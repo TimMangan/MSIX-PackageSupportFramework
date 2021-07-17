@@ -50,58 +50,65 @@ REGSAM RegFixupSam(std::string keypath, REGSAM samDesired, DWORD RegLocalInstanc
                             Log("[%d] RegFixupSam: Check %LS\n", RegLocalInstance, widen(keypath.substr(keystring.size())).c_str());
                             Log("[%d] RegFixupSam: using %LS\n", RegLocalInstance, pattern.c_str());
 #endif
-                            if (std::regex_match(widen(keypath.substr(keystring.size())), std::wregex(pattern)))
+                            try
                             {
-#ifdef _DEBUG
-                                Log("[%d] RegFixupSam: is HKCU pattern match.\n", RegLocalInstance);
-#endif
-                                switch (rem.modifyKeyAccess.access)
+                                if (std::regex_match(widen(keypath.substr(keystring.size())), std::wregex(pattern)))
                                 {
-                                case Modify_Key_Access_Type_Full2RW:
-                                    if ((samDesired & (KEY_ALL_ACCESS|KEY_CREATE_LINK)) != 0)
-                                    {
-                                        samModified = samDesired & ~(DELETE|KEY_CREATE_LINK);
 #ifdef _DEBUG
-                                        Log("[%d] RegFixupSam: Full2RW\n", RegLocalInstance);
+                                    Log("[%d] RegFixupSam: is HKCU pattern match.\n", RegLocalInstance);
 #endif
-                                    }
-                                    break;
-                                case Modify_Key_Access_Type_Full2MaxAllowed:
-                                    if ((samDesired & (DELETE | WRITE_DAC | WRITE_OWNER | KEY_SET_VALUE | KEY_CREATE_SUB_KEY | KEY_CREATE_LINK)) != 0)
+                                    switch (rem.modifyKeyAccess.access)
                                     {
-                                        samModified = MAXIMUM_ALLOWED;
+                                    case Modify_Key_Access_Type_Full2RW:
+                                        if ((samDesired & (KEY_ALL_ACCESS | KEY_CREATE_LINK)) != 0)
+                                        {
+                                            samModified = samDesired & ~(DELETE | KEY_CREATE_LINK);
 #ifdef _DEBUG
-                                        Log("[%d] RegFixupSam: Full2MaxAllowed\n", RegLocalInstance);
+                                            Log("[%d] RegFixupSam: Full2RW\n", RegLocalInstance);
+#endif
+                                        }
+                                        break;
+                                    case Modify_Key_Access_Type_Full2MaxAllowed:
+                                        if ((samDesired & (DELETE | WRITE_DAC | WRITE_OWNER | KEY_SET_VALUE | KEY_CREATE_SUB_KEY | KEY_CREATE_LINK)) != 0)
+                                        {
+                                            samModified = MAXIMUM_ALLOWED;
+#ifdef _DEBUG
+                                            Log("[%d] RegFixupSam: Full2MaxAllowed\n", RegLocalInstance);
 #endif                                    
-                                    }
-                                case Modify_Key_Access_Type_Full2R:
-                                    if ((samDesired & (DELETE | WRITE_DAC | WRITE_OWNER | KEY_SET_VALUE | KEY_CREATE_SUB_KEY | KEY_CREATE_LINK)) != 0)
-                                    {
-                                        samModified = samDesired & ~(DELETE | WRITE_DAC | WRITE_OWNER | KEY_SET_VALUE | KEY_CREATE_SUB_KEY | KEY_CREATE_LINK);
+                                        }
+                                    case Modify_Key_Access_Type_Full2R:
+                                        if ((samDesired & (DELETE | WRITE_DAC | WRITE_OWNER | KEY_SET_VALUE | KEY_CREATE_SUB_KEY | KEY_CREATE_LINK)) != 0)
+                                        {
+                                            samModified = samDesired & ~(DELETE | WRITE_DAC | WRITE_OWNER | KEY_SET_VALUE | KEY_CREATE_SUB_KEY | KEY_CREATE_LINK);
 #ifdef _DEBUG
-                                        Log("[%d] RegFixupSam: Full2R\n", RegLocalInstance);  
+                                            Log("[%d] RegFixupSam: Full2R\n", RegLocalInstance);
 #endif
-                                    }
-                                case Modify_Key_Access_Type_RW2R:
-                                    if ((samDesired & (KEY_CREATE_LINK|KEY_CREATE_SUB_KEY|KEY_SET_VALUE))  != 0)
-                                    {
-                                        samModified = samDesired & ~(DELETE | WRITE_DAC | WRITE_OWNER | KEY_SET_VALUE | KEY_CREATE_SUB_KEY | KEY_CREATE_LINK);
+                                        }
+                                    case Modify_Key_Access_Type_RW2R:
+                                        if ((samDesired & (KEY_CREATE_LINK | KEY_CREATE_SUB_KEY | KEY_SET_VALUE)) != 0)
+                                        {
+                                            samModified = samDesired & ~(DELETE | WRITE_DAC | WRITE_OWNER | KEY_SET_VALUE | KEY_CREATE_SUB_KEY | KEY_CREATE_LINK);
 #ifdef _DEBUG
-                                        Log("[%d] RegFixupSam: RW2R\n", RegLocalInstance);
+                                            Log("[%d] RegFixupSam: RW2R\n", RegLocalInstance);
 #endif
-                                    }
-                                case Modify_Key_Access_Type_RW2MaxAllowed:
-                                    if ((samDesired & (KEY_CREATE_LINK | KEY_CREATE_SUB_KEY | KEY_SET_VALUE | WRITE_DAC | WRITE_OWNER)) != 0)
-                                    {
-                                        samModified = MAXIMUM_ALLOWED;
+                                        }
+                                    case Modify_Key_Access_Type_RW2MaxAllowed:
+                                        if ((samDesired & (KEY_CREATE_LINK | KEY_CREATE_SUB_KEY | KEY_SET_VALUE | WRITE_DAC | WRITE_OWNER)) != 0)
+                                        {
+                                            samModified = MAXIMUM_ALLOWED;
 #ifdef _DEBUG
-                                        Log("[%d] RegFixupSam: RW2MaxAllowed\n", RegLocalInstance);
+                                            Log("[%d] RegFixupSam: RW2MaxAllowed\n", RegLocalInstance);
 #endif                                    
+                                        }
+                                    default:
+                                        break;
                                     }
-                                default:
-                                    break;
+                                    return samModified;
                                 }
-                                return samModified;
+                            }
+                            catch (...)
+                            {
+                                Log("[%d] Bad Regex pattern ignored in RegLegacyFixups.\n", RegLocalInstance);
                             }
                         }
                     }
@@ -115,58 +122,65 @@ REGSAM RegFixupSam(std::string keypath, REGSAM samDesired, DWORD RegLocalInstanc
 #endif
                         for (auto& pattern : rem.modifyKeyAccess.patterns)
                         {
-                            if (std::regex_match(widen(keypath.substr(keystring.size())), std::wregex(pattern)))
+                            try
                             {
-#ifdef _DEBUG
-                                Log("[%d] RegFixupSam: HKLM pattern match.\n", RegLocalInstance);
-#endif
-                                switch (rem.modifyKeyAccess.access)
+                                if (std::regex_match(widen(keypath.substr(keystring.size())), std::wregex(pattern)))
                                 {
-                                case Modify_Key_Access_Type_Full2RW:
-                                    if ((samDesired & (KEY_ALL_ACCESS | KEY_CREATE_LINK)) != 0)
-                                    {
-                                        samModified = samDesired & ~(DELETE|KEY_CREATE_LINK);
 #ifdef _DEBUG
-                                        Log("[%d] RegFixupSam: Full2RW\n", RegLocalInstance);
+                                    Log("[%d] RegFixupSam: HKLM pattern match.\n", RegLocalInstance);
 #endif
-                                    }
-                                    break;
-                                case Modify_Key_Access_Type_Full2R:
-                                    if ((samDesired & (DELETE | WRITE_DAC | WRITE_OWNER | KEY_SET_VALUE | KEY_CREATE_SUB_KEY | KEY_CREATE_LINK)) != 0)
+                                    switch (rem.modifyKeyAccess.access)
                                     {
-                                        samModified = samDesired & ~(DELETE | WRITE_DAC | WRITE_OWNER | KEY_SET_VALUE | KEY_CREATE_SUB_KEY | KEY_CREATE_LINK);
+                                    case Modify_Key_Access_Type_Full2RW:
+                                        if ((samDesired & (KEY_ALL_ACCESS | KEY_CREATE_LINK)) != 0)
+                                        {
+                                            samModified = samDesired & ~(DELETE | KEY_CREATE_LINK);
 #ifdef _DEBUG
-                                        Log("[%d] RegFixupSam: Full2R\n", RegLocalInstance);
+                                            Log("[%d] RegFixupSam: Full2RW\n", RegLocalInstance);
 #endif
-                                    }
-                                case Modify_Key_Access_Type_Full2MaxAllowed:
-                                    if ((samDesired & (DELETE | WRITE_DAC | WRITE_OWNER | KEY_SET_VALUE | KEY_CREATE_SUB_KEY | KEY_CREATE_LINK)) != 0)
-                                    {
-                                        samModified = MAXIMUM_ALLOWED;
+                                        }
+                                        break;
+                                    case Modify_Key_Access_Type_Full2R:
+                                        if ((samDesired & (DELETE | WRITE_DAC | WRITE_OWNER | KEY_SET_VALUE | KEY_CREATE_SUB_KEY | KEY_CREATE_LINK)) != 0)
+                                        {
+                                            samModified = samDesired & ~(DELETE | WRITE_DAC | WRITE_OWNER | KEY_SET_VALUE | KEY_CREATE_SUB_KEY | KEY_CREATE_LINK);
 #ifdef _DEBUG
-                                        Log("[%d] RegFixupSam: Full2MaxAllowed\n", RegLocalInstance);
+                                            Log("[%d] RegFixupSam: Full2R\n", RegLocalInstance);
+#endif
+                                        }
+                                    case Modify_Key_Access_Type_Full2MaxAllowed:
+                                        if ((samDesired & (DELETE | WRITE_DAC | WRITE_OWNER | KEY_SET_VALUE | KEY_CREATE_SUB_KEY | KEY_CREATE_LINK)) != 0)
+                                        {
+                                            samModified = MAXIMUM_ALLOWED;
+#ifdef _DEBUG
+                                            Log("[%d] RegFixupSam: Full2MaxAllowed\n", RegLocalInstance);
 #endif                                    
-                                    }
-                                case Modify_Key_Access_Type_RW2R:
-                                    if ((samDesired & (KEY_CREATE_LINK | KEY_CREATE_SUB_KEY | KEY_SET_VALUE)) != 0)
-                                    {
-                                        samModified = samDesired & ~(DELETE | WRITE_DAC | WRITE_OWNER | KEY_SET_VALUE | KEY_CREATE_SUB_KEY | KEY_CREATE_LINK);
+                                        }
+                                    case Modify_Key_Access_Type_RW2R:
+                                        if ((samDesired & (KEY_CREATE_LINK | KEY_CREATE_SUB_KEY | KEY_SET_VALUE)) != 0)
+                                        {
+                                            samModified = samDesired & ~(DELETE | WRITE_DAC | WRITE_OWNER | KEY_SET_VALUE | KEY_CREATE_SUB_KEY | KEY_CREATE_LINK);
 #ifdef _DEBUG
-                                        Log("[%d] RegFixupSam: RW2R\n", RegLocalInstance);
+                                            Log("[%d] RegFixupSam: RW2R\n", RegLocalInstance);
 #endif
-                                    }
-                                case Modify_Key_Access_Type_RW2MaxAllowed:
-                                    if ((samDesired & (KEY_CREATE_LINK | KEY_CREATE_SUB_KEY | KEY_SET_VALUE | WRITE_DAC | WRITE_OWNER)) != 0)
-                                    {
-                                        samModified = MAXIMUM_ALLOWED;
+                                        }
+                                    case Modify_Key_Access_Type_RW2MaxAllowed:
+                                        if ((samDesired & (KEY_CREATE_LINK | KEY_CREATE_SUB_KEY | KEY_SET_VALUE | WRITE_DAC | WRITE_OWNER)) != 0)
+                                        {
+                                            samModified = MAXIMUM_ALLOWED;
 #ifdef _DEBUG
-                                        Log("[%d] RegFixupSam: RW2MaxAllowed\n", RegLocalInstance);
+                                            Log("[%d] RegFixupSam: RW2MaxAllowed\n", RegLocalInstance);
 #endif                                    
+                                        }
+                                    default:
+                                        break;
                                     }
-                                default:
-                                    break;
+                                    return samModified;
                                 }
-                                return samModified;
+                            }
+                            catch (...)
+                            {
+                                Log("[%d] Bad Regex pattern ignored in RegLegacyFixups.\n", RegLocalInstance);
                             }
                         }
                     }
