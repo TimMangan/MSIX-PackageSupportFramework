@@ -1,5 +1,5 @@
 # Package Support Framework
-This project provides tools, libraries, documentation and samples for creating runtime fixes (also called *fixups*) for compatibility issues that enable Windows desktop applications to be distributed and executed as MSIX packaged apps.
+This project provides tools, libraries, documentation and samples for creating runtime fixes (also called *fixups*) for compatibility issues that enable Windows desktop applications to be distributed and executed as MSIX packaged apps.  This fork is directly used by the PsfTooling and TMEditX applications.  Additionally, several other tool vendors are believed to look to this source as the basis their own private repositories.
 
 The original fork for this project is a Microsoft project, and this project remains forked from the original, although this fork is now considered the up-to-date and managed source for the PSF and there is no longer any intent to create pull requests back into the Microsoft fork. 
 
@@ -24,12 +24,12 @@ The following additional resources provide additional information about specific
 * [Instructions for authoring your own fixup DLL](Authoring.md)
 
 ## Get the pre-built Package Support Framework binaries
-Look for a versioned folder starting with ReleasePsf- that will contain pre-built release and debug builds of the PSF.  We are unable to use the GitHub "release" mechanism without breaking your ability to compare sources here to the original Microsoft sources.
+Look for a versioned folder in the Develop branch code starting with "ZipRelease-v" that will contain pre-built release and debug builds of the PSF in a zip format.  We are unable to use the GitHub "release" mechanism without breaking your ability to compare sources here to the original Microsoft sources.
 
 The older Microsoft builds for the Package Support Framework binaries from [Nuget.org](https://www.nuget.org/packages/Microsoft.PackageSupportFramework). To extract the binaries, rename the package extension to .zip, unzip the file, and locate the binaries in the /bin folder. In a future release we are planning to make it easier to locate the binaries directly on GitHub.
 
 ## Branch structure
-THe original Microsoft Package Support Framework adopts a **develop** and **master** branching style.
+The original Microsoft Package Support Framework adopted a **develop** and **master** branching style.
 In this TimMangan fork, the develop **develop** branch acts like the master and other branches are childs of develop.
 
 ### Master
@@ -39,7 +39,7 @@ The **master** branch represents the Microsoft Master source in the most recent 
 The **develop** branch has the latest Release code. Make a private fork off the **develop** branch to make your own contributions to Package Support Framework.
 
 ## Fixup metadata
-Each fixup and the PSF Launcher has a metadata file in XML format. Each file contains the following:
+Each fixup and the PSF Launcher has a metadata file in XML format, which is used for some of the automated testing. Each file contains the following:
 
 * `Version`: The version of the Package Support Framework is in MAJOR.MINOR.PATCH format according to [Sem Version 2](https://semver.org/).
 * `MinimumWindowsPlatform`: The minimum windows version required for the fixup or PSF Launcher.
@@ -49,18 +49,20 @@ Each fixup and the PSF Launcher has a metadata file in XML format. Each file con
 The metadata file schema is provided [here](MetadataSchema.xsd).
 
 ## Data/Telemetry
-The Package Support Framework includes telemetry that collects usage data and sends it to Microsoft to help improve our products and services. Read Microsoft's [privacy statement to learn more](https://privacy.microsoft.com/en-US/privacystatement). However, data will be collected only when both of the following conditions are met:
+The Package Support Framework includes telemetry that collects usage data and sends it to Microsoft to help improve their products and services. Read Microsoft's [privacy statement to learn more](https://privacy.microsoft.com/en-US/privacystatement). However, data will be collected only when both of the following conditions are met:
 
 * The Package Support Framework binaries are used from the [NuGet package](https://www.nuget.org/packages/Microsoft.PackageSupportFramework) on a Windows 10 computer.
 * The user has enabled collection of data on the computer.
 
-The NuGet package contains signed binaries and will collect usage data from the computer. Telemetry is not collected when the binaries are built locally by cloning the repo or downloading the binaries directly.
+The NuGet package contains signed binaries and will collect usage data from the computer. Telemetry is not collected when the binaries are built locally by cloning the repo or downloading the binaries directly.  This means that while telemetry code is present in the binaries in the ZipRelease folder, it isn't active if you include those binaries in your MSIX packages.
 
 ## License
 The Package Support Framework code is licensed under the [MIT License](https://github.com/Microsoft/MSIX-PackageSupportFramework/blob/master/LICENSE).
 
 ## Contribute
-This project welcomes contributions and suggestions. Contributions to the Microsoft branch require you to agree to a Contributor License Agreement (CLA) declaring that you have the right to, and actually do, grant us the rights to use your contribution. For details, visit https://cla.microsoft.com.  For contributing to this fork, contact Tim as tmangan@tmurgent.com 
+This project welcomes contributions and suggestions. Contributions to the Microsoft branch require you to agree to a Contributor License Agreement (CLA) declaring that you have the right to, and actually do, grant us the rights to use your contribution. For details, visit https://cla.microsoft.com.  
+
+For contributing to the TimMangan fork, contact Tim as tmangan@tmurgent.com 
 
 Submit your own fixup(s) to the community:
 1. Create a private fork for yourself
