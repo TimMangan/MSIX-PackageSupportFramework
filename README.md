@@ -1,4 +1,4 @@
-# A NOTE ABOUT THIS FOKK
+# A NOTE ABOUT THIS FOK
 While Microsoft created the initial open-source project for the Package Support Framework, they have neglected it for some time and seem disinterested in maintaining it,
 so this fork represents the lastest active branch.
 
