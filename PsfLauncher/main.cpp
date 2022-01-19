@@ -14,7 +14,6 @@
 #include <combaseapi.h>
 #include <ppltasks.h>
 #include <ShObjIdl.h>
-#include "Logger.h"
 #include "StartProcessHelper.h"
 #include "Telemetry.h"
 #include "PsfPowershellScriptRunner.h"
@@ -42,10 +41,18 @@ void LogApplicationAndProcessesCollection();
 int launcher_main(PCWSTR args, int cmdShow) noexcept;
 void GetAndLaunchMonitor(const psf::json_object& monitor, std::filesystem::path packageRoot, int cmdShow, LPCWSTR dirStr);
 void LaunchMonitorInBackground(std::filesystem::path packageRoot, const wchar_t executable[], const wchar_t arguments[], bool wait, bool asAdmin, int cmdShow, LPCWSTR dirStr);
+void LaunchInBackgroundAsAdmin(const wchar_t executable[], const wchar_t arguments[], bool wait, int cmdShow, LPCWSTR dirStr);
 bool IsCurrentOSRS2OrGreater();
 std::wstring ReplaceVariablesInString(std::wstring inputString, bool ReplaceEnvironmentVars, bool ReplacePseudoVars);
 
 static inline bool check_suffix_if(iwstring_view str, iwstring_view suffix) noexcept;
+
+#if INECTIONFROMHEREREADY
+// From PsfRuntime:
+USHORT ProcessBitness(HANDLE hProcess);
+std::wstring FixDllBitness(std::wstring originalName, USHORT bitness);
+#endif
+
 
 int __stdcall wWinMain(_In_ HINSTANCE , _In_opt_ HINSTANCE, _In_ PWSTR args, _In_ int cmdShow)
 { 
@@ -56,10 +63,10 @@ int __stdcall wWinMain(_In_ HINSTANCE , _In_opt_ HINSTANCE, _In_ PWSTR args, _In
 
 int launcher_main(PCWSTR args, int cmdShow) noexcept try
 {
-    Log("PSFLauncher started.");
+    Log(L"PSFLauncher started.");
 
     
-    //Log("DEBUG TEMP PsfLauncher waiting for debugger to attach to process...\n");
+    //Log(L"DEBUG TEMP PsfLauncher waiting for debugger to attach to process...\n");
     //psf::wait_for_debugger();
 
     auto appConfig = PSFQueryCurrentAppLaunchConfig(true);
@@ -74,7 +81,7 @@ int launcher_main(PCWSTR args, int cmdShow) noexcept try
             bool waitSignal = waitSignalPtr->as_boolean().get(); 
             if (waitSignal) 
             { 
-                Log("PsfLauncher waiting for debugger to attach to process...\n"); 
+                Log(L"PsfLauncher waiting for debugger to attach to process...\n"); 
                 psf::wait_for_debugger(); 
             } 
         } 
@@ -127,9 +134,19 @@ int launcher_main(PCWSTR args, int cmdShow) noexcept try
     std::wstring exeWName = exeName;
     exeWName = ReplaceVariablesInString(exeWName, true, true);
     std::filesystem::path exePath;
+    bool isHttp = false;
     if (exeWName[1] != L':')
     {
-        exePath = packageRoot / exeWName;
+        if (_wcsnicmp(exeWName.c_str(), L"http://", 7) == 0 ||
+            _wcsnicmp(exeWName.c_str(), L"https://", 8) == 0)
+        {
+            isHttp = true;
+            exePath = exeWName;
+        }
+        else
+        {
+            exePath = packageRoot / exeWName;
+        }
     }
     else
     {
@@ -152,24 +169,26 @@ int launcher_main(PCWSTR args, int cmdShow) noexcept try
         {
             fullargs = args;
         }
-        LogString("Process Launch: ", exePath.c_str());
-        LogString("     Arguments: ", fullargs.data());
-        LogString("Working Directory: ", currentDirectory.c_str());
+        LogString(L"Process Launch: ", exePath.c_str());
+        LogString(L"     Arguments: ", fullargs.data());
+        LogString(L"Working Directory: ", currentDirectory.c_str());
 
         HRESULT hr = StartProcess(exePath.c_str(), (L"\"" + exePath.filename().native() + L"\" " + exeArgString + L" " + args).data(), currentDirectory.c_str(), cmdShow, INFINITE);
         if (hr != ERROR_SUCCESS)
         {
-            Log("Error return from launching process 0x%x.", GetLastError());
+            Log(L"Error return from launching process 0x%x.", GetLastError());
+            LaunchInBackgroundAsAdmin(exePath.c_str(), args, true, cmdShow, currentDirectory.c_str());
         }
     }
     else
     {
-        LogString("Shell Launch", exePath.c_str());
-        LogString("   Arguments", exeArgString.c_str());
-        LogString("Working Directory: ", currentDirectory.c_str());
+        LogString(L"Shell Launch", exePath.c_str());
+        LogString(L"   Arguments", exeArgString.c_str());
+        LogString(L"Working Directory: ", currentDirectory.c_str());
+        
         if (check_suffix_if(exeName, L".cmd"_isv) || check_suffix_if(exeName, L".bat"_isv))
         {
-            Log("Shell Launch special case for cmd/bat files"); 
+            Log(L"Shell Launch special case for cmd/bat files");
             // To get the cmd process that runs this script we need to start it via a powershell process that uses Invoke-CommandInDesktopPackage with the -PreventBreakaway option.
             // This is currently done by using a powershell wrapper script that is part of the PSF.
             // Why another ps1 file?  
@@ -202,7 +221,7 @@ int launcher_main(PCWSTR args, int cmdShow) noexcept try
             wArgs.append(L" -File \"");
             wArgs.append(SSCmdWrapper.c_str());
             wArgs.append(L"\" ");
-            
+
             wArgs.append(L" ");
             ///wArgs.append(L"-PackageFamilyName ");
             wArgs.append(PSFQueryPackageFamilyName());
@@ -219,22 +238,27 @@ int launcher_main(PCWSTR args, int cmdShow) noexcept try
 
             wArgs.append(exeArgString);
 
-            powershellScriptRunner.RunOtherScript(SSCmdWrapper.c_str(), currentDirectory.c_str(), exePath.c_str(), exeArgString.c_str(),false);
+            powershellScriptRunner.RunOtherScript(SSCmdWrapper.c_str(), currentDirectory.c_str(), exePath.c_str(), exeArgString.c_str(), false);
         }
         else
         {
             // Previously we had issues with this: StartWithShellExecute(nullptr, packageRoot, exePath, exeArgString, currentDirectory.c_str(), cmdShow, INFINITE);
             std::wstring ext = exePath.extension().c_str();
-            Log("Looking for default command for FTA %ls", ext.c_str());
+            if (isHttp)
+            {
+                // Let the default browser handle it.
+                ext = L".html";
+            }
+            Log(L"Looking for default command for FTA %ls", ext.c_str());
             wchar_t szBuf[1024];
             DWORD cbBufSize = sizeof(szBuf);
-            
+
             cbBufSize = sizeof(szBuf);  // resetting for second call...
             HRESULT hr = AssocQueryString(0, ASSOCSTR_EXECUTABLE,
-                                    ext.c_str(), NULL, szBuf, &cbBufSize);
-            if (FAILED(hr)) 
-            { 
-                Log("Failed to get an FTA default command 0x0x", GetLastError());
+                ext.c_str(), NULL, szBuf, &cbBufSize);
+            if (FAILED(hr))
+            {
+                Log(L"Failed to get an FTA default command 0x0x", GetLastError());
                 StartWithShellExecute(nullptr, packageRoot, exePath, exeArgString, currentDirectory.c_str(), cmdShow, INFINITE);
             }
             else
@@ -245,7 +269,7 @@ int launcher_main(PCWSTR args, int cmdShow) noexcept try
                 //      We construct a command that is:    DefaultExeForFTA.exe /xxx  file.ext
                 // Note: If there is no FTA, the query returns with OpenWith.exe, which means the user will be prompted with what they want to do.  
                 //       That is probably the best we can do.
-                Log("Default command for FTA is %ls, use StartMenuShellLaunchWrapperScript.ps1 to inject into container, if possible.", szBuf);
+                Log(L"Default command for FTA is %ls, use StartMenuShellLaunchWrapperScript.ps1 to inject into container, if possible.", szBuf);
                 std::wstring newcmd = szBuf;
 
                 std::filesystem::path SSShellWrapper = packageRoot / L"StartMenuShellLaunchWrapperScript.ps1";
@@ -266,17 +290,17 @@ int launcher_main(PCWSTR args, int cmdShow) noexcept try
                 wArgs.append(L" \"");
                 wArgs.append(exePath.c_str());
                 wArgs.append(L"\"");
-                powershellScriptRunner.RunOtherScript(SSShellWrapper.c_str(), currentDirectory.c_str(), newcmd.c_str(), wArgs.c_str(),false);
+                powershellScriptRunner.RunOtherScript(SSShellWrapper.c_str(), currentDirectory.c_str(), newcmd.c_str(), wArgs.c_str(), false);
             }
         }
     }
 
     if (IsCurrentOSRS2OrGreater())
     {
-        Log("Process Launch Ready to run any end scripts.");
+        Log(L"Process Launch Ready to run any end scripts.");
         // Launch the end PowerShell script if we are using one.
         powershellScriptRunner.RunEndingScript();
-        Log("Process Launch complete.");
+        Log(L"Process Launch complete.");
     }
 
     return 0;
@@ -305,7 +329,7 @@ void GetAndLaunchMonitor(const psf::json_object& monitor, std::filesystem::path 
         wait = monitorWait->as_boolean().get();
     }
 
-    Log("\tCreating the monitor: %ls", monitorExecutable->as_string().wide());
+    Log(L"\tCreating the monitor: %ls", monitorExecutable->as_string().wide());
     LaunchMonitorInBackground(packageRoot, monitorExecutable->as_string().wide(), monitorArguments->as_string().wide(), wait, asAdmin, cmdShow, dirStr);
 }
 
@@ -354,6 +378,155 @@ void LaunchMonitorInBackground(std::filesystem::path packageRoot, const wchar_t 
     {
         THROW_IF_FAILED(StartProcess(executable, (cmd + L" " + arguments).data(), (packageRoot / dirStr).c_str(), cmdShow, INFINITE));
     }
+}
+
+void LaunchInBackgroundAsAdmin( const wchar_t executable[], const wchar_t arguments[], bool wait, int cmdShow, LPCWSTR dirStr)
+{
+    std::wstring cmd = L"\"";
+    cmd.append(executable);
+    cmd.append(L"\"");
+
+
+    // This happens when the program is requested for elevation.  For now just launch this way.  We don't get to inject,
+    // but it is better than nothing.
+    SHELLEXECUTEINFOW shExInfo =
+    {
+        sizeof(shExInfo) // bSize
+        , wait ? (ULONG)SEE_MASK_NOCLOSEPROCESS : (ULONG)(SEE_MASK_NOCLOSEPROCESS | SEE_MASK_WAITFORINPUTIDLE) // fmask
+        , 0           // hwnd
+        , L"runas"    // lpVerb
+        , cmd.c_str() // lpFile
+        , arguments   // lpParameters
+        , dirStr     // lpDirectory
+        , cmdShow           // nShow
+        , 0           // hInstApp
+    };
+    Log("PsfLaunch: Unable to launch with injection (possibly due to elevation).  Launch using shell launch without injection.");
+    THROW_LAST_ERROR_IF_MSG(!ShellExecuteEx(&shExInfo), "Error starting monitor using ShellExecuteEx");
+    THROW_HR_IF(HRESULT_FROM_WIN32(ERROR_INVALID_HANDLE), shExInfo.hProcess == INVALID_HANDLE_VALUE);
+
+    // possibly inject the runtime now?
+#if INECTIONFROMHEREREADY
+    try
+    {
+        BOOL b;
+        BOOL res = IsProcessInJob(shExInfo.hProcess, nullptr, &b);
+        if (res != 0)
+        {
+            if (b == true)
+            {
+                Log(L"\tPsfLaunch: New process is in a job, allow injection.");
+                // Fix for issue #167: allow subprocess to be a different bitness than this process.
+                USHORT bitness = ProcessBitness(shExInfo.hProcess);
+                DWORD procId = GetProcessId(shExInfo.hProcess);
+                std::filesystem::path packageRoot = PSFQueryPackageRootPath();
+#if _DEBUG
+                Log(L"\tPsfLaunch: Injection for PID=%d Bitness=%d", procId, bitness);
+#endif  
+                std::wstring wtargetDllName = FixDllBitness(std::wstring(psf::runtime_dll_name), bitness);
+#if _DEBUG
+                Log(L"\tPsfLaunch: Use runtime %ls", wtargetDllName.c_str());
+#endif
+                static const auto pathToPsfRuntime = (packageRoot / wtargetDllName.c_str()).string();
+                const char* targetDllPath = NULL;
+#if _DEBUG
+                Log("\tPsfLaunch: Inject %s into PID=%d", pathToPsfRuntime.c_str(), procId);
+#endif
+
+                if (std::filesystem::exists(pathToPsfRuntime))
+                {
+                    targetDllPath = pathToPsfRuntime.c_str();
+                }
+                else
+                {
+                    // Possibly the dll is in the folder with the exe and not at the package root.
+                    Log(L"\tPsfLaunch: %ls not found at package root, try target folder.", wtargetDllName.c_str());
+
+                    std::filesystem::path altPathToExeRuntime = executable;
+                    static const auto altPathToPsfRuntime = (altPathToExeRuntime.parent_path() / pathToPsfRuntime.c_str()).string();
+#if _DEBUG
+                    Log(L"\tPsfLaunch: alt target filename is now %ls", altPathToPsfRuntime.c_str());
+#endif
+                    if (std::filesystem::exists(altPathToPsfRuntime))
+                    {
+                        targetDllPath = altPathToPsfRuntime.c_str();
+                    }
+                    else
+                    {
+#if _DEBUG
+                        Log(L"\tPsfLaunch: Not present there either, try elsewhere in package.");
+#endif
+                        // If not in those two locations, must check everywhere in package.
+                        // The child process might also be in another package folder, so look elsewhere in the package.
+                        for (auto& dentry : std::filesystem::recursive_directory_iterator(packageRoot))
+                        {
+                            try
+                            {
+                                if (dentry.path().filename().compare(wtargetDllName) == 0)
+                                {
+                                    static const auto altDirPathToPsfRuntime = narrow(dentry.path().c_str());
+#if _DEBUG
+                                    Log(L"\tPsfLaunch: Found match as %ls", dentry.path().c_str());
+#endif
+                                    targetDllPath = altDirPathToPsfRuntime.c_str();
+                                    break;
+                                }
+                            }
+                            catch (...)
+                            {
+                                Log(L"\tPsfLaunch: Non-fatal error enumerating directories while looking for PsfRuntime.");
+                            }
+                        }
+
+                    }
+                }
+
+                if (targetDllPath != NULL)
+                {
+                    Log("\tPsfLaunch: Attempt injection into %d using %s", procId, targetDllPath);
+                    if (!::DetourUpdateProcessWithDll(processInformation->hProcess, &targetDllPath, 1))
+                    {
+                        Log("\tPsfLaunch: %s unable to inject, err=0x%x.", targetDllPath, ::GetLastError());
+                        if (!::DetourProcessViaHelperDllsW(processInformation->dwProcessId, 1, &targetDllPath, CreateProcessWithPsfRunDll))
+                        {
+                            Log("\tPsfLaunch: %s unable to inject with RunDll either (Skipping), err=0x%x.", targetDllPath, ::GetLastError());
+                        }
+                    }
+                    else
+                    {
+                        Log(L"\tPsfLaunch: Injected %ls into PID=%d\n", wtargetDllName.c_str(), processInformation->dwProcessId);
+                    }
+                }
+                else
+                {
+                    Log(L"\tPsfLaunch: %ls not found, skipping.", wtargetDllName.c_str());
+                }
+            }
+        }
+    }
+    catch (...)
+    {
+#if _DEBUG
+        Log(L"\tPsfLaunch: Exception while trying to determine job status of new process. Do not inject.");
+#endif
+
+    }
+#endif
+
+
+    if (wait)
+    {
+        WaitForSingleObject(shExInfo.hProcess, INFINITE);
+        CloseHandle(shExInfo.hProcess);
+    }
+    else
+    {
+        WaitForInputIdle(shExInfo.hProcess, 1000);
+        // Due to elevation, the process starts, relaunches, and the main process ends in under 1ms.
+        // So we'll just toss in an ugly sleep here for now.
+        Sleep(5000);
+    }
+ 
 }
 
 
