@@ -29,12 +29,16 @@
     <ClInclude Include="FunctionImplementations.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\..\CommonSrc\psf_logging.cpp" />
     <ClCompile Include="DynamicLibraryFixup.cpp" />
     <ClCompile Include="InitializeFixup.cpp" />
     <ClCompile Include="main.cpp" />
   </ItemGroup>
   <ItemGroup>
     <Xml Include="DynamicLibraryFixup.xml" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="readme.md" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>15.0</VCProjectVersion>

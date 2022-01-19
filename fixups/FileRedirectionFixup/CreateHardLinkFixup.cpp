@@ -5,6 +5,7 @@
 
 #include "FunctionImplementations.h"
 #include "PathRedirection.h"
+#include <psf_logging.h>
 
 template <typename CharT>
 BOOL __stdcall CreateHardLinkFixup(
@@ -17,10 +18,11 @@ BOOL __stdcall CreateHardLinkFixup(
     {
         if (guard)
         {
+#if _DEBUG
             DWORD CreateHardLinkInstance = ++g_FileIntceptInstance;
             LogString(CreateHardLinkInstance,L"CopyHardLinkFixup for",    fileName);
             LogString(CreateHardLinkInstance,L"CopyHardLinkFixup target", existingFileName);
-            
+#endif
 
             // NOTE: We need to copy-on-read the existing file since the application may want to open the hard-link file
             //       for write in the future. As for the link file, we currently _don't_ copy-on-read it due to the fact
@@ -28,8 +30,8 @@ BOOL __stdcall CreateHardLinkFixup(
             //       link file already exists. I.e. we're giving the application the benefit of the doubt that, if they
             //       are trying to create a hard-link with the same path as a file inside the package, they had
             //       previously attempted to delete that file.
-            auto [redirectLink, redirectPath, shouldReadonlySource] = ShouldRedirect(fileName, redirect_flags::ensure_directory_structure);
-            auto [redirectTarget, redirectTargetPath, shouldReadonlyDest] = ShouldRedirect(existingFileName, redirect_flags::copy_on_read);
+            auto [redirectLink, redirectPath, shouldReadonlySource] = ShouldRedirectV2(fileName, redirect_flags::ensure_directory_structure);
+            auto [redirectTarget, redirectTargetPath, shouldReadonlyDest] = ShouldRedirectV2(existingFileName, redirect_flags::copy_on_read);
             if (redirectLink || redirectTarget)
             {
                 std::wstring rldFileName = TurnPathIntoRootLocalDevice(redirectLink ? redirectPath.c_str() : widen_argument(fileName).c_str());

@@ -31,6 +31,7 @@
     <None Include="readme.md" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\..\CommonSrc\psf_logging.cpp" />
     <ClCompile Include="CopyFileFixup.cpp" />
     <ClCompile Include="CreateDirectoryFixup.cpp" />
     <ClCompile Include="CreateFileFixup.cpp" />
@@ -39,7 +40,7 @@
     <ClCompile Include="DeleteFileFixup.cpp" />
     <ClCompile Include="FileAttributesFixup.cpp" />
     <ClCompile Include="FindFirstFileFixup.cpp" />
-    <ClCompile Include="FindFirstFileFixup2.cpp" />
+    <ClCompile Include="FindFirstFileFixupV2.cpp" />
     <ClCompile Include="GetPrivateProfileIntFixup.cpp" />
     <ClCompile Include="GetPrivateProfileSectionFixup.cpp" />
     <ClCompile Include="GetPrivateProfileSectionNamesFixup.cpp" />
@@ -48,9 +49,11 @@
     <ClCompile Include="main.cpp" />
     <ClCompile Include="MoveFileFixup.cpp" />
     <ClCompile Include="PathRedirection.cpp" />
+    <ClCompile Include="PathTests.cpp" />
     <ClCompile Include="RemoveDirectoryFixup.cpp" />
     <ClCompile Include="ReplaceFileFixup.cpp" />
     <ClCompile Include="SetWorkingDirectory.cpp" />
+    <ClCompile Include="PathRedirectionV2.cpp" />
     <ClCompile Include="WritePrivateProfileSectionFixup.cpp" />
     <ClCompile Include="WritePrivateProfileStringFixup.cpp" />
     <ClCompile Include="WritePrivateProfileStructFixup.cpp" />
@@ -69,15 +72,19 @@
   </PropertyGroup>
   <PropertyGroup Label="Configuration" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <PlatformToolset>v141</PlatformToolset>
+    <UseOfMfc>false</UseOfMfc>
   </PropertyGroup>
   <PropertyGroup Label="Configuration" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <PlatformToolset>v141</PlatformToolset>
+    <UseOfMfc>false</UseOfMfc>
   </PropertyGroup>
   <PropertyGroup Label="Configuration" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <PlatformToolset>v141</PlatformToolset>
+    <UseOfMfc>false</UseOfMfc>
   </PropertyGroup>
   <PropertyGroup Label="Configuration" Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <PlatformToolset>v141</PlatformToolset>
+    <UseOfMfc>false</UseOfMfc>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <Import Project="$(MSBuildThisFileDirectory)\..\..\Fixups.props" />
