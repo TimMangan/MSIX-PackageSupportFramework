@@ -1,10 +1,15 @@
-# DynamicLibrary Fixup
-When injected into a process, the DynamicLibraryFixup supports the ability to:
-> * Define mappings between dll name and location within the package in the Config.Json file.
-> * Ensure that the named dll will be found within the package anytime the application tries to load the dll.
+# Env Var Fixup
+When injected into a process, the EnvVarFixup supports the ability to:
+> * Define environment variables in the Config.Json file.
+> * Specify that a named environment variable should be extracted from the application
+> * hive registry.
 
-There are a bunch of reasons that the traditional ways of apps locating their dlls fail under MSIX.
-Although there are specific fixes for many of these issues, this fixup creates a sure-fire way to get it loaded.
+MSIX packages do not normally implement any environment variables outside of what is normally set on the system outside of the container.
+In essence, this fixup allows you to specify what would natively be a system or user environment variable as an application-specific environment variable.
+
+### Detecting the need for this fixup
+A static detection is possible by installing the native product and looking for new/updated environment variables.
+
 
 ## About Debugging this fixup
 The Release build of this fixup produces no output to the debug console port for performance reasons.
@@ -17,47 +22,42 @@ This `config` element contains a an array called "EnvVars".  Each Envar contains
 
 | PropertyName | Description |
 | ------------ | ----------- |
-| `forcePackageDllUse` | Boolean.  Set to true.|
-| `relativeDllPaths` | An array. See below. |
+| `name` | Regex pattern for the name(s) of the environment variable being defined.|
+| `value`| If the value is to be defined in the json, the value is entered here. Otherwise this may be specified as an empty string.|
+| `useregistry`| A boolean, when set to true it instructs that the environment variable should be extracted from the package registry for Environment variables, first checking HKCU and then HKLM. When specified, the intercept will first look in the HKCU registry, then HKLM, and finally the `value` field in the JSON entry. |
 
-Each element of the array has the following structure:
-
-| PropertyName | Description |
-| ------------ | ----------- |
-| `name`| This is the name as requested by the application. This will be the name of the file, without any path information and without the filename extension.|
-| `filepath`| The filepath relative to the root folder of the package. |
-| `achitecure`| An optional value to speficy the 'bitness' of the dll.  Supported values include `x86`, `x64`, and `anyCPU`. When not specified, no checking for archtecture of the process and dll will be made.|
-
-The `architecure` is optional and normally need not be specified for simplicity. It is included because sometimes an app contains both 32 and 64 bit exes for different purposes that need to load the correct version of the same named dll, typically stored in a different folder. When the package has this situation, it is then necessary to specify the architecture.  The fixup for LoadDll will match up the appropriate version of the dll based on the process it is running under.
 
 # JSON Examples
 To make things simpler to understand, here is a potential example configuration object that is not using the optional parameters:
 
 ```json
 "config": {
-    "forcePackageDllUse": "true",
-    "relativeDllPaths": [
+    "EnvVars": [
         {
-            "name" : "DllName_without_DotDll",
-            "filepath" : "RelativePathToFile_including_DllName_without_DotDll.dll"
+            "name" : "Var1Name",
+            "value" : "SpecifiedValue1",
+            "useregistry": "false"
         },
         {
-            "name" : "DllName2",
-            "filepath" : "VFS\ProgramFilesX84\Vendor\App\Subfolder\DllName2.dll"
+            "name" : "Var2Name",
+            "value" : "BackupValue2",
+            "useregistry": "true"
         }
         ,
         {
-            "name" : "DllNameX",
-            "filepath" : "VFS\ProgramFilesX84\Vendor\App\x64\DllNameX.dll",
-            "architecture" : "x64"
-        }
-        ,
-        {
-            "name" : "DllNameX",
-            "filepath" : "VFS\ProgramFilesX84\Vendor\App\32bit\DllNameX.dll",
-            "architecture" : "x86"
+            "name" : "MyName.\*",
+            "value" : "",
+            "useregistry": "true"
         }
     ]
 }
 ```
+
+Note that when using registry entries, the search looks at the registry as seen by the application inside the container.
+Thus a HKCU search should see entries in the Application hive overlayed over the local system.
+The HKLM search does the same, but on some systems (all at the time this was written) the HKLM\System entries in the Application hive might not be seen by the application.
+
+When useregistry is not specified, any attempt by the application to set an environment variable will return an ERROR_ACCESS_DENIED event without attempting to set the value.
+
+When useregistry is specified, regardless of where the value was located, it will be written to the HKCU\EnvironmentVariables key so that the write will succeed on systems that support it.
 

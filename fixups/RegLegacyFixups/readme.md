@@ -1,8 +1,19 @@
 # Registry Legacy Fixups
 When injected into a process, RegLegacyFixups supports the ability to:
-> * Modifies certain registry calls that do not work due to the MSIX container restrictions by modifying the call parameters to a form that would be allowed.
+> * Modify certain registry calls that do not work due to the MSIX container restrictions by modifying the call parameters to a form that would be allowed.
 
 There is no guarantee that these changes will be enough to allow the application to perform properly, but often the change can solve application compatibility issues by removing request incompatible parameters that the application did not need.
+The fixup is generally considered safe to apply with common rules as shown in the example below, even for apps where it is not needed.
+
+### Detecting the need for this fixup
+For the IT Pro without access to the application source code, it is not possible to detect the need for this fixup by static analysis; the need must be determined by testing.
+This is generally easy to determine by running the application in the container with a tracing tool, either TraceFixup or Process Monitor trace.
+The application needing this fixup will experience ACCESS_DENIED results on registry operations. Most common are denials when the application attempts to open a registry key.  
+Less often seen is ACCESS_DENIED when the applicatoin tries to delete an item from the conrainter registry.
+
+For the developer, you should address the code making such calls directly instead of fixing with this fixup.  
+In the first case, you should now open registry keys with either the exact permissionis that you need, or MAX_ALLOWED.
+In all cases you should check and gracefully handle any error conditions you get.
 
 ## About Debugging this fixup
 The Release build of this fixup produces no output to the debug console port for performance reasons.
@@ -10,17 +21,7 @@ Use of the Debug build will enable you to see the intercepts and what the fixup 
 That output is easily seen using the Sysinternals "DebugView" tool.
 
 ### Dependencies for RegLegacyFixups
-The following dlls are also required and should generally be placed in the same folder as RegLegacyFixups:
-
-| Build | File | Source |
-| ----- | ---- | ------ |
-| Release | msvcp140.dll | VC141 |
-| Release | vcruntime140.dll | VC141 |
-| Debug | msvcp140d.dll | VC141 |
-| Debug | vcruntime140d.dll | VC141 |
-| Either  | ucrtbased.dll | SDK 10.0.17763 |
-
-Copies of these dlls are available in this project.
+Specific dependencies for this fixup have been removed.
 
 
 # General Configuration

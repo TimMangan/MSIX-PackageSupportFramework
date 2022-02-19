@@ -297,35 +297,37 @@ void load_json()
         }
     }
 
-
-    char buffer[2048];
-    rapidjson::FileReadStream stream(file, buffer, std::size(buffer));
-    rapidjson::AutoUTFInputStream<char32_t, rapidjson::FileReadStream> autoStream(stream);
-
-    rapidjson::GenericReader<rapidjson::AutoUTF<char32_t>, rapidjson::UTF8<>> reader;
-    auto result = reader.Parse(autoStream, g_JsonHandler);
-    fclose(file);
-
-    if (result.IsError())
+    if (file)
     {
-        std::stringstream msgStream;
-        msgStream << "Error occurred when parsing config.json\n";
-        if (g_JsonHandler.error_message.empty())
-        {
-            msgStream << "Error: " << rapidjson::GetParseError_En(result.Code()) << "\n";
-        }
-        else
-        {
-            msgStream << "Error: " << g_JsonHandler.error_message << "\n";
-        }
-        msgStream << "File Offest: " << result.Offset();
-        throw std::runtime_error(msgStream.str());
-    }
-    else if (!g_JsonHandler.root)
-    {
-        throw std::runtime_error("config.json has no contents");
-    }
+        char buffer[2048];
+        rapidjson::FileReadStream stream(file, buffer, std::size(buffer));
+        rapidjson::AutoUTFInputStream<char32_t, rapidjson::FileReadStream> autoStream(stream);
 
+        rapidjson::GenericReader<rapidjson::AutoUTF<char32_t>, rapidjson::UTF8<>> reader;
+        auto result = reader.Parse(autoStream, g_JsonHandler);
+        fclose(file);
+
+
+        if (result.IsError())
+        {
+            std::stringstream msgStream;
+            msgStream << "Error occurred when parsing config.json\n";
+            if (g_JsonHandler.error_message.empty())
+            {
+                msgStream << "Error: " << rapidjson::GetParseError_En(result.Code()) << "\n";
+            }
+            else
+            {
+                msgStream << "Error: " << g_JsonHandler.error_message << "\n";
+            }
+            msgStream << "File Offest: " << result.Offset();
+            throw std::runtime_error(msgStream.str());
+        }
+        else if (!g_JsonHandler.root)
+        {
+            throw std::runtime_error("config.json has no contents");
+        }
+    }
     assert(g_JsonHandler.state_stack.empty());
 
     // Cache a pointer to the current executable's config, as we are most likely to reference that later

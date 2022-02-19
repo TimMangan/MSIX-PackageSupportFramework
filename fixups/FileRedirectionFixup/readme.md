@@ -9,6 +9,14 @@ When injected into a process, the File Redirection Fixup supports the ability to
 > > * In the case of a folder the redirected folder is created (including folder structures as needed) and used.
 > * The rule may optionally have additional configuration to modify the behavior, such as to control the redirected location or exempt a file from redirection.
 
+### Detecting the need for this fixup
+A static analysis of the files in the package is often all that is needed:
+> * If the package contains files in the VFS/AppData or VFS\LocalAppData folders that are required.
+> * If the package contains any files that might be updated.
+> * If the application wants to add new files to folders within the package.
+
+At runtime this can sometimes be detected as ACCESS_DENIED results to file operations, however File and Path not found may also indicate the need.
+
 ## About Debugging this fixup
 The Release build of this fixup produces no output to the debug console port for performance reasons.
 Use of the Debug build will enable you to see the intercepts and what the fixup did.
