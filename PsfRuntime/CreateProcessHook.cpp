@@ -32,7 +32,7 @@
 using namespace std::literals;
 
 
-
+extern wchar_t g_PsfRunTimeModulePath[];
 
 bool findStringIC(const std::string& strHaystack, const std::string& strNeedle)
 {
@@ -839,7 +839,17 @@ BOOL WINAPI CreateProcessFixup(
 #if _DEBUG
         Log(L"\tCreateProcessFixup: Use runtime %ls", wtargetDllName.c_str());
 #endif
-        static const auto pathToPsfRuntime = (PackageRootPath() / wtargetDllName.c_str()).string();
+        ///static const auto pathToPsfRuntime = (PackageRootPath() / wtargetDllName.c_str()).string();
+        static std::string pathToPsfRuntime;
+        if (g_PsfRunTimeModulePath[0] != 0x0)
+        {
+            std::filesystem::path RuntimePath = g_PsfRunTimeModulePath;
+            pathToPsfRuntime = RuntimePath.string();
+        }
+        else
+        {
+            pathToPsfRuntime = (PackageRootPath() / wtargetDllName.c_str()).string();
+        }
         const char * targetDllPath = NULL;
 #if _DEBUG
         Log("\tCreateProcessFixup: Inject %s into PID=%d", pathToPsfRuntime.c_str(), processInformation->dwProcessId);
@@ -857,11 +867,14 @@ BOOL WINAPI CreateProcessFixup(
             std::filesystem::path altPathToExeRuntime = exePath.data();
             static const auto altPathToPsfRuntime = (altPathToExeRuntime.parent_path() / pathToPsfRuntime.c_str()).string();
 #if _DEBUG
-            Log(L"\tCreateProcessFixup: alt target filename is now %ls", altPathToPsfRuntime.c_str());
+            Log(L"\tCreateProcessFixup: alt target filename is now %s", altPathToPsfRuntime.c_str());
 #endif
             if (std::filesystem::exists(altPathToPsfRuntime))
             {
                 targetDllPath = altPathToPsfRuntime.c_str();
+#if _DEBUG
+                Log(L"\tCreateProcessFixup: alt target exists.");
+#endif
             }
             else
             {
