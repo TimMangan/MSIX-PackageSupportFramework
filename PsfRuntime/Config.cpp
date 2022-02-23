@@ -607,6 +607,7 @@ static inline const psf::json_value* find_config(const psf::json_object* exeConf
     //  (1) They compare identical
     //  (2) One name is of the form AAAAABB.dll and the other is of the form AAAAA.dll for some architecture bitness
     //      'BB' (32 or 64)
+    //  (3) the config object is a path ending with a match
     auto targetDll = remove_suffix_if(remove_suffix_if(dll, L".dll"_isv), psf::warch_string);
 
     if (auto fixups = exeConfig->try_get("fixups"))
@@ -617,10 +618,22 @@ static inline const psf::json_value* find_config(const psf::json_object* exeConf
 
             auto dllStr = fixupConfigObj.get("dll").as_string().wstring();
             iwstring_view dllStrView(dllStr.data(), dllStr.length());
-            if (targetDll == remove_suffix_if(remove_suffix_if(dllStrView, L".dll"_isv), psf::warch_string))
+           if (targetDll == remove_suffix_if(remove_suffix_if(dllStrView, L".dll"_isv), psf::warch_string))
             {
                 // NOTE: config is optional
                 return fixupConfigObj.try_get("config");
+            }
+            else
+            {
+               // Look for case (3) where json lists a relative path to the config
+               size_t offsetLast = dllStrView.find_last_of(L'\\');
+               if (offsetLast != std::wstring::npos)
+               {
+                   if (targetDll == remove_suffix_if(remove_suffix_if(dllStrView.substr(offsetLast + 1), L".dll"_isv), psf::warch_string))
+                   {
+                       return fixupConfigObj.try_get("config");
+                   }
+               }
             }
         }
     }
