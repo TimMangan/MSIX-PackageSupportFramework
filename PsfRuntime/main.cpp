@@ -85,7 +85,7 @@ void load_fixups()
                             if (!fixup.module_handle)
                             {
 #if _DEBUG
-                                Log("\tfixup not found at cwd,checkroot of package." );
+                                Log("\tfixup not found as specified,checkroot of package." );
 #endif
                                 std::filesystem::path pathfromroot = PackageRootPath() / path.filename().c_str();
                                 fixup.module_handle = ::LoadLibraryW(pathfromroot.c_str());
