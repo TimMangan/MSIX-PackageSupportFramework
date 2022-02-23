@@ -39,6 +39,9 @@ void LogString(DWORD inst, const wchar_t* name, const wchar_t* value);
 
 void LogStringWA(DWORD inst, const wchar_t* name, const char* value);
 void LogStringWW(DWORD inst, const wchar_t* name, const wchar_t* value);
+void LogString(DWORD rememberedInst, DWORD inst, const wchar_t* name, const char* value);
+
+void LogString(DWORD rememberedInst, DWORD inst, const wchar_t* name, const wchar_t* value);
 
 void LogCountedStringW(const char* name, const wchar_t* value, std::size_t length);
 
