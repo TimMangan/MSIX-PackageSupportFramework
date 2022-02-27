@@ -1,7 +1,8 @@
 # A NOTE ABOUT THIS FORK
-While Microsoft created the initial open-source project for the Package Support Framework, they have neglected it for some time and seem disinterested in maintaining it,
-so this fork represents the lastest active branch.
-![PsfLogo](https://user-images.githubusercontent.com/19534997/151001683-88fa3752-4e35-4bf2-adf1-482057029175.png)
+While Microsoft created the initial open-source project for the Package Support Framework, they have neglected it for some time and seem disinterested in maintaining it, so this fork represents the lastest active branch.
+    ![PsfLogo](https://user-images.githubusercontent.com/19534997/151001486-af6b65de-9046-4b23-9112-4916a844e81c.png)
+=======
+
 
 # Package Support Framework
 This project provides tools, libraries, documentation and samples for creating runtime fixes (also called *fixups*) for compatibility issues that enable Windows desktop applications to be distributed and executed as MSIX packaged apps.  This fork is directly used by the PsfTooling and TMEditX applications.  Additionally, several other tool vendors are believed to look to this source as the basis their own private repositories.

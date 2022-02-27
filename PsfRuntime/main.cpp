@@ -50,6 +50,7 @@ struct loaded_fixup
 std::vector<loaded_fixup> loaded_fixups;
 
 bool usingPsf = false;
+wchar_t g_PsfRunTimeModulePath[MAX_PATH];
 
 void load_fixups()
 {
@@ -84,7 +85,7 @@ void load_fixups()
                             if (!fixup.module_handle)
                             {
 #if _DEBUG
-                                Log("\tfixup not found at cwd,checkroot of package." );
+                                Log("\tfixup not found as specified,checkroot of package." );
 #endif
                                 std::filesystem::path pathfromroot = PackageRootPath() / path.filename().c_str();
                                 fixup.module_handle = ::LoadLibraryW(pathfromroot.c_str());
@@ -281,7 +282,7 @@ void detach()
     }
 }
 
-BOOL APIENTRY DllMain(HMODULE, DWORD reason, LPVOID) noexcept try
+BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID) noexcept try
 {
     Log("PsfRuntime: In DllMain Pid=%d Tid=%d", GetCurrentProcessId(), GetCurrentThreadId());
     // Per detours documentation, immediately return true if running in a helper process
@@ -296,6 +297,11 @@ BOOL APIENTRY DllMain(HMODULE, DWORD reason, LPVOID) noexcept try
     case DLL_PROCESS_ATTACH:
         try
         {
+            // Record the location for ourselves in case we need to inject it into another new process (CreateProcessHook.cpp).
+            if (::GetModuleFileName(hModule, g_PsfRunTimeModulePath, MAX_PATH) == 0)
+            {
+                g_PsfRunTimeModulePath[0] = 0x0;
+            }
             attach();
         }
         catch (...)

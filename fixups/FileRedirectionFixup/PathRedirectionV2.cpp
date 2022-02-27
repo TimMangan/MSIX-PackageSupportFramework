@@ -24,7 +24,7 @@
 
 
 #if _DEBUG
-#define MOREDEBUG 1
+//#define MOREDEBUG 1
 #endif
 
 using namespace std::literals;
@@ -608,12 +608,12 @@ static path_redirect_info ShouldRedirectV2Impl(const CharT* path, redirect_flags
         for (auto& redirectSpec : g_redirectionSpecs)
         {
 #ifdef MOREDEBUG
-            //LogString(inst, L"\t\tFRFShouldRedirect: Check against: base", redirectSpec.base_path.c_str());
+            LogString(inst, L"\t\tFRFShouldRedirect: Check against: base", redirectSpec.base_path.c_str());
 #endif
             if (path_relative_to(pathVirtualizedV2.c_str(), redirectSpec.base_path))
             {
 #ifdef MOREDEBUG
-                //LogString(inst, L"\t\tFRFShouldRedirect: In ball park of base", redirectSpec.base_path.c_str());
+                LogString(inst, L"\t\tFRFShouldRedirect: In ball park of base", redirectSpec.base_path.c_str());
 #endif
                 auto relativePath = pathVirtualizedV2.c_str() + redirectSpec.base_path.native().length();
                 if (psf::is_path_separator(relativePath[0]))
@@ -628,7 +628,7 @@ static path_redirect_info ShouldRedirectV2Impl(const CharT* path, redirect_flags
                 // Otherwise exact match. Assume an implicit directory separator at the end (e.g. for matches to satisfy the
                 // first call to CreateDirectory
 #ifdef MOREDEBUG
-            //LogString(inst, L"\t\t\tFRFShouldRedirect: relativePath",relativePath);
+                LogString(inst, L"\t\t\tFRFShouldRedirect: relativePath",relativePath);
 #endif
                 if (std::regex_match(relativePath, redirectSpec.pattern))
                 {
@@ -655,8 +655,8 @@ static path_redirect_info ShouldRedirectV2Impl(const CharT* path, redirect_flags
                             destinationTargetBase = redirectSpec.redirect_targetbase;
 
 #ifdef MOREDEBUG
-                            //LogString(inst, L"\t\tFRFShouldRedirect isWide for", pathVirtualizedV2.c_str());
-                            //LogString(inst, L"\t\tFRFShouldRedirect isWide redir", destinationTargetBase.c_str());
+                            LogString(inst, L"\t\tFRFShouldRedirect isWide for", pathVirtualizedV2.c_str());
+                            LogString(inst, L"\t\tFRFShouldRedirect isWide redir", destinationTargetBase.c_str());
 #endif
                             result.redirect_path = RedirectedPathV2(vfspathV2, flag_set(flags, redirect_flags::ensure_directory_structure), destinationTargetBase, inst);
 
@@ -732,14 +732,14 @@ static path_redirect_info ShouldRedirectV2Impl(const CharT* path, redirect_flags
                 else
                 {
 #ifdef MOREDEBUG
-                    //LogString(inst, L"\t\tFRFShouldRedirectV2: no match on parse relativePath", relativePath);
+                    LogString(inst, L"\t\tFRFShouldRedirectV2: no match on parse relativePath", relativePath);
 #endif
                 }
             }
             else
             {
 #ifdef MOREDEBUG
-                //LogString(inst, L"\t\tFRFShouldRedirectV2: Not in ball park of base", redirectSpec.base_path.c_str());
+                LogString(inst, L"\t\tFRFShouldRedirectV2: Not in ball park of base", redirectSpec.base_path.c_str());
 #endif
             }
         }

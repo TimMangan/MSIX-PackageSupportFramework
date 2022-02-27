@@ -8,6 +8,10 @@
 #include "FunctionImplementations.h"
 #include "dll_location_spec.h"
 
+#if _DEBUG
+#define MOREDEBUG 1
+#endif
+
 extern bool                  g_dynf_forcepackagedlluse;
 extern std::vector<dll_location_spec> g_dynf_dllSpecs;
 
@@ -25,7 +29,7 @@ HMODULE __stdcall LoadLibraryFixup(_In_ const CharT* libFileName)
     if (guard)
     {
 #if _DEBUG
-        //Log(L"LoadLibraryFixup unguarded.");
+        Log(L"LoadLibraryFixup unguarded.");
 #endif
         // Check against known dlls in package.
         std::wstring libFileNameW = GetFilenameOnly(InterpretStringW(libFileName));
@@ -42,17 +46,57 @@ HMODULE __stdcall LoadLibraryFixup(_In_ const CharT* libFileName)
 #endif
                 try
                 {
-#if _DEBUG
-                    //LogString(L"LoadLibraryFixup testing against", spec.filename.data());
+#if MOREDEBUG
+                    LogString(L"LoadLibraryFixup testing against", spec.filename.data());
 #endif
                     if (spec.filename.compare(libFileNameW + L".dll") == 0 ||
                         spec.filename.compare(libFileNameW) == 0)
                     {
+                        bool useThis = true;
+                        BOOL procTest = false;
+                        switch (spec.architecture)
+                        {
+                        case x86:
+                            if (IsWow64Process(GetCurrentProcess(), &procTest))
+                            {
+                                if (procTest == FALSE)
+                                {
+                                    // 32 bit process on an x64 OS
+                                    useThis = true;
+                                }
+                            }
+                            else
+                            {
+                                // 32bit OS
+                                useThis = true;
+                            }
+                            break;
+                        case x64:
+                            if (IsWow64Process(GetCurrentProcess(), &procTest))
+                            {
+                                if (procTest == TRUE)
+                                {
+                                    // 64 bit process on an x64 OS
+                                    useThis = true;
+                                }
+                            }
+                            break;
+                        case AnyCPU:
+                            useThis = true;
+                            break;
+                        case NotSpecified:
+                        default:
+                            break;
+                        }
+
+                        if (useThis)
+                        {
 #if _DEBUG
-                        LogString(L"LoadLibraryFixup using", spec.full_filepath.c_str());
+                            LogString(L"LoadLibraryFixup using", spec.full_filepath.c_str());
 #endif
-                        result = LoadLibraryImpl(spec.full_filepath.c_str());
-                        return result;
+                            result = LoadLibraryImpl(spec.full_filepath.c_str());
+                            return result;
+                        }
                     }
                 }
                 catch (...)
@@ -60,6 +104,10 @@ HMODULE __stdcall LoadLibraryFixup(_In_ const CharT* libFileName)
                     Log(L"LoadLibraryFixup ERROR");
                 }
             }
+
+#if _DEBUG
+            Log(L"LoadLibraryFixup found no match.");
+#endif
         }
     }
     result = LoadLibraryImpl(libFileName);

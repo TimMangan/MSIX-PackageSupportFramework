@@ -297,35 +297,37 @@ void load_json()
         }
     }
 
-
-    char buffer[2048];
-    rapidjson::FileReadStream stream(file, buffer, std::size(buffer));
-    rapidjson::AutoUTFInputStream<char32_t, rapidjson::FileReadStream> autoStream(stream);
-
-    rapidjson::GenericReader<rapidjson::AutoUTF<char32_t>, rapidjson::UTF8<>> reader;
-    auto result = reader.Parse(autoStream, g_JsonHandler);
-    fclose(file);
-
-    if (result.IsError())
+    if (file)
     {
-        std::stringstream msgStream;
-        msgStream << "Error occurred when parsing config.json\n";
-        if (g_JsonHandler.error_message.empty())
-        {
-            msgStream << "Error: " << rapidjson::GetParseError_En(result.Code()) << "\n";
-        }
-        else
-        {
-            msgStream << "Error: " << g_JsonHandler.error_message << "\n";
-        }
-        msgStream << "File Offest: " << result.Offset();
-        throw std::runtime_error(msgStream.str());
-    }
-    else if (!g_JsonHandler.root)
-    {
-        throw std::runtime_error("config.json has no contents");
-    }
+        char buffer[2048];
+        rapidjson::FileReadStream stream(file, buffer, std::size(buffer));
+        rapidjson::AutoUTFInputStream<char32_t, rapidjson::FileReadStream> autoStream(stream);
 
+        rapidjson::GenericReader<rapidjson::AutoUTF<char32_t>, rapidjson::UTF8<>> reader;
+        auto result = reader.Parse(autoStream, g_JsonHandler);
+        fclose(file);
+
+
+        if (result.IsError())
+        {
+            std::stringstream msgStream;
+            msgStream << "Error occurred when parsing config.json\n";
+            if (g_JsonHandler.error_message.empty())
+            {
+                msgStream << "Error: " << rapidjson::GetParseError_En(result.Code()) << "\n";
+            }
+            else
+            {
+                msgStream << "Error: " << g_JsonHandler.error_message << "\n";
+            }
+            msgStream << "File Offest: " << result.Offset();
+            throw std::runtime_error(msgStream.str());
+        }
+        else if (!g_JsonHandler.root)
+        {
+            throw std::runtime_error("config.json has no contents");
+        }
+    }
     assert(g_JsonHandler.state_stack.empty());
 
     // Cache a pointer to the current executable's config, as we are most likely to reference that later
@@ -605,6 +607,7 @@ static inline const psf::json_value* find_config(const psf::json_object* exeConf
     //  (1) They compare identical
     //  (2) One name is of the form AAAAABB.dll and the other is of the form AAAAA.dll for some architecture bitness
     //      'BB' (32 or 64)
+    //  (3) the config object is a path ending with a match
     auto targetDll = remove_suffix_if(remove_suffix_if(dll, L".dll"_isv), psf::warch_string);
 
     if (auto fixups = exeConfig->try_get("fixups"))
@@ -615,10 +618,22 @@ static inline const psf::json_value* find_config(const psf::json_object* exeConf
 
             auto dllStr = fixupConfigObj.get("dll").as_string().wstring();
             iwstring_view dllStrView(dllStr.data(), dllStr.length());
-            if (targetDll == remove_suffix_if(remove_suffix_if(dllStrView, L".dll"_isv), psf::warch_string))
+           if (targetDll == remove_suffix_if(remove_suffix_if(dllStrView, L".dll"_isv), psf::warch_string))
             {
                 // NOTE: config is optional
                 return fixupConfigObj.try_get("config");
+            }
+            else
+            {
+               // Look for case (3) where json lists a relative path to the config
+               size_t offsetLast = dllStrView.find_last_of(L'\\');
+               if (offsetLast != std::wstring::npos)
+               {
+                   if (targetDll == remove_suffix_if(remove_suffix_if(dllStrView.substr(offsetLast + 1), L".dll"_isv), psf::warch_string))
+                   {
+                       return fixupConfigObj.try_get("config");
+                   }
+               }
             }
         }
     }

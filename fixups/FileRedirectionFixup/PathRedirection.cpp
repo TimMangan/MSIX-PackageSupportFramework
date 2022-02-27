@@ -23,7 +23,7 @@
 
 
 #if _DEBUG
-#define MOREDEBUG 1
+//#define MOREDEBUG 1
 #endif
 
 TRACELOGGING_DECLARE_PROVIDER(g_Log_ETW_ComponentProvider);
@@ -268,13 +268,22 @@ void InitializeConfiguration()
 {
     TraceLoggingRegister(g_Log_ETW_ComponentProvider);
     std::wstringstream traceDataStream;
+#if MOREDEBUG
+    Log("\t\tFRF CONFIG: Look for config");
+#endif            
 
     if (auto rootConfig = ::PSFQueryCurrentDllConfig())
     {
+#if MOREDEBUG
+        Log("\t\tFRF CONFIG: Has config");
+#endif            
         auto& rootObject = rootConfig->as_object();
         traceDataStream << " config:\n";
         if (auto pathsValue = rootObject.try_get("redirectedPaths"))
         {
+#if MOREDEBUG
+            Log("\t\tFRF CONFIG: Has redirectedPaths");
+#endif            
             traceDataStream << " redirectedPaths:\n";
             auto& redirectedPathsObject = pathsValue->as_object();
             auto initializeRedirection = [&traceDataStream](const std::filesystem::path & basePath, const psf::json_array & specs, bool traceOnly = false)
@@ -326,18 +335,27 @@ void InitializeConfiguration()
 
             if (auto packageRelativeValue = redirectedPathsObject.try_get("packageRelative"))
             {
+#if MOREDEBUG
+                Log("\t\tFRF CONFIG: Has packageRelative");
+#endif 
                 traceDataStream << " packageRelative:\n";
                 initializeRedirection(g_packageRootPath, packageRelativeValue->as_array());
             }
 
             if (auto packageDriveRelativeValue = redirectedPathsObject.try_get("packageDriveRelative"))
             {
+#if MOREDEBUG
+                Log("\t\tFRF CONFIG: Has packageDriveRelative");
+#endif 
                 traceDataStream << " packageDriveRelative:\n";
                 initializeRedirection(g_packageRootPath.root_name(), packageDriveRelativeValue->as_array());
             }
 
             if (auto knownFoldersValue = redirectedPathsObject.try_get("knownFolders"))
             {
+#if MOREDEBUG
+                Log("\t\tFRF CONFIG: Has knownFolders");
+#endif 
                 traceDataStream << " knownFolders:\n";
                 for (auto& knownFolderValue : knownFoldersValue->as_array())
                 {
