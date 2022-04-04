@@ -5,7 +5,7 @@ This functionality can be easily turned off/on inside of the `config.json` throu
 
 ```json
 {
-    "dll": "TraceFixup.dll",
+    "dll": "WaitForDebuggerFixup.dll",
     "config": {
         "enabled": false
     }
@@ -14,7 +14,7 @@ This functionality can be easily turned off/on inside of the `config.json` throu
 
 ```xml
 <fixup>
-    <dll>TraceFixup.dll</dll>
+    <dll>WaitForDebuggerFixup.dll</dll>
     <config>
         <enabled>false</enabled>
     </config>
