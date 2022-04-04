@@ -47,7 +47,10 @@ The following Windows API calls are supported for this fixup type.
 > * RegCreateKeyEx
 > * RegOpenKeyEx
 > * RegOpenKeyTransacted
-> * RegOpenCurrentUser
+> * RegDeleteKey
+> * RegDeleteKeyEx
+> * RegDeleteKeyTransacted
+> * RegDeleteValue
 
 ### Configuration for ModifyKeyAccess
 When the `type` is specified as `ModifyKeyAccess`, the `remediation` element is an array of remediations with a structure shown here:
