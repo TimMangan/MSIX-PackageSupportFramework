@@ -31,12 +31,12 @@ BOOL __stdcall CopyFileFixup(_In_ const CharT* existingFileName, _In_ const Char
             //       manually fail out ourselves if 'failIfExists' is true and the file exists in the package, but
             //       that's arguably worse since we currently aren't handling the case where an application tries to
             //       delete a file in its package path.
-            auto [redirectSource, sourceRedirectPath,shouldReadonlySource] = ShouldRedirectV2(existingFileName, redirect_flags::check_file_presence, CopyFileInstance);
-            auto [redirectDest, destRedirectPath,shouldReadonlyDest] = ShouldRedirectV2(newFileName, redirect_flags::ensure_directory_structure, CopyFileInstance);
-            if (redirectSource )
+            path_redirect_info  priSource = ShouldRedirectV2(existingFileName, redirect_flags::check_file_presence, CopyFileInstance);
+            path_redirect_info  priDest = ShouldRedirectV2(newFileName, redirect_flags::ensure_directory_structure, CopyFileInstance);
+            if (priSource.should_redirect )
             {
-                std::wstring rldSourceRedirectPath = TurnPathIntoRootLocalDevice(widen(sourceRedirectPath).c_str());
-                std::wstring rldRedirectDest = TurnPathIntoRootLocalDevice(redirectDest ? destRedirectPath.c_str() : widen_argument(newFileName).c_str());
+                std::wstring rldSourceRedirectPath = TurnPathIntoRootLocalDevice(widen(priSource.redirect_path).c_str());
+                std::wstring rldRedirectDest = TurnPathIntoRootLocalDevice(priDest.should_redirect ? priDest.redirect_path.c_str() : widen_argument(newFileName).c_str());
                 return impl::CopyFile(
                     rldSourceRedirectPath.c_str(),
                     rldRedirectDest.c_str(),
@@ -48,7 +48,7 @@ BOOL __stdcall CopyFileFixup(_In_ const CharT* existingFileName, _In_ const Char
                 auto path = widen(existingFileName);
                 std::filesystem::path vfspath = GetPackageVFSPath(path.c_str());
                 std::wstring rldExistingFileName = TurnPathIntoRootLocalDevice(vfspath.has_filename() ? vfspath.c_str() : path.c_str());
-                std::wstring rldNewDirectory = TurnPathIntoRootLocalDevice(redirectDest ? destRedirectPath.c_str() : widen_argument(newFileName).c_str());
+                std::wstring rldNewDirectory = TurnPathIntoRootLocalDevice(priDest.should_redirect ? priDest.redirect_path.c_str() : widen_argument(newFileName).c_str());
                 return impl::CopyFile(
                     rldExistingFileName.c_str(),
                     rldNewDirectory.c_str(),
@@ -99,12 +99,12 @@ BOOL __stdcall CopyFileExFixup(
 #endif
 
             // See note in CopyFileFixup for commentary on copy-on-read policy
-            auto [redirectSource, sourceRedirectPath,shouldReadonlySource] = ShouldRedirectV2(existingFileName, redirect_flags::check_file_presence, CopyFileExInstance);
-            auto [redirectDest, destRedirectPath,shouldReadonlyDest] = ShouldRedirectV2(newFileName, redirect_flags::ensure_directory_structure, CopyFileExInstance);
-            if (redirectSource)
+            path_redirect_info  priSource = ShouldRedirectV2(existingFileName, redirect_flags::check_file_presence, CopyFileExInstance);
+            path_redirect_info  priDest = ShouldRedirectV2(newFileName, redirect_flags::ensure_directory_structure, CopyFileExInstance);
+            if (priSource.should_redirect)
             {
-                std::wstring rldSourceRedirectPath = TurnPathIntoRootLocalDevice(widen(sourceRedirectPath).c_str());
-                std::wstring rldRedirectDest = TurnPathIntoRootLocalDevice(redirectDest ? destRedirectPath.c_str() : widen_argument(newFileName).c_str());
+                std::wstring rldSourceRedirectPath = TurnPathIntoRootLocalDevice(widen(priSource.redirect_path).c_str());
+                std::wstring rldRedirectDest = TurnPathIntoRootLocalDevice(priDest.should_redirect ? priDest.redirect_path.c_str() : widen_argument(newFileName).c_str());
                 return impl::CopyFileEx(
                     rldSourceRedirectPath.c_str(),
                     rldRedirectDest.c_str(),
@@ -119,7 +119,7 @@ BOOL __stdcall CopyFileExFixup(
                 auto path = widen(existingFileName);
                 std::filesystem::path vfspath = GetPackageVFSPath(path.c_str());
                 std::wstring rldExistingFileName = TurnPathIntoRootLocalDevice(vfspath.has_filename() ? vfspath.c_str() : path.c_str());
-                std::wstring rldNewDirectory = TurnPathIntoRootLocalDevice(redirectDest ? destRedirectPath.c_str() : widen_argument(newFileName).c_str());
+                std::wstring rldNewDirectory = TurnPathIntoRootLocalDevice(priDest.should_redirect ? priDest.redirect_path.c_str() : widen_argument(newFileName).c_str());
                 return impl::CopyFileEx(rldExistingFileName.c_str(), rldNewDirectory.c_str(),
                     progressRoutine,
                     data,
@@ -166,13 +166,13 @@ HRESULT __stdcall CopyFile2Fixup(
 #endif
 
             // See note in CopyFileFixup for commentary on copy-on-read policy
-            auto [redirectSource, sourceRedirectPath, shouldReadonlySource] = ShouldRedirectV2(existingFileName, redirect_flags::check_file_presence, CopyFile2Instance);
-            auto [redirectDest, destRedirectPath, shouldReadonlyDest] = ShouldRedirectV2(newFileName, redirect_flags::ensure_directory_structure, CopyFile2Instance);
-            if (redirectSource)
+            path_redirect_info  priSource = ShouldRedirectV2(existingFileName, redirect_flags::check_file_presence, CopyFile2Instance);
+            path_redirect_info  priDest = ShouldRedirectV2(newFileName, redirect_flags::ensure_directory_structure, CopyFile2Instance);
+            if (priSource.should_redirect)
             {
                 return impl::CopyFile2(
-                    sourceRedirectPath.c_str(),
-                    redirectDest ? destRedirectPath.c_str() : newFileName,
+                    priSource.redirect_path.c_str(),
+                    priDest.should_redirect ? priDest.redirect_path.c_str() : newFileName,
                     extendedParameters);
             }
 
@@ -183,7 +183,7 @@ HRESULT __stdcall CopyFile2Fixup(
                 std::filesystem::path vfspath = GetPackageVFSPath(path.c_str());
                 return impl::CopyFile2(
                     vfspath.has_filename() ? vfspath.c_str() : existingFileName,
-                    redirectDest ? destRedirectPath.c_str() : newFileName,
+                    priDest.should_redirect ? priDest.redirect_path.c_str() : newFileName,
                     extendedParameters);
             }
         }

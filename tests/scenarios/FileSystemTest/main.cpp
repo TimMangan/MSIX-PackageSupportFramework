@@ -65,6 +65,7 @@ int RemoveDirectoryTests();
 int EnumerateDirectoriesTests();
 int EnumerateDirectoriesTests2();
 int PrivateProfileTests();
+int SearchPathTests();
 
 int run()
 {
@@ -78,44 +79,47 @@ int run()
     testResult = CreateNewFileTests();
     result = result ? result : testResult;
 
-    //testResult = EnumerateFilesTests();
-    //result = result ? result : testResult;
+    testResult = EnumerateFilesTests();
+    result = result ? result : testResult;
 
-    //testResult = CopyFileTests();
-    //result = result ? result : testResult;
+    testResult = CopyFileTests();
+    result = result ? result : testResult;
 
-    //testResult = DeleteFileTests();
-    //result = result ? result : testResult;
+    testResult = DeleteFileTests();
+    result = result ? result : testResult;
 
-    //testResult = CreateHardLinkTests();
-    //result = result ? result : testResult;
+    testResult = CreateHardLinkTests();
+    result = result ? result : testResult;
 
-    //testResult = CreateSymbolicLinkTests();
-    //result = result ? result : testResult;
+    testResult = CreateSymbolicLinkTests();
+    result = result ? result : testResult;
 
-    //testResult = FileAttributesTests();
-    //result = result ? result : testResult;
+    testResult = FileAttributesTests();
+    result = result ? result : testResult;
 
-    //testResult = MoveFileTests();
-    //result = result ? result : testResult;
+    testResult = MoveFileTests();
+    result = result ? result : testResult;
 
-    //testResult = ReplaceFileTests();
-    //result = result ? result : testResult;
+    testResult = ReplaceFileTests();
+    result = result ? result : testResult;
 
-    //testResult = CreateDirectoryTests();
-    //result = result ? result : testResult;
+    testResult = CreateDirectoryTests();
+    result = result ? result : testResult;
 
-    //testResult = RemoveDirectoryTests();
-    //result = result ? result : testResult;
+    testResult = RemoveDirectoryTests();
+    result = result ? result : testResult;
 
-    //testResult = EnumerateDirectoriesTests();
-    //result = result ? result : testResult;
+    testResult = EnumerateDirectoriesTests();
+    result = result ? result : testResult;
 
-    //testResult = EnumerateDirectoriesTests2();
-    //result = result ? result : testResult;
+    testResult = EnumerateDirectoriesTests2();
+    result = result ? result : testResult;
 
-    //testResult = PrivateProfileTests();
-    //result = result ? result : testResult;
+    testResult = PrivateProfileTests();
+    result = result ? result : testResult;
+
+    testResult = SearchPathTests();
+    result = result ? result : testResult;
 
     return result;
 }
@@ -130,9 +134,9 @@ int wmain(int argc, const wchar_t** argv)
     {
         // The number of file mappings is different in 32-bit vs 64-bit
 #if !_M_IX86
-        test_initialize("File System Tests", 89);
+        test_initialize("File System Tests", 91);
 #else
-        test_initialize("File System Tests", 80);
+        test_initialize("File System Tests", 82);
 #endif
 
         InitializeFolderMappings();

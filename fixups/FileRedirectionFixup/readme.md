@@ -239,6 +239,7 @@ Here is the config section of the File Redirection Fixup for xml.
 
 
 In the example above, the configuration is directing the File Redirection Fixup to redirect accesses to files with the `.log` extension under the `logs` folder that is relative to the package installation root. E.g. this would redirect an attempt to create the file `%ProgramFiles%\WindowsApps\Contoso.App_1.0.0.0_x64__wgeqdkkx372wm\logs\startup.log`. Similarly, the second configuration specifies that attempts to access _any_ file under the directory `temp` relative to the package root drive (e.g. `C:\temp\`) would get redirected. Moving on, the next configuration directs the fixup to redirect access to any file under the path created by combining the expansion of `FOLDERID_ProgramFilesX64` with `Contoso\config`. E.g. this would redirect an attempt to create the file `%ProgramFiles%\Contoso\config\foo.txt`. Finally, the last configuration is identical to the above, only it specifies the GUID of `FOLDERID_Documents`. E.g. this would redirect an attempt to create the file `%USERPROFILE%\Documents\MyApplication\settings.json`.
+For a list of other well known FolderID GUIDs that you might use when this fixup doesn't support one by name, see https://docs.microsoft.com/en-us/dotnet/desktop/winforms/controls/known-folder-guids-for-file-dialog-custom-places?view=netframeworkdesktop-4.8 .
 
 In reality, most applications will only require redirecting access from either (1) the relative package path, or (2) a named known folder.
 

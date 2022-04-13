@@ -934,7 +934,7 @@ static path_redirect_info ShouldRedirectImpl(const CharT* path, redirect_flags f
         return result;
     }
 #if _DEBUG
-    LogString(inst, L"\tFRFShouldRedirect: called for path", widen(path).c_str());
+    LogString(inst, L" \tFRFShouldRedirect: called for path", widen(path).c_str());
 #endif
     try
     {
@@ -955,7 +955,7 @@ static path_redirect_info ShouldRedirectImpl(const CharT* path, redirect_flags f
     if (normalizedPath.path_type == psf::dos_path_type::local_device)
     {
 #if _DEBUG
-        LogString(L"\tFRFShouldRedirect: Path is of type local device so FRF should ignore.", widen(path).c_str());
+        LogString(L" \tFRFShouldRedirect: Path is of type local device so FRF should ignore.", widen(path).c_str());
 #endif
         return result;
     }
@@ -1007,7 +1007,7 @@ static path_redirect_info ShouldRedirectImpl(const CharT* path, redirect_flags f
 
         // For now, let's return this path and let the caller deal with it.
 #if _DEBUG
-        LogString(inst, L"\tFRFShouldRedirect: Prevent redundant redirection.", widen(path).c_str());
+        LogString(inst, L" \tFRFShouldRedirect: Prevent redundant redirection.", widen(path).c_str());
 #endif
         return result;
     }
@@ -1161,7 +1161,7 @@ static path_redirect_info ShouldRedirectImpl(const CharT* path, redirect_flags f
     if (!result.should_redirect)
     {
 #if _DEBUG
-        LogString(inst, L"\tFRFShouldRedirect: no redirect rule for path", widen(path).c_str());
+        LogString(inst, L" \tFRFShouldRedirect: no redirect rule for path", widen(path).c_str());
 #endif
         return result;
     }
@@ -1184,7 +1184,7 @@ static path_redirect_info ShouldRedirectImpl(const CharT* path, redirect_flags f
             result.redirect_path.clear();
 
 #if _DEBUG
-            LogString(inst, L"\tFRFShouldRedirect: skipped (redirected not present check failed) for path", widen(path).c_str());
+            LogString(inst, L" \tFRFShouldRedirect: skipped (redirected not present check failed) for path", widen(path).c_str());
 #endif
             return result;
         }
@@ -1316,7 +1316,7 @@ static path_redirect_info ShouldRedirectImpl(const CharT* path, redirect_flags f
         }
     }
 #if _DEBUG
-    LogString(inst, L"\tFRFShouldRedirect: returns with result", result.redirect_path.c_str());
+    LogString(inst, L" \tFRFShouldRedirect: returns with result", result.redirect_path.c_str());
 #endif
     }
     catch (...)

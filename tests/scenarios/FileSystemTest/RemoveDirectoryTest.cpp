@@ -51,7 +51,9 @@ int RemoveDirectoryTests()
     {
         clean_redirection_path();
         trace_message(L"Creating a directory that we can then validate that we can remove\n");
-        if (!::CreateDirectoryW(L"TèƨƭÐïřèçƭôř¥", nullptr))
+        ::CreateDirectoryW(L"TèƨƭÐïřèçƭôř¥", nullptr);
+        if (!(GetLastError() == ERROR_ALREADY_EXISTS) &&
+            !(GetLastError() == ERROR_SUCCESS))
         {
             return trace_last_error(L"Failed to create test directory");
         }
@@ -68,7 +70,9 @@ int RemoveDirectoryTests()
     {
         clean_redirection_path();
         trace_message(L"Creating another directory, but this time it won't be empty\n");
-        if (!::CreateDirectoryW(L"TèƨƭÐïřèçƭôř¥", nullptr))
+        ::CreateDirectoryW(L"TèƨƭÐïřèçƭôř¥", nullptr);
+        if (!(GetLastError() == ERROR_ALREADY_EXISTS) &&
+            !(GetLastError() == ERROR_SUCCESS))
         {
             return trace_last_error(L"Failed to create test directory");
         }
@@ -101,7 +105,7 @@ int RemoveDirectoryTests()
     test_begin("Remove Package Directory Test");
     clean_redirection_path();
     Log("<<<<<Remove Package Directory Test HERE");
-    testResult = DoRemoveDirectoryTest(L"Tèƨƭ", true);
+    testResult = DoRemoveDirectoryTest(L"Tèƨƭ", false);
     Log("Remove Package Directory Test >>>>>");
     result = result ? result : testResult;
     test_end(testResult);

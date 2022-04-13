@@ -27,17 +27,17 @@ BOOL __stdcall WritePrivateProfileStructFixup(
                 LogString(WritePrivateProfileStructInstance,L"WritePrivateProfileStructFixup for fileName", fileName);
                 if (!IsUnderUserAppDataLocalPackages(fileName))
                 {
-                    auto [shouldRedirect, redirectPath, shouldReadonly] = ShouldRedirectV2(fileName, redirect_flags::copy_on_read, WritePrivateProfileStructInstance);
-                    if (shouldRedirect)
+                    path_redirect_info  pri = ShouldRedirectV2(fileName, redirect_flags::copy_on_read, WritePrivateProfileStructInstance);
+                    if (pri.should_redirect)
                     {
                         if constexpr (psf::is_ansi<CharT>)
                         {
                             return impl::WritePrivateProfileStructW(widen_argument(appName).c_str(), widen_argument(keyName).c_str(),
-                                structData, uSizeStruct, redirectPath.c_str());
+                                structData, uSizeStruct, pri.redirect_path.c_str());
                         }
                         else
                         {
-                            return impl::WritePrivateProfileStructW(appName, keyName, structData, uSizeStruct, redirectPath.c_str());
+                            return impl::WritePrivateProfileStructW(appName, keyName, structData, uSizeStruct, pri.redirect_path.c_str());
                         }
                     }
                 }

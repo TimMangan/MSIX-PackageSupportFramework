@@ -2,6 +2,7 @@
 // Copyright (C) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 //-------------------------------------------------------------------------------------------------------
+//#define MOREDEBUG 1
 
 #include "FunctionImplementations.h"
 #include "PathRedirection.h"
@@ -29,6 +30,7 @@ BOOL __stdcall ReplaceFileFixup(
             {
                 LogString(ReplaceFileInstance, L"ReplaceFileFixup with backup", backupFileName);
             }
+            Log(L"[%d] ReplaceFileFixup replaceFlags 0x%x", ReplaceFileInstance, replaceFlags);
 #endif
 
             // NOTE: ReplaceFile will delete the "replacement file" (the file we're copying from), so therefore we need
@@ -36,21 +38,41 @@ BOOL __stdcall ReplaceFileFixup(
             //       immediately get deleted. We could improve this in the future if we wanted, but that would
             //       effectively require that we re-write ReplaceFile, which we opt not to do right now. Also note that
             //       this implies that we have the same file deletion limitation that we have for DeleteFile, etc.
-            auto [redirectTarget, targetRedirectPath, shouldReadonlyTarget] = ShouldRedirectV2(replacedFileName, redirect_flags::copy_on_read, ReplaceFileInstance);
-            auto [redirectSource, sourceRedirectPath, shouldReadonlySource] = ShouldRedirectV2(replacementFileName, redirect_flags::ensure_directory_structure, ReplaceFileInstance);
-            auto [redirectBackup, backupRedirectPath, shouldReadonlyDest] = ShouldRedirectV2(backupFileName, redirect_flags::ensure_directory_structure, ReplaceFileInstance);
-            if (redirectTarget || redirectSource || redirectBackup)
+            path_redirect_info  priTarget = ShouldRedirectV2(replacedFileName, redirect_flags::check_file_presence | redirect_flags::copy_on_read, ReplaceFileInstance);
+            //////path_redirect_info  priSource = ShouldRedirectV2(replacementFileName, redirect_flags::ensure_directory_structure, ReplaceFileInstance);
+            path_redirect_info  priSource = ShouldRedirectV2(replacementFileName, redirect_flags::check_file_presence | redirect_flags::copy_on_read | redirect_flags::ensure_directory_structure, ReplaceFileInstance);
+            path_redirect_info  priBackup = ShouldRedirectV2(backupFileName, redirect_flags::ensure_directory_structure, ReplaceFileInstance);
+#if MOREDEBUG
+            if (priTarget.should_redirect)
+                LogString(ReplaceFileInstance, L"ReplaceFileFixup RedirTarget ", priTarget.redirect_path.c_str());
+            if (priSource.should_redirect)
+                LogString(ReplaceFileInstance, L"ReplaceFileFixup RedirSource ", priSource.redirect_path.c_str());
+            if (priBackup.should_redirect)
+                LogString(ReplaceFileInstance, L"ReplaceFileFixup RedirBackup ", priBackup.redirect_path.c_str());
+            Log(L"[%d] Exists: %d %d %d", ReplaceFileInstance, priTarget.doesRedirectedExist, priSource.doesRedirectedExist, priBackup.doesRedirectedExist);
+#endif
+            if ( priTarget.should_redirect || priSource.should_redirect || priBackup.should_redirect)
             {
-                std::wstring rldReplacedFileName = TurnPathIntoRootLocalDevice(redirectTarget ? targetRedirectPath.c_str() : widen_argument(replacedFileName).c_str());
-                std::wstring rldReplacementFileName = TurnPathIntoRootLocalDevice(redirectSource ? sourceRedirectPath.c_str() : widen_argument(replacementFileName).c_str());
+                std::wstring rldReplacedFileName = TurnPathIntoRootLocalDevice(priTarget.should_redirect ? priTarget.redirect_path.c_str() : widen_argument(replacedFileName).c_str());
+                std::wstring rldReplacementFileName = TurnPathIntoRootLocalDevice(priSource.should_redirect ? priSource.redirect_path.c_str() : widen_argument(replacementFileName).c_str());
                 if (backupFileName != nullptr)
                 {
-                    std::wstring rldBackupFileName = TurnPathIntoRootLocalDevice(redirectBackup ? backupRedirectPath.c_str() : widen_argument(backupFileName).c_str());
-                    return impl::ReplaceFile(rldReplacedFileName.c_str(), rldReplacementFileName.c_str(), rldBackupFileName.c_str(), replaceFlags, exclude, reserved);
+                    std::wstring rldBackupFileName = TurnPathIntoRootLocalDevice(priBackup.should_redirect ? priBackup.redirect_path.c_str() : widen_argument(backupFileName).c_str());
+                    BOOL b = impl::ReplaceFile(rldReplacedFileName.c_str(), rldReplacementFileName.c_str(), rldBackupFileName.c_str(), replaceFlags, exclude, reserved);
+                    if (b == 0)
+                    {
+                        Log(L"[%d] ReplaceFileFixup GetLastError 0x%x", ReplaceFileInstance, GetLastError());
+                    }
+                    return b;
                 }
                 else
                 {
-                    return impl::ReplaceFile(rldReplacedFileName.c_str(), rldReplacementFileName.c_str(), nullptr, replaceFlags, exclude, reserved);
+                    BOOL b = impl::ReplaceFile(rldReplacedFileName.c_str(), rldReplacementFileName.c_str(), nullptr, replaceFlags, exclude, reserved);
+                    if (b == 0)
+                    {
+                        Log(L"[%d] ReplaceFileFixup GetLastError 0x%x", ReplaceFileInstance, GetLastError());
+                    }
+                    return b;
                 }
             }
         }

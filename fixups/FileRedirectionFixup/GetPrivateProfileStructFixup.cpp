@@ -29,17 +29,17 @@ BOOL __stdcall GetPrivateProfileStructFixup(
 #endif
                 if (!IsUnderUserAppDataLocalPackages(fileName))
                 {
-                    auto [shouldRedirect, redirectPath, shouldReadonly] = ShouldRedirectV2(fileName, redirect_flags::copy_on_read, GetPrivateProfileStructInstance);
-                    if (shouldRedirect)
+                    path_redirect_info  pri = ShouldRedirectV2(fileName, redirect_flags::copy_on_read, GetPrivateProfileStructInstance);
+                    if (pri.should_redirect)
                     {
                         if constexpr (psf::is_ansi<CharT>)
                         {
                             return impl::GetPrivateProfileStructW(widen_argument(sectionName).c_str(), widen_argument(key).c_str(),
-                                structArea, uSizeStruct, redirectPath.c_str());
+                                structArea, uSizeStruct, pri.redirect_path.c_str());
                         }
                         else
                         {
-                            return impl::GetPrivateProfileStructW(sectionName, key, structArea, uSizeStruct, redirectPath.c_str());
+                            return impl::GetPrivateProfileStructW(sectionName, key, structArea, uSizeStruct, pri.redirect_path.c_str());
                         }
                     }
                 }

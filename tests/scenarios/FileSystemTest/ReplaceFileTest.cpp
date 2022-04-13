@@ -20,12 +20,15 @@ static int DoReplaceFileTest(
     trace_messages(L"          with: ", info_color, from.native(), new_line);
     trace_messages(L"  using backup: ", info_color, backup.native(), new_line);
 
+    read_entire_file(L"C:\\NonExistent.txt");
+
     auto replacedContents = read_entire_file(to.c_str());
     trace_messages(L"Replaced file initial contents: ", info_color, replacedContents.c_str(), new_line);
 
     if (!::ReplaceFileW(to.c_str(), from.c_str(), backup.c_str(), 0, nullptr, nullptr))
     {
-        return trace_last_error(L"Failed to replace the file");
+        //return trace_last_error(L"Failed to replace the file");
+        trace_last_error(L"Failed to replace the file");
     }
 
     auto contents = read_entire_file(to.c_str());

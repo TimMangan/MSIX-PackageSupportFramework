@@ -520,6 +520,8 @@ private:
 		//Add ending quote for the script inside a string literal.
 		commandString.append(L"\"");
 
+		LogString(L"MakeCommandString: final string", commandString.c_str());
+
 		return commandString;
 	}
 

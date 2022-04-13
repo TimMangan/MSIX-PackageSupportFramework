@@ -54,6 +54,9 @@
     <ClCompile Include="PrivateProfileTest.cpp">
       <Filter>src</Filter>
     </ClCompile>
+    <ClCompile Include="SearchPathTest.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="readme.md" />

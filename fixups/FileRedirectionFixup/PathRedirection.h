@@ -30,6 +30,11 @@ struct path_redirect_info
     bool should_redirect = false;
     std::filesystem::path redirect_path;
     bool shouldReadonly = false;
+
+    // These two values are set only if the Should code sees that the requested/redirected file exists.
+    // This might only happen if check_presnece option is included in the call.
+    bool doesRequestedExist = false;
+    bool doesRedirectedExist = false;
 };
 
 
@@ -85,6 +90,16 @@ struct normalized_pathV2
     // A shortened full_path if the path explicitly uses a drive symbolic link at the root, otherwise the full_path or a path with working directory added; always wide.
     std::wstring drive_absolute_path;
 };
+
+inline normalized_pathV2 ClonePathV2(normalized_pathV2 input)
+{
+    normalized_pathV2 output;
+    output.original_path = input.original_path;
+    output.drive_absolute_path = input.drive_absolute_path;
+    output.full_path = input.full_path;
+    output.path_type = input.path_type;
+    return output;
+}
 
 path_redirect_info ShouldRedirect(const char* path, redirect_flags flags, DWORD inst = 0);
 path_redirect_info ShouldRedirect(const wchar_t* path, redirect_flags flags, DWORD inst = 0);

@@ -58,6 +58,7 @@ HANDLE __stdcall CreateFileFixup(
     DWORD CreateFileInstance = ++g_FileIntceptInstance;
 #if _DEBUG
     LogString(CreateFileInstance, L"CreateFileFixup for ", fileName);
+    Log(L"[%d] DesiredAccess 0x%x  ShareMode 0x%x", CreateFileInstance, desiredAccess, shareMode);
 #endif
 
     std::string FileNameString;
@@ -104,8 +105,8 @@ HANDLE __stdcall CreateFileFixup(
             {
                 // FUTURE: If 'creationDisposition' is something like 'CREATE_ALWAYS', we could get away with something
                 //         cheaper than copy-on-read, but we'd also need to be mindful of ensuring the correct error if so
-                auto [shouldRedirect, redirectPath, shouldReadonly] = ShouldRedirectV2(FixedFileName, redirect_flags::copy_on_read, CreateFileInstance);
-                if (shouldRedirect)
+                path_redirect_info  pri = ShouldRedirectV2(FixedFileName, redirect_flags::copy_on_read, CreateFileInstance);
+                if (pri.should_redirect)
                 {
                     if (IsUnderUserAppDataLocal(FixedFileName))
                     {
@@ -118,13 +119,13 @@ HANDLE __stdcall CreateFileFixup(
                         {
                             if (impl::PathExists(PackageVersion.c_str()))
                             {
-                                if (!impl::PathExists(redirectPath.c_str()))
+                                if (!impl::PathExists(pri.redirect_path.c_str()))
                                 {
                                     // Need to copy now
 #if _DEBUG
-                                    LogString(CreateFileInstance, L"\tFRF CreateFile COA from ADL to", redirectPath.c_str());
+                                    LogString(CreateFileInstance, L"\tFRF CreateFile COA from ADL to", pri.redirect_path.c_str());
 #endif
-                                    impl::CopyFileW(PackageVersion.c_str(), redirectPath.c_str(), true);
+                                    impl::CopyFileW(PackageVersion.c_str(), pri.redirect_path.c_str(), true);
                                 }
                             }
                         }
@@ -140,28 +141,28 @@ HANDLE __stdcall CreateFileFixup(
                         {
                             if (impl::PathExists(PackageVersion.c_str()))
                             {
-                                if (!impl::PathExists(redirectPath.c_str()))
+                                if (!impl::PathExists(pri.redirect_path.c_str()))
                                 {
                                     // Need to copy now
 #if _DEBUG
-                                    LogString(CreateFileInstance, L"\tFRF CreateFile COA from ADR to", redirectPath.c_str());
+                                    LogString(CreateFileInstance, L"\tFRF CreateFile COA from ADR to", pri.redirect_path.c_str());
 #endif
-                                    impl::CopyFileW(PackageVersion.c_str(), redirectPath.c_str(), true);
+                                    impl::CopyFileW(PackageVersion.c_str(), pri.redirect_path.c_str(), true);
                                 }
                             }
                         }
                     }
 
                     DWORD redirectedAccess = desiredAccess;
-                    if (shouldReadonly)
+                    if (pri.shouldReadonly)
                     {
                         redirectedAccess = ConvertToReadOnlyAccess(desiredAccess);
                     }
-                    HANDLE hRet = impl::CreateFile(redirectPath.c_str(), redirectedAccess, shareMode, securityAttributes, creationDisposition, flagsAndAttributes, templateFile);
+                    HANDLE hRet = impl::CreateFile(pri.redirect_path.c_str(), redirectedAccess, shareMode, securityAttributes, creationDisposition, flagsAndAttributes, templateFile);
                     if (hRet == INVALID_HANDLE_VALUE)
                     {
 #if _DEBUG
-                        Log(L"[%d]CreateFile redirected uses %ls. FAILURE.", CreateFileInstance, redirectPath.c_str());
+                        Log(L"[%d]CreateFile redirected uses %ls. FAILURE.", CreateFileInstance, pri.redirect_path.c_str());
 #endif
                         // Fall back to original request, but keep this error if needed (might be file not found instead of path not found/access denied).
                         DWORD ecode = GetLastError();
@@ -194,7 +195,7 @@ HANDLE __stdcall CreateFileFixup(
                     else
                     {
 #if _DEBUG
-                        Log(L"[%d]CreateFile redirected uses %ls. SUCCESS.", CreateFileInstance, redirectPath.c_str());
+                        Log(L"[%d]CreateFile redirected uses %ls. SUCCESS.", CreateFileInstance, pri.redirect_path.c_str());
 #endif
                         return hRet;
                     }
@@ -253,6 +254,7 @@ HANDLE __stdcall CreateFile2Fixup(
     DWORD CreateFile2Instance = ++g_FileIntceptInstance;
 #if _DEBUG
     LogString(CreateFile2Instance, L"CreateFile2Fixup for ", fileName);
+    Log(L"[%d] DesiredAccess 0x%x  ShareMode 0x%x", CreateFile2Instance, desiredAccess, shareMode);
 #endif
     std::wstring WFileNameString = fileName;
     try
@@ -278,8 +280,8 @@ HANDLE __stdcall CreateFile2Fixup(
             {
                 // FUTURE: See comment in CreateFileFixup about using 'creationDisposition' to choose a potentially better
             //         redirect flags value
-                auto [shouldRedirect, redirectPath, shouldReadonly] = ShouldRedirectV2(WFileNameString.c_str(), redirect_flags::copy_on_read, CreateFile2Instance);
-                if (shouldRedirect)
+                path_redirect_info  pri = ShouldRedirectV2(WFileNameString.c_str(), redirect_flags::copy_on_read, CreateFile2Instance);
+                if (pri.should_redirect)
                 {
                     if (IsUnderUserAppDataLocal(WFileNameString.c_str()))
                     {
@@ -292,13 +294,13 @@ HANDLE __stdcall CreateFile2Fixup(
                         {
                             if (impl::PathExists(PackageVersion.c_str()))
                             {
-                                if (!impl::PathExists(redirectPath.c_str()))
+                                if (!impl::PathExists(pri.redirect_path.c_str()))
                                 {
                                     // Need to copy now
 #if _DEBUG
-                                    LogString(CreateFile2Instance, L"\tFRF CreateFile2 COA from ADL to", redirectPath.c_str());
+                                    LogString(CreateFile2Instance, L"\tFRF CreateFile2 COA from ADL to", pri.redirect_path.c_str());
 #endif
-                                    impl::CopyFileW(PackageVersion.c_str(), redirectPath.c_str(), true);
+                                    impl::CopyFileW(PackageVersion.c_str(), pri.redirect_path.c_str(), true);
                                 }
                             }
                         }
@@ -314,28 +316,28 @@ HANDLE __stdcall CreateFile2Fixup(
                         {
                             if (impl::PathExists(PackageVersion.c_str()))
                             {
-                                if (!impl::PathExists(redirectPath.c_str()))
+                                if (!impl::PathExists(pri.redirect_path.c_str()))
                                 {
                                     // Need to copy now
 #if _DEBUG
-                                    LogString(CreateFile2Instance, L"\tFRF CreateFile2 COA from ADR to", redirectPath.c_str());
+                                    LogString(CreateFile2Instance, L"\tFRF CreateFile2 COA from ADR to", pri.redirect_path.c_str());
 #endif
-                                    impl::CopyFileW(PackageVersion.c_str(), redirectPath.c_str(), true);
+                                    impl::CopyFileW(PackageVersion.c_str(), pri.redirect_path.c_str(), true);
                                 }
                             }
                         }
                     }
                     DWORD redirectedAccess = desiredAccess;
-                    if (shouldReadonly)
+                    if (pri.shouldReadonly)
                     {
                         redirectedAccess = ConvertToReadOnlyAccess(desiredAccess);
                     }
 
-                    HANDLE hRet = impl::CreateFile2(redirectPath.c_str(), desiredAccess, shareMode, creationDisposition, createExParams);
+                    HANDLE hRet = impl::CreateFile2(pri.redirect_path.c_str(), desiredAccess, shareMode, creationDisposition, createExParams);
                     if (hRet == INVALID_HANDLE_VALUE)
                     {
 #if _DEBUG
-                        Log(L"[%d]CreateFile2 redirected uses %ls. FAILURE.", CreateFile2Instance, redirectPath.c_str());
+                        Log(L"[%d]CreateFile2 redirected uses %ls. FAILURE.", CreateFile2Instance, pri.redirect_path.c_str());
 #endif
                         // Fall back to original request, but keep this error if needed (might be file not found instead of path not found/access denied).
                         DWORD ecode = GetLastError();
@@ -359,7 +361,7 @@ HANDLE __stdcall CreateFile2Fixup(
                     else
                     {
 #if _DEBUG
-                        Log(L"[%d]CreateFile2 redirected uses %ls. SUCCESS.", CreateFile2Instance, redirectPath.c_str());
+                        Log(L"[%d]CreateFile2 redirected uses %ls. SUCCESS.", CreateFile2Instance, pri.redirect_path.c_str());
 #endif
                         return hRet;
                     }

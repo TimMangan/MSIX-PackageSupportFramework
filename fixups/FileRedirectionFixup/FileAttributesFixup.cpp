@@ -32,13 +32,13 @@ DWORD __stdcall GetFileAttributesFixup(_In_ const CharT* fileName) noexcept
 
             if (!IsUnderUserAppDataLocalPackages(wfileName.c_str()))
             {
-                auto [shouldRedirect, redirectPath, shouldReadonly] = ShouldRedirectV2(wfileName.c_str(), redirect_flags::check_file_presence, GetFileAttributesInstance);
-                if (shouldRedirect)
+                path_redirect_info  pri = ShouldRedirectV2(wfileName.c_str(), redirect_flags::check_file_presence, GetFileAttributesInstance);
+                if (pri.should_redirect)
                 {
 #if _DEBUG
                     Log(L"[%d]GetFileAttributes: Should Redirect says yes.", GetFileAttributesInstance);
 #endif
-                    DWORD attributes = impl::GetFileAttributes(redirectPath.c_str());
+                    DWORD attributes = impl::GetFileAttributes(pri.redirect_path.c_str());
                     if (attributes == INVALID_FILE_ATTRIBUTES)
                     {
                         // Might be file/dir has not been copied yet, but might also be funky ADL/ADR.
@@ -72,7 +72,7 @@ DWORD __stdcall GetFileAttributesFixup(_In_ const CharT* fileName) noexcept
                     }
                     else if (attributes != INVALID_FILE_ATTRIBUTES)
                     {
-                        if (shouldReadonly)
+                        if (pri.shouldReadonly)
                         {
                             if ((attributes & FILE_ATTRIBUTE_DIRECTORY) == 0)
                                 attributes |= FILE_ATTRIBUTE_READONLY;
@@ -165,10 +165,10 @@ BOOL __stdcall GetFileAttributesExFixup(
 
             if (!IsUnderUserAppDataLocalPackages(fileName))
             {
-                auto [shouldRedirect, redirectPath, shouldReadonly] = ShouldRedirectV2(wfileName.c_str(), redirect_flags::check_file_presence, GetFileAttributesExInstance);
-                if (shouldRedirect)
+                path_redirect_info  pri = ShouldRedirectV2(wfileName.c_str(), redirect_flags::check_file_presence, GetFileAttributesExInstance);
+                if (pri.should_redirect)
                 {
-                    BOOL retval = impl::GetFileAttributesExW(redirectPath.c_str(), infoLevelId, fileInformation);
+                    BOOL retval = impl::GetFileAttributesExW(pri.redirect_path.c_str(), infoLevelId, fileInformation);
                     if (retval == 0)
                     {
                         // We know it exists, so must be file/dir has not been copied yet.
@@ -202,7 +202,7 @@ BOOL __stdcall GetFileAttributesExFixup(
                     }
                     else if (retval != 0)
                     {
-                        if (shouldReadonly)
+                        if (pri.shouldReadonly)
                         {
                             if (infoLevelId == GetFileExInfoStandard)
                             {
@@ -267,11 +267,11 @@ BOOL __stdcall SetFileAttributesFixup(_In_ const CharT* fileName, _In_ DWORD fil
 
             if (!IsUnderUserAppDataLocalPackages(fileName))
             {
-                auto [shouldRedirect, redirectPath, shouldReadonly] = ShouldRedirectV2(wfileName.c_str(), redirect_flags::copy_on_read, SetFileAttributesInstance);
-                if (shouldRedirect)
+                path_redirect_info  pri = ShouldRedirectV2(wfileName.c_str(), redirect_flags::copy_on_read, SetFileAttributesInstance);
+                if (pri.should_redirect)
                 {
                     DWORD redirectedAttributes = fileAttributes;
-                    if (shouldReadonly)
+                    if (pri.shouldReadonly)
                     {
                         if ((fileAttributes & FILE_ATTRIBUTE_DIRECTORY) == 0)
                             redirectedAttributes |= FILE_ATTRIBUTE_READONLY;
@@ -279,7 +279,7 @@ BOOL __stdcall SetFileAttributesFixup(_In_ const CharT* fileName, _In_ DWORD fil
 #if _DEBUG
                     Log(L"[%d] Setting on redirected Equivalent with 0x%x", SetFileAttributesInstance, redirectedAttributes);
 #endif
-                    std::wstring rldRedirectPath = TurnPathIntoRootLocalDevice(widen_argument(redirectPath.c_str()).c_str());
+                    std::wstring rldRedirectPath = TurnPathIntoRootLocalDevice(widen_argument(pri.redirect_path.c_str()).c_str());
                     return impl::SetFileAttributesW(rldRedirectPath.c_str(), redirectedAttributes);
                 }
             }

@@ -28,14 +28,14 @@ DWORD __stdcall GetPrivateProfileSectionFixup(
 #endif
                 if (!IsUnderUserAppDataLocalPackages(fileName))
                 {
-                    auto [shouldRedirect, redirectPath, shouldReadonly] = ShouldRedirectV2(fileName, redirect_flags::copy_on_read, GetPrivateProfileSectionInstance);
-                    if (shouldRedirect)
+                    path_redirect_info  pri = ShouldRedirectV2(fileName, redirect_flags::copy_on_read, GetPrivateProfileSectionInstance);
+                    if (pri.should_redirect)
                     {
                         if constexpr (psf::is_ansi<CharT>)
                         {
                             auto wideString = std::make_unique<wchar_t[]>(stringLength);
                             auto realRetValue = impl::GetPrivateProfileSectionW(widen_argument(appName).c_str(), wideString.get(),
-                                stringLength, redirectPath.c_str());
+                                stringLength, pri.redirect_path.c_str());
 
                             if (_doserrno != ENOENT)
                             {
@@ -45,7 +45,7 @@ DWORD __stdcall GetPrivateProfileSectionFixup(
                         }
                         else
                         {
-                            return impl::GetPrivateProfileSectionW(appName, string, stringLength, redirectPath.c_str());
+                            return impl::GetPrivateProfileSectionW(appName, string, stringLength, pri.redirect_path.c_str());
                         }
                     }
                 }
