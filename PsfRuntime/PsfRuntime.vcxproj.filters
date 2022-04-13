@@ -24,6 +24,9 @@
     <ClCompile Include="..\CommonSrc\psf_logging.cpp">
       <Filter>CommonSrc</Filter>
     </ClCompile>
+    <ClCompile Include="ArgumentVirtualization.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="PsfRuntime.def" />

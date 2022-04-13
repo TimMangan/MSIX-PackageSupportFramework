@@ -77,7 +77,7 @@ static int ModifyFileTest(const std::wstring_view filename, const vfs_mapping& m
         if (file == INVALID_HANDLE_VALUE)
         {
             return trace_last_error(L"Failed to open file");
-            Sleep(1000 * 30);
+            ///Sleep(1000 * 30);
         }
         else if ((creationDisposition == CREATE_ALWAYS) && (::GetLastError() != ERROR_ALREADY_EXISTS))
         {
@@ -175,11 +175,12 @@ static int ModifyFileTest(const std::wstring_view filename, const vfs_mapping& m
 
         return ::GetLastError();
     };
+    int result;
 
     // Test with full paths
     trace_message(L"Testing Set Full Paths with CreateFile\n");
     Log("<<<<<Full Paths Set with CreateFile HERE");
-    auto result = performTest(CreateFileFunc, mapping.package_path);
+    result = performTest(CreateFileFunc, mapping.package_path);
     Log("Full Paths Set with CreateFile >>>>>");
     if (result) return result;
 
@@ -192,6 +193,7 @@ static int ModifyFileTest(const std::wstring_view filename, const vfs_mapping& m
     // Test with relative paths
     trace_message(L"Testing Set Relative Paths with CreateFile\n");
     Log("<<<<<Relative Paths Set with CreateFile HERE");
+    
     result = performTest(
         CreateFileFunc,
         mapping.package_path.lexically_relative(std::filesystem::current_path()));
@@ -234,11 +236,11 @@ static int ModifyFileTest(const std::wstring_view filename, const vfs_mapping& m
         Log("Root-Local Set with CreateFile >>>>>");
         if (result) return result;
 
-        trace_message("Testing Set Root-Local Path with CreateFile2\n");
-        Log("<<<<<Root-Local Set with CreateFile2 HERE");
-        result = performTest(CreateFile2Func, packagePath);
-        Log("Root-Local Set with CreateFile2 >>>>>");
-        if (result) return result;
+      trace_message("Testing Set Root-Local Path with CreateFile2\n");
+      Log("<<<<<Root-Local Set with CreateFile2 HERE");
+      result = performTest(CreateFile2Func, packagePath);
+      Log("Root-Local Set with CreateFile2 >>>>>");
+      if (result) return result;
     }
 
     return ERROR_SUCCESS;

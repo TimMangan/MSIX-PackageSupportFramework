@@ -29,11 +29,11 @@ BOOL __stdcall DeleteFileFixup(_In_ const CharT* fileName) noexcept
                 //       "deleted" and then just pretend like they've been deleted. Such a change would be rather large and
                 //       disruptful and probably fairly inefficient as it would impact virtually every code path, so we'll
                 //       put it off for now.
-                auto [shouldRedirect, redirectPath, shoudReadonly] = ShouldRedirectV2(fileName, redirect_flags::none, DeleteFileInstance);
-                if (shouldRedirect)
+                path_redirect_info  pri = ShouldRedirectV2(fileName, redirect_flags::none, DeleteFileInstance);
+                if (pri.should_redirect)
                 {
                     std::wstring rldFileName = TurnPathIntoRootLocalDevice(widen_argument(fileName).c_str());
-                    std::wstring rldRedirPath = TurnPathIntoRootLocalDevice(widen_argument(redirectPath.c_str()).c_str());
+                    std::wstring rldRedirPath = TurnPathIntoRootLocalDevice(widen_argument(pri.redirect_path.c_str()).c_str());
                     if (!impl::PathExists(rldRedirPath.c_str()) && impl::PathExists(rldFileName.c_str()))
                     {
                         // If the file does not exist in the redirected location, but does in the non-redirected location,

@@ -22,7 +22,7 @@
 #include "Telemetry.h"
 #include "RemovePII.h"
 
-
+#define DODEVIRT 1
 #if _DEBUG
 //#define MOREDEBUG 1
 #endif
@@ -85,7 +85,14 @@ normalized_pathV2 NormalizePathV2Impl(const wchar_t* path, [[maybe_unused]] DWOR
         break;
     case psf::dos_path_type::relative:  // E.g. "path\to\file"
         cwd = std::filesystem::current_path();
-        cwd /= result.full_path.data();
+        if (result.full_path._Starts_with(L".\\"))
+        {
+            cwd.append(result.full_path.data() + 2);
+        }
+        else
+        {
+            cwd /= result.full_path.data();
+        }
         result.drive_absolute_path = cwd.native();
         break;
     case psf::dos_path_type::local_device:  // E.g. "\\.\C:\path\to\file"
@@ -251,27 +258,35 @@ std::wstring DeVirtualizePathV2(normalized_pathV2 path)
 std::wstring VirtualizePathV2(normalized_pathV2 path, [[maybe_unused]] DWORD impl)
 {
 #ifdef MOREDEBUG
-    //Log(L"[%d]\t\tVirtualizePathV2: Input original_path %ls", impl, path.original_path.c_str());
-    //Log(L"[%d]\t\tVirtualizePathV2: Input full_path %ls", impl, path.full_path.c_str());
-    //Log(L"[%d]\t\tVirtualizePathV2: Input drive_absolute_path %ls", impl, path.drive_absolute_path.c_str());
+    LogString(impl, L"\t\tVirtualizePathV2: Input original_path ", path.original_path.c_str());
+    LogString(impl, L"\t\tVirtualizePathV2: Input full_path ",  path.full_path.c_str());
+    LogString(impl, L"\t\tVirtualizePathV2: Input drive_absolute_path ",  path.drive_absolute_path.c_str());
 #endif
 
     std::wstring vPath = L"";
 
     if (path.path_type == psf::dos_path_type::unknown)
     {
-        //Log(L"[%d]\t\tVirtualizePathV2: unknown input type, not virtualizable.", impl);
+#ifdef MOREDEBUG
+        Log(L"[%d]\t\tVirtualizePathV2: unknown input type, not virtualizable.", impl);
+#endif
     }
     else
     {
+#ifdef MOREDEBUG
+        Log(L"[%d]\t\tVirtualizePathV2: check input location.", impl);
+#endif
         if (path_relative_to(path.drive_absolute_path.c_str(), g_packageRootPath))
         {
 #ifdef MOREDEBUG
-            //Log(L"[%d]\t\tVirtualizePathV2: input, is in package", impl);
+            Log(L"[%d]\t\tVirtualizePathV2: input, is in package.", impl);
 #endif
         }
         else
         {
+#ifdef MOREDEBUG
+            Log(L"[%d]\t\tVirtualizePathV2: input, is NOT in package.", impl);
+#endif            
             //I think this iteration must be forward order, otherwise C:\Windows\SysWOW64 matches to VFS\Windows\SysWOW64 instead of VFS\System32
             //for (std::vector<vfs_folder_mapping>::reverse_iterator iter = g_vfsFolderMappings.rbegin(); iter != g_vfsFolderMappings.rend(); ++iter)
             for (std::vector<vfs_folder_mapping>::iterator iter = g_vfsFolderMappings.begin(); iter != g_vfsFolderMappings.end(); ++iter)
@@ -280,9 +295,9 @@ std::wstring VirtualizePathV2(normalized_pathV2 path, [[maybe_unused]] DWORD imp
                 if (path_relative_to(path.drive_absolute_path.c_str(), mapping.path))
                 {
 #ifdef MOREDEBUG
-                    //LogString(impl, L"\t\t\t mapping entry match on path", mapping.path.wstring().c_str());
-                    //LogString(impl, L"\t\t\t package_vfs_relative_path", mapping.package_vfs_relative_path.native().c_str());
-                    //Log(L"[%d]\t\t\t rel length =%d, %d", impl, mapping.path.native().length(), mapping.package_vfs_relative_path.native().length());
+                    LogString(impl, L"\t\t\t mapping entry match on path", mapping.path.wstring().c_str());
+                    LogString(impl, L"\t\t\t package_vfs_relative_path", mapping.package_vfs_relative_path.native().c_str());
+                    Log(L"[%d]\t\t\t rel length =%d, %d", impl, mapping.path.native().length(), mapping.package_vfs_relative_path.native().length());
 #endif
                     auto vfsRelativePath = path.drive_absolute_path.data() + mapping.path.native().length();
                     if (psf::is_path_separator(vfsRelativePath[0]))
@@ -290,7 +305,7 @@ std::wstring VirtualizePathV2(normalized_pathV2 path, [[maybe_unused]] DWORD imp
                         ++vfsRelativePath;
                     }
 #ifdef MOREDEBUG
-                    //LogString(impl, L"\t\t\t VfsRelativePath", vfsRelativePath);
+                    LogString(impl, L"\t\t\t VfsRelativePath", vfsRelativePath);
 #endif
                     vPath = (g_packageVfsRootPath / mapping.package_vfs_relative_path / vfsRelativePath).native();
                     return vPath;
@@ -299,7 +314,10 @@ std::wstring VirtualizePathV2(normalized_pathV2 path, [[maybe_unused]] DWORD imp
         }
     }
 
-    vPath = g_packageVfsRootPath;
+#ifdef MOREDEBUG
+    Log(L"[%d]\t\tVirtualizePathV2: post input look.", impl);
+#endif
+    vPath = g_packageVfsRootPath.c_str();
     vPath.push_back(L'\\');
     vPath.push_back(path.drive_absolute_path[0]);
     vPath.push_back('$');  // Replace ':' with '$'
@@ -439,7 +457,7 @@ std::wstring RedirectedPathV2(const normalized_pathV2& pathAsRequestedNormalized
                 //relativePath = L"\\PackageCache\\" + psf::current_package_family_name() + +L"\\VFS\\PackageDrive";
                 // Not sure what that code in the 2 lines above was, but probably not for the general case of a file outside of the package
                 ///relativePath = L"\\PackageCache\\" + psf::current_package_family_name() + +L"\\Microsoft\\WritablePackageRoot\\VFS\\";
-                std::wstring virtualized = VirtualizePathV2(pathAsRequestedNormalized, 0);
+                std::wstring virtualized = VirtualizePathV2(pathAsRequestedNormalized, inst);
                 /////relativePath = virtualized.c_str() + g_packageVfsRootPath.native().length();
                 relativePath = virtualized.c_str() + g_packageRootPath.native().length();
 #if _DEBUG
@@ -464,8 +482,8 @@ std::wstring RedirectedPathV2(const normalized_pathV2& pathAsRequestedNormalized
 
     ////Log(L"\tFRF devirt.full_path %ls", pathAsRequestedNormalized.full_path.c_str());
     ////Log(L"\tFRF devirt.da_path %ls", pathAsRequestedNormalized.drive_absolute_path);
-    //LogString(inst, L"\tFRF initial basePath", basePath.c_str());
-    //LogString(inst, L"\tFRF initial relative", relativePath.c_str());
+    //LogString(inst, L" \tFRF initial basePath", basePath.c_str());
+    //LogString(inst, L" \tFRF initial relative", relativePath.c_str());
 
     // Create folder structure, if needed
     if (impl::PathExists((basePath + relativePath).c_str()))
@@ -516,7 +534,7 @@ static path_redirect_info ShouldRedirectV2Impl(const CharT* path, redirect_flags
         return result;
     }
 #if _DEBUG
-    LogString(inst, L"\tFRFShouldRedirectV2: called for path", widen(path).c_str());
+    LogString(inst, L" \tFRFShouldRedirectV2: called for path", widen(path).c_str());
 #endif
     try
     {
@@ -538,7 +556,7 @@ static path_redirect_info ShouldRedirectV2Impl(const CharT* path, redirect_flags
 #endif
             // For now, let's return this path and let the caller deal with it.
 #if _DEBUG
-            LogString(inst, L"\tFRFShouldRedirectV2: Prevent redundant redirection.", widen(path).c_str());
+            LogString(inst, L" \tFRFShouldRedirectV2: Prevent redundant redirection.", widen(path).c_str());
 #endif
             return result;
         }
@@ -551,7 +569,7 @@ static path_redirect_info ShouldRedirectV2Impl(const CharT* path, redirect_flags
         if (normalizedPathV2.path_type == psf::dos_path_type::local_device)
         {
 #if _DEBUG
-            LogString(L"\tFRFShouldRedirectV2: Path is of type local device so FRF should ignore.", widen(path).c_str());
+            LogString(inst,L" \tFRFShouldRedirectV2: Path is of type local device so FRF should ignore.", widen(path).c_str());
 #endif
             return result;
         }
@@ -569,10 +587,11 @@ static path_redirect_info ShouldRedirectV2Impl(const CharT* path, redirect_flags
         LogString(inst, L"\t\tFRFShouldRedirectV2: NormalizedV2.DAP", normalizedPathV2.drive_absolute_path.c_str());
 #endif
 
+        normalized_pathV2 cloneNormalizedPathV2 = ClonePathV2(normalizedPathV2);
 #ifdef DODEVIRT
         // To be consistent in where we redirect files, we need to map VFS paths to their non-package-relative equivalent,
         // but maybe only for findfile and not these
-        std::wstring DeVirtualizedV2 = DeVirtualizePathV2(std::move(normalizedPathV2));
+        std::wstring DeVirtualizedV2 = DeVirtualizePathV2(std::move(normalizedPathV2));   
 #ifdef MOREDEBUG
         LogString(inst, L"\t\tFRFShouldRedirectV2: DeVirtualizedV2", DeVirtualizedV2.c_str());
 #endif
@@ -585,21 +604,48 @@ static path_redirect_info ShouldRedirectV2Impl(const CharT* path, redirect_flags
         // Basically, what goes into RedirectedPath here also needs to go into 
         // FindFirstFile/NextFixup.cpp
         std::wstring pathVirtualizedV2 = L"";
-        if (normalizedPathV2.path_type != psf::dos_path_type::unknown &&
-            normalizedPathV2.path_type != psf::dos_path_type::unc_absolute &&
-            !IsUnderPackageRoot(normalizedPathV2.drive_absolute_path.c_str()) &&
-            !IsUnderUserPackageWritablePackageRoot(normalizedPathV2.drive_absolute_path.c_str()))
+#ifdef MOREDEBUG
+        Log(L"[%d]\t\tFRFShouldRedirectV2: type=0x%x %ls", inst, cloneNormalizedPathV2.path_type, cloneNormalizedPathV2.drive_absolute_path.c_str());
+#endif
+        if (cloneNormalizedPathV2.path_type != psf::dos_path_type::unknown &&
+            cloneNormalizedPathV2.path_type != psf::dos_path_type::unc_absolute)
         {
-            pathVirtualizedV2 = VirtualizePathV2(normalizedPathV2);
+            if (!IsUnderPackageRoot(cloneNormalizedPathV2.drive_absolute_path.c_str()))
+            {
+#ifdef MOREDEBUG
+                Log(L"[%d]\t\tFRFShouldRedirectV2: post Is Not UnderPackageRoot.", inst);
+#endif
+                if (!IsUnderUserPackageWritablePackageRoot(cloneNormalizedPathV2.drive_absolute_path.c_str()))
+                {
+#ifdef MOREDEBUG
+                    Log(L"[%d]\t\tFRFShouldRedirectV2: post Is Not UnderUserPackageWritablePackageRoot.", inst);
+#endif
+                    pathVirtualizedV2 = VirtualizePathV2(cloneNormalizedPathV2, inst);
+                }
+            }
+            else
+            {
+#ifdef MOREDEBUG
+                Log(L"[%d]\t\tFRFShouldRedirectV2: post Is UnderPackageRoot.", inst);
+#endif
+            }
         }
+#ifdef MOREDEBUG
+        Log(L"[%d]\t\tFRFShouldRedirectV2: post checks.", inst);
+#endif
+
         if (pathVirtualizedV2.length() == 0)
-            pathVirtualizedV2 = normalizedPathV2.full_path.c_str();
+        {
+            //pathVirtualizedV2 = cloneNormalizedPathV2.full_path.c_str(); // should be dap in case this was a relative path?
+            pathVirtualizedV2 = cloneNormalizedPathV2.drive_absolute_path.c_str(); 
+        }
 
         auto vfspathV2 = NormalizePathV2(pathVirtualizedV2.c_str(), inst);
         if (!vfspathV2.drive_absolute_path.empty())
         {
 #ifdef MOREDEBUG
             LogString(inst, L"\t\tFRFShouldRedirectV2: VirtualizedV2", pathVirtualizedV2.c_str());
+            LogString(inst, L"\t\tFRFShouldRedirectV2: vfspathV2", vfspathV2.drive_absolute_path.c_str());
 #endif
         }
 
@@ -752,7 +798,7 @@ static path_redirect_info ShouldRedirectV2Impl(const CharT* path, redirect_flags
         if (!result.should_redirect)
         {
 #if _DEBUG
-            LogString(inst, L"\tFRFShouldRedirectV2: no redirect rule for path", widen(path).c_str());
+            LogString(inst, L" \tFRFShouldRedirectV2: no redirect rule for path", widen(path).c_str());
 #endif
             return result;
         }
@@ -767,15 +813,20 @@ static path_redirect_info ShouldRedirectV2Impl(const CharT* path, redirect_flags
             std::wstring rldRedir = TurnPathIntoRootLocalDevice(widen(result.redirect_path).c_str());
             std::wstring rldVedir = TurnPathIntoRootLocalDevice(widen(pathVirtualizedV2.c_str()).c_str());
             std::wstring rldNdir = TurnPathIntoRootLocalDevice(widen(normalizedPathV2.drive_absolute_path.c_str()).c_str());
-            if (!impl::PathExists(rldRedir.c_str()) &&
-                !impl::PathExists(rldVedir.c_str()) &&
-                !impl::PathExists(rldNdir.c_str()))
+            bool rldRedirExists = impl::PathExists(rldRedir.c_str());
+            bool rldVedirExists = impl::PathExists(rldVedir.c_str());
+            bool rldNdirExists = impl::PathExists(rldNdir.c_str());
+            result.doesRedirectedExist = rldRedirExists;
+            result.doesRequestedExist = rldNdirExists || rldVedirExists;
+            if (!rldRedirExists &&
+                !rldVedirExists &&
+                !rldNdirExists)
             {
                 result.should_redirect = false;
                 result.redirect_path.clear();
 
 #if _DEBUG
-                LogString(inst, L"\tFRFShouldRedirectV2: skipped (redirected not present check failed) for path", widen(path).c_str());
+                LogString(inst, L" \tFRFShouldRedirectV2: skipped (redirected not present check failed) for path", widen(path).c_str());
 #endif
                 return result;
             }
@@ -826,6 +877,7 @@ static path_redirect_info ShouldRedirectV2Impl(const CharT* path, redirect_flags
                             COPY_FILE_FAIL_IF_EXISTS | COPY_FILE_NO_BUFFERING);
                         if (copyResult)
                         {
+                            result.doesRedirectedExist = true;
 #if _DEBUG
                             LogString(inst, L"\t\tFRFShouldRedirectV2 CopyFile Success From", CopySource.c_str());
                             LogString(inst, L"\t\tFRFShouldRedirectV2 CopyFile Success To", result.redirect_path.c_str());
@@ -907,7 +959,7 @@ static path_redirect_info ShouldRedirectV2Impl(const CharT* path, redirect_flags
             }
         }
 #if _DEBUG
-        LogString(inst, L"\tFRFShouldRedirectV2: returns with result", result.redirect_path.c_str());
+        LogString(inst, L" \tFRFShouldRedirectV2: returns with result", result.redirect_path.c_str());
 #endif
     }
     catch (...)

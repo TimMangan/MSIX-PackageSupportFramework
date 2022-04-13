@@ -123,7 +123,7 @@ HANDLE __stdcall FindFirstFileExFixup(
     // Split the input into directory and pattern
     auto wPath = widen(fileName);
     auto wfileName = widen(fileName);
-    LogString(FindFirstFileExInstance,L"\tFindFirstFileEx: for fileName", wfileName.c_str());
+    LogString(FindFirstFileExInstance,L" \tFindFirstFileEx: for fileName", wfileName.c_str());
     Log(L"[%d]\tFindFirstFileEx: InfoLevel=0x%x searchOp=0x%x addtionalFlags=0x%x ", FindFirstFileExInstance, infoLevelId, searchOp, additionalFlags);
 
     normalized_path dir;
@@ -131,7 +131,7 @@ HANDLE __stdcall FindFirstFileExFixup(
     wchar_t dal[512];
     if (auto dirPos = wPath.find_last_of(LR"(\/)"); dirPos != std::wstring::npos)
     {
-        Log("[%d]\tFileFirstFileEx: has slash", FindFirstFileExInstance);
+        Log("[%d]\tFindFirstFileEx: has slash", FindFirstFileExInstance);
         // Special case for single separator at beginning of the wPath "/foo.txt"
         if (dirPos == 0)
         {
@@ -172,7 +172,7 @@ HANDLE __stdcall FindFirstFileExFixup(
     }
     else
     {
-        Log("[%d]\tFileFirstFileEx: no slash, assume cwd based.", FindFirstFileExInstance);
+        Log("[%d]\tFindFirstFileEx: no slash, assume cwd based.", FindFirstFileExInstance);
         // TODO: This is a messy situation and the code I am replacing doen't handle it well and can crash the app later on in PathRedirection.
         // While FindFirstFileEx is usually passed a regular (unique) filepath in the first parameter, 
         // it is permissible for the caller to use wildcards to select multiple subfolders or files to be searched.
@@ -184,10 +184,10 @@ HANDLE __stdcall FindFirstFileExFixup(
         //     dir = NormalizePath(L".",FindFirstFileExInstance);
         //     pattern = path.c_str();
         std::filesystem::path cwd = std::filesystem::current_path();
-        Log("[%d]\tFileFirstFileEx: swap to cwd: %ls", FindFirstFileExInstance,cwd.c_str());
+        Log("[%d]\tFindFirstFileEx: swap to cwd: %ls", FindFirstFileExInstance,cwd.c_str());
         dir = NormalizePath(cwd.c_str(), FindFirstFileExInstance);
         pattern = wPath.c_str();
-        Log("[%d]\tFileFirstFileEx: no slash, assumed cwd based type=x%x dap=%ls", FindFirstFileExInstance, psf::path_type(cwd.c_str()),dir.drive_absolute_path);
+        Log("[%d]\tFindFirstFileEx: no slash, assumed cwd based type=x%x dap=%ls", FindFirstFileExInstance, psf::path_type(cwd.c_str()),dir.drive_absolute_path);
     }
     Log("[%d]\tpattern=%ls wPath=%ls", FindFirstFileExInstance, pattern, wPath.c_str());
 

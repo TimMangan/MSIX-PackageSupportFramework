@@ -25,17 +25,17 @@ BOOL __stdcall WritePrivateProfileSectionFixup(
                 LogString(WritePrivateProfileSectionInstance,L"WritePrivateProfileSectionFixup for fileName", fileName);
                 if (!IsUnderUserAppDataLocalPackages(fileName))
                 {
-                    auto [shouldRedirect, redirectPath, shouldReadonly] = ShouldRedirectV2(fileName, redirect_flags::copy_on_read, WritePrivateProfileSectionInstance);
-                    if (shouldRedirect)
+                    path_redirect_info  pri = ShouldRedirectV2(fileName, redirect_flags::copy_on_read, WritePrivateProfileSectionInstance);
+                    if (pri.should_redirect)
                     {
                         if constexpr (psf::is_ansi<CharT>)
                         {
                             return impl::WritePrivateProfileSectionW(widen_argument(appName).c_str(),
-                                widen_argument(string).c_str(), redirectPath.c_str());
+                                widen_argument(string).c_str(), pri.redirect_path.c_str());
                         }
                         else
                         {
-                            return impl::WritePrivateProfileSection(appName, string, redirectPath.c_str());
+                            return impl::WritePrivateProfileSection(appName, string, pri.redirect_path.c_str());
                         }
                     }
                 }

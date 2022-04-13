@@ -33,13 +33,14 @@ BOOL __stdcall CreateDirectoryFixup(_In_ const CharT* pathName, _In_opt_ LPSECUR
 
             if (!IsUnderUserAppDataLocalPackages(wPathName.c_str()))
             {
-                auto [shouldRedirect, redirectPath, shouldReadonlySource] = ShouldRedirectV2(pathName, redirect_flags::ensure_directory_structure, CreateDirectoryInstance);
-                if (shouldRedirect)
+                path_redirect_info  pri = ShouldRedirectV2(pathName, redirect_flags::ensure_directory_structure, CreateDirectoryInstance);
+                //path_redirect_info  pri = ShouldRedirectV2(pathName, redirect_flags::none, CreateDirectoryInstance);
+                if (pri.should_redirect)
                 {
 #if _DEBUG
-                    LogString(CreateDirectoryInstance, L"CreateDirectoryFixup Use Folder", redirectPath.c_str());
+                    LogString(CreateDirectoryInstance, L"CreateDirectoryFixup Use Folder", pri.redirect_path.c_str());
 #endif
-                    return impl::CreateDirectory(redirectPath.c_str(), securityAttributes);
+                    return impl::CreateDirectory(pri.redirect_path.c_str(), securityAttributes);
                 }
             }
             else
@@ -108,12 +109,12 @@ BOOL __stdcall CreateDirectoryExFixup(
             }
 
             
-            auto [redirectTemplate, redirectTemplatePath,shouldReadonlySource] = ShouldRedirectV2(WtemplateDirectory.c_str(), redirect_flags::check_file_presence, CreateDirectoryExInstance);
-            auto [redirectDest, redirectDestPath,shouldReadonlyDest] = ShouldRedirectV2(WnewDirectory.c_str(), redirect_flags::ensure_directory_structure, CreateDirectoryExInstance);
-            if (redirectTemplate || redirectDest)
+            path_redirect_info  priSource = ShouldRedirectV2(WtemplateDirectory.c_str(), redirect_flags::check_file_presence, CreateDirectoryExInstance);
+            path_redirect_info  priDest = ShouldRedirectV2(WnewDirectory.c_str(), redirect_flags::ensure_directory_structure, CreateDirectoryExInstance);
+            if (priSource.should_redirect || priDest.should_redirect)
             {
-                std::wstring rldRedirectTemplate = TurnPathIntoRootLocalDevice(redirectTemplate ? redirectTemplatePath.c_str() : WtemplateDirectory.c_str());
-                std::wstring rldDest = TurnPathIntoRootLocalDevice(redirectDest ? redirectDestPath.c_str() : WnewDirectory.c_str());
+                std::wstring rldRedirectTemplate = TurnPathIntoRootLocalDevice(priSource.should_redirect ? priSource.redirect_path.c_str() : WtemplateDirectory.c_str());
+                std::wstring rldDest = TurnPathIntoRootLocalDevice(priDest.should_redirect ? priDest.redirect_path.c_str() : WnewDirectory.c_str());
                 return impl::CreateDirectoryEx(rldRedirectTemplate.c_str(), rldDest.c_str(), securityAttributes);
             }
         }

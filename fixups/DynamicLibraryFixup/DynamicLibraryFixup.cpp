@@ -9,7 +9,7 @@
 #include "dll_location_spec.h"
 
 #if _DEBUG
-#define MOREDEBUG 1
+//#define MOREDEBUG 1
 #endif
 
 extern bool                  g_dynf_forcepackagedlluse;

@@ -28,13 +28,13 @@ BOOL __stdcall MoveFileFixup(_In_ const CharT* existingFileName, _In_ const Char
             //       well. Additionally, we don't copy-on-read the destination file for the same reason we don't do the
             //       same for CopyFile: we give the application the benefit of the doubt that they previously tried to
             //       delete the file if it exists in the package path.
-            auto [redirectExisting, existingRedirectPath, shouldReadonlSource] = ShouldRedirectV2(existingFileName, redirect_flags::copy_on_read, MoveFileInstance);
-            auto [redirectDest, destRedirectPath, shouldReadonlyDest] = ShouldRedirectV2(newFileName, redirect_flags::ensure_directory_structure, MoveFileInstance);
-            if (redirectExisting || redirectDest)
+            path_redirect_info  priExisting = ShouldRedirectV2(existingFileName, redirect_flags::copy_on_read, MoveFileInstance);
+            path_redirect_info  priDest = ShouldRedirectV2(newFileName, redirect_flags::ensure_directory_structure, MoveFileInstance);
+            if (priExisting.should_redirect || priDest.should_redirect)
             {
                 BOOL bRet = impl::MoveFile(
-                    redirectExisting ? existingRedirectPath.c_str() : widen_argument(existingFileName).c_str(),
-                    redirectDest ? destRedirectPath.c_str() : widen_argument(newFileName).c_str());
+                    priExisting.should_redirect ? priExisting.redirect_path.c_str() : widen_argument(existingFileName).c_str(),
+                    priDest.should_redirect ? priDest.redirect_path.c_str() : widen_argument(newFileName).c_str());
 #if _DEBUG
                 if (bRet)
                     Log(L"[%d]MoveFile returns true.", MoveFileInstance);
@@ -82,12 +82,12 @@ BOOL __stdcall MoveFileExFixup(
 
             // See note in MoveFile for commentary on copy-on-read functionality (though we could do better by checking
             // flags for MOVEFILE_REPLACE_EXISTING)
-            auto [redirectExisting, existingRedirectPath, shouldReadonlySource] = ShouldRedirectV2(existingFileName, redirect_flags::copy_on_read, MoveFileExInstance);
-            auto [redirectDest, destRedirectPath, shouldReadonlyDest] = ShouldRedirectV2(newFileName, redirect_flags::ensure_directory_structure, MoveFileExInstance);
-            if (redirectExisting || redirectDest)
+            path_redirect_info  priExisting = ShouldRedirectV2(existingFileName, redirect_flags::copy_on_read, MoveFileExInstance);
+            path_redirect_info  priDest = ShouldRedirectV2(newFileName, redirect_flags::ensure_directory_structure, MoveFileExInstance);
+            if (priExisting.should_redirect || priDest.should_redirect)
             {
-                std::wstring rldExistingFileName = TurnPathIntoRootLocalDevice(redirectExisting ? existingRedirectPath.c_str() : widen_argument(existingFileName).c_str());
-                std::wstring rldNewDirectory = TurnPathIntoRootLocalDevice(redirectDest ? destRedirectPath.c_str() : widen_argument(newFileName).c_str());
+                std::wstring rldExistingFileName = TurnPathIntoRootLocalDevice(priExisting.should_redirect ? priExisting.redirect_path.c_str() : widen_argument(existingFileName).c_str());
+                std::wstring rldNewDirectory = TurnPathIntoRootLocalDevice(priDest.should_redirect ? priDest.redirect_path.c_str() : widen_argument(newFileName).c_str());
                 BOOL bRet= impl::MoveFileEx(rldExistingFileName.c_str(), rldNewDirectory.c_str(), flags);
 #if _DEBUG
                 if (bRet)

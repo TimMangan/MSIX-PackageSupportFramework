@@ -30,12 +30,12 @@ BOOL __stdcall CreateHardLinkFixup(
             //       link file already exists. I.e. we're giving the application the benefit of the doubt that, if they
             //       are trying to create a hard-link with the same path as a file inside the package, they had
             //       previously attempted to delete that file.
-            auto [redirectLink, redirectPath, shouldReadonlySource] = ShouldRedirectV2(fileName, redirect_flags::ensure_directory_structure);
-            auto [redirectTarget, redirectTargetPath, shouldReadonlyDest] = ShouldRedirectV2(existingFileName, redirect_flags::copy_on_read);
-            if (redirectLink || redirectTarget)
+            path_redirect_info  priSource = ShouldRedirectV2(fileName, redirect_flags::ensure_directory_structure);
+            path_redirect_info  priTarget = ShouldRedirectV2(existingFileName, redirect_flags::copy_on_read);
+            if (priSource.should_redirect || priTarget.should_redirect)
             {
-                std::wstring rldFileName = TurnPathIntoRootLocalDevice(redirectLink ? redirectPath.c_str() : widen_argument(fileName).c_str());
-                std::wstring rldExistingFileName = TurnPathIntoRootLocalDevice(redirectTarget ? redirectTargetPath.c_str() : widen_argument(existingFileName).c_str());
+                std::wstring rldFileName = TurnPathIntoRootLocalDevice(priSource.should_redirect ? priSource.redirect_path.c_str() : widen_argument(fileName).c_str());
+                std::wstring rldExistingFileName = TurnPathIntoRootLocalDevice(priTarget.should_redirect ? priTarget.redirect_path.c_str() : widen_argument(existingFileName).c_str());
                 return impl::CreateHardLink(rldFileName.c_str(), rldExistingFileName.c_str(), securityAttributes);
             }
         }

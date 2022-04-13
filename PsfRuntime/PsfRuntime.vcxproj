@@ -20,6 +20,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\CommonSrc\psf_logging.cpp" />
+    <ClCompile Include="ArgumentVirtualization.cpp" />
     <ClCompile Include="Config.cpp" />
     <ClCompile Include="CreateProcessHook.cpp" />
     <ClCompile Include="main.cpp" />

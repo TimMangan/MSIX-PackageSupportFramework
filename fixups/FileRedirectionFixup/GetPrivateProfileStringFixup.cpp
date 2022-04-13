@@ -71,15 +71,15 @@ DWORD __stdcall GetPrivateProfileStringFixup(
             {
                 if (!IsUnderUserAppDataLocalPackages(fileName))
                 {
-                    auto [shouldRedirect, redirectPath, shouldReadonly] = ShouldRedirectV2(fileName, redirect_flags::copy_on_read, GetPrivateProfileStringInstance);
-                    if (shouldRedirect)
+                    path_redirect_info  pri = ShouldRedirectV2(fileName, redirect_flags::copy_on_read, GetPrivateProfileStringInstance);
+                    if (pri.should_redirect)
                     {
                         if constexpr (psf::is_ansi<CharT>)
                         {
                             
                             auto realRetValue = impl::GetPrivateProfileString(appName, keyName,
                                                                                defaultString, string, stringLength, 
-                                                                               narrow(redirectPath.c_str()).c_str() );
+                                                                               narrow(pri.redirect_path.c_str()).c_str() );
 #if _DEBUG
                             Log(L"[%d] Ansi Returned length=0x%x", GetPrivateProfileStringInstance, realRetValue);
                             if (realRetValue > 0)
@@ -89,7 +89,7 @@ DWORD __stdcall GetPrivateProfileStringFixup(
                         }
                         else
                         {
-                            auto realRetValue = impl::GetPrivateProfileString(appName, keyName, defaultString, string, stringLength, redirectPath.c_str());
+                            auto realRetValue = impl::GetPrivateProfileString(appName, keyName, defaultString, string, stringLength, pri.redirect_path.c_str());
 #if _DEBUG
                             if (realRetValue > 0)
                                 LogString(GetPrivateProfileStringInstance, L" Returned string", string);

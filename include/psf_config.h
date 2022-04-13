@@ -93,7 +93,7 @@ namespace psf
             }
             else
             {
-                static_assert(false, "Invalid JSON type");
+                // static_assert(false, "Invalid JSON type");
             }
         }
 

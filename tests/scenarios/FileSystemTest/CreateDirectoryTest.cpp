@@ -90,7 +90,8 @@ static int DoCreateDirectoryTest(const std::filesystem::path& path, bool expectS
     }
     else if (expectSuccess)
     {
-        return trace_last_error(L"Failed to create directory, but we were expecting it to succeed");
+        if (! (GetLastError() == ERROR_ALREADY_EXISTS))
+            return trace_last_error(L"Failed to create directory, but we were expecting it to succeed");
     }
 
     return ERROR_SUCCESS;

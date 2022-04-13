@@ -63,6 +63,8 @@ namespace impl
     inline auto WritePrivateProfileString = psf::detoured_string_function(&::WritePrivateProfileStringA, &::WritePrivateProfileStringW);
     inline auto WritePrivateProfileStruct = psf::detoured_string_function(&::WritePrivateProfileStructA, &::WritePrivateProfileStructW);
 
+    inline auto SearchPath = psf::detoured_string_function(&::SearchPathA, &::SearchPathW);
+
     // Most internal use of GetFileAttributes is to check to see if a file/directory exists, so provide a helper
     template <typename CharT>
     inline bool PathExists(CharT* path) noexcept

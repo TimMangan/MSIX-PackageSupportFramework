@@ -83,6 +83,9 @@
       <Filter>CommonSrc</Filter>
     </ClCompile>
     <ClCompile Include="GetPrivateProfileStructFixup.cpp" />
+    <ClCompile Include="SearchPath.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Xml Include="FileRedirectionFixupMetadata.xml" />

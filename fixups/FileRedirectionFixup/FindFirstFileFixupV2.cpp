@@ -219,7 +219,7 @@ HANDLE __stdcall FindFirstFileExFixupV2(
         !IsUnderPackageRoot(pathAsRequestedNormalized.drive_absolute_path.c_str()) &&
         !IsUnderUserPackageWritablePackageRoot(pathAsRequestedNormalized.drive_absolute_path.c_str()))
     {
-        pathVirtualized = VirtualizePathV2(pathAsRequestedNormalized);
+        pathVirtualized = VirtualizePathV2(pathAsRequestedNormalized, FindFirstFileExInstanceV2);
     }
     std::wstring pathDeVirtualized = DeVirtualizePathV2(pathAsRequestedNormalized);
     std::wstring pathRedirected = RedirectedPathV2(pathAsRequestedNormalized, false, g_writablePackageRootPath.native(), FindFirstFileExInstanceV2);
@@ -572,14 +572,14 @@ template <typename CharT>
 HANDLE __stdcall FindFirstFileFixupV2(_In_ const CharT* fileName, _Out_ win32_find_data_t<CharT>* findFileData) noexcept
 {
     // For simplicity, just do what the OS appears to be doing and forward arguments on to FindFirstFileEx
-#if _DEBUG
+#if MOREDEBUG
     if constexpr (psf::is_ansi<CharT>)
     {
-        Log(L"FileFirstFile A redirected to FindFirstFileExFixupV2");
+        Log(L"FindFirstFile A redirected to FindFirstFileExFixupV2");
     }
     else
     {
-        Log(L"FileFirstFile W redirected to FindFirstFileExFixupV2");
+        Log(L"FimdFirstFile W redirected to FindFirstFileExFixupV2");
     }
 #endif
     return FindFirstFileExFixupV2(fileName, FindExInfoStandard, findFileData, FindExSearchNameMatch, nullptr, 0);
