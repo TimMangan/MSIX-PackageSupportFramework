@@ -24,8 +24,11 @@
     <ClCompile Include="..\CommonSrc\psf_logging.cpp">
       <Filter>CommonSrc</Filter>
     </ClCompile>
-    <ClCompile Include="ArgumentVirtualization.cpp">
-      <Filter>src</Filter>
+    <ClCompile Include="..\CommonSrc\ArgumentVirtualization.cpp">
+      <Filter>CommonSrc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\CommonSrc\findStringIC.cpp">
+      <Filter>CommonSrc</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -33,11 +36,14 @@
     <None Include="readme.md" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Config.h">
-      <Filter>inc</Filter>
-    </ClInclude>
     <ClInclude Include="JsonConfig.h">
       <Filter>inc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\CommonSrc\Config.h">
+      <Filter>inc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\CommonSrc\findStringIC.h">
+      <Filter>CommonSrc</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

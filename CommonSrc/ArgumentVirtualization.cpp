@@ -25,6 +25,7 @@
 #include <StartInfo_helper.h>
 #include <TlHelp32.h>
 #include <shellapi.h>
+#include <findStringIC.h>
 
 using namespace std::literals;
 
@@ -36,8 +37,6 @@ struct vfs_folder_mapping
 }; 
 std::vector<vfs_folder_mapping> g_vfsFolderMappings;
 
-extern bool findStringIC(const std::wstring& strHaystack, const std::wstring& strNeedle);
-extern bool findStringIC(const std::string& strHaystack, const std::string& strNeedle);
 
 
 
@@ -46,97 +45,107 @@ std::wstring CanReplaceWithVFS(const std::wstring input)
     std::wstring output = L"";
     std::filesystem::path testpath;
 
-    const std::filesystem::path l_PackageRootPath = PackageRootPath();
+    const std::filesystem::path l_PackageRootPath = PSFQueryPackageRootPath();// PackageRootPath();
     testpath = psf::known_folder(FOLDERID_Documents);
     if (findStringIC(input, testpath))
     {
-        output = l_PackageRootPath / "VFS\\Personal" / input.substr(testpath.wstring().length());
+        LogString(L"PackageRootPath is ", l_PackageRootPath.c_str());
+        output = ((std::wstring)l_PackageRootPath.c_str()) + L"\\VFS\\Personal" + input.substr(testpath.wstring().length()).c_str();
+        LogString(L"Replacement is ", output.c_str());
+        return output;
+    }
+    testpath = psf::known_folder(FOLDERID_PublicDocuments);
+    if (findStringIC(input, testpath))
+    {
+        LogString(L"PackageRootPath is ", l_PackageRootPath.c_str());
+        output = ((std::wstring)l_PackageRootPath.c_str()) + L"\\VFS\\Common Documents" + input.substr(testpath.wstring().length()).c_str();
+        LogString(L"Replacement is ", output.c_str());
         return output;
     }
     testpath = psf::known_folder(FOLDERID_LocalAppData);
     if (findStringIC(input, testpath))
     {
-        output = l_PackageRootPath / "VFS\\Local AppData" / input.substr(testpath.wstring().length());
+        output = ((std::wstring)l_PackageRootPath.c_str()) + L"\\VFS\\Local AppData" + input.substr(testpath.wstring().length()).c_str();
         return output;
     }
     testpath = psf::known_folder(FOLDERID_RoamingAppData);
     if (findStringIC(input, testpath))
     {
-        output = l_PackageRootPath / "VFS\\AppData" / input.substr(testpath.wstring().length());
+        output = ((std::wstring)l_PackageRootPath.c_str()) + L"\\VFS\\AppData" + input.substr(testpath.wstring().length()).c_str();
         return output;
     }
 
     testpath = psf::known_folder(FOLDERID_ProgramFilesCommonX86);
     if (findStringIC(input, testpath))
     {
-        output = l_PackageRootPath / "VFS\\ProgramFilesCommonX86" / input.substr(testpath.wstring().length());
+        output = ((std::wstring)l_PackageRootPath.c_str()) + L"\\VFS\\ProgramFilesCommonX86" + input.substr(testpath.wstring().length()).c_str();
         return output;
     }
     testpath = psf::known_folder(FOLDERID_ProgramFilesX86);
     if (findStringIC(input, testpath))
     {
-        output = l_PackageRootPath / "VFS\\ProgramFilesX86" / input.substr(testpath.wstring().length());
+        output = ((std::wstring)l_PackageRootPath.c_str()) + L"\\VFS\\ProgramFilesX86" + input.substr(testpath.wstring().length()).c_str();
         return output;
     }
     testpath = psf::known_folder(FOLDERID_ProgramFilesCommonX64);
     if (findStringIC(input, testpath))
     {
-        output = l_PackageRootPath / "VFS\\ProgramFilesCommonX64" / input.substr(testpath.wstring().length());
+        output = ((std::wstring)l_PackageRootPath.c_str()) + L"\\VFS\\ProgramFilesCommonX64" + input.substr(testpath.wstring().length()).c_str();
         return output;
     }
     testpath = psf::known_folder(FOLDERID_ProgramFilesX64);
     if (findStringIC(input, testpath))
     {
-        output = l_PackageRootPath / "VFS\\ProgramFilesX64" / input.substr(testpath.wstring().length());
+        output = ((std::wstring)l_PackageRootPath.c_str()) + L"\\VFS\\ProgramFilesX64" + input.substr(testpath.wstring().length()).c_str();
         return output;
     }
 
     testpath = psf::known_folder(FOLDERID_System);
     if (findStringIC(input, testpath))
     {
-        output = l_PackageRootPath / "VFS\\SystemX64" / input.substr(testpath.wstring().length());
+        output = ((std::wstring)l_PackageRootPath.c_str()) + L"\\VFS\\SystemX64" + input.substr(testpath.wstring().length()).c_str();
         return output;
     }
     testpath = psf::known_folder(FOLDERID_SystemX86);
     if (findStringIC(input, testpath))
     {
-        output = l_PackageRootPath / "VFS\\SystemX86" / input.substr(testpath.wstring().length());
+        output = ((std::wstring)l_PackageRootPath.c_str()) + L"\\VFS\\SystemX86" + input.substr(testpath.wstring().length()).c_str();
         return output;
     }
     testpath = psf::known_folder(FOLDERID_Fonts);
     if (findStringIC(input, testpath))
     {
-        output = l_PackageRootPath / "VFS\\Fonts" / input.substr(testpath.wstring().length());
+        output = ((std::wstring)l_PackageRootPath.c_str()) + L"\\VFS\\Fonts" + input.substr(testpath.wstring().length()).c_str();
         return output;
     }
     testpath = psf::known_folder(FOLDERID_Windows);
     if (findStringIC(input, testpath))
     {
-        output = l_PackageRootPath / "VFS\\Windows" / input.substr(testpath.wstring().length());
+        output = ((std::wstring)l_PackageRootPath.c_str()) + L"\\VFS\\Windows" + input.substr(testpath.wstring().length()).c_str();
         return output;
     }
     testpath = psf::known_folder(FOLDERID_ProgramData);
     if (findStringIC(input, testpath))
     {
-        output = l_PackageRootPath / "VFS\\Common AppData" / input.substr(testpath.wstring().length());
+        output = ((std::wstring)l_PackageRootPath.c_str()) + L"\\VFS\\Common AppData" + input.substr(testpath.wstring().length()).c_str();
         return output;
     }
     testpath = psf::known_folder(FOLDERID_PublicDesktop);
     if (findStringIC(input, testpath))
     {
-        output = l_PackageRootPath / "VFS\\Common Desktop" / input.substr(testpath.wstring().length());
+        output = ((std::wstring)l_PackageRootPath.c_str()) + L"\\VFS\\Common Desktop" + input.substr(testpath.wstring().length()).c_str();
         return output;
     }
     testpath = psf::known_folder(FOLDERID_CommonPrograms);
     if (findStringIC(input, testpath))
     {
-        output = l_PackageRootPath / "VFS\\Common Programs" / input.substr(testpath.wstring().length());
+        output = ((std::wstring)l_PackageRootPath.c_str()) + L"\\VFS\\Common Programs" + input.substr(testpath.wstring().length()).c_str();
         return output;
     }
     testpath = psf::known_folder(FOLDERID_LocalAppDataLow);
     if (findStringIC(input, testpath))
     {
-        output = l_PackageRootPath / "VFS\\LOCALAPPDATALOW" / input.substr(testpath.wstring().length());
+        output = ((std::wstring)l_PackageRootPath.c_str()) + L"\\VFS\\LOCALAPPDATALOW" + input.substr(testpath.wstring().length()).c_str();
         return output;
     }
     return output;

@@ -19,6 +19,8 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\CommonSrc\ArgumentVirtualization.cpp" />
+    <ClCompile Include="..\CommonSrc\findStringIC.cpp" />
     <ClCompile Include="..\CommonSrc\psf_logging.cpp" />
     <ClCompile Include="main.cpp">
       <UndefinePreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NONAMELESSUNION</UndefinePreprocessorDefinitions>
@@ -41,6 +43,8 @@
     <Xml Include="PSFLauncherMetadata.xml" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\CommonSrc\Config.h" />
+    <ClInclude Include="..\CommonSrc\findStringIC.h" />
     <ClInclude Include="Globals.h" />
     <ClInclude Include="PsfPowershellScriptRunner.h" />
     <ClInclude Include="StartProcessHelper.h" />
@@ -100,6 +104,9 @@
       </EntryPointSymbol>
       <SubSystem>Windows</SubSystem>
     </Link>
+    <ClCompile>
+      <AdditionalIncludeDirectories>$(SolutionDir)\CommonSrc;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ClCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <Link>
@@ -108,6 +115,9 @@
       </EntryPointSymbol>
       <SubSystem>Windows</SubSystem>
     </Link>
+    <ClCompile>
+      <AdditionalIncludeDirectories>$(SolutionDir)\CommonSrc;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ClCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <Link>
@@ -116,6 +126,9 @@
       </EntryPointSymbol>
       <SubSystem>Windows</SubSystem>
     </Link>
+    <ClCompile>
+      <AdditionalIncludeDirectories>$(SolutionDir)\CommonSrc;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ClCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <Link>
@@ -124,6 +137,9 @@
       </EntryPointSymbol>
       <SubSystem>Windows</SubSystem>
     </Link>
+    <ClCompile>
+      <AdditionalIncludeDirectories>$(SolutionDir)\CommonSrc;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ClCompile>
   </ItemDefinitionGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
 </Project>

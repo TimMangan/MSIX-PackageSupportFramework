@@ -84,6 +84,7 @@ DWORD __stdcall GetFileAttributesFixup(_In_ const CharT* fileName) noexcept
                     }
 #if _DEBUG
                     Log(L"[%d]GetFileAttributes: ShouldRedirect att=0x%x", GetFileAttributesInstance, attributes);
+                    Log(L"[%d]GetFileAttributes: ShouldRedirect GetLastError=0x%x", GetFileAttributesInstance, GetLastError());
 #endif
                     return attributes;
                 }
@@ -106,6 +107,7 @@ DWORD __stdcall GetFileAttributesFixup(_In_ const CharT* fileName) noexcept
                             attributes = impl::GetFileAttributes(PackageVersion.c_str());
 #if _DEBUG
                             Log(L"[%d]GetFileAttributes: ShouldRedirect att=0x%x", GetFileAttributesInstance, attributes);
+                            Log(L"[%d]GetFileAttributes: ShouldRedirect GetLastError=0x%x", GetFileAttributesInstance, GetLastError());
 #endif
                         }
                     }
@@ -113,6 +115,7 @@ DWORD __stdcall GetFileAttributesFixup(_In_ const CharT* fileName) noexcept
                     {
 #if _DEBUG
                         Log(L"[%d]GetFileAttributes: ShouldRedirect att=0x%x", GetFileAttributesInstance, attributes);
+                        Log(L"[%d]GetFileAttributes: ShouldRedirect GetLastError=0x%x", GetFileAttributesInstance, GetLastError());
 #endif
                     }
                     return attributes;
@@ -222,12 +225,14 @@ BOOL __stdcall GetFileAttributesExFixup(
                     {
 #if _DEBUG
                         Log(L"[%d]GetFileAttributesEx: ShouldRedirect retval=%d att=%d", GetFileAttributesExInstance, retval, ((WIN32_FILE_ATTRIBUTE_DATA*)fileInformation)->dwFileAttributes);
+                        Log(L"[%d]GetFileAttributesEx: ShouldRedirect GetLastError=0x%x", GetFileAttributesExInstance, GetLastError());
 #endif
                     }
                     else
                     {
 #if _DEBUG
                         Log(L"[%d]GetFileAttributesEx: ShouldRedirect retval=%d", GetFileAttributesExInstance, retval);
+                        Log(L"[%d]GetFileAttributesEx: ShouldRedirect GetLastError=0x%x", GetFileAttributesExInstance, GetLastError());
 #endif
                     }
                     return retval;
