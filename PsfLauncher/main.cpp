@@ -44,6 +44,7 @@ void LaunchMonitorInBackground(std::filesystem::path packageRoot, const wchar_t 
 void LaunchInBackgroundAsAdmin(const wchar_t executable[], const wchar_t arguments[], bool wait, int cmdShow, LPCWSTR dirStr);
 bool IsCurrentOSRS2OrGreater();
 std::wstring ReplaceVariablesInString(std::wstring inputString, bool ReplaceEnvironmentVars, bool ReplacePseudoVars);
+std::wstring ArgumentVirtualization(const std::wstring input);
 
 static inline bool check_suffix_if(iwstring_view str, iwstring_view suffix) noexcept;
 
@@ -143,6 +144,39 @@ int launcher_main(PCWSTR args, int cmdShow) noexcept try
             isHttp = true;
             exePath = exeWName;
         }
+        else if (_wcsnicmp(exeWName.c_str(), L"VFS\\",4) == 0)
+        {
+            // Look to see if file is in package, but might need to reverse VFS to find exe
+            exePath = packageRoot / exeWName;
+            if (!std::filesystem::exists(exePath))
+            {
+                // Since this is an exe filename, we'll only reverse the most important ones
+                if (_wcsnicmp(exeWName.c_str(), L"VFS\\Windows\\", 12) == 0)
+                {
+                    exePath = psf::known_folder(FOLDERID_Windows) / exeWName.substr(12);
+                }
+                else if (_wcsnicmp(exeWName.c_str(), L"VFS\\SystemX64\\", 14) == 0)
+                {
+                    exePath = psf::known_folder(FOLDERID_System) / exeWName.substr(14);
+                }
+                else if (_wcsnicmp(exeWName.c_str(), L"VFS\\SystemX86\\", 14) == 0)
+                {
+                    exePath = psf::known_folder(FOLDERID_SystemX86) / exeWName.substr(14);
+                }
+                else if (_wcsnicmp(exeWName.c_str(), L"VFS\\System\\", 11) == 0)
+                {
+                    exePath = psf::known_folder(FOLDERID_System) / exeWName.substr(14);
+                }
+                else if (_wcsnicmp(exeWName.c_str(), L"VFS\\ProgramFilesX64\\", 20) == 0)
+                {
+                    exePath = psf::known_folder(FOLDERID_ProgramFilesX64) / exeWName.substr(20);
+                }
+                else if (_wcsnicmp(exeWName.c_str(), L"VFS\\ProgramFilesX86\\", 20) == 0)
+                {
+                    exePath = psf::known_folder(FOLDERID_ProgramFilesX86) / exeWName.substr(20);
+                }
+            }
+        }
         else
         {
             exePath = packageRoot / exeWName;
@@ -155,7 +189,11 @@ int launcher_main(PCWSTR args, int cmdShow) noexcept try
     
     auto exeArgs = appConfig->try_get("arguments"); 
     std::wstring exeArgString = exeArgs ? exeArgs->as_string().wide() : (wchar_t*)L"";
+    LogString(L"Arguments Original", exeArgString.c_str());
     exeArgString = ReplaceVariablesInString(exeArgString, true, true);
+    LogString(L"Arguments Devariablized", exeArgString.c_str());
+    exeArgString = ArgumentVirtualization(exeArgString);
+    LogString(L"Arguments after ArgumentVirtualization", exeArgString.c_str());
 
     // Keep these quotes here.  StartProcess assumes there are quotes around the exe file name
     if (check_suffix_if(exeName, L".exe"_isv))

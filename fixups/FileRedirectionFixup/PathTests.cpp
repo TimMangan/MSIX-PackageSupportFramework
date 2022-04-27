@@ -22,7 +22,7 @@
 
 
 #if _DEBUG
-#define MOREDEBUG 1
+//#define MOREDEBUG 1
 #endif
 
 using namespace std::literals;
@@ -41,6 +41,7 @@ extern std::filesystem::path g_finalPackageRootPath;
 template <typename CharT>
 bool path_relative_toImpl(const CharT* path, const std::filesystem::path& basePath)
 {
+    // Compare using case insesitive matching
     return std::equal(basePath.native().begin(), basePath.native().end(), path, psf::path_compare{});
 }
 bool path_relative_to(const wchar_t* path, const std::filesystem::path& basePath)
@@ -486,11 +487,13 @@ std::wstring StripFileColonSlash(std::wstring old_string)
 std::filesystem::path trim_absvfs2varfolder(std::filesystem::path abs)
 {
     std::filesystem::path trimmed = abs;
-    if (trimmed.wstring().find(L"VFS") != std::wstring::npos)
+    if (trimmed.wstring().find(L"VFS") != std::wstring::npos &&
+        trimmed.wstring().find(L"vfs") != std::wstring::npos)
     {
         while (trimmed.has_parent_path())
         {
-            if (trimmed.parent_path().filename().wstring().compare(L"VFS") == 0)
+            if (trimmed.parent_path().filename().wstring().compare(L"VFS") == 0 ||
+                trimmed.parent_path().filename().wstring().compare(L"vfs") == 0)
                 return trimmed;
             trimmed = trimmed.parent_path();
         }

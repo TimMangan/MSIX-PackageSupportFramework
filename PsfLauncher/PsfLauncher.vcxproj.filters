@@ -18,6 +18,12 @@
     <ClCompile Include="..\CommonSrc\psf_logging.cpp">
       <Filter>CommonSrc</Filter>
     </ClCompile>
+    <ClCompile Include="..\CommonSrc\ArgumentVirtualization.cpp">
+      <Filter>CommonSrc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\CommonSrc\findStringIC.cpp">
+      <Filter>CommonSrc</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Xml Include="PSFLauncherMetadata.xml">
@@ -33,6 +39,12 @@
     </ClInclude>
     <ClInclude Include="Globals.h">
       <Filter>inc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\CommonSrc\Config.h">
+      <Filter>inc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\CommonSrc\findStringIC.h">
+      <Filter>CommonSrc</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

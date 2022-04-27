@@ -332,11 +332,42 @@ To implement scripting PsfLauncher uses a PowerShell script as an intermediator.
 }
 ```
 
-In this example two scripts are defined. The startScript is configured so that PsfLauncher will run this script only the first time that this user runs the application. It will wait for completion of the script before starting the executable associated with the application.  PsfLauncher will resolve the %MsixWritablePackageRoot% pseudo-variable allowing the script to write the configuration into the package redirected area (necessary since package scripts do not inject the FileRedirectionFixup).  The endScript example is configured to run after each time the application is run.
+In this example two scripts are defined. The startScript is configured so that PsfLauncher will run this script only the first time that this user runs the application. It will wait for completion of the script before starting the executable associated with the application.  
+PsfLauncher will resolve the %MsixWritablePackageRoot% pseudo-variable allowing the script to write the configuration into the package redirected area (necessary since package scripts do not inject the FileRedirectionFixup).  The endScript example is configured to run after each time the application is run.
 
 Note that the scriptPath must point to a powershell ps1 file; it may be a full path reference or a reference relative to the package root folder.  In addition to this script file, the package must also include a file named "StartingScriptWrapper.ps1", which is included in the Psf sources.  This script is run by PsfLauncher for any startScript or endScript, and the wrapper will invoke the script defined in the json configuration.
 
 The use of scriptExecutionMode may only be necessary in environments when Group Policy setting of default PowerShell ExecutionPolicy is expressed. 
+
+### Example 5
+This example shows how the launcher may be used to start an executable that is not in the package, but by referencing it using VFS pathing. 
+Referencing using VFS pathing allows for end-user systems where the standard paths might be altered from what we normally expect.
+
+We should note that there may be reasons to force a particular program (as is done in this example), or to instead let the end-users's system decide what program to use to open the txt file. Instead of the configuration shown below, you could configure the json application entry with the executable field with the .txt file (and blank arguments field) and let the client system use whatever file type assocated program is regitered for that file type. 
+
+
+```json
+  "applications": [
+    {
+      "id": "Sample5",
+      "executable": "VFS\\Windows\\Notepad.exe",
+      "arguments" : "VFS\\ProgramFilesX64\\Sample5\\Readme.txt"
+      "workingDirectory": ""
+    }
+  ],
+  "processes": [
+    ...(taken out for brevity)
+  ]
+}
+```
+
+In this example the executable file is not inside the package.  The launcher will attempt to see if the executable is in the VFS path of the package,
+and if not it will attempt to use the reverse-vfs path well known folder (typically translated to C"":\Windows\Notepad.exe").
+
+This reverse-vfs only applies to the executable field as process launching for the exe is not subject to the normal MSIX runtime searching.
+In the case of the arguments field, the executable will be passed the argument as a relative path from the package root, however the MSIX runtime and/or FileRedirectionFixup can
+intercept any file open call to redirect as appropriate.  In our case, we expect that the text file is part of the package and notepad will open the file from the package, 
+or the user-redirected area for the package if previously altered.
 
 ### Json Schema
 
