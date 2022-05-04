@@ -32,7 +32,7 @@ BOOL __stdcall CreateDirectoryFixup(_In_ const CharT* pathName, _In_opt_ LPSECUR
             }
 
             if (!IsUnderUserAppDataLocalPackages(wPathName.c_str()))
-            {
+            { 
                 path_redirect_info  pri = ShouldRedirectV2(wPathName.c_str(), redirect_flags::ensure_directory_structure, CreateDirectoryInstance);
                 //path_redirect_info  pri = ShouldRedirectV2(pathName, redirect_flags::ensure_directory_structure, CreateDirectoryInstance);
                 //path_redirect_info  pri = ShouldRedirectV2(pathName, redirect_flags::none, CreateDirectoryInstance);
