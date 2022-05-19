@@ -826,7 +826,7 @@ static path_redirect_info ShouldRedirectV2Impl(const CharT* path, redirect_flags
                 result.redirect_path.clear();
 
 #if _DEBUG
-                LogString(inst, L" \tFRFShouldRedirectV2: skipped (redirected not present check failed) for path", widen(path).c_str());
+                LogString(inst, L" \tFRFShouldRedirectV2: skipped (not present under any path check failed) for path", widen(path).c_str());
 #endif
                 return result;
             }

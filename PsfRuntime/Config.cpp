@@ -569,15 +569,16 @@ static inline constexpr iwstring_view remove_suffix_if(iwstring_view str, iwstri
 
 PSFAPI const psf::json_object* __stdcall PSFQueryExeConfig(const wchar_t* executable) noexcept try
 {
-    const auto exeName = remove_suffix_if(executable, L".exe"_isv);
+    //const auto exeName = remove_suffix_if(executable, L".exe"_isv);
+    const iwstring_view exeName  = iwstring_view (executable);
     if (auto processes = g_JsonHandler.root->as_object().try_get("processes"))
     {
         for (auto& processConfig : processes->as_array())
         {
             auto& obj = processConfig.as_object();
-            auto exe = obj.get("executable").as_string().wstring();
+            auto exePattern = obj.get("executable").as_string().wstring();
 
-            if (std::regex_match(exeName.begin(), exeName.end(), std::wregex(exe.data(), exe.length())))
+            if (std::regex_match(exeName.begin(), exeName.end(), std::wregex(exePattern.data(), exePattern.length())))
             {
                 return &obj;
             }

@@ -1,5 +1,11 @@
 # PSF Runtime
-The PSF Runtime serves several purposes. The first is that it is responsible for detouring `CreateProcess` to ensure that any child process will also get the PSF Runtime injected into it. Additionally, it is responsible for loading and parsing the `config.json` DOM as well as loading any configured fixup dlls for the current executable. Finally, it exposes a set of utility functions collectively referred to as the "PSF Framework" for use by the individual fixup dlls. This includes helpers for interop with the Detours library, functions for querying information about the current package/app id, and a set of functions for querying information from the `config.json` DOM. See [psf_runtime.h](../include/psf_runtime.h) for a more complete idea of this API surface as well as [psf_config.h](../include/psf_config.h) for an idea of how the JSON data is exposed.
+The PSF Runtime serves several purposes. 
+* It provides an intercept for detouring `CreateProcess` to ensure that:
+* * Any child process will run inside the container, along with grandchildren.
+* * Any child process gets the PSF Runtime injected into it. 
+* It provides an intercept for detouring `SetDllDirectory` and `AddDllDirectory[A/W]` to fix up path information.
+* It is responsible for loading and parsing the `config.json` DOM as well as loading any configured fixup dlls for the current executable. 
+* Finally, it exposes a set of utility functions collectively referred to as the "PSF Framework" for use by the individual fixup dlls. This includes helpers for interop with the Detours library, functions for querying information about the current package/app id, and a set of functions for querying information from the `config.json` DOM. See [psf_runtime.h](../include/psf_runtime.h) for a more complete idea of this API surface as well as [psf_config.h](../include/psf_config.h) for an idea of how the JSON data is exposed.
 
 ## Processes to be fixed up
 To ensure that all processes that require fixups are handled, PsfRuntime intercepts the processes creation API CreateProcess.  
@@ -19,8 +25,8 @@ Currently:
 As mentioned above, one of the major responsibilities that the PSF Runtime has is loading the fixups that are configured for the current executable. E.g. for a configuration that looks something like:
 
 ```json
-{
-    "processes": [
+ {
+     "processes": [
         {
             "executable": "ContosoApp",
             "fixups": [
@@ -32,6 +38,8 @@ As mentioned above, one of the major responsibilities that the PSF Runtime has i
     ]
 }
 ```
+
+And here is the xml form:
 
 ```xml
 <processes>
@@ -71,3 +79,49 @@ The PSF Runtime then calls `PSFInitialize` within a Detours transaction, failing
 
 ## Runtime Requirements
 As a part of its initialization, the PSF Runtime queries information about its environment that it then caches for later use. A few examples include parsing the `config.json`, caching the path to the package root, and caching the package name, among a couple other things. If any of these steps fail, e.g. because something is not present/cannot be found or any other failure, then the PSF Runtime dll will fail to load, which likely means that the process fails to start. Note that this implies the requirement that the application be running with package identity. There have been past conversations on adding support for a "debug" mode that works around this restriction (e.g. by using a fake package name, executable directory as the package root, etc.), but its benefit is questionable and has not yet been implemented.
+
+## Example Situations
+
+### Example 1: Add runtime to all child apps except console apps
+Often an application package will have many different executable process, and it is tedious to repeat the same fixup dlls for every one of them.
+Therefore it is very common to create the config.json file processes section to inject the same configuration into any process running inside the container without having to list each of them by using the Regex wildcard string for the executable name.
+However, there are situations where we don't want the injection:
+
+* We wouldn't have PsfRuntime inject a PsfRuntime in a PsfLauncher (as it will load the runtime itself).
+* We should not inject into any process that is going to be running outside of the container.
+* We might not want to inject into console apps running inside the container.
+
+If PsfRuntime's CreateProcess hook detects that the process config for the child process contains no fixups, it will skip injecting the launcher into that child process.  
+In the example below, the child process `notme.exe` will not get PSF injections.
+
+
+```json
+ {
+     "applications" [
+         ...
+     ],
+ 
+    "processes": [
+        {
+          "executable": "^PsfLauncher.*"
+        },
+        {
+          "executable": "^[Pp]ower[Ss]hell.*"
+        },
+        {
+          "executable": "^notme.exe$"
+        },
+        {
+            "executable": ".*",
+            "fixups": [
+                {
+                    "dll": "FileRedirectionFixup.dll",
+                    config {
+                        ...
+                    }
+                }
+            ]
+        }
+    ]
+}
+```

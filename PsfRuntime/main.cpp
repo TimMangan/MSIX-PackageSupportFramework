@@ -13,6 +13,9 @@
 
 #include "Config.h"
 
+
+
+
 struct loaded_fixup
 {
     HMODULE module_handle = nullptr;
@@ -284,6 +287,36 @@ void detach()
 
 BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID) noexcept try
 {
+
+#if BLOCKDEBUGOUTPUTTEST
+    HANDLE Handle = OpenProcess(
+        PROCESS_QUERY_INFORMATION | PROCESS_VM_READ,
+        FALSE,
+        GetCurrentProcessId() /* This is the PID, you can find one from windows task manager */
+    );
+    if (Handle)
+    {
+        WCHAR Buffer[MAX_PATH];
+        if (::GetModuleFileNameEx(Handle, 0, Buffer, MAX_PATH))
+        {
+            std::wstring xxx = Buffer;
+            if (xxx.find(L"rsession.exe") != std::wstring::npos)
+            {
+                g_psf_NoLogging = true;
+                //printf("testing...");
+                //psf::wait_for_debugger();
+                // DEBUG_EVENT evt;
+                // WaitForDebugEventEx(&evt, 0);
+            }
+        }
+        else
+        {
+            // You better call GetLastError() here
+        }
+        CloseHandle(Handle);
+    }
+#endif
+
     Log("PsfRuntime: In DllMain Pid=%d Tid=%d", GetCurrentProcessId(), GetCurrentThreadId());
     // Per detours documentation, immediately return true if running in a helper process
     if (::DetourIsHelperProcess())

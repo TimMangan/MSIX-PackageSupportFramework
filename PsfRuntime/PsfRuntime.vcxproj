@@ -22,6 +22,7 @@
     <ClCompile Include="..\CommonSrc\ArgumentVirtualization.cpp" />
     <ClCompile Include="..\CommonSrc\findStringIC.cpp" />
     <ClCompile Include="..\CommonSrc\psf_logging.cpp" />
+    <ClCompile Include="AddSetDllDirectory.cpp" />
     <ClCompile Include="Config.cpp" />
     <ClCompile Include="CreateProcessHook.cpp" />
     <ClCompile Include="main.cpp" />

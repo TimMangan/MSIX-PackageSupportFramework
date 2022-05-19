@@ -46,6 +46,8 @@
 #endif
 
 
+
+
 // Since consumers typically call 'Log' multiple times, make sure that we synchronize that output
 inline std::recursive_mutex g_outputMutex;
 

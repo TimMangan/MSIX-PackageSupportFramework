@@ -45,38 +45,38 @@ struct SIH_PROC_THREAD_ATTRIBUTE_LIST
     SIH_PROC_THREAD_ATTRIBUTE_ENTRY Entry[ANYSIZE_ARRAY];
 };
 
-inline void DumpStartupAttributes(SIH_PROC_THREAD_ATTRIBUTE_LIST* attlist)
+inline void DumpStartupAttributes(SIH_PROC_THREAD_ATTRIBUTE_LIST* attlist, DWORD instance)
 {
     if (attlist != NULL)
     {
-        Log("Attribute List Dump:");
-        Log("\t\tdwflags=0x%x Size=0x%x Count=0x%x", attlist->dwflags, attlist->Size, attlist->Count);
+        Log("\t[%d] Attribute List Dump:", instance);
+        Log("\t\t[%d]\tdwflags=0x%x Size=0x%x Count=0x%x", instance, attlist->dwflags, attlist->Size, attlist->Count);
 
         if ((attlist->dwflags & SIH_PROC_THREAD_ATTRIBUTE_DESKTOP_APP_POLICY) != 0)
         {
-            Log("\t\tHas Desktop_App_Policy.");
+            Log("\t\t[%d]\tHas Desktop_App_Policy.", instance);
             for (ULONG inx = 0; inx < attlist->Count; inx++)
             {
                 SIH_PROC_THREAD_ATTRIBUTE_ENTRY Entry = attlist->Entry[inx];
-                Log("\t\t\tIndex %d Attribute 0x%x Size=0x%x", inx, Entry.Attribute, Entry.cbSize);
-                Loghexdump(Entry.lpvalue, (long)Entry.cbSize);
+                Log("\t\t[%d]\t\tIndex %d Attribute 0x%x Size=0x%x", instance, inx, Entry.Attribute, Entry.cbSize);
+                Loghexdump(Entry.lpvalue, (long)Entry.cbSize, instance);
                 if (Entry.Attribute == PROC_THREAD_ATTRIBUTE_DESKTOP_APP_POLICY)
                 {
-                    Log("\t\t\tIs Attribute_Desktop_App_Policy");
+                    Log("\t\t[%d]\t\tIs Attribute_Desktop_App_Policy", instance);
                     if (Entry.cbSize == 4)
                     {
                         DWORD attval = *((DWORD*)(Entry.lpvalue));
                         if ((attval & PROCESS_CREATION_DESKTOP_APP_BREAKAWAY_ENABLE_PROCESS_TREE) != 0)
                         {
-                            Log("\t\t\t\tPROCESS_CREATION_DESKTOP_APP_BREAKAWAY_ENABLE_PROCESS_TREE present.");
+                            Log("\t\t[%d]\t\t\tPROCESS_CREATION_DESKTOP_APP_BREAKAWAY_ENABLE_PROCESS_TREE present.", instance);
                         }
                         if ((attval & PROCESS_CREATION_DESKTOP_APP_BREAKAWAY_DISABLE_PROCESS_TREE) != 0)
                         {
-                            Log("\t\t\t\tPROCESS_CREATION_DESKTOP_APP_BREAKAWAY_DISABLE_PROCESS_TREE present.");
+                            Log("\t\t[%d]\t\t\tPROCESS_CREATION_DESKTOP_APP_BREAKAWAY_DISABLE_PROCESS_TREE present.", instance);
                         }
                         if ((attval & PROCESS_CREATION_DESKTOP_APP_BREAKAWAY_OVERRIDE) != 0)
                         {
-                            Log("\t\t\t\tPROCESS_CREATION_DESKTOP_APP_BREAKAWAY_OVERRIDE present.");
+                            Log("\t\t[%d]\t\t\tPROCESS_CREATION_DESKTOP_APP_BREAKAWAY_OVERRIDE present.", instance);
                         }
                     }
                 }
@@ -84,7 +84,7 @@ inline void DumpStartupAttributes(SIH_PROC_THREAD_ATTRIBUTE_LIST* attlist)
         }
         else
         {
-            Loghexdump(attlist, 48);
+            Loghexdump(attlist, 48, instance);
         }
     }
 }
@@ -160,6 +160,7 @@ private:
     // to be modified in both initialization calls in the CTOR.
 
     std::unique_ptr<_PROC_THREAD_ATTRIBUTE_LIST> attributeList;
+    bool requiresCleanup = false;
 
 public:
 
@@ -175,10 +176,11 @@ public:
             countAtt++;
         }
         // Ffor example of this code with two attributes see: https://github.com/microsoft/terminal/blob/main/src/server/Entrypoints.cpp
-        SIZE_T AttributeListSize; //{};
+        SIZE_T AttributeListSize;
         InitializeProcThreadAttributeList(nullptr, countAtt, 0, &AttributeListSize);
         attributeList = std::unique_ptr<_PROC_THREAD_ATTRIBUTE_LIST>(reinterpret_cast<_PROC_THREAD_ATTRIBUTE_LIST*>(new char[AttributeListSize]));
         //attributeList = std::unique_ptr<_PROC_THREAD_ATTRIBUTE_LIST>(reinterpret_cast<_PROC_THREAD_ATTRIBUTE_LIST*>(HeapAlloc(GetProcessHeap(), 0, AttributeListSize)));
+        requiresCleanup = true;
         InitializeProcThreadAttributeList(
                 attributeList.get(),
                 countAtt,
@@ -195,7 +197,7 @@ public:
                 bool b = UpdateProcThreadAttribute(
                     attributeList.get(),
                     0,
-                    ProcThreadAttributeValue(18, FALSE, TRUE, FALSE),
+                    ProcThreadAttributeValue(18, FALSE, TRUE, FALSE),  //ProcThreadAttributeDesktopAppPolicy = 18
                     &createInContainerAttribute,
                     sizeof(createInContainerAttribute),
                     nullptr,
@@ -247,10 +249,114 @@ public:
         }
     }
 
+    MyProcThreadAttributeList(SIH_PROC_THREAD_ATTRIBUTE_LIST *AttributeListInput, bool setContainer, bool inside)
+    {
+        DWORD countAtt = 0;
+        DWORD haveSet = false;
+        if (AttributeListInput != NULL)
+        {
+            if ((AttributeListInput->dwflags & SIH_PROC_THREAD_ATTRIBUTE_DESKTOP_APP_POLICY) != 0)
+            {
+                countAtt = AttributeListInput->Count;
+                for (ULONG inx = 0; inx < AttributeListInput->Count; inx++)
+                {
+                    SIH_PROC_THREAD_ATTRIBUTE_ENTRY Entry = AttributeListInput->Entry[inx];
+                    if (Entry.Attribute == PROC_THREAD_ATTRIBUTE_DESKTOP_APP_POLICY)
+                    {
+                        if (Entry.cbSize == 4)
+                        {
+                            haveSet = true;
+                            DWORD attval = *((DWORD*)(Entry.lpvalue));
+                            if ((attval & PROCESS_CREATION_DESKTOP_APP_BREAKAWAY_OVERRIDE) == 0)
+                            {
+                                if (setContainer && inside)
+                                {
+                                    attval &= ~PROCESS_CREATION_DESKTOP_APP_BREAKAWAY_OVERRIDE;
+                                    attval |= PROCESS_CREATION_DESKTOP_APP_BREAKAWAY_DISABLE_PROCESS_TREE;
+                                    attval &= ~PROCESS_CREATION_DESKTOP_APP_BREAKAWAY_ENABLE_PROCESS_TREE;
+                                }
+                            }
+                            else
+                            {
+                                if (setContainer && !inside)
+                                {
+                                    attval |= PROCESS_CREATION_DESKTOP_APP_BREAKAWAY_OVERRIDE;
+                                    attval &= ~PROCESS_CREATION_DESKTOP_APP_BREAKAWAY_DISABLE_PROCESS_TREE;
+                                    attval |= PROCESS_CREATION_DESKTOP_APP_BREAKAWAY_ENABLE_PROCESS_TREE;
+                                }
+                            }
+                            *((DWORD*)(Entry.lpvalue)) = attval;
+                        }
+                    }
+                }
+            }
+        }
+        if (!haveSet)
+        {
+            countAtt++;
+        }
+
+
+        if (AttributeListInput && AttributeListInput->Count != countAtt)
+        {
+            // We need to add an extra attribute, so we'll replace that one.
+
+            SIZE_T AttributeListSize;
+            InitializeProcThreadAttributeList(nullptr, countAtt, 0, &AttributeListSize);
+            attributeList = std::unique_ptr<_PROC_THREAD_ATTRIBUTE_LIST>(reinterpret_cast<_PROC_THREAD_ATTRIBUTE_LIST*>(new char[AttributeListSize]));
+            InitializeProcThreadAttributeList(
+                attributeList.get(),
+                countAtt,
+                0,
+                &AttributeListSize);
+            for (ULONG inx = 0; inx < AttributeListInput->Count; inx++)
+            {
+                SIH_PROC_THREAD_ATTRIBUTE_ENTRY Entry = AttributeListInput->Entry[inx];
+                UpdateProcThreadAttribute(
+                    attributeList.get(),
+                    0,
+                    Entry.Attribute,
+                    Entry.lpvalue,
+                    Entry.cbSize,
+                    nullptr,
+                    nullptr);
+            }
+            DWORD attvalue = 0;
+            if (setContainer && inside)
+            {
+                attvalue |= PROCESS_CREATION_DESKTOP_APP_BREAKAWAY_DISABLE_PROCESS_TREE;
+            }
+            else if (setContainer && !inside)
+            {
+                attvalue |= PROCESS_CREATION_DESKTOP_APP_BREAKAWAY_OVERRIDE;
+                attvalue |= PROCESS_CREATION_DESKTOP_APP_BREAKAWAY_ENABLE_PROCESS_TREE;
+            }
+            UpdateProcThreadAttribute(
+                    attributeList.get(),
+                    0,
+                    ProcThreadAttributeValue(18, FALSE, TRUE, FALSE),  //ProcThreadAttributeDesktopAppPolicy = 18 becomes 0x40000 in dwFlags
+                    &attvalue,
+                    sizeof(attvalue),
+                    nullptr,
+                    nullptr);
+        }
+        else
+        {
+            // we updated the existing list inline and don't need to replace
+            attributeList = std::unique_ptr<_PROC_THREAD_ATTRIBUTE_LIST>(reinterpret_cast<_PROC_THREAD_ATTRIBUTE_LIST*>(AttributeListInput));
+
+        }
+    }
+
     ~MyProcThreadAttributeList()
     {
-        DeleteProcThreadAttributeList(attributeList.get());
+        if (requiresCleanup)
+        {
+            DeleteProcThreadAttributeList(attributeList.get());
+        }
     }
+
+
 
     LPPROC_THREAD_ATTRIBUTE_LIST get()
     {

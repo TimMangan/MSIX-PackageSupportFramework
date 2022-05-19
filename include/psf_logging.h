@@ -9,7 +9,7 @@
 
 #include <windows.h>
 
-
+extern bool g_psf_NoLogging;
 
 
 void Log(const char* fmt, ...);
@@ -45,4 +45,4 @@ void LogString(DWORD rememberedInst, DWORD inst, const wchar_t* name, const wcha
 
 void LogCountedStringW(const char* name, const wchar_t* value, std::size_t length);
 
-void Loghexdump(void* pAddressIn, long  lSize);
+void Loghexdump(void* pAddressIn, long  lSize, DWORD instance = 0);

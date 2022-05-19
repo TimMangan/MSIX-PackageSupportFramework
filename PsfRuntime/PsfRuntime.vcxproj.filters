@@ -30,6 +30,9 @@
     <ClCompile Include="..\CommonSrc\findStringIC.cpp">
       <Filter>CommonSrc</Filter>
     </ClCompile>
+    <ClCompile Include="AddSetDllDirectory.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="PsfRuntime.def" />
