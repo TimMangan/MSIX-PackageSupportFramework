@@ -14,8 +14,6 @@
 #include "Config.h"
 
 
-
-
 struct loaded_fixup
 {
     HMODULE module_handle = nullptr;
@@ -335,6 +333,8 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID) noexcept try
             {
                 g_PsfRunTimeModulePath[0] = 0x0;
             }
+
+
             attach();
         }
         catch (...)
