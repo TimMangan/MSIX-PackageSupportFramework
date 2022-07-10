@@ -80,7 +80,7 @@ void Log(const wchar_t* fmt, ...)
         {
             ::OutputDebugStringA("Exception in wide Log()");
             ::OutputDebugStringW(fmt);
-        }\
+        }
     }
 }
 
@@ -105,7 +105,7 @@ void LogString(const char* name, const wchar_t* value)
     {
         if ((value != NULL && ((char*)value)[1] == 0x0))
         {
-            Log(L"%s=%ls\n", name, value);
+            Log(L"%s=%s\n", name, value);
         }
         else
         {
@@ -118,14 +118,7 @@ void LogString(const wchar_t* name, const char* value)
 {
     if (!g_psf_NoLogging)
     {
-        if ((value != NULL && value[1] != 0x0))
-        {
-            Log(L"%ls=%s\n", name, value);
-        }
-        else
-        {
-            Log(L"%ls=%ls", name, (wchar_t*)value);
-        }
+        Log(L"%s=%s\n", name, widen(value).c_str());
     }
 }
 
@@ -133,14 +126,7 @@ void LogString(const wchar_t* name, const wchar_t* value)
 {
     if (!g_psf_NoLogging)
     {
-        if ((value != NULL && ((char*)value)[1] == 0x0))
-        {
-            Log(L"%ls=%ls\n", name, value);
-        }
-        else
-        {
-            Log(L"%ls=%s", name, (char*)value);
-        }
+        Log(L"%s=%s\n", name, value);
     }
 }
 
