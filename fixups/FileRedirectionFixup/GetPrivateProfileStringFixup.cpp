@@ -115,10 +115,16 @@ DWORD __stdcall GetPrivateProfileStringFixup(
             }
         }
     }
+#if _DEBUG
+    // Fall back to assuming no redirection is necessary if exception
+    LOGGED_CATCHHANDLER(GetPrivateProfileStringInstance, L"GetPrivateProfileString")
+#else
     catch (...)
     {
-        // Fall back to assuming no redirection is necessary
+        Log(L"[%d] GetPrivateProfileString Exception=0x%x", GetPrivateProfileStringInstance, GetLastError());
     }
+#endif
+
 
     DWORD dRet =  impl::GetPrivateProfileString(appName, keyName, defaultString, string, stringLength, fileName);
 #if _DEBUG

@@ -13,12 +13,12 @@ BOOL __stdcall WritePrivateProfileSectionFixup(
     _In_opt_ const CharT* string,
     _In_opt_ const CharT* fileName) noexcept
 {
+    DWORD WritePrivateProfileSectionInstance = ++g_FileIntceptInstance;
     auto guard = g_reentrancyGuard.enter();
     try
     {
         if (guard)
         {
-            DWORD WritePrivateProfileSectionInstance = ++g_FileIntceptInstance;
 
             if (fileName != NULL)
             {
@@ -50,10 +50,16 @@ BOOL __stdcall WritePrivateProfileSectionFixup(
             }
         }
     }
+#if _DEBUG
+    // Fall back to assuming no redirection is necessary if exception
+    LOGGED_CATCHHANDLER(WritePrivateProfileSectionInstance, L"WritePrivateProfileSection")
+#else
     catch (...)
     {
-        // Fall back to assuming no redirection is necessary
+        Log(L"[%d] WritePrivateProfileSection Exception=0x%x", WritePrivateProfileSectionInstance, GetLastError());
     }
+#endif 
+
 
     return impl::WritePrivateProfileSection(appName, string, fileName);
 }

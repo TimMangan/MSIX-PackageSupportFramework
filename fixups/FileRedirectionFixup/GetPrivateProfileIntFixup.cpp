@@ -101,10 +101,15 @@ UINT __stdcall GetPrivateProfileIntFixup(
             }
         }
     }
+#if _DEBUG
+    // Fall back to assuming no redirection is necessary if exception
+    LOGGED_CATCHHANDLER(GetPrivateProfileIntInstance, L"GetPrivateProfileInt")
+#else
     catch (...)
     {
-        // Fall back to assuming no redirection is necessary
+        Log(L"[%d] GetPrivateProfileInt Exception=0x%x", GetPrivateProfileIntInstance, GetLastError());
     }
+#endif
 
     UINT uVal = impl::GetPrivateProfileInt(sectionName, key, nDefault, fileName);
 #if _DEBUG

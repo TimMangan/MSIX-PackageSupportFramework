@@ -15,12 +15,12 @@ DWORD __stdcall GetPrivateProfileSectionFixup(
     _In_ DWORD stringLength,
     _In_opt_ const CharT* fileName) noexcept
 {
+    DWORD GetPrivateProfileSectionInstance = ++g_FileIntceptInstance;
     auto guard = g_reentrancyGuard.enter();
     try
     {
         if (guard)
         {
-            DWORD GetPrivateProfileSectionInstance = ++g_FileIntceptInstance;
             if (fileName != NULL)
             {
 #if _DEBUG
@@ -64,10 +64,16 @@ DWORD __stdcall GetPrivateProfileSectionFixup(
             }
         }
     }
+#if _DEBUG
+    // Fall back to assuming no redirection is necessary if exception
+    LOGGED_CATCHHANDLER(GetPrivateProfileSectionInstance, L"GetPrivateProfileSection")
+#else
     catch (...)
     {
-        // Fall back to assuming no redirection is necessary
+        Log(L"[%d] GetPrivateProfileSection Exception=0x%x", GetPrivateProfileSectionInstance, GetLastError());
     }
+#endif
+
 
     return impl::GetPrivateProfileSection(appName, string, stringLength, fileName);
 }

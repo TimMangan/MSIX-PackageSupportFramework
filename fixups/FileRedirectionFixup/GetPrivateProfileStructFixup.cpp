@@ -16,12 +16,12 @@ BOOL __stdcall GetPrivateProfileStructFixup(
     _In_ UINT uSizeStruct,
     _In_opt_ const CharT* fileName) noexcept
 {
+    DWORD GetPrivateProfileStructInstance = ++g_FileIntceptInstance;
     auto guard = g_reentrancyGuard.enter();
     try
     {
         if (guard)
         {
-            DWORD GetPrivateProfileStructInstance = ++g_FileIntceptInstance;
             if (fileName != NULL)
             {
 #if _DEBUG
@@ -58,10 +58,16 @@ BOOL __stdcall GetPrivateProfileStructFixup(
             }
         }
     }
+#if _DEBUG
+    // Fall back to assuming no redirection is necessary if exception
+    LOGGED_CATCHHANDLER(GetPrivateProfileStructInstance, L"GetPrivateProfileStruct")
+#else
     catch (...)
     {
-        // Fall back to assuming no redirection is necessary
+        Log(L"[%d] GetPrivateProfileStruct Exception=0x%x", GetPrivateProfileStructInstance, GetLastError());
     }
+#endif
+
 
     return impl::GetPrivateProfileStruct(sectionName, key, structArea, uSizeStruct, fileName);
 }
