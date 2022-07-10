@@ -13,13 +13,13 @@ BOOL __stdcall CreateHardLinkFixup(
     _In_ const CharT* existingFileName,
     _Reserved_ LPSECURITY_ATTRIBUTES securityAttributes) noexcept
 {
+    DWORD CreateHardLinkInstance = ++g_FileIntceptInstance;
     auto guard = g_reentrancyGuard.enter();
     try
     {
         if (guard)
         {
 #if _DEBUG
-            DWORD CreateHardLinkInstance = ++g_FileIntceptInstance;
             LogString(CreateHardLinkInstance,L"CopyHardLinkFixup for",    fileName);
             LogString(CreateHardLinkInstance,L"CopyHardLinkFixup target", existingFileName);
 #endif
@@ -40,10 +40,16 @@ BOOL __stdcall CreateHardLinkFixup(
             }
         }
     }
+#if _DEBUG
+    // Fall back to assuming no redirection is necessary if exception
+    LOGGED_CATCHHANDLER(CreateHardLinkInstance, L"CreateHardlink")
+#else
     catch (...)
     {
-        // Fall back to assuming no redirection is necessary
+        Log(L"[%d] CreateHardLink Exception=0x%x", CreateHardLinkInstance, GetLastError());
     }
+#endif
+
 
     // Improve app compat by allowing long paths always
     if constexpr (psf::is_ansi<CharT>)
