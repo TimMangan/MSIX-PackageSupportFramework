@@ -18,6 +18,9 @@
     <ClInclude Include="PathRedirection.h">
       <Filter>inc</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\include\CatchHandler.h">
+      <Filter>inc</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="readme.md" />
@@ -84,6 +87,12 @@
     </ClCompile>
     <ClCompile Include="GetPrivateProfileStructFixup.cpp" />
     <ClCompile Include="SearchPath.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="UCRTBasedPosixFunctions.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="ReadDirectoryChangesFixup.cpp">
       <Filter>src</Filter>
     </ClCompile>
   </ItemGroup>
