@@ -150,7 +150,7 @@ void InitializeConfiguration()
 #if _DEBUG
                             Log(L"RegLegacyFixups:      is FakeDelete\n");
 #endif
-                            recordItem.remeditaionType = Reg_Remediation_type_FakeDelete;
+                            recordItem.remeditaionType = Reg_Remediation_Type_FakeDelete;
 
                             auto hiveType = regItemObject.try_get("hive")->as_string().wstring();
 #if _DEBUG
@@ -187,8 +187,19 @@ void InitializeConfiguration()
 
                             specItem.remediationRecords.push_back(recordItem);
                         }
+                        else if (type.compare(L"HKLM2HKCU") == 0)
+                        {
+#if _DEBUG
+                            Log(L"RegLegacyFixups:      is HKLM2HKCU\n");
+#endif
+                            recordItem.remeditaionType = Reg_Remdiaton_Type_HKLM_to_HKCU;
+                        }
                         else
                         {
+                        
+#if _DEBUG
+                            LogString(L"RegLegacyFixups:      have unknown",type.data());
+#endif
                         }
                         g_regRemediationSpecs.push_back(specItem);
                     }

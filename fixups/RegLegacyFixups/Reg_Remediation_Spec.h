@@ -14,7 +14,8 @@ enum  Reg_Remediation_Types
 {
     Reg_Remediation_Type_Unknown = 0,
     Reg_Remediation_Type_ModifyKeyAccess,
-    Reg_Remediation_type_FakeDelete
+    Reg_Remediation_Type_FakeDelete,
+    Reg_Remdiaton_Type_HKLM_to_HKCU,
 };
 
 enum Modify_Key_Access_Types

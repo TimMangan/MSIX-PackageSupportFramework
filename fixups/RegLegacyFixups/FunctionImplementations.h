@@ -227,12 +227,3 @@ namespace impl
 
 
 
-inline std::wstring InterpretStringW(const char* value)
-{
-    return widen(value);
-}
-inline std::wstring InterpretStringW(const wchar_t* value)
-{
-    return value;
-}
-
