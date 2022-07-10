@@ -10,12 +10,12 @@
 template <typename CharT>
 BOOL __stdcall DeleteFileFixup(_In_ const CharT* fileName) noexcept
 {
+    DWORD DeleteFileInstance = ++g_FileIntceptInstance;
     auto guard = g_reentrancyGuard.enter();
     try
     {
         if (guard)
         {
-            DWORD DeleteFileInstance = ++g_FileIntceptInstance;
 #if _DEBUG
             LogString(DeleteFileInstance,L"DeleteFileFixup for fileName", fileName);
 #endif
@@ -41,6 +41,7 @@ BOOL __stdcall DeleteFileFixup(_In_ const CharT* fileName) noexcept
 #if _DEBUG
                         Log(L"[%d]DeleteFileFixup Exists in package but not redir, so fake success.", DeleteFileInstance);
 #endif
+                        SetLastError(ERROR_SUCCESS);
                         return TRUE;
                     }
                     else
@@ -70,11 +71,15 @@ BOOL __stdcall DeleteFileFixup(_In_ const CharT* fileName) noexcept
 #endif
         }
     }
+#if _DEBUG
+    // Fall back to assuming no redirection is necessary if exception
+    LOGGED_CATCHHANDLER(DeleteFileInstance, L"DeleteFile")
+#else
     catch (...)
     {
-        // Fall back to assuming no redirection is necessary
-        Log(L"DeleteFileFixup *** Exception *** ");
+        Log(L"[%d] DeleteFile Exception=0x%x", DeleteFileInstance, GetLastError());
     }
+#endif
 
     std::wstring rldFileName = TurnPathIntoRootLocalDevice(widen_argument(fileName).c_str());
     return impl::DeleteFile(rldFileName.c_str());
