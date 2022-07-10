@@ -26,7 +26,7 @@ namespace PsfMonitor
         #region DATA_SYSTEM
         public string ProviderName_SYSTEM = "System";
         private BackgroundWorker TraceBgWorker_SYSTEM = null;
-        private bool WaitingForEventStart_SYSTEM = true;
+        //private bool WaitingForEventStart_SYSTEM = true;
         #endregion
 
         #region BACKGROUNDWORKER_SYSTEM
@@ -74,7 +74,7 @@ namespace PsfMonitor
                     Ev_OperationalBookmark = eventInstance.Bookmark;
                 }
                 R_Operational.Dispose();
-                WaitingForEventStart_SYSTEM = false;
+                //WaitingForEventStart_SYSTEM = false;
 
                 worker.ReportProgress(count++);
 
@@ -138,12 +138,12 @@ namespace PsfMonitor
             }
             catch
             {
-                WaitingForEventStart_SYSTEM = false;
+                //WaitingForEventStart_SYSTEM = false;
             }
         } // ETWTraceInBackground_DoWork_SYSTEM()
         private void ETWTraceInBackground_ProgressChanged_SYSTEM(object sender, ProgressChangedEventArgs e)
         {
-            WaitingForEventStart_SYSTEM = false;
+            //WaitingForEventStart_SYSTEM = false;
             if (e.UserState != null)
             {
                 EventItem eItem = (EventItem)e.UserState;

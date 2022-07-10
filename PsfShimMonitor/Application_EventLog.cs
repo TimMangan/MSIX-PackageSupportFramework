@@ -24,7 +24,7 @@ namespace PsfMonitor
         #region DATA_APPS
         public string ProviderName_APPS = "Application";
         private BackgroundWorker TraceBgWorker_APPS = null;
-        private bool WaitingForEventStart_APPS = true;
+        //private bool WaitingForEventStart_APPS = true;
         #endregion
 
 
@@ -73,7 +73,7 @@ namespace PsfMonitor
                     Ev_OperationalBookmark = eventInstance.Bookmark;
                 }
                 R_Operational.Dispose();
-                WaitingForEventStart_APPS = false;
+                //WaitingForEventStart_APPS = false;
 
                 worker.ReportProgress(count++);
 
@@ -136,12 +136,12 @@ namespace PsfMonitor
             }
             catch
             {
-                WaitingForEventStart_APPS = false;
+                //WaitingForEventStart_APPS = false;
             }
         } // ETWTraceInBackground_DoWork_APPS()
         private void ETWTraceInBackground_ProgressChanged_APPS(object sender, ProgressChangedEventArgs e)
         {
-            WaitingForEventStart_APPS = false;
+            //WaitingForEventStart_APPS = false;
             if (e.UserState != null)
             {
                 EventItem eItem = (EventItem)e.UserState;
