@@ -65,10 +65,49 @@ namespace impl
 
     inline auto SearchPath = psf::detoured_string_function(&::SearchPathA, &::SearchPathW);
 
-    // Most internal use of GetFileAttributes is to check to see if a file/directory exists, so provide a helper
+#if FIXUP_UCRT
+    // ucrtbased.dll functions
+    inline auto fopen = &::fopen;
+    inline auto _wfopen = &::_wfopen;
+    inline auto fopen_s = &::fopen_s;
+    inline auto _wfopen_s = &::_wfopen_s;
+
+#include <io.h>
+#include <stdio.h>
+    //inline auto _findfirst = &::_findfirst;    // is just a macro
+    ////inline auto _findfirst32 = &::_findfirst32;         // can't find???
+    ////inline auto _findfirst32i64 = &::_findfirst32i64;   // can't find???
+    ////inline auto _findfirst64 = &::_findfirst64;         // can't find???
+    ////inline auto _findfirst64i32 = &::_findfirst64i32;   // can't find???
+    //inline auto _wfindfirst = &::_wfindfirst;    // is just a macro
+    inline auto _wfindfirst32 = &::_wfindfirst32;
+    inline auto _wfindfirst32i64 = &::_wfindfirst32i64;
+    inline auto _wfindfirst64 = &::_wfindfirst64;
+    inline auto _wfindfirst64i32 = &::_wfindfirst64i32;
+    ////inline auto _mkdir = &::_mkdir;                      // can't find???
+    inline auto _wmkdir = &::_wmkdir;
+    ////inline auto _open = &::_open;                        // can't find???
+    inline auto _wopen = &::_wopen;
+    ////inline auto _rmdir = &::_rmdir;                      // can't find???
+    inline auto _wrmdir = &::_wrmdir;
+    ////inline auto _sopen = &::_sopen;                      // can't find???
+    inline auto _wsopen = &::_wsopen;
+    ////inline auto _sopen_s = &::_sopen_s;                  // can't find???
+    inline auto _wsopen_s = &::_wsopen_s;
+    //////////inline auto _unlink = &::_unlink;             // troublemaker
+    inline auto _wunlink = &::_wunlink;
+#endif
+
+    inline auto ReadDirectoryChangesW = &::ReadDirectoryChangesW;
+    inline auto ReadDirectoryChangesExW = &::ReadDirectoryChangesExW;
+
+    // Most internal use of GetFileAttributes is to check to see if a file/directory exists, so provide a helper, but don't affect existing GetLastError
     template <typename CharT>
     inline bool PathExists(CharT* path) noexcept
     {
-        return GetFileAttributes(path) != INVALID_FILE_ATTRIBUTES;
+        DWORD oldErr = GetLastError();
+        bool bRet = GetFileAttributes(path) != INVALID_FILE_ATTRIBUTES;
+        SetLastError(oldErr);
+        return bRet;
     }
 }
