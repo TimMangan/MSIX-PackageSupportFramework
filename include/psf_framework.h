@@ -68,6 +68,22 @@ namespace psf
                 target->Registered = true;
             }
         });
+
+    }
+
+    inline int attach_count_all()
+    {
+        int count = 0;
+        std::for_each(details::fixups_begin, details::fixups_end, [&](details::detour_function_pair* target)
+            {
+                if (target && !target->Registered)
+                {
+                    check_win32(::PSFRegister(&target->Target, target->Detour));
+                    target->Registered = true;
+                    count++;
+                }
+            });
+        return count;
     }
 
     inline void detach_all()

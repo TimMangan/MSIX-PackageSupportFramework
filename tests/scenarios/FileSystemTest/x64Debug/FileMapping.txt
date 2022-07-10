@@ -32,3 +32,8 @@
 "file.txt" "Tèƨƭ\Ç\file.txt"
 "file.ini" "TestIniFile.ini"
 "file.ini" "TèƨƭFïℓè.ini"
+
+
+"file.ini" "UCTestIniFile.ini"
+"file.txt" "VFS\Windows\UCWindowsFïℓè.txt"
+"file.txt"     "VFS\LocalAppData\FileSystemTest\UCWindowsFïℓè.txt"

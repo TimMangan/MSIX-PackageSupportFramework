@@ -55,7 +55,7 @@ int main(int argc, const char** argv)
     test_initialize("EnvVarsA Tests", 4);
 
 
-    test_begin("EnvVarsA GetEnvironmentA Test#1 Name Test2 from Json");
+    test_begin("EnvVarsA GetEnvironmentA Test#1: Test1/Value1 from Json");
     try
     {
         char* buffer = new char[len];
@@ -91,7 +91,8 @@ int main(int argc, const char** argv)
     test_end(result);
 
 
-    test_begin("EnvVarsA GetEnvironmentA Test#2 Name Test2 from AppReg HKCU");
+    test_begin("EnvVarsA GetEnvironmentA Test#2 Test2/Value2Reg from AppReg HKCU");
+    std::wcout << "EnvVarsA GetEnvironmentA Test#2 Test2/Value2Reg from AppReg HKCU" << std::endl;
     try
     {
         char* buffer = new char[len];
@@ -129,7 +130,7 @@ int main(int argc, const char** argv)
 
 
     bool Test3Success = false;
-    test_begin("EnvVarsA SetEnvironmentA Test#3 Name Test2 to AppReg HKCU");
+    test_begin("EnvVarsA SetEnvironmentA Test#3 Name Test2/Value2RegModified to AppReg HKCU");
     try
     {
         trace_messages("Testing: ", info_color, "SetEnvironmentA Test#3", new_line);

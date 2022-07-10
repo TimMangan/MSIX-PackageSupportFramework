@@ -2,6 +2,7 @@
 // Copyright (C) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 //-------------------------------------------------------------------------------------------------------
+#define NOSKIP 1
 
 #include <conio.h>
 #include <fcntl.h>
@@ -13,6 +14,7 @@
 #include <test_config.h>
 
 #include "common_paths.h"
+#include "file_paths.h"
 
 void InitializeFolderMappings()
 {
@@ -66,13 +68,23 @@ int EnumerateDirectoriesTests();
 int EnumerateDirectoriesTests2();
 int PrivateProfileTests();
 int SearchPathTests();
+int WfopenTests(int);
+int Wfopen_sTests(int);
+int WopenTests(int);
+int WSopenTests(int);
+int WSopen_sTests(int);
+int MkRmDirTests(int);
+int MkDirTests(int);
+int OddDirectoryTests(int);
 
 int run()
 {
     int result = ERROR_SUCCESS;
     int testResult;
 
+    DisplayCWD();
 
+#if NOSKIP
     testResult = ModifyFileTests();
     result = result ? result : testResult;
 
@@ -103,8 +115,10 @@ int run()
     testResult = ReplaceFileTests();
     result = result ? result : testResult;
 
+
     testResult = CreateDirectoryTests();
     result = result ? result : testResult;
+
 
     testResult = RemoveDirectoryTests();
     result = result ? result : testResult;
@@ -120,6 +134,32 @@ int run()
 
     testResult = SearchPathTests();
     result = result ? result : testResult;
+ 
+    testResult = WfopenTests(999990);
+    result = result ? result : testResult;
+
+    testResult = Wfopen_sTests(999991);
+    result = result ? result : testResult;
+
+    testResult = WopenTests(999992);
+    result = result ? result : testResult;
+
+    testResult = WSopenTests(999993);
+    result = result ? result : testResult;
+
+    testResult = WSopen_sTests(999994);
+    result = result ? result : testResult;
+
+
+    testResult = MkDirTests(999995);
+    result = result ? result : testResult;
+
+    testResult = MkRmDirTests(999996);
+    result = result ? result : testResult;
+#endif
+
+    testResult = OddDirectoryTests(999997);
+    result = result ? result : testResult;
 
     return result;
 }
@@ -133,10 +173,14 @@ int wmain(int argc, const wchar_t** argv)
     if (result == ERROR_SUCCESS)
     {
         // The number of file mappings is different in 32-bit vs 64-bit
+#if NOSKIP
 #if !_M_IX86
-        test_initialize("File System Tests", 91);
+        test_initialize("File System Tests", 121);
 #else
-        test_initialize("File System Tests", 82);
+        test_initialize("File System Tests", 112);
+#endif
+#else
+        test_initialize("File System Tests", 5);
 #endif
 
         InitializeFolderMappings();
