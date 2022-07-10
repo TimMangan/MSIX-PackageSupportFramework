@@ -15,12 +15,12 @@ BOOL __stdcall WritePrivateProfileStructFixup(
     _In_opt_ const UINT   uSizeStruct,
     _In_opt_ const CharT* fileName) noexcept
 {
+    DWORD WritePrivateProfileStructInstance = ++g_FileIntceptInstance;
     auto guard = g_reentrancyGuard.enter();
     try
     {
         if (guard)
         {
-            DWORD WritePrivateProfileStructInstance = ++g_FileIntceptInstance;
 
             if (fileName != NULL)
             {
@@ -52,10 +52,16 @@ BOOL __stdcall WritePrivateProfileStructFixup(
             }
         }
     }
+#if _DEBUG
+    // Fall back to assuming no redirection is necessary if exception
+    LOGGED_CATCHHANDLER(WritePrivateProfileStructInstance, L"WritePrivateProfileStruct")
+#else
     catch (...)
     {
-        // Fall back to assuming no redirection is necessary
+        Log(L"[%d] WritePrivateProfileStruct Exception=0x%x", WritePrivateProfileStructInstance, GetLastError());
     }
+#endif 
+
 
     return impl::WritePrivateProfileStruct(appName, keyName, structData, uSizeStruct, fileName);
 }
