@@ -13,12 +13,12 @@ BOOLEAN __stdcall CreateSymbolicLinkFixup(
     _In_ const CharT* targetFileName,
     _In_ DWORD flags) noexcept
 {
+    DWORD CreateSymbolicLinkInstance = ++g_FileIntceptInstance;
     auto guard = g_reentrancyGuard.enter();
     try
     {
         if (guard)
         {
-            DWORD CreateSymbolicLinkInstance = ++g_FileIntceptInstance;
 #if _DEBUG
             LogString(CreateSymbolicLinkInstance,L"CreateSymbolicLinkFixup for", symlinkFileName);
             LogString(CreateSymbolicLinkInstance,L"CreateSymbolicLinkFixup target",  targetFileName);
@@ -37,10 +37,16 @@ BOOLEAN __stdcall CreateSymbolicLinkFixup(
             }
         }
     }
+#if _DEBUG
+    // Fall back to assuming no redirection is necessary if exception
+    LOGGED_CATCHHANDLER(CreateSymbolicLinkInstance, L"CreateSymbolicLink")
+#else
     catch (...)
     {
-        // Fall back to assuming no redirection is necessary
+        Log(L"[%d] CreateSymbolicLink Exception=0x%x", CreateSymbolicLinkInstance, GetLastError());
     }
+#endif
+
 
     std::wstring rldFileName = TurnPathIntoRootLocalDevice(widen_argument(symlinkFileName).c_str());
     std::wstring rldExistingFileName = TurnPathIntoRootLocalDevice(widen_argument(targetFileName).c_str());
