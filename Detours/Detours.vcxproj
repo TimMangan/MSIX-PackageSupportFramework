@@ -71,7 +71,7 @@
     <ClCompile>
       <!-- NOTE: Detours generates error C2362 under conformance mode: initialization of 'identifier' is skipped by 'goto label' -->
       <ConformanceMode>false</ConformanceMode>
-      <PreprocessorDefinitions>_WIN32_WINNT=0x501;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_WIN32_WINNT=0x501;%(PreprocessorDefinitions);</PreprocessorDefinitions>
     </ClCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(DebugDetours)'=='true'">
