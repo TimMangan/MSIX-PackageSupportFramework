@@ -10,12 +10,12 @@
 template <typename CharT>
 BOOL __stdcall RemoveDirectoryFixup(_In_ const CharT* pathName) noexcept
 {
+    DWORD RemoveDirectoryInstance = ++g_FileIntceptInstance;
     auto guard = g_reentrancyGuard.enter();
     try
     {
         if (guard)
         {
-            DWORD RemoveDirectoryInstance = ++g_FileIntceptInstance;
             std::wstring wPathName = widen(pathName);
 #if _DEBUG
             LogString(RemoveDirectoryInstance,L"RemoveDirectoryFixup for pathName", wPathName.c_str());
@@ -71,11 +71,16 @@ BOOL __stdcall RemoveDirectoryFixup(_In_ const CharT* pathName) noexcept
             }
         }
     }
+#if _DEBUG
+    // Fall back to assuming no redirection is necessary if exception
+    LOGGED_CATCHHANDLER(RemoveDirectoryInstance, L"RemoveDirectory")
+#else
     catch (...)
     {
-        // Fall back to assuming no redirection is necessary
-        LogString(L"RemoveDirectoryFixup ", L"***Exception; use requested folder.***");
+        Log(L"[%d] RemoveDirectory Exception=0x%x", RemoveDirectoryInstance, GetLastError());
     }
+#endif
+
 
     std::wstring rldPathName = TurnPathIntoRootLocalDevice(widen_argument(pathName).c_str());
     return impl::RemoveDirectory(rldPathName.c_str());
