@@ -11,12 +11,12 @@
 template <typename CharT>
 BOOL __stdcall CopyFileFixup(_In_ const CharT* existingFileName, _In_ const CharT* newFileName, _In_ BOOL failIfExists) noexcept
 {
+    DWORD CopyFileInstance = ++g_FileIntceptInstance;
     auto guard = g_reentrancyGuard.enter();
     try
     {
         if (guard)
         {
-            DWORD CopyFileInstance = ++g_FileIntceptInstance;
 #if _DEBUG
             LogString(CopyFileInstance,L"CopyFileFixup from", existingFileName);
             LogString(CopyFileInstance,L"CopyFileFixup to",   newFileName);
@@ -56,10 +56,15 @@ BOOL __stdcall CopyFileFixup(_In_ const CharT* existingFileName, _In_ const Char
             }
         }
     }
+#if _DEBUG
+    // Fall back to assuming no redirection is necessary if exception
+    LOGGED_CATCHHANDLER(CopyFileInstance, L"CopyFile")
+#else
     catch (...)
     {
-        // Fall back to assuming no redirection is necessary
+        Log(L"[%d] CopyFile Exception=0x%x", CopyFileInstance, GetLastError());
     }
+#endif
 
     // In the spirit of app compatability, make the path long formed just in case.
     if constexpr (psf::is_ansi<CharT>)
@@ -87,12 +92,12 @@ BOOL __stdcall CopyFileExFixup(
     _When_(cancel != NULL, _Pre_satisfies_(*cancel == FALSE)) _Inout_opt_ LPBOOL cancel,
     _In_ DWORD copyFlags) noexcept
 {
+    DWORD CopyFileExInstance = ++g_FileIntceptInstance;
     auto guard = g_reentrancyGuard.enter();
     try
     {
         if (guard)
         {
-            DWORD CopyFileExInstance = ++g_FileIntceptInstance;
 #if _DEBUG
             LogString(CopyFileExInstance,L"CopyFileExFixup from", existingFileName);
             LogString(CopyFileExInstance,L"CopyFileExFixup to",   newFileName);
@@ -128,10 +133,15 @@ BOOL __stdcall CopyFileExFixup(
             }
         }
     }
+#if _DEBUG
+    // Fall back to assuming no redirection is necessary if exception
+    LOGGED_CATCHHANDLER(CopyFileExInstance, L"CopyFileEx")
+#else
     catch (...)
     {
-        // Fall back to assuming no redirection is necessary
+        Log(L"[%d] CopyFileEx Exception=0x%x", CopyFileExInstance, GetLastError());
     }
+#endif
 
     if constexpr (psf::is_ansi<CharT>)
     {
@@ -154,12 +164,12 @@ HRESULT __stdcall CopyFile2Fixup(
     _In_ PCWSTR newFileName,
     _In_opt_ COPYFILE2_EXTENDED_PARAMETERS* extendedParameters) noexcept
 {
+    DWORD CopyFile2Instance = ++g_FileIntceptInstance;
     auto guard = g_reentrancyGuard.enter();
     try
     {
         if (guard)
         {
-            DWORD CopyFile2Instance = ++g_FileIntceptInstance;
 #if _DEBUG
             LogString(CopyFile2Instance,L"CopyFile2Fixup from", existingFileName);
             LogString(CopyFile2Instance,L"CopyFile2Fixup to",   newFileName);
@@ -188,10 +198,15 @@ HRESULT __stdcall CopyFile2Fixup(
             }
         }
     }
-    catch (...)
-    {
-        // Fall back to assuming no redirection is necessary
-    }
+#if _DEBUG
+        // Fall back to assuming no redirection is necessary if exception
+        LOGGED_CATCHHANDLER(CopyFile2Instance, L"CopyFile2")
+#else
+catch (...)
+{
+    Log(L"[%d] CopyFile2 Exception=0x%x", CopyFile2Instance, GetLastError());
+}
+#endif
 
     return impl::CopyFile2(existingFileName, newFileName, extendedParameters);
 }
