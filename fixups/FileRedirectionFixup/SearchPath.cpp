@@ -40,27 +40,28 @@ DWORD __stdcall SearchPathFixup(
     {
         if (!guard)
         {
+
 #if _DEBUG
             if (lpPath != NULL)
             {
                 if (lpExtension != NULL)
                 {
-                    Log(L"\tSearchPathFixup (unguarded): for folder=%s fileName=%s ext=%s", lpPath, lpFileName, lpExtension);
+                    Log(L"[%d]\tSearchPathFixup (unguarded): for folder=%s fileName=%s ext=%s", SearchPathInstance,lpPath, lpFileName, lpExtension);
                 }
                 else
                 {
-                    Log(L"\tSearchPathFixup (unguarded): for folder=%s fileName=%s", lpPath, lpFileName);
+                    Log(L"[%d]\tSearchPathFixup (unguarded): for folder=%s fileName=%s", SearchPathInstance, lpPath, lpFileName);
                 }
             }
             else
             {
                 if (lpExtension != NULL)
                 {
-                    Log(L"\tSearchPathFixup (unguarded): for  fileName=%s ext=%s", lpFileName, lpExtension);
+                    Log(L"[%d]\tSearchPathFixup (unguarded): for  fileName=%s ext=%s", SearchPathInstance, lpFileName, lpExtension);
                 }
                 else
                 {
-                    Log(L"\tSearchPathFixup (unguarded): for  fileName=%s", lpFileName);
+                    Log(L"[%d]\tSearchPathFixup (unguarded): for  fileName=%s", SearchPathInstance, lpFileName);
                 }
             }
 #endif
@@ -74,22 +75,22 @@ DWORD __stdcall SearchPathFixup(
         {
             if (lpExtension != NULL)
             {
-                Log(L"\tSearchPathFixup: for folder=%s fileName=%s ext=%s", lpPath, lpFileName, lpExtension);
+                Log(L"[%d]\tSearchPathFixup: for folder=%s fileName=%s ext=%s", SearchPathInstance, lpPath, lpFileName, lpExtension);
             }
             else
             {
-                Log(L"\tSearchPathFixup: for folder=%s fileName=%s", lpPath, lpFileName);
+                Log(L"[%d]\tSearchPathFixup: for folder=%s fileName=%s", SearchPathInstance, lpPath, lpFileName);
             }
         }
         else
         {
             if (lpExtension != NULL)
             {
-                Log(L"\tSearchPathFixup: for  fileName=%s ext=%s", lpFileName, lpExtension);
+                Log(L"[%d]\tSearchPathFixup: for  fileName=%s ext=%s", SearchPathInstance, lpFileName, lpExtension);
             }
             else
             {
-                Log(L"\tSearchPathFixup: for  fileName=%s", lpFileName);
+                Log(L"[%d]\tSearchPathFixup: for  fileName=%s", SearchPathInstance, lpFileName);
             }
         }
 #endif
@@ -98,11 +99,11 @@ DWORD __stdcall SearchPathFixup(
 #if _DEBUG
         if (dRet == 0)
         {
-            Log("\t\tSearchPathFixup: native not found.");
+            Log("[%d]\t\tSearchPathFixup: native not found.", SearchPathInstance);
         }
         else
         {
-            Log("\t\tSearchPathFixup: native found.");
+            Log("[%d]\t\tSearchPathFixup: native found.", SearchPathInstance);
         }
 #endif
 
@@ -124,12 +125,12 @@ DWORD __stdcall SearchPathFixup(
         wPathNormalized = NormalizePathV2(wPathRequested.c_str(), SearchPathInstance);
         if constexpr (psf::is_ansi<CharT>)
         {
-            Log("\t\tSearchPathFixup: ansi.");
+            Log("[%d]\t\tSearchPathFixup: ansi.", SearchPathInstance);
             dRet = impl::SearchPath(narrow(wPathNormalized.full_path).c_str(), lpFileName, lpExtension, nBufferLength, lpBuffer, lpFilePart);
         }
         else
         {
-            Log("\t\tSearchPathFixup: wide.");
+            Log("[%d]\t\tSearchPathFixup: wide.", SearchPathInstance);
             dRet = impl::SearchPath(wPathNormalized.full_path.c_str(), lpFileName, lpExtension, nBufferLength, lpBuffer, lpFilePart);
         }
         if (dRet == 0)
@@ -207,14 +208,19 @@ DWORD __stdcall SearchPathFixup(
         }
         
 
-        Log(L"\tSearchPathFixup: [%d] return value=0x%x GetLastError=0x%x", SearchPathInstance, dRet, GetLastError());
+        Log(L"[%d]\tSearchPathFixup: return value=0x%x GetLastError=0x%x", SearchPathInstance, dRet, GetLastError());
         return dRet;
     }
+#if _DEBUG
+    // Fall back to assuming no redirection is necessary if exception
+    LOGGED_CATCHHANDLER(SearchPathInstance, L"SearchPath")
+#else
     catch (...)
     {
-        // Fall back to assuming no redirection is necessary
-        Log(L"[%d]\tSearchPathFixup Exception=0x%x", SearchPathInstance, GetLastError());
-        return 0;
+        Log(L"[%d] SearchPath Exception=0x%x", SearchPathInstance, GetLastError());
     }
+#endif 
+    return 0;
+    
 }
 DECLARE_STRING_FIXUP(impl::SearchPath, SearchPathFixup);
