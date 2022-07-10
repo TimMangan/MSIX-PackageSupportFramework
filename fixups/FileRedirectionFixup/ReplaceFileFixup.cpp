@@ -20,12 +20,12 @@ BOOL __stdcall ReplaceFileFixup(
     _Reserved_ LPVOID exclude,
     _Reserved_ LPVOID reserved) noexcept
 {
+    DWORD ReplaceFileInstance = ++g_FileIntceptInstance;
     auto guard = g_reentrancyGuard.enter();
     try
     {
         if (guard)
         {
-            DWORD ReplaceFileInstance = ++g_FileIntceptInstance;
 #if _DEBUG
             LogString(ReplaceFileInstance,L"ReplaceFileFixup From", replacedFileName);
             LogString(ReplaceFileInstance,L"ReplaceFileFixup To",   replacementFileName);
@@ -80,11 +80,16 @@ BOOL __stdcall ReplaceFileFixup(
             }
         }
     }
+#if _DEBUG
+    // Fall back to assuming no redirection is necessary if exception
+    LOGGED_CATCHHANDLER(ReplaceFileInstance, L"ReplaceFile")
+#else
     catch (...)
     {
-        // Fall back to assuming no redirection is necessary
-        LogString(L"ReplaceFileFixup ", L"***Exception; use requested files.***");
+        Log(L"[%d] ReplaceFile Exception=0x%x", ReplaceFileInstance, GetLastError());
     }
+#endif
+
 
     if constexpr (psf::is_ansi<CharT>)
     {
