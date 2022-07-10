@@ -77,8 +77,8 @@ BOOL _stdcall ReadDirectoryChangesWFixup(
                     wchar_t* wfn = (wchar_t*)malloc(pFileInformation->FileNameLength + 1);
                     if (wfn != NULL)
                     {
+                        RtlZeroMemory(wfn, pFileInformation->FileNameLength + 1);
                         for (int inx = 0; inx <(int)pFileInformation->FileNameLength; inx++) { wfn[inx] = pFileInformation->FileName[inx]; }
-                        wfn[pFileInformation->FileNameLength] = 0;
                         Log(L"[%d]       RDCW Handle Path is %s", Instance, wfn);
                         free(wfn);
                     }
