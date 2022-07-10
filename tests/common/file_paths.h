@@ -10,6 +10,7 @@
 #include <psf_utils.h>
 
 #include "test_config.h"
+#include <direct.h> // _getcwd
 
 inline bool wiequals(std::wstring a, std::wstring b)
 {
@@ -111,12 +112,19 @@ inline void clean_redirection_path_helper(std::filesystem::path redirectRoot)
     }
 #else
     // 12/19/2021: Modified cleanup to only cleanup contents of requested folder, as OS is now protecting the folder from deletion.
-    trace_messages(info_color, L"clean_redirection_path_helper: ", redirectRoot.c_str(), new_line);
-    num = deleteDirectoryContents(redirectRoot);
-    wchar_t wNum[16]; 
-    std::wstring sNum = L"Detail: CleanupCount=";
-    _itow_s((int)num, wNum, 16, 10);
-    trace_messages(info_color, sNum.c_str(), wNum, new_line);
+    //trace_messages( L"clean_redirection_path_helper: ", info_color, redirectRoot.c_str(), new_line);
+    if (std::filesystem::exists(redirectRoot))
+    {
+        num = deleteDirectoryContents(redirectRoot);
+        wchar_t wNum[16];
+        std::wstring sNum = L"    Detail: CleanupCount=";
+        _itow_s((int)num, wNum, 16, 10);
+        trace_messages(info_color, sNum.c_str(), wNum, new_line);
+    }
+    else
+    {
+        trace_messages(info_color, "redirect root path missing.", new_line);
+    }
     // without deletion of the folder, no need to recreate it either.
 #endif
 
@@ -133,8 +141,16 @@ inline void clean_redirection_path()
     static const auto redirectRoot = std::filesystem::path(LR"(\\?\)" + psf::known_folder(FOLDERID_LocalAppData).native()) / L"Packages" / psf::current_package_family_name() / LR"(LocalCache\Local\VFS)"; 
 	static const auto writablePackageRoot = std::filesystem::path(LR"(\\?\)" + psf::known_folder(FOLDERID_LocalAppData).native()) / L"Packages" / psf::current_package_family_name() / LR"(LocalCache\Local\Microsoft\WritablePackageRoot)";
     trace_message(L"<<<Cleanup Redirection Paths before next test.\n");
-    clean_redirection_path_helper(redirectRoot);
-	clean_redirection_path_helper(writablePackageRoot);
+    try
+    {
+        clean_redirection_path_helper(redirectRoot);
+        clean_redirection_path_helper(writablePackageRoot);
+    }
+    catch (...)
+    {
+        // This happens when we run non-psf code in the container on some apps.  Unclear why.
+        trace_message(L"Handled exception in cleanup, might not be clean!.");
+    }
     trace_message(L"Cleanup Redirection Paths before next test.>>>\n");
 }
 
@@ -199,6 +215,22 @@ inline bool write_entire_file(const wchar_t* path, const char* contents)
 
     assert(len == bytesWritten);
     ::CloseHandle(file);
-    trace_message(L"Original file written external to package.",info_color,true);
+    trace_messages(info_color, L"Original file written external to package.", path, new_line);
     return true;
+}
+
+
+inline void DisplayCWD()
+{
+    char* buffer;
+    // Let's display the current working directory:
+    if ((buffer = _getcwd(NULL, 0)) == NULL)
+    {
+        trace_messages(L"_getcwd: ", error_color, L"failed to acquire.", new_line);
+    }
+    else
+    {
+        trace_messages(L"_getcwd: ", info_color, buffer, new_line);
+        free(buffer);
+    }
 }
