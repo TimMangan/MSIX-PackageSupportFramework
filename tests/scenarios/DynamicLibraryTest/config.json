@@ -21,14 +21,16 @@
           	    "config": {
             			"forcePackageDllUse": true,
             			"relativeDllPaths": [
-              			    {
-              			  	"name": "TraceFixup32.dll",
-                			"filepath": "SubDir\\TraceFixup32.dll"
-              			    },
-				    {
-              			  	"name": "TraceFixup64.dll",
-                			"filepath": "SubDir\\TraceFixup64.dll"
-              			    }
+                    {
+                      "name": "TraceFixup32.dll",
+                      "filepath": "SubDir\\TraceFixup32.dll",
+                      "architecture": "x86"
+                    },
+                    {
+                      "name": "TraceFixup64.dll",
+                      "filepath": "SubDir\\TraceFixup64.dll",
+                      "architecture": "x64"
+                    }
 				]
 		    }
                 }
