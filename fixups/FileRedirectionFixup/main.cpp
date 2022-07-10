@@ -14,7 +14,12 @@ extern "C" {
 int __stdcall PSFInitialize() noexcept try
 {
     InitializeConfiguration();
+#if _DEBUG
+    int count = psf::attach_count_all();
+    Log(L"[0] FileRedirectionFixup attaches %d fixups.", count);
+#else
     psf::attach_all();
+#endif
     return ERROR_SUCCESS;
 }
 catch (...)
