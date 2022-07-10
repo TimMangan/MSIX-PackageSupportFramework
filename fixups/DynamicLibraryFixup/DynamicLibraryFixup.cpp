@@ -7,6 +7,8 @@
 #include <psf_framework.h>
 #include "FunctionImplementations.h"
 #include "dll_location_spec.h"
+#include <iostream>
+#include <algorithm>
 
 #if _DEBUG
 //#define MOREDEBUG 1
@@ -17,6 +19,21 @@ extern std::vector<dll_location_spec> g_dynf_dllSpecs;
 
 DWORD g_LoadLibraryIntceptInstance = 30000;
 
+// Utility to perform a case independent comparison with or without the dll in the spec.
+int compare_dllname(std::wstring Requested, std::wstring Locationspec)
+{
+    std::wstring requested = Requested;
+    transform(requested.begin(), requested.end(), requested.begin(), towlower);
+    std::wstring locationspec = Locationspec;
+    std::transform(locationspec.begin(), locationspec.end(), locationspec.begin(), towlower);
+
+    
+    if (requested.compare(locationspec) == 0)
+    {
+        return 0;
+    }
+    return requested.compare(locationspec.append(L".dll"));
+}
 
 auto LoadLibraryImpl = psf::detoured_string_function(&::LoadLibraryA, &::LoadLibraryW);
 template <typename CharT>
@@ -53,8 +70,7 @@ HMODULE __stdcall LoadLibraryFixup(_In_ const CharT* libFileName)
 #if MOREDEBUG
                     LogString(LoadLibraryInstance, L"LoadLibraryFixup testing against", spec.filename.data());
 #endif
-                    if (spec.filename.compare(libFileNameW + L".dll") == 0 ||
-                        spec.filename.compare(libFileNameW) == 0)
+                    if (compare_dllname(spec.filename.data(), libFileNameW) == 0)
                     {
                         bool useThis = true;
                         BOOL procTest = false;
@@ -153,8 +169,7 @@ HMODULE __stdcall LoadLibraryExFixup(_In_ const CharT* libFileName, _Reserved_ H
                     //Log(L" [%d] LoadLibraryExFixup testing %ls against %ls", LoadLibraryExInstance, libFileNameW.c_str(), spec.full_filepath.native().c_str());
                     //LogString(LoadLibraryExInstance, L"LoadLibraryExFixup testing against", spec.filename.data());
 #endif
-                    if (spec.filename.compare(libFileNameW + L".dll") == 0 ||
-                        spec.filename.compare(libFileNameW) == 0)
+                    if (compare_dllname(spec.filename.data(), libFileNameW) == 0)
                     {
 #if _DEBUG
                         LogString(LoadLibraryExInstance, L"LoadLibraryExFixup using", spec.full_filepath.c_str());
