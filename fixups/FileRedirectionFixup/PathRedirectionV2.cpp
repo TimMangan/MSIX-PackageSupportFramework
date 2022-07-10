@@ -25,6 +25,7 @@
 #define DODEVIRT 1
 #if _DEBUG
 //#define MOREDEBUG 1
+//#define RULEDEBUG 1
 #endif
 
 using namespace std::literals;
@@ -187,7 +188,7 @@ normalized_pathV2 NormalizePathV2(const wchar_t* path, DWORD inst)
     else
     {
 #if _DEBUG
-        Log(L"[%d]\t\tNormalizePathV2 W: NULL Use CWD.",inst);
+        Log(L"[%d]\t\tNormalizePathV2 W: NULL-or-empty,  Use CWD.",inst);
 #endif
         n2 = NormalizePathV2Impl(std::filesystem::current_path().c_str(),inst);
         n2.original_path = path;
@@ -294,7 +295,7 @@ std::wstring VirtualizePathV2(normalized_pathV2 path, [[maybe_unused]] DWORD imp
                 auto& mapping = *iter;
                 if (path_relative_to(path.drive_absolute_path.c_str(), mapping.path))
                 {
-#ifdef MOREDEBUG
+#ifdef RULEDEBUG
                     LogString(impl, L"\t\t\t mapping entry match on path", mapping.path.wstring().c_str());
                     LogString(impl, L"\t\t\t package_vfs_relative_path", mapping.package_vfs_relative_path.native().c_str());
                     Log(L"[%d]\t\t\t rel length =%d, %d", impl, mapping.path.native().length(), mapping.package_vfs_relative_path.native().length());
@@ -653,13 +654,13 @@ static path_redirect_info ShouldRedirectV2Impl(const CharT* path, redirect_flags
         // Figure out if this VFS path is something we need to redirect
         for (auto& redirectSpec : g_redirectionSpecs)
         {
-#ifdef MOREDEBUG
-            LogString(inst, L"\t\tFRFShouldRedirect: Check against: base", redirectSpec.base_path.c_str());
+#ifdef RULEDEBUG
+            LogString(inst, L"\t\tFRFShouldRedirectV2: Check against: base", redirectSpec.base_path.c_str());
 #endif
             if (path_relative_to(pathVirtualizedV2.c_str(), redirectSpec.base_path))
             {
-#ifdef MOREDEBUG
-                LogString(inst, L"\t\tFRFShouldRedirect: In ball park of base", redirectSpec.base_path.c_str());
+#ifdef RULEDEBUG
+                LogString(inst, L"\t\tFRFShouldRedirectV2: In ball park of base", redirectSpec.base_path.c_str());
 #endif
                 auto relativePath = pathVirtualizedV2.c_str() + redirectSpec.base_path.native().length();
                 if (psf::is_path_separator(relativePath[0]))
@@ -673,8 +674,8 @@ static path_redirect_info ShouldRedirectV2Impl(const CharT* path, redirect_flags
                 }
                 // Otherwise exact match. Assume an implicit directory separator at the end (e.g. for matches to satisfy the
                 // first call to CreateDirectory
-#ifdef MOREDEBUG
-                LogString(inst, L"\t\t\tFRFShouldRedirect: relativePath",relativePath);
+#ifdef RULEDEBUG
+                LogString(inst, L"\t\t\tFRFShouldRedirectV2: relativePath",relativePath);
 #endif
                 if (std::regex_match(relativePath, redirectSpec.pattern))
                 {
@@ -682,7 +683,7 @@ static path_redirect_info ShouldRedirectV2Impl(const CharT* path, redirect_flags
                     {
                         // The impact on isExclusion is that redirection is not needed.
                         result.should_redirect = false;
-#ifdef MOREDEBUG
+#ifdef RULEDEBUG
                         LogString(inst, L"\t\tFRFShouldRedirectV2 CASE:Exclusion for path", widen(path).c_str());
 #endif
                     }
@@ -695,21 +696,21 @@ static path_redirect_info ShouldRedirectV2Impl(const CharT* path, redirect_flags
                         std::wstring rldPath = TurnPathIntoRootLocalDevice(pathVirtualizedV2.c_str());
                         if (impl::PathExists(rldPath.c_str()))
                         {
-#ifdef MOREDEBUG
+#ifdef RULEDEBUG
                             Log(L"[%d]\t\t\tFRFShouldRedirectV2 CASE:match, existing in package.", inst);
 #endif
                             destinationTargetBase = redirectSpec.redirect_targetbase;
 
-#ifdef MOREDEBUG
-                            LogString(inst, L"\t\tFRFShouldRedirect isWide for", pathVirtualizedV2.c_str());
-                            LogString(inst, L"\t\tFRFShouldRedirect isWide redir", destinationTargetBase.c_str());
+#ifdef RULEDEBUG
+                            LogString(inst, L"\t\tFRFShouldRedirectV2 isWide for", pathVirtualizedV2.c_str());
+                            LogString(inst, L"\t\tFRFShouldRedirectV2 isWide redir", destinationTargetBase.c_str());
 #endif
                             result.redirect_path = RedirectedPathV2(vfspathV2, flag_set(flags, redirect_flags::ensure_directory_structure), destinationTargetBase, inst);
 
                         }
                         else
                         {
-#ifdef MOREDEBUG
+#ifdef RULEDEBUG
                             Log(L"[%d]\t\t\tFRFShouldRedirectV2 CASE:match, not existing in package.", inst);
 #endif
                             // If the folder above it exists, we might want to redirect anyway?
@@ -721,14 +722,14 @@ static path_redirect_info ShouldRedirectV2Impl(const CharT* path, redirect_flags
                             //  Request:       ...\AppData\Roaming\Vendor\foo\bar\now   Redirect currently yes, was no
                             std::filesystem::path abs = pathVirtualizedV2.c_str();
                             std::filesystem::path abs2vfsvarfolder = trim_absvfs2varfolder(abs);
-#ifdef MOREDEBUG
+#ifdef RULEDEBUG
                             LogString(inst, L"\t\t\tFRFShouldRedirectV2 check if VFS var-folder is in package?", abs2vfsvarfolder.c_str());
 #endif
                             std::wstring rldPPath = TurnPathIntoRootLocalDevice(abs2vfsvarfolder.c_str());
                             rldPPath = rldPPath.substr(0, rldPPath.find_last_of(L"\\"));
                             if (impl::PathExists(rldPPath.c_str()))
                             {
-#ifdef MOREDEBUG
+#ifdef MOREDRULEDEBUGEBUG
                                 Log(L"[%d]\t\t\tFRFShouldRedirectV2 SUBCASE: parent-folder is in package.", inst);
 #endif
                                 destinationTargetBase = redirectSpec.redirect_targetbase;
@@ -739,7 +740,7 @@ static path_redirect_info ShouldRedirectV2Impl(const CharT* path, redirect_flags
 
 #ifdef DONTREDIRECTIFPARENTNOTINPACKAGE
                                 psf::dos_path_type origType = psf::path_type(path);
-#ifdef MOREDEBUG
+#ifdef RULEDEBUG
                                 Log(L"[%d]\t\t\tFRFShouldRedirectV2 Orig Type=0%x", inst, (int)origType);
 #endif
                                 if (origType == psf::dos_path_type::relative)
@@ -768,7 +769,7 @@ static path_redirect_info ShouldRedirectV2Impl(const CharT* path, redirect_flags
                         }
                         if (result.should_redirect)
                         {
-#ifdef MOREDEBUG
+#ifdef RULEDEBUG
                             LogString(inst, L"\t\tFRFShouldRedirectV2 CASE:match on redirect_path", result.redirect_path.c_str());
 #endif
                         }
@@ -777,20 +778,20 @@ static path_redirect_info ShouldRedirectV2Impl(const CharT* path, redirect_flags
                 }
                 else
                 {
-#ifdef MOREDEBUG
+#ifdef RULEDEBUG
                     LogString(inst, L"\t\tFRFShouldRedirectV2: no match on parse relativePath", relativePath);
 #endif
                 }
             }
             else
             {
-#ifdef MOREDEBUG
+#ifdef RULEDEBUG
                 LogString(inst, L"\t\tFRFShouldRedirectV2: Not in ball park of base", redirectSpec.base_path.c_str());
 #endif
             }
         }
 
-#ifdef MOREDEBUG
+#ifdef RULEDEBUG
         Log(L"[%d]\t\tFRFShouldRedirectV2 post check 1", inst);
 #endif
 
@@ -832,7 +833,7 @@ static path_redirect_info ShouldRedirectV2Impl(const CharT* path, redirect_flags
             }
         }
 
-#ifdef MOREDEBUG
+#ifdef RULEDEBUG
         Log(L"[%d]\t\tFRFShouldRedirectV2 post check 3", inst);
 #endif
 
