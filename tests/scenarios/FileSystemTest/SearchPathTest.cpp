@@ -39,21 +39,33 @@ static int DoSearchPathTest(const std::function<DWORD(LPCWSTR,LPCWSTR, LPCWSTR,D
 int SearchPathTests()
 {
     int result = ERROR_SUCCESS;
-
+    int testResult;
     auto packageFilePath = g_packageRootPath / L"TestIniFile.ini"; //g_packageRootPath / g_packageFileName;
     std::filesystem::path vfsWindowsPath = L"C:\\Windows\\WindowsFïℓè.txt";
 
+
+
     test_begin("SearchPath Test in package");
     clean_redirection_path();
-    auto testResult = DoSearchPathTest(SearchPathFunc, "SearchPath", packageFilePath);
-    result = result ? result : testResult;
+    auto testReturn = DoSearchPathTest(SearchPathFunc, "SearchPath", packageFilePath);
+    if (testReturn == 0)
+        testResult = GetLastError();
+    else
+        testResult = ERROR_SUCCESS;
     test_end(testResult);
+    result = result ? result : testResult;
+
+
 
     test_begin("SearchPath Test via VFS");
     clean_redirection_path();
-    testResult = DoSearchPathTest(SearchPathFunc, "SearchPath", vfsWindowsPath);
-    result = result ? result : testResult;
+    testReturn = DoSearchPathTest(SearchPathFunc, "SearchPath", vfsWindowsPath);
+    if (testReturn == 0)
+        testResult = GetLastError();
+    else
+        testResult = ERROR_SUCCESS; 
     test_end(testResult);
+    result = result ? result : testResult;
 
     return result;
 }

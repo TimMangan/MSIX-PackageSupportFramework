@@ -37,40 +37,29 @@ int RemoveDirectoryTests()
 {
     int result = ERROR_SUCCESS;
 
-    // We shouldn't be able to delete the VFS directory, particularly because it isn't redirected
-    test_begin("Remove Non-Configured Directory Test");
-    Log("<<<<<Remove Non-Configured Directory Test HERE");
-    auto testResult = DoRemoveDirectoryTest(L"VFS", false);
-    Log("Remove Non-Configured Directory Test >>>>>");
+
+    // We should be able to delete the VFS directory, at least the redirected one.
+    test_begin("Remove Empty Added Redirected Directory Test");
+    Log("<<<<<Remove Empty Added Redirected Directory Test HERE");
+    trace_message(L"Creating a directory that we can then validate that we can remove\n");
+    auto bTestResult = ::CreateDirectoryW(L"VFS\\LocalAppData\\FileSystemTest\\NewFolderToDelete", nullptr);
+    if (!bTestResult)
+    {
+        return trace_last_error(L"Failed to create directory first.");
+    }
+    auto testResult = DoRemoveDirectoryTest(L"VFS\\LocalAppData\\FileSystemTest\\NewFolderToDelete", true);
+    Log("Remove Empty Added Redirected Directory Test >>>>>");
     result = result ? result : testResult;
     test_end(testResult);
 
-    test_begin("Remove Empty Redirected Directory Test");
-    Log("<<<<<Remove Empty Directory Test HERE");
+
+    test_begin("Remove non-Empty Added Redirected Directory Test");
+    Log("<<<<<Remove non-Empty Added Redirected Directory Test HERE");
     testResult = []()
     {
         clean_redirection_path();
         trace_message(L"Creating a directory that we can then validate that we can remove\n");
-        ::CreateDirectoryW(L"TèƨƭÐïřèçƭôř¥", nullptr);
-        if (!(GetLastError() == ERROR_ALREADY_EXISTS) &&
-            !(GetLastError() == ERROR_SUCCESS))
-        {
-            return trace_last_error(L"Failed to create test directory");
-        }
-
-        return DoRemoveDirectoryTest(L"TèƨƭÐïřèçƭôř¥", true);
-    }();
-    Log("Remove Empty Directory Test >>>>>");
-    result = result ? result : testResult;
-    test_end(testResult);
-
-    test_begin("Remove Non-Empty Directory Test");
-    Log("<<<<<Remove Non-Empty Directory Test HERE");
-    testResult = []()
-    {
-        clean_redirection_path();
-        trace_message(L"Creating another directory, but this time it won't be empty\n");
-        ::CreateDirectoryW(L"TèƨƭÐïřèçƭôř¥", nullptr);
+        ::CreateDirectoryW(L"VFS\\LocalAppData\\FileSystemTest\\TèƨƭÐïřèçƭôř¥", nullptr);
         if (!(GetLastError() == ERROR_ALREADY_EXISTS) &&
             !(GetLastError() == ERROR_SUCCESS))
         {
@@ -78,22 +67,22 @@ int RemoveDirectoryTests()
         }
         else
         {
-            if (!std::filesystem::exists(L"TèƨƭÐïřèçƭôř¥"))
+            if (!std::filesystem::exists(L"VFS\\LocalAppData\\FileSystemTest\\TèƨƭÐïřèçƭôř¥"))
             {
                 return trace_last_error(L"Failed to create test directory without returned error");
             }
             else
             {
-                if (!write_entire_file(L"TèƨƭÐïřèçƭôř¥\\file.txt", "This file's presence will cause RemoveDirectory to fail"))
+                if (!write_entire_file(L"VFS\\LocalAppData\\FileSystemTest\\TèƨƭÐïřèçƭôř¥\\file.txt", "This file's presence will cause RemoveDirectory to fail"))
                 {
                     return trace_last_error(L"Failed to create file");
                 }
             }
         }
 
-        return DoRemoveDirectoryTest(L"TèƨƭÐïřèçƭôř¥", false);
+        return DoRemoveDirectoryTest(L"VFS\\LocalAppData\\FileSystemTest\\TèƨƭÐïřèçƭôř¥", false);
     }();
-    Log("Remove Non-Empty Directory Test >>>>>");
+    Log("Remove Non-Empty Added Redirected Directory Test >>>>>");
     result = result ? result : testResult;
     test_end(testResult);
 
@@ -102,11 +91,11 @@ int RemoveDirectoryTests()
     //       file/directory deletion, we explicitly ensure that the opposite is true. That is, we give the application
     //       the benefit of the doubt that if it were to try and delete the directory "Tèƨƭ," it had previously tried to
     //       delete the contents of the directory first
-    test_begin("Remove Package Directory Test");
+    test_begin("Remove Non-empty Package Directory Test");
     clean_redirection_path();
-    Log("<<<<<Remove Package Directory Test HERE");
-    testResult = DoRemoveDirectoryTest(L"Tèƨƭ", false);
-    Log("Remove Package Directory Test >>>>>");
+    Log("<<<<<Remove Non-empty Package Directory Test HERE");
+    testResult = DoRemoveDirectoryTest(L"Tèƨƭ", true);
+    Log("Remove Package Non-empty Directory Test >>>>>");
     result = result ? result : testResult;
     test_end(testResult);
 

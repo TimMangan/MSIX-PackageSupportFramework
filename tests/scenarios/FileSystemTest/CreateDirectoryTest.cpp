@@ -11,6 +11,7 @@
 #include "attributes.h"
 #include "common_paths.h"
 
+
 static int DoCreateDirectoryTest(const std::filesystem::path& path, bool expectSuccess)
 {
     clean_redirection_path();
@@ -26,17 +27,30 @@ static int DoCreateDirectoryTest(const std::filesystem::path& path, bool expectS
         }
 
         // Trying to create the directory again should fail
-        trace_message(L"Directory created successfully. Creating it again should fail...\n");
+        trace_message(L"Directory created successfully; Creating it again should fail...\n");
         if (::CreateDirectoryW(path.c_str(), nullptr))
         {
             trace_message(L"ERROR: Successfully created directory, but we were expecting failure\n", error_color);
             return ERROR_ASSERTION_FAILURE;
         }
+        else
+        {
+            int fErr= GetLastError();
+            if (fErr == ERROR_ALREADY_EXISTS)
+            {
+                trace_message(L"Second attempt expected result ERROR_ALREADY_EXISTS received.\n");
+            }
+            else
+            {
+                trace_last_error(L"Second attempt expected result unexpected: ");
+            }
+        }
     }
     else if (expectSuccess)
     {
-        return trace_last_error(L"Failed to create directory, but we were expecting it to succeed");
+        return trace_last_error(L"Failed to create directory, but we were expecting it to succeed.");
     }
+    trace_message(L"Expected result received.\n");
 
     clean_redirection_path();
 	write_entire_file(L"TèƨƭTè₥ƥℓáƭè\\file.txt", "Testing text");
@@ -93,6 +107,7 @@ static int DoCreateDirectoryTest(const std::filesystem::path& path, bool expectS
         if (! (GetLastError() == ERROR_ALREADY_EXISTS))
             return trace_last_error(L"Failed to create directory, but we were expecting it to succeed");
     }
+    trace_message(L"Expected result received.\n");
 
     return ERROR_SUCCESS;
 }
@@ -101,23 +116,26 @@ int CreateDirectoryTests()
 {
     int result = ERROR_SUCCESS;
 
-    // "Fôô" is not something that we should try and redirect, so creation should fail
-    test_begin("Create Non-Configured Directory Test");
-    auto testResult = DoCreateDirectoryTest(L"Fôô", false);
+    
+
+    // "Fôô" does not exist, we should try and redirect, so creation should succeed.
+    test_begin("Create Non-Existing Directory in Package Root Test");
+    
+    auto testResult = DoCreateDirectoryTest(L"Fôô", true);
     result = result ? result : testResult;
     test_end(testResult);
 
-    // "TestÐïřèçƭôř¥" _is_ something that we should try and redirect
-    test_begin("Create Redirected Directory Test");
-    testResult = DoCreateDirectoryTest(L"TèƨƭÐïřèçƭôř¥", true);
+    // "VFS\LocalAppData\FileSystemTest" exists in the package and NewFolder doesn't, so creation should succeed.
+    test_begin("Create Non-Existing Directory in Package VFS Test");
+    testResult = DoCreateDirectoryTest(L"VFS\\LocalAppData\\FileSystemTest\\NewFolder", true);
     result = result ? result : testResult;
     test_end(testResult);
 
     // NOTE: "Tèƨƭ" is a directory that exists in the package path. Therefore, it's reasonable to expect that an attempt
     //       to create that directory would fail. However, due to the limitations around file/directory deletion, we
     //       explicitly ensure that the opposite is true. That is, we give the application the benefit of the doubt that
-    //       if it were to try and create the directory "Tèƨƭ" here that it had previously tried to delete it
-    test_begin("Create Package Directory Test");
+    //       if it were to try and create the directory "Tèƨƭ" here that it may have previously tried to delete.
+    test_begin("Create Existing Directory in Package Root Test");
     testResult = DoCreateDirectoryTest(L"Tèƨƭ", true);
     result = result ? result : testResult;
     test_end(testResult);

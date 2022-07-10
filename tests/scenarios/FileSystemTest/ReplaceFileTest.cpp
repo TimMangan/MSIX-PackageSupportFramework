@@ -20,7 +20,7 @@ static int DoReplaceFileTest(
     trace_messages(L"          with: ", info_color, from.native(), new_line);
     trace_messages(L"  using backup: ", info_color, backup.native(), new_line);
 
-    read_entire_file(L"C:\\NonExistent.txt");
+    //read_entire_file(L"C:\\NonExistent.txt");
 
     auto replacedContents = read_entire_file(to.c_str());
     trace_messages(L"Replaced file initial contents: ", info_color, replacedContents.c_str(), new_line);
