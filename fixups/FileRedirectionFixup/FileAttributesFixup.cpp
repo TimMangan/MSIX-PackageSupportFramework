@@ -38,6 +38,7 @@ DWORD __stdcall GetFileAttributesFixup(_In_ const CharT* fileName) noexcept
 #if _DEBUG
                     Log(L"[%d] GetFileAttributes: Should Redirect says yes.", GetFileAttributesInstance);
 #endif
+                    SetLastError(0);
                     DWORD attributes = impl::GetFileAttributes(pri.redirect_path.c_str());
                     if (attributes == INVALID_FILE_ATTRIBUTES)
                     {
@@ -93,16 +94,18 @@ DWORD __stdcall GetFileAttributesFixup(_In_ const CharT* fileName) noexcept
 #if _DEBUG
                     Log(L"[%d] GetFileAttributes: No Redirect, try original call ", GetFileAttributesInstance);
 #endif
+                    SetLastError(0);
                     DWORD attributes = impl::GetFileAttributes(fileName);
                     if (attributes == INVALID_FILE_ATTRIBUTES)
                     {
+                        DWORD rememberError = GetLastError();
                         // If this was a native path and folder is in the package, we might need to try the package
                         // just to set the LastError correctly.
                         std::filesystem::path PackageVersion = GetPackageVFSPath(wfileName.c_str());
                         if (wcslen(PackageVersion.c_str()) > 0)
                         {
 #if _DEBUG
-                            Log(L"[%d] GetFileAttributes: Retry in package anyway %ls", GetFileAttributesInstance, PackageVersion.c_str());
+                            Log(L"[%d] GetFileAttributes: Retry in actual package anyway %ls", GetFileAttributesInstance, PackageVersion.c_str());
 #endif
                             attributes = impl::GetFileAttributes(PackageVersion.c_str());
 #if _DEBUG
@@ -110,18 +113,22 @@ DWORD __stdcall GetFileAttributesFixup(_In_ const CharT* fileName) noexcept
                             Log(L"[%d] GetFileAttributes: No Redirect returns GetLastError=0x%x", GetFileAttributesInstance, GetLastError());
 #endif
                         }
+                        else
+                        {
+#if _DEBUG
+                            Log(L"[%d] GetFileAttributes: No Redirect returns Invalid and GetLastError=0x%x", GetFileAttributesInstance, rememberError);
+#endif
+                            SetLastError(rememberError);
+                        }
                     }
                     else
                     {
 #if _DEBUG
                         Log(L"[%d] GetFileAttributes: No Redirect returns att=0x%x", GetFileAttributesInstance, attributes);
-                        //Log(L"[%d]GetFileAttributes: No Redirect GetLastError=0x%x", GetFileAttributesInstance, GetLastError());
+                        Log(L"[%d]GetFileAttributes: No Redirect GetLastError=0x%x", GetFileAttributesInstance, GetLastError());
 #endif
                     }
-                    if (attributes != INVALID_FILE_ATTRIBUTES)
-                    {
-                        SetLastError(0);
-                    }
+                    
                     return attributes;
                 }
             }
@@ -133,11 +140,15 @@ DWORD __stdcall GetFileAttributesFixup(_In_ const CharT* fileName) noexcept
             }
         }
     }
+#if _DEBUG
+    // Fall back to assuming no redirection is necessary if exception
+    LOGGED_CATCHHANDLER(GetFileAttributesInstance, L"DeleGetFileAttributesteFile")
+#else
     catch (...)
     {
-        // Fall back to assuming no redirection is necessary
-        Log(L"[%d] GetFileAttributes: *** Exception *** 0x%x", GetFileAttributesInstance, GetLastError());
+        Log(L"[%d] GetFileAttributes Exception=0x%x", GetFileAttributesInstance, GetLastError());
     }
+#endif
 
     DWORD retfinal = impl::GetFileAttributes(fileName);
 #if _DEBUG
@@ -264,12 +275,17 @@ BOOL __stdcall GetFileAttributesExFixup(
             }
         }
     }
+#if _DEBUG
+    // Fall back to assuming no redirection is necessary if exception
+    LOGGED_CATCHHANDLER(GetFileAttributesExInstance, L"GetFileAttributesEx")
+#else
     catch (...)
     {
-        // Fall back to assuming no redirection is necessary
-        Log(L"[%d] GetFileAttributesEx Exception 0x%x", GetFileAttributesExInstance, GetLastError());
+        Log(L"[%d] GetFileAttributesEx Exception=0x%x", GetFileAttributesExInstance, GetLastError());
     }
+#endif
 
+    SetLastError(0);
     DWORD retfinal =  impl::GetFileAttributesEx(fileName, infoLevelId, fileInformation);
 #if _DEBUG
     Log(L"[%d] GetFileAttributesEx: returns retfinal=%d", GetFileAttributesExInstance, retfinal);
@@ -336,11 +352,15 @@ BOOL __stdcall SetFileAttributesFixup(_In_ const CharT* fileName, _In_ DWORD fil
             }
         }
     }
+#if _DEBUG
+    // Fall back to assuming no redirection is necessary if exception
+    LOGGED_CATCHHANDLER(SetFileAttributesInstance, L"SetFileAttributes")
+#else
     catch (...)
     {
-        // Fall back to assuming no redirection is necessary
-        Log(L"[%d] SetFileAttributes Exception 0x%x", SetFileAttributesInstance, GetLastError());
+        Log(L"[%d] SetFileAttributes Exception=0x%x", SetFileAttributesInstance, GetLastError());
     }
+#endif
 
     std::wstring rldFileName = TurnPathIntoRootLocalDevice(widen_argument(fileName).c_str());
     BOOL retfinal = impl::SetFileAttributes(rldFileName.c_str(), fileAttributes);
