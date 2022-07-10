@@ -10,13 +10,13 @@
 template <typename CharT>
 BOOL __stdcall CreateDirectoryFixup(_In_ const CharT* pathName, _In_opt_ LPSECURITY_ATTRIBUTES securityAttributes) noexcept
 {
+    DWORD CreateDirectoryInstance = ++g_FileIntceptInstance;
     auto guard = g_reentrancyGuard.enter();
     
     try
     {
         if (guard)
         {
-            DWORD CreateDirectoryInstance = ++g_FileIntceptInstance;
             std::wstring wPathName = widen(pathName);
 #if _DEBUG
             LogString(CreateDirectoryInstance,L"CreateDirectoryFixup for path", pathName);
@@ -52,11 +52,15 @@ BOOL __stdcall CreateDirectoryFixup(_In_ const CharT* pathName, _In_opt_ LPSECUR
             }
         }
     }
+#if _DEBUG
+    // Fall back to assuming no redirection is necessary if exception
+    LOGGED_CATCHHANDLER(CreateDirectoryInstance, L"CreateDirectory")
+#else
     catch (...)
     {
-        // Fall back to assuming no redirection is necessary
-        LogString(L"CreateDirectoryFixup ", L"*** Exception; use requested folder.***");
+        Log(L"[%d] CreateDirectory Exception=0x%x", CreateDirectoryInstance, GetLastError());
     }
+#endif
 
     // In the spirit of app compatability, make the path long formed just in case.
     if constexpr (psf::is_ansi<CharT>)
@@ -79,12 +83,12 @@ BOOL __stdcall CreateDirectoryExFixup(
     _In_ const CharT* newDirectory,
     _In_opt_ LPSECURITY_ATTRIBUTES securityAttributes) noexcept
 {
+    DWORD CreateDirectoryExInstance = ++g_FileIntceptInstance;
     auto guard = g_reentrancyGuard.enter();
     try
     {
         if (guard)
         {
-            DWORD CreateDirectoryExInstance = ++g_FileIntceptInstance;
 #if _DEBUG
             LogString(CreateDirectoryExInstance,L"CreateDirectoryExFixup for", templateDirectory);
             LogString(CreateDirectoryExInstance,L"CreateDirectoryExFixup to",  newDirectory);
@@ -120,11 +124,16 @@ BOOL __stdcall CreateDirectoryExFixup(
             }
         }
     }
+#if _DEBUG
+    // Fall back to assuming no redirection is necessary if exception
+    LOGGED_CATCHHANDLER(CreateDirectoryExInstance, L"CreateDirectoryEx")
+#else
     catch (...)
     {
-        // Fall back to assuming less redirection is necessary
-        LogString(L"CreateDirectoryExFixup ", L"*** Exception; use requested folder.***");
+        Log(L"[%d] CreateDirectoryEx Exception=0x%x", CreateDirectoryExInstance, GetLastError());
     }
+#endif
+
 
     // In the spirit of app compatability, make the path long formed just in case.
     try
