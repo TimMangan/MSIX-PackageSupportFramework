@@ -50,7 +50,7 @@ inline std::string error_message(int err)
 {
     // Remove the ".\r\n" that gets added to all messages
     auto msg = std::system_category().message(err);
-    msg.resize(msg.length() - 3);
+    msg.resize(msg.length() - 2);
     return msg;
 }
 
