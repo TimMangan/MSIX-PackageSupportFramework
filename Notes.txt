@@ -1,0 +1,11 @@
+v.next
+* Fix DynamicLibraryFixup to allow for mixed cases in call by app.
+* Fix for CreateFile when request is to the redirected area directly and file either exists already there or the request was to CREATE_ALWAYS.
+* Fix DeleteDirectory to allow deletion of redirected directory.
+* WIP: Add intercepts for many ucrtbased (POSIX) file system calls.  These only intercept, log (debug build only), and call the original function.  
+  Trying to determine if some of these functions skip the kernel32 library and jump under our intercepts there.
+  Ultimately conditionally compiled these out as they A) Didn't intercept for some reason. B) Were determined to not be needed.
+* Added intercept for ReadDirectoryChangesW and ReadDirectoryChangesExW that only log the calls.  
+	Until we find an app that requires modification, this is the next best thing.
+
+v.2022.06.08
