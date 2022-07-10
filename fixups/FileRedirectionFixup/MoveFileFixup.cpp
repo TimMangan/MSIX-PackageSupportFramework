@@ -10,12 +10,12 @@
 template <typename CharT>
 BOOL __stdcall MoveFileFixup(_In_ const CharT* existingFileName, _In_ const CharT* newFileName) noexcept
 {
+    DWORD MoveFileInstance = ++g_FileIntceptInstance;
     auto guard = g_reentrancyGuard.enter();
     try
     {
         if (guard)
         {
-            DWORD MoveFileInstance = ++g_FileIntceptInstance;
 #if _DEBUG
             LogString(MoveFileInstance,L"MoveFileFixup From", existingFileName);
             LogString(MoveFileInstance,L"MoveFileFixup To",   newFileName);
@@ -52,11 +52,16 @@ BOOL __stdcall MoveFileFixup(_In_ const CharT* existingFileName, _In_ const Char
 #endif
         }
     }
+#if _DEBUG
+    // Fall back to assuming no redirection is necessary if exception
+    LOGGED_CATCHHANDLER(MoveFileInstance, L"MoveFile")
+#else
     catch (...)
     {
-        // Fall back to assuming no redirection is necessary
-        Log(L"MoveFileFixup ***Exception detected; fallback.***");
+        Log(L"[%d] MoveFile Exception=0x%x", MoveFileInstance, GetLastError());
     }
+#endif
+
 
     return impl::MoveFile(existingFileName, newFileName);
 }
@@ -68,12 +73,12 @@ BOOL __stdcall MoveFileExFixup(
     _In_opt_ const CharT* newFileName,
     _In_ DWORD flags) noexcept
 {
+    DWORD MoveFileExInstance = ++g_FileIntceptInstance;
     auto guard = g_reentrancyGuard.enter();
     try
     {
         if (guard)
         {
-            DWORD MoveFileExInstance = ++g_FileIntceptInstance;
 #if _DEBUG
             LogString(MoveFileExInstance,L"MoveFileExFixup From", existingFileName);
             LogString(MoveFileExInstance,L"MoveFileExFixup To",   newFileName);
@@ -106,11 +111,16 @@ BOOL __stdcall MoveFileExFixup(
 #endif
         }
     }
+#if _DEBUG
+    // Fall back to assuming no redirection is necessary if exception
+    LOGGED_CATCHHANDLER(MoveFileExInstance, L"MoveFileEx")
+#else
     catch (...)
     {
-        // Fall back to assuming no redirection is necessary
-        Log(L"MoveFileExFixup ***Exception detected; fallback.***");
+        Log(L"[%d] MoveFileEx Exception=0x%x", MoveFileExInstance, GetLastError());
     }
+#endif
+
 
     if constexpr (psf::is_ansi<CharT>)
     {
