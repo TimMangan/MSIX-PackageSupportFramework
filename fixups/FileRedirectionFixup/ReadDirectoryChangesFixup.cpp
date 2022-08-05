@@ -142,12 +142,18 @@ BOOL _stdcall ReadDirectoryChangesExWFixup(
         if (guard)
         {
 #if _DEBUG
+            FILE_BASIC_INFO FileBasicInfoData;
+            BOOL res1 = GetFileInformationByHandleEx(hDirectory, FileBasicInfo, &FileBasicInfoData, sizeof(FileBasicInfoData));
+            if (res1 != 0)
+            {
+                Log(L"[%d] RDCWEx RDCWEx Handle FileBasicInfo Fail err=0x%x", Instance, GetLastError());
+            }
             DWORD len = 512;
             PFILE_NAME_INFO pFileInformation = (PFILE_NAME_INFO)malloc(len);
             if (pFileInformation != NULL)
             {
                 BOOL res = GetFileInformationByHandleEx(hDirectory, FileNameInfo, pFileInformation, len);
-                if (res == ERROR_SUCCESS)
+                if (res != 0)
                 {
                     LogCountedStringW("       RDCWEx Handle Path is", pFileInformation->FileName, pFileInformation->FileNameLength);
                 }

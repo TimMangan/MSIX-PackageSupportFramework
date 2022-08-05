@@ -314,3 +314,5 @@ tests/scenarios/Appx/ArchitectureTest.appx.signtool.txt
 tests/scenarios/Appx/CompositionTest.appx.makeappx.txt
 ZipRelease/DebugPsf.zip
 ZipRelease/ReleasePsf.zip
+/tests/scenarios/Appx/PackageDriveTest.appx.makeappx.txt
+/tests/scenarios/Appx/PackageDriveTest.appx.signtool.txt

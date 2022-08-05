@@ -1076,9 +1076,18 @@ BOOL WINAPI CreateProcessFixup(
             if (!::DetourUpdateProcessWithDll(processInformation->hProcess, &targetDllPath, 1))
             {
                 Log("\t[%d] CreateProcessFixup: %s unable to inject, err=0x%x.", CreateProcessInstance, targetDllPath, ::GetLastError());
+                // We failed to detour the created process. Assume that the failure was due to an architecture mis-match
+                // and try the launch using PsfRunDl
                 if (!::DetourProcessViaHelperDllsW(processInformation->dwProcessId, 1, &targetDllPath, CreateProcessWithPsfRunDll))
                 {
-                    Log("\t[%d] CreateProcessFixup: %s unable to inject with RunDll either (Skipping), err=0x%x.", CreateProcessInstance, targetDllPath, ::GetLastError());
+                    auto err = ::GetLastError();
+                    Log("\t[%d] CreateProcessFixup: %s unable to inject with RunDll either (Skipping), err=0x%x.", CreateProcessInstance, targetDllPath, err);
+                    ::TerminateProcess(processInformation->hProcess, ~0u);
+                    ::CloseHandle(processInformation->hProcess);
+                    ::CloseHandle(processInformation->hThread);
+
+                    ::SetLastError(err);
+                    return FALSE;
                 }
             }
             else

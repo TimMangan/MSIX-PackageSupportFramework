@@ -41,7 +41,19 @@ BOOL __stdcall CreateDirectoryFixup(_In_ const CharT* pathName, _In_opt_ LPSECUR
 #if _DEBUG
                     LogString(CreateDirectoryInstance, L"CreateDirectoryFixup Use Folder", pri.redirect_path.c_str());
 #endif
-                    return impl::CreateDirectory(pri.redirect_path.c_str(), securityAttributes);
+                    BOOL bRet = impl::CreateDirectory(pri.redirect_path.c_str(), securityAttributes);
+#if _DEBUG
+                    if (bRet != 0)
+                    {
+                        Log(L"[%d] CreateDirectory returns SUCCESS", CreateDirectoryInstance);
+
+                    }
+                    else
+                    {
+                        Log(L"[%d] CreateDirectory returns FAIL with GetLastError=0x%x", CreateDirectoryInstance, GetLastError());
+                    }
+#endif
+                    return bRet;
                 }
             }
             else
@@ -90,7 +102,7 @@ BOOL __stdcall CreateDirectoryExFixup(
         if (guard)
         {
 #if _DEBUG
-            LogString(CreateDirectoryExInstance,L"CreateDirectoryExFixup for", templateDirectory);
+            LogString(CreateDirectoryExInstance,L"CreateDirectoryExFixup using template", templateDirectory);
             LogString(CreateDirectoryExInstance,L"CreateDirectoryExFixup to",  newDirectory);
 #endif
             std::wstring WtemplateDirectory = widen(templateDirectory);
@@ -115,12 +127,24 @@ BOOL __stdcall CreateDirectoryExFixup(
 
             
             path_redirect_info  priSource = ShouldRedirectV2(WtemplateDirectory.c_str(), redirect_flags::check_file_presence, CreateDirectoryExInstance);
-            path_redirect_info  priDest = ShouldRedirectV2(WnewDirectory.c_str(), redirect_flags::ensure_directory_structure, CreateDirectoryExInstance);
+            path_redirect_info  priDest = ShouldRedirectV2(WnewDirectory.c_str(), redirect_flags::ensure_directory_structure | redirect_flags::ok_if_parent_in_pkg, CreateDirectoryExInstance);
             if (priSource.should_redirect || priDest.should_redirect)
             {
                 std::wstring rldRedirectTemplate = TurnPathIntoRootLocalDevice(priSource.should_redirect ? priSource.redirect_path.c_str() : WtemplateDirectory.c_str());
                 std::wstring rldDest = TurnPathIntoRootLocalDevice(priDest.should_redirect ? priDest.redirect_path.c_str() : WnewDirectory.c_str());
-                return impl::CreateDirectoryEx(rldRedirectTemplate.c_str(), rldDest.c_str(), securityAttributes);
+                BOOL bRet = impl::CreateDirectoryEx(rldRedirectTemplate.c_str(), rldDest.c_str(), securityAttributes);
+#if _DEBUG
+                if (bRet != 0)
+                {
+                    Log(L"[%d] CreateDirectoryEx returns SUCCESS", CreateDirectoryExInstance);
+
+            }
+                else
+                {
+                    Log(L"[%d] CreateDirectoryEx returns FAIL with GetLastError=0x%x", CreateDirectoryExInstance, GetLastError());
+                }
+#endif
+                return bRet;
             }
         }
     }

@@ -119,6 +119,16 @@ bool _stdcall IsUnderFolderImpl(_In_ const CharT* fileName, _In_ const std::file
         }
     }
     return path_relative_to(fileName, folder);
+} // IsUnderFolderImpl()
+
+bool _stdcall IsUnderFolder(_In_ const char* fileName, _In_ const std::filesystem::path folder)
+{
+    return IsUnderFolderImpl(fileName, folder);
+}
+
+bool _stdcall IsUnderFolder(_In_ const wchar_t* fileName, _In_ const std::filesystem::path folder)
+{
+    return IsUnderFolderImpl(fileName, folder);
 }
 
 /// <summary>
@@ -170,7 +180,7 @@ bool IsThisFolderImpl(_In_ const CharT* fileName, _In_ const std::filesystem::pa
 template <typename CharT>
 bool _stdcall IsUnderUserAppDataLocalImpl(_In_ const CharT* fileName)
 {
-    return IsUnderFolderImpl(fileName, psf::known_folder(FOLDERID_LocalAppData));
+    return IsUnderFolder(fileName, psf::known_folder(FOLDERID_LocalAppData));
 }
 bool IsUnderUserAppDataLocal(_In_ const wchar_t* fileName)
 {
@@ -182,11 +192,12 @@ bool IsUnderUserAppDataLocal(_In_ const char* fileName)
 }
 #pragma endregion
 
+
 #pragma region IsUnderUserAppDataLocalPackages
 template <typename CharT>
 bool _stdcall IsUnderUserAppDataLocalPackagesImpl(_In_ const CharT* fileName)
 {
-    return IsUnderFolderImpl(fileName, psf::known_folder(FOLDERID_LocalAppData) / L"Packages");
+    return IsUnderFolder(fileName, psf::known_folder(FOLDERID_LocalAppData) / L"Packages");
 }
 bool IsUnderUserAppDataLocalPackages(_In_ const wchar_t* fileName)
 {
@@ -202,7 +213,7 @@ bool IsUnderUserAppDataLocalPackages(_In_ const char* fileName)
 template <typename CharT>
 bool _stdcall IsUnderUserAppDataRoamingImpl(_In_ const CharT* fileName)
 {
-    return IsUnderFolderImpl(fileName, psf::known_folder(FOLDERID_RoamingAppData));
+    return IsUnderFolder(fileName, psf::known_folder(FOLDERID_RoamingAppData));
 }
 bool IsUnderUserAppDataRoaming(_In_ const wchar_t* fileName)
 {
@@ -218,7 +229,7 @@ bool IsUnderUserAppDataRoaming(_In_ const char* fileName)
 template <typename CharT>
 bool _stdcall IsUnderUserPackageWritablePackageRootImpl(_In_ const CharT* fileName)
 {
-    return IsUnderFolderImpl(fileName, g_writablePackageRootPath);
+    return IsUnderFolder(fileName, g_writablePackageRootPath);
 }
 bool IsUnderUserPackageWritablePackageRoot(_In_ const wchar_t* fileName)
 {
@@ -234,7 +245,7 @@ bool IsUnderUserPackageWritablePackageRoot(_In_ const char* fileName)
 template <typename CharT>
 bool _stdcall IsUnderPackageRootImpl(_In_ const CharT* fileName)
 {
-    return IsUnderFolderImpl(fileName, g_packageRootPath);
+    return IsUnderFolder(fileName, g_packageRootPath);
 }
 bool IsUnderPackageRoot(_In_ const wchar_t* fileName)
 {
@@ -265,6 +276,38 @@ bool IsPackageRoot(_In_ const char* fileName)
 
 
 #pragma region SpecialtyPaths
+
+
+// Eliminate files like CONOUT$
+bool IsSpecialFile(const char* path)
+{
+    std::string sPath = path;
+    std::size_t foundSlash = sPath.find('\\');
+    if (foundSlash == std::string::npos)
+    {
+        std::size_t foundDollar = sPath.find('$');
+        if (foundDollar != std::string::npos)
+        {
+            return true;
+        }
+    }
+    return false;
+}
+bool IsSpecialFile(const wchar_t* path)
+{
+    std::wstring wPath = path;
+    std::size_t foundSlash = wPath.find(L'\\');
+    if (foundSlash == std::wstring::npos)
+    {
+        std::size_t foundDollar = wPath.find(L'$');
+        if (foundDollar != std::wstring::npos)
+        {
+            return true;
+        }
+    }
+    return false;
+}
+
 bool IsColonColonGuid(const char* path)
 {
     if (path != nullptr && strlen(path) > 39)

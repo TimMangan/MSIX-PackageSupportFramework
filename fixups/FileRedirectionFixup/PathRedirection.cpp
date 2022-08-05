@@ -23,7 +23,9 @@
 
 
 #if _DEBUG
-//#define MOREDEBUG 1
+#define MOREDEBUG 1
+//#define _ManualDebug 1
+//#include <thread>
 #endif
 
 TRACELOGGING_DECLARE_PROVIDER(g_Log_ETW_ComponentProvider);
@@ -73,6 +75,8 @@ void InitializePaths()
 
     // Folder IDs and their desktop bridge packaged VFS location equivalents. Taken from:
     // https://docs.microsoft.com/en-us/windows/uwp/porting/desktop-to-uwp-behind-the-scenes
+    // This list is the list of folders automatically checked when the application requests the native path.
+    // This list is clearly a subset of VFS folders that might be in a package.
     //      System Location                 Redirected Location (Under [PackageRoot]\VFS)   Valid on architectures
     //      FOLDERID_SystemX86              SystemX86                                       x86, amd64
     //      FOLDERID_System                 SystemX64                                       amd64
@@ -91,41 +95,54 @@ void InitializePaths()
     ///// NOTE:
     ///// It is critical that the ordering in this list causes a more specific path to match before the more general one.
     ///// So FOLDERID_SystemX86 is before FOLDERID_Windows and common folders before their parent, etc
-    g_vfsFolderMappings.push_back(vfs_folder_mapping{ psf::known_folder(FOLDERID_System) / LR"(catroot2)"sv,    LR"(AppVSystem32Catroot2)"sv });
-    g_vfsFolderMappings.push_back(vfs_folder_mapping{ psf::known_folder(FOLDERID_System) / LR"(catroot)"sv,     LR"(AppVSystem32Catroot)"sv });
-    g_vfsFolderMappings.push_back(vfs_folder_mapping{ psf::known_folder(FOLDERID_System) / LR"(drivers\etc)"sv, LR"(AppVSystem32DriversEtc)"sv });
-    g_vfsFolderMappings.push_back(vfs_folder_mapping{ psf::known_folder(FOLDERID_System) / LR"(driverstore)"sv, LR"(AppVSystem32Driverstore)"sv });
-    g_vfsFolderMappings.push_back(vfs_folder_mapping{ psf::known_folder(FOLDERID_System) / LR"(logfiles)"sv,    LR"(AppVSystem32Logfiles)"sv });
-    g_vfsFolderMappings.push_back(vfs_folder_mapping{ psf::known_folder(FOLDERID_System) / LR"(spool)"sv,       LR"(AppVSystem32Spool)"sv });
+    std::filesystem::path System32Path = psf::known_folder(FOLDERID_System);
+    std::filesystem::path windirPath = psf::known_folder(FOLDERID_Windows);
 
-    g_vfsFolderMappings.push_back(vfs_folder_mapping{ psf::known_folder(FOLDERID_SystemX86),                   LR"(SystemX86)"sv });
-    g_vfsFolderMappings.push_back(vfs_folder_mapping{ psf::known_folder(FOLDERID_ProgramFilesCommonX86),       LR"(ProgramFilesCommonX86)"sv });
-    g_vfsFolderMappings.push_back(vfs_folder_mapping{ psf::known_folder(FOLDERID_ProgramFilesX86),             LR"(ProgramFilesX86)"sv });
+    g_vfsFolderMappings.push_back(vfs_folder_mapping{ System32Path / LR"(catroot2)"sv,                          LR"(AppVSystem32Catroot2)"sv,   true });
+    g_vfsFolderMappings.push_back(vfs_folder_mapping{ System32Path / LR"(catroot)"sv,                           LR"(AppVSystem32Catroot)"sv,    true });
+    g_vfsFolderMappings.push_back(vfs_folder_mapping{ System32Path / LR"(drivers\etc)"sv,                       LR"(AppVSystem32DriversEtc)"sv, true });
+    g_vfsFolderMappings.push_back(vfs_folder_mapping{ System32Path / LR"(driverstore)"sv,                       LR"(AppVSystem32Driverstore)"sv, true });
+    g_vfsFolderMappings.push_back(vfs_folder_mapping{ System32Path / LR"(logfiles)"sv,                          LR"(AppVSystem32Logfiles)"sv,   true });
+    g_vfsFolderMappings.push_back(vfs_folder_mapping{ System32Path / LR"(spool)"sv,                             LR"(AppVSystem32Spool)"sv,      true });
+
+    g_vfsFolderMappings.push_back(vfs_folder_mapping{ psf::known_folder(FOLDERID_SystemX86),                    LR"(SystemX86)"sv,              true });
+    g_vfsFolderMappings.push_back(vfs_folder_mapping{ psf::known_folder(FOLDERID_ProgramFilesCommonX86),        LR"(ProgramFilesCommonX86)"sv,  true });
+    g_vfsFolderMappings.push_back(vfs_folder_mapping{ psf::known_folder(FOLDERID_ProgramFilesX86),              LR"(ProgramFilesX86)"sv,        true });
 #if !_M_IX86
     // FUTURE: We may want to consider the possibility of a 32-bit application trying to reference "%windir%\sysnative\"
     //         in which case we'll have to get smarter about how we resolve paths
-    g_vfsFolderMappings.push_back(vfs_folder_mapping{ psf::known_folder(FOLDERID_System), LR"(SystemX64)"sv });
+    g_vfsFolderMappings.push_back(vfs_folder_mapping{ System32Path,                                             LR"(SystemX64)"sv,              true });
     // FOLDERID_ProgramFilesX64* not supported for 32-bit applications
     // FUTURE: We may want to consider the possibility of a 32-bit process trying to access this path anyway. E.g. a
     //         32-bit child process of a 64-bit process that set the current directory
-    g_vfsFolderMappings.push_back(vfs_folder_mapping{ psf::known_folder(FOLDERID_ProgramFilesCommonX64), LR"(ProgramFilesCommonX64)"sv });
-    g_vfsFolderMappings.push_back(vfs_folder_mapping{ psf::known_folder(FOLDERID_ProgramFilesX64), LR"(ProgramFilesX64)"sv });
+    g_vfsFolderMappings.push_back(vfs_folder_mapping{ psf::known_folder(FOLDERID_ProgramFilesCommonX64),        LR"(ProgramFilesCommonX64)"sv,  true });
+    g_vfsFolderMappings.push_back(vfs_folder_mapping{ psf::known_folder(FOLDERID_ProgramFilesX64),              LR"(ProgramFilesX64)"sv,        true });
 #endif
-    g_vfsFolderMappings.push_back(vfs_folder_mapping{ psf::known_folder(FOLDERID_System),                       LR"(System)"sv });
-    g_vfsFolderMappings.push_back(vfs_folder_mapping{ psf::known_folder(FOLDERID_Fonts),                        LR"(Fonts)"sv });
-    g_vfsFolderMappings.push_back(vfs_folder_mapping{ psf::known_folder(FOLDERID_Windows),                      LR"(Windows)"sv });
+    g_vfsFolderMappings.push_back(vfs_folder_mapping{ System32Path,                                             LR"(System)"sv,                 false });
+    g_vfsFolderMappings.push_back(vfs_folder_mapping{ psf::known_folder(FOLDERID_Fonts),                        LR"(Fonts)"sv,                  false });
+    g_vfsFolderMappings.push_back(vfs_folder_mapping{ windirPath,                                               LR"(Windows)"sv,                true });
 
-    g_vfsFolderMappings.push_back(vfs_folder_mapping{ psf::known_folder(FOLDERID_ProgramData),                  LR"(Common AppData)"sv });
+    g_vfsFolderMappings.push_back(vfs_folder_mapping{ psf::known_folder(FOLDERID_ProgramData),                  LR"(Common AppData)"sv,         true });
 
     // These are additional folders that may appear in MSIX packages and need help
-    g_vfsFolderMappings.push_back(vfs_folder_mapping{ psf::known_folder(FOLDERID_LocalAppData),                 LR"(Local AppData)"sv });
-    g_vfsFolderMappings.push_back(vfs_folder_mapping{ psf::known_folder(FOLDERID_RoamingAppData),               LR"(AppData)"sv });
+    g_vfsFolderMappings.push_back(vfs_folder_mapping{ psf::known_folder(FOLDERID_LocalAppData),                 LR"(Local AppData)"sv,          false });
+    g_vfsFolderMappings.push_back(vfs_folder_mapping{ psf::known_folder(FOLDERID_RoamingAppData),               LR"(AppData)"sv,                false });
+    g_vfsFolderMappings.push_back(vfs_folder_mapping{ psf::known_folder(FOLDERID_LocalAppDataLow),              LR"(LocalAppDataLow)"sv,        false });
 
-    //These are additional folders seen from App-V packages converted into MSIX (still looking for an official list)
-    g_vfsFolderMappings.push_back(vfs_folder_mapping{ psf::known_folder(FOLDERID_PublicDesktop),                LR"(Common Desktop)"sv });
-    g_vfsFolderMappings.push_back(vfs_folder_mapping{ psf::known_folder(FOLDERID_CommonPrograms),               LR"(Common Programs)"sv });
-    g_vfsFolderMappings.push_back(vfs_folder_mapping{ psf::known_folder(FOLDERID_LocalAppDataLow),              LR"(LOCALAPPDATALOW)"sv });
+    g_vfsFolderMappings.push_back(vfs_folder_mapping{ psf::known_folder(FOLDERID_PublicDesktop),                LR"(Common Desktop)"sv,         false });
+    g_vfsFolderMappings.push_back(vfs_folder_mapping{ psf::known_folder(FOLDERID_CommonPrograms),               LR"(Common Programs)"sv,        false });
+    g_vfsFolderMappings.push_back(vfs_folder_mapping{ psf::known_folder(FOLDERID_Desktop),                      LR"(ThisPCDesktopFolder)"sv,    false });
+    g_vfsFolderMappings.push_back(vfs_folder_mapping{ psf::known_folder(FOLDERID_Documents),                    LR"(Personal)"sv,               false });
+    g_vfsFolderMappings.push_back(vfs_folder_mapping{ psf::known_folder(FOLDERID_Profile),                      LR"(Profile)"sv,                false });
+    g_vfsFolderMappings.push_back(vfs_folder_mapping{ psf::known_folder(FOLDERID_PublicDesktop),                LR"(Common Desktop)"sv,         false });
+    g_vfsFolderMappings.push_back(vfs_folder_mapping{ psf::known_folder(FOLDERID_PublicDocuments),              LR"(Common Documents)"sv,       false });
+
+    g_vfsFolderMappings.push_back(vfs_folder_mapping{ windirPath.root_name(),                                   LR"(AppVPackageDrive)"sv,       false });
 }
+
+std::vector<path_redirection_spec> g_redirectionSpecs;
+
+
 
 std::filesystem::path path_from_known_folder_string(std::wstring_view str)
 {
@@ -178,9 +195,19 @@ std::filesystem::path path_from_known_folder_string(std::wstring_view str)
     {
         id = FOLDERID_RoamingAppData;
     }
-    else if ((str.length() >= 38) && (str[0] == '{'))
+    else if ((str.length() == 38) && (str[0] == '{'))
     {
-        if (FAILED(::IIDFromString(str.data(), &id)))
+        if (::IIDFromString(str.data(), &id) != S_OK)
+        {
+            return {};
+        }
+    }
+    else if (str.length() == 36)
+    {
+        std::wstring AddedBrackets = L"{";
+        AddedBrackets.append(str);
+        AddedBrackets.append(L"}");
+        if (::IIDFromString(AddedBrackets.c_str(), &id) != S_OK)
         {
             return {};
         }
@@ -194,53 +221,87 @@ std::filesystem::path path_from_known_folder_string(std::wstring_view str)
     return psf::known_folder(id);
 }
 
-std::vector<path_redirection_spec> g_redirectionSpecs;
+
+std::filesystem::path path_from_package_vfs_relative_path(std::wstring package_vfs_relative_path)
+{
+    // Performing exact match so order doesn't matter here
+    for (std::vector<vfs_folder_mapping>::iterator iter = g_vfsFolderMappings.begin(); iter != g_vfsFolderMappings.end(); ++iter)
+    {
+        //auto& mapping = *iter;
+        if ((iter->package_vfs_relative_path).wstring().compare(package_vfs_relative_path) == 0)
+        {
+            return iter->path;
+        }
+    }
+    return L"";
+} // path_from_package_vfs_relative_path()
+
+// Given a native filepath that is under this mapping, return the package VFS equivalent path
+std::filesystem::path PackagePathFromNativePathImpl(vfs_folder_mapping mapping, const wchar_t* fileName)
+{
+    constexpr wchar_t root_local_device_prefix[] = LR"(\\?\)";
+    constexpr wchar_t root_local_device_prefix_dot[] = LR"(\\.\)";
+    std::wstring varName = mapping.package_vfs_relative_path.wstring();
+    std::wstring nativePath = mapping.path.wstring();
+    //Log(L"*** PackagePathFromNativePathImpl fileName=%s varname=%s nativePath=%s initial", fileName, varName.c_str(), nativePath.c_str());
+
+    std::wstring ws_fileName = widen(fileName);
+    std::filesystem::path inputPathStripped = widen(fileName);
+
+    std::filesystem::path prefix = g_packageVfsRootPath;
+    if (std::equal(root_local_device_prefix, root_local_device_prefix + 4, ws_fileName.c_str()))
+    {
+        inputPathStripped = ws_fileName.c_str() + 4;
+        std::wstring wpref = root_local_device_prefix;
+        prefix = wpref.append(g_packageVfsRootPath.c_str());
+    }
+    else if (std::equal(root_local_device_prefix_dot, root_local_device_prefix_dot + 4, ws_fileName.c_str()))
+    {
+        inputPathStripped = ws_fileName.c_str() + 4;
+        std::wstring wpref = root_local_device_prefix_dot;
+        prefix = wpref.append(g_packageVfsRootPath.c_str());
+    }
+    std::wstring ws_inputPathStripped = inputPathStripped.wstring();
+    std::filesystem::path nativepath = path_from_package_vfs_relative_path(varName);
+    auto outputPath = prefix / varName /  ws_inputPathStripped.substr(wcslen(nativepath.c_str()) + 1).c_str();
+    //Log(L"*** PackagePathFromNativePathImpl outputPath=%s return", outputPath.c_str());
+    return outputPath;
+} // PackagePathFromNativePathImpl()
+
+std::filesystem::path PackagePathFromNativePath(vfs_folder_mapping mapping, const char* fileName)
+{
+    return PackagePathFromNativePathImpl(mapping, widen(fileName).c_str());
+}
+std::filesystem::path PackagePathFromNativePath(vfs_folder_mapping mapping, const wchar_t * fileName)
+{
+    return PackagePathFromNativePathImpl(mapping, fileName);
+}
 
 
-
+// Given a native filepath, return the equivalent package VFS path or nothing.
 template <typename CharT>
 std::filesystem::path GetPackageVFSPathImpl(const CharT* fileName)
 {
     if (fileName != NULL)
     {
-        constexpr wchar_t root_local_device_prefix[] = LR"(\\?\)";
-        constexpr wchar_t root_local_device_prefix_dot[] = LR"(\\.\)";
 
         try
         {
-            if (IsUnderUserAppDataLocal(fileName))
+            // Ignore these two areas
+            if (IsUnderFolder(fileName, path_from_package_vfs_relative_path(L"Local AppData") / L"Packages") ||
+                IsUnderFolder(fileName, path_from_package_vfs_relative_path(L"ProgramFilesX64") / L"WindowsApps"))
             {
-                auto lad = psf::known_folder(FOLDERID_LocalAppData);
-                std::filesystem::path foo;
-                if (std::equal(root_local_device_prefix, root_local_device_prefix + 4, fileName))
-                {
-                    foo = fileName + 4;
-                }
-                else if (std::equal(root_local_device_prefix_dot, root_local_device_prefix_dot + 4, fileName))
-                {
-                    foo = fileName + 4;
-                }
-                else
-                {
-                    foo = fileName;
-                }
-                auto testLad = g_packageVfsRootPath / L"Local AppData" / foo.wstring().substr(wcslen(lad.c_str()) + 1).c_str();
-                return testLad;
+                return L"";
             }
-            else if (IsUnderUserAppDataRoaming(fileName))
+
+            // NOTE: Always check longer paths first
+            for (std::vector<vfs_folder_mapping>::iterator iter = g_vfsFolderMappings.begin(); iter != g_vfsFolderMappings.end(); ++iter)
             {
-                auto rad = psf::known_folder(FOLDERID_RoamingAppData);
-                std::filesystem::path foo;
-                if (std::equal(root_local_device_prefix, root_local_device_prefix + 4, fileName))
+                auto& mapping = *iter;
+                if(IsUnderFolder(fileName, iter->path))
                 {
-                    foo = fileName + 4;
+                    return PackagePathFromNativePath(mapping, fileName);
                 }
-                else
-                {
-                    foo = fileName;
-                }
-                auto testRad = g_packageVfsRootPath / L"AppData" / foo.wstring().substr(wcslen(rad.c_str()) + 1).c_str();
-                return testRad;
             }
         }
         catch (...)
@@ -249,7 +310,7 @@ std::filesystem::path GetPackageVFSPathImpl(const CharT* fileName)
         }
     }
     return L"";
-}
+} // GetPackageVFSPathImpl()
 
 std::filesystem::path GetPackageVFSPath(const wchar_t* fileName)
 {
@@ -262,12 +323,74 @@ std::filesystem::path GetPackageVFSPath(const char* fileName)
 }
 
 
+// Given a path within the package, return the name of the VFS var  (e.g. "Windows")
+std::wstring GetVfsVarFromPackagePath(std::filesystem::path packagePath)
+{
+    std::filesystem::path package_vfs = g_packageRootPath / L"VFS";
+    std::wstring  ws_package_vfs = package_vfs.wstring();
+    size_t lenPkgVfs = ws_package_vfs.length();
 
+    std::wstring ws_packagePath = packagePath.wstring();
+    if (ws_packagePath.length() > lenPkgVfs)
+    {
+        std::wstring remainder = ws_packagePath.substr(lenPkgVfs);
+        size_t lenSlash = remainder.find_first_of(L"\\");
+        if (lenSlash > 0)
+        {
+            return remainder.substr(0, lenSlash);
+        }
+        else
+        {
+            return remainder;
+        }
+    }
+    else
+    {
+        return L"";
+    }
+}
+#if _ManualDebug
+void manual_LogWFD(const wchar_t* msg)
+{
+    ::OutputDebugStringW(msg);
+}
+void manual_wait_for_debugger()
+{
+    manual_LogWFD(L"Start WFD");
+    // If a debugger is already attached, ignore as they have likely already set all breakpoints, etc. they need
+    if (!::IsDebuggerPresent())
+    {
+        manual_LogWFD(L"WFD: not yet.");
+        while (!::IsDebuggerPresent())
+        {
+            manual_LogWFD(L"WFD: still not yet.");
+            ::Sleep(1000);
+        }
+        manual_LogWFD(L"WFD: Yes.");
+        // NOTE: When a debugger attaches (invasively), it will inject a DebugBreak in a new thread. Unfortunately,
+        //       that does not synchronize with, and may occur _after_ IsDebuggerPresent returns true, allowing
+        //       execution to continue for a short period of time. In order to get around this, we'll insert our own
+        //       DebugBreak call here. We also add a short(-ish) sleep so that this is likely to be the second break
+        //       seen, so that the injected DebugBreak doesn't preempt us in the middle of debugging. This is of
+        //       course best effort
+        ::Sleep(5000);
+        std::this_thread::yield();
+        ::DebugBreak();
+    }
+    manual_LogWFD(L"WFD: Done.");
+}
+#endif
 
 void InitializeConfiguration()
 {
     TraceLoggingRegister(g_Log_ETW_ComponentProvider);
     std::wstringstream traceDataStream;
+
+#if _ManualDebug
+    Log(L"PsfLauncher waiting for debugger to attach to process...\n");
+    manual_wait_for_debugger();
+#endif
+
 #if MOREDEBUG
     Log("\t\tFRF CONFIG: Look for config");
 #endif            
@@ -291,6 +414,9 @@ void InitializeConfiguration()
                 for (auto& spec : specs)
                 {
                     auto& specObject = spec.as_object();
+#if MOREDEBUG
+                    ///LogString(L"\t\tFRF CONFIG: \tspecified basepath is ", basePath.c_str());
+#endif
                     auto path = psf::remove_trailing_path_separators(basePath / specObject.get("base").as_string().wstring());
                     std::filesystem::path redirectTargetBaseValue = g_writablePackageRootPath;
                     if (auto redirectTargetBase = specObject.try_get("redirectTargetBase"))
@@ -308,7 +434,10 @@ void InitializeConfiguration()
                         IsReadOnlyValue = specObject.get("isReadOnly").as_boolean().get();
                     }
                   
-                    traceDataStream << " base:" << RemovePIIfromFilePath(specObject.get("base").as_string().wide()) << " ;";
+
+#if MOREDEBUG
+                    //LogString(L"\t\tFRF CONFIG: \tcalculated basepath is ", path.c_str());
+#endif
                     traceDataStream << " patterns:";
                     for (auto& pattern : specObject.get("patterns").as_array())
                     {
@@ -319,6 +448,14 @@ void InitializeConfiguration()
                           g_redirectionSpecs.emplace_back();
                           g_redirectionSpecs.back().base_path = path;
                           g_redirectionSpecs.back().pattern.assign(patternString.data(), patternString.length());
+                          try
+                          {
+                              g_redirectionSpecs.back().patternWstring = patternString.data();
+                          }
+                          catch (...)
+                          {
+                              g_redirectionSpecs.back().patternWstring = L"";
+                          }
                           g_redirectionSpecs.back().redirect_targetbase = redirectTargetBaseValue;
                           g_redirectionSpecs.back().isExclusion = IsExclusionValue;
                           g_redirectionSpecs.back().isReadOnly = IsReadOnlyValue;
@@ -348,7 +485,7 @@ void InitializeConfiguration()
                 Log("\t\tFRF CONFIG: Has packageDriveRelative");
 #endif 
                 traceDataStream << " packageDriveRelative:\n";
-                initializeRedirection(g_packageRootPath.root_name(), packageDriveRelativeValue->as_array());
+                initializeRedirection(g_packageRootPath.root_path() , packageDriveRelativeValue->as_array());
             }
 
             if (auto knownFoldersValue = redirectedPathsObject.try_get("knownFolders"))
@@ -359,12 +496,19 @@ void InitializeConfiguration()
                 traceDataStream << " knownFolders:\n";
                 for (auto& knownFolderValue : knownFoldersValue->as_array())
                 {
-                    auto& knownFolderObject = knownFolderValue.as_object();
-                    auto path = path_from_known_folder_string(knownFolderObject.get("id").as_string().wstring());
-                    traceDataStream << " id:" << knownFolderObject.get("id").as_string().wide() << " ;";
+                    try
+                    {
+                        auto& knownFolderObject = knownFolderValue.as_object();
+                        auto path = path_from_known_folder_string(knownFolderObject.get("id").as_string().wstring());
+                        traceDataStream << " id:" << knownFolderObject.get("id").as_string().wide() << " ;";
 
-                    traceDataStream << " relativePaths:\n";
-                    initializeRedirection(path, knownFolderObject.get("relativePaths").as_array(), path.empty());
+                        traceDataStream << " relativePaths:\n";
+                        initializeRedirection(path, knownFolderObject.get("relativePaths").as_array(), path.empty());
+                    }
+                    catch (...)
+                    {
+                        Log("*** Bad entry in knownFolders of config.json FileRedirectionFixup***");
+                    }
                 }
             }
         }

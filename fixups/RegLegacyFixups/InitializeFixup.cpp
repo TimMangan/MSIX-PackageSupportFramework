@@ -172,7 +172,7 @@ void InitializeConfiguration()
                             Log(L"RegLegacyFixups:      have hive\n");
 #endif
 
-                            for (auto& pattern : regItemObject.get("patterns").as_array())
+                            for (auto&  pattern : regItemObject.get("patterns").as_array())
                             {
                                 auto patternString = pattern.as_string().wstring();
 #if _DEBUG

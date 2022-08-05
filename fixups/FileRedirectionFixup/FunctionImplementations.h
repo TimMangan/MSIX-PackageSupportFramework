@@ -106,7 +106,7 @@ namespace impl
     inline bool PathExists(CharT* path) noexcept
     {
         DWORD oldErr = GetLastError();
-        bool bRet = GetFileAttributes(path) != INVALID_FILE_ATTRIBUTES;
+        bool bRet = (GetFileAttributes(path) != INVALID_FILE_ATTRIBUTES);
         SetLastError(oldErr);
         return bRet;
     }

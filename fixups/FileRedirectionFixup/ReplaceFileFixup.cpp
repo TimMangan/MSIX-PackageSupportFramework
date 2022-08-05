@@ -41,10 +41,10 @@ BOOL __stdcall ReplaceFileFixup(
             //       immediately get deleted. We could improve this in the future if we wanted, but that would
             //       effectively require that we re-write ReplaceFile, which we opt not to do right now. Also note that
             //       this implies that we have the same file deletion limitation that we have for DeleteFile, etc.
-            path_redirect_info  priTarget = ShouldRedirectV2(replacedFileName, redirect_flags::check_file_presence | redirect_flags::copy_on_read, ReplaceFileInstance);
+            path_redirect_info  priTarget = ShouldRedirectV2(replacedFileName, redirect_flags::check_file_presence | redirect_flags::copy_on_read | redirect_flags::ok_if_parent_in_pkg, ReplaceFileInstance);
             //////path_redirect_info  priSource = ShouldRedirectV2(replacementFileName, redirect_flags::ensure_directory_structure, ReplaceFileInstance);
-            path_redirect_info  priSource = ShouldRedirectV2(replacementFileName, redirect_flags::check_file_presence | redirect_flags::copy_on_read | redirect_flags::ensure_directory_structure, ReplaceFileInstance);
-            path_redirect_info  priBackup = ShouldRedirectV2(backupFileName, redirect_flags::ensure_directory_structure, ReplaceFileInstance);
+            path_redirect_info  priSource = ShouldRedirectV2(replacementFileName, redirect_flags::check_file_presence | redirect_flags::copy_on_read | redirect_flags::ensure_directory_structure | redirect_flags::ok_if_parent_in_pkg, ReplaceFileInstance);
+            path_redirect_info  priBackup = ShouldRedirectV2(backupFileName, redirect_flags::ensure_directory_structure | redirect_flags::ok_if_parent_in_pkg, ReplaceFileInstance);
 #if MOREDEBUG
             if (priTarget.should_redirect)
                 LogString(ReplaceFileInstance, L"ReplaceFileFixup RedirTarget ", priTarget.redirect_path.c_str());

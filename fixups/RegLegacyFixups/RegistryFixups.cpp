@@ -14,7 +14,7 @@
 #include <regex>
 #include "RegRemediation.h"
 
-DWORD g_RegIntceptInstance = 5000;
+DWORD g_RegIntceptInstance = 50000;
 
 
 

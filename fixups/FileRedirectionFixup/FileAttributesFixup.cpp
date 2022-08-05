@@ -32,48 +32,60 @@ DWORD __stdcall GetFileAttributesFixup(_In_ const CharT* fileName) noexcept
 
             if (!IsUnderUserAppDataLocalPackages(wfileName.c_str()))
             {
-                path_redirect_info  pri = ShouldRedirectV2(wfileName.c_str(), redirect_flags::check_file_presence, GetFileAttributesInstance);
+                path_redirect_info  pri = ShouldRedirectV2(wfileName.c_str(), redirect_flags::check_file_presence | redirect_flags::ok_if_parent_in_pkg, GetFileAttributesInstance);
                 if (pri.should_redirect)
                 {
 #if _DEBUG
                     Log(L"[%d] GetFileAttributes: Should Redirect says yes.", GetFileAttributesInstance);
 #endif
                     SetLastError(0);
-                    DWORD attributes = impl::GetFileAttributes(pri.redirect_path.c_str());
-                    if (attributes == INVALID_FILE_ATTRIBUTES)
+                    DWORD attributes = INVALID_FILE_ATTRIBUTES;
+                    if (pri.doesRedirectedExist)
                     {
-                        // Might be file/dir has not been copied yet, but might also be funky ADL/ADR.
-                        if (IsUnderUserAppDataLocal(wfileName.c_str()) ||
-                            IsUnderUserAppDataRoaming(wfileName.c_str()))
+                        attributes = impl::GetFileAttributes(pri.redirect_path.c_str());
+                    }
+                    else if (pri.doesVFSExist)
+                    {
+                        attributes = impl::GetFileAttributes(pri.vfs_path.c_str());
+                    }
+                    else
+                    {
+                        attributes = impl::GetFileAttributes(wfileName.c_str());
+                        if (attributes == INVALID_FILE_ATTRIBUTES)
                         {
-                            // special case.  Need to do the copy ourselves if present in the package as MSIX Runtime doesn't take care of these cases.
-                            std::filesystem::path PackageVersion = GetPackageVFSPath(wfileName.c_str());
-                            if (wcslen(PackageVersion.c_str()) > 0)
+                            // Might be file/dir has not been copied yet, but might also be funky ADL/ADR.
+                            if (IsUnderUserAppDataLocal(wfileName.c_str()) ||
+                                IsUnderUserAppDataRoaming(wfileName.c_str()))
                             {
-#if _DEBUG
-                                Log(L"[%d] GetFileAttributes: uncopied ADL/ADR case %ls", GetFileAttributesInstance,PackageVersion.c_str());
-#endif
-                                attributes = impl::GetFileAttributes(PackageVersion.c_str());
-                                if (attributes == INVALID_FILE_ATTRIBUTES)
+                                // special case.  Need to do the copy ourselves if present in the package as MSIX Runtime doesn't take care of these cases.
+                                std::filesystem::path PackageVersion = GetPackageVFSPath(wfileName.c_str());
+                                if (wcslen(PackageVersion.c_str()) > 0)
                                 {
 #if _DEBUG
-                                    Log(L"[%d] GetFileAttributes: fall back to original request location.", GetFileAttributesInstance);
+                                    Log(L"[%d] GetFileAttributes: uncopied ADL/ADR case %ls", GetFileAttributesInstance, PackageVersion.c_str());
 #endif
-                                    attributes = impl::GetFileAttributesW(wfileName.c_str());
+                                    attributes = impl::GetFileAttributes(PackageVersion.c_str());
+                                    if (attributes == INVALID_FILE_ATTRIBUTES)
+                                    {
+#if _DEBUG
+                                        Log(L"[%d] GetFileAttributes: fall back to original request location.", GetFileAttributesInstance);
+#endif
+                                        attributes = impl::GetFileAttributesW(wfileName.c_str());
+                                    }
                                 }
                             }
-                        }
-                        else
-                        {
+                            else
+                            {
 #if _DEBUG
-                            Log(L"[%d] GetFileAttributes: other not yet redirected case", GetFileAttributesInstance);
+                                Log(L"[%d] GetFileAttributes: other not yet redirected case", GetFileAttributesInstance);
 #endif
-                            attributes = impl::GetFileAttributesW(wfileName.c_str());
+                                attributes = impl::GetFileAttributesW(wfileName.c_str());
+                            }
                         }
                     }
-                    else if (attributes != INVALID_FILE_ATTRIBUTES)
+                    if (attributes != INVALID_FILE_ATTRIBUTES)
                     {
-                        if (pri.shouldReadonly)
+                        if (pri.doesRedirectedExist && pri.shouldReadonly)
                         {
                             if ((attributes & FILE_ATTRIBUTE_DIRECTORY) == 0)
                                 attributes |= FILE_ATTRIBUTE_READONLY;
@@ -191,7 +203,7 @@ BOOL __stdcall GetFileAttributesExFixup(
 
             if (!IsUnderUserAppDataLocalPackages(fileName))
             {
-                path_redirect_info  pri = ShouldRedirectV2(wfileName.c_str(), redirect_flags::check_file_presence, GetFileAttributesExInstance);
+                path_redirect_info  pri = ShouldRedirectV2(wfileName.c_str(), redirect_flags::check_file_presence | redirect_flags::ok_if_parent_in_pkg, GetFileAttributesExInstance);
                 if (pri.should_redirect)
                 {
 #if _DEBUG
@@ -319,7 +331,7 @@ BOOL __stdcall SetFileAttributesFixup(_In_ const CharT* fileName, _In_ DWORD fil
 
             if (!IsUnderUserAppDataLocalPackages(fileName))
             {
-                path_redirect_info  pri = ShouldRedirectV2(wfileName.c_str(), redirect_flags::copy_on_read, SetFileAttributesInstance);
+                path_redirect_info  pri = ShouldRedirectV2(wfileName.c_str(), redirect_flags::copy_on_read | redirect_flags::ok_if_parent_in_pkg, SetFileAttributesInstance);
                 if (pri.should_redirect)
                 {
                     DWORD redirectedAttributes = fileAttributes;

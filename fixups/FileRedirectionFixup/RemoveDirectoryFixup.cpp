@@ -25,7 +25,7 @@ BOOL __stdcall RemoveDirectoryFixup(_In_ const CharT* pathName) noexcept
             {
                 // NOTE: See commentary in DeleteFileFixup for limitations on deleting files/directories
                 //auto [shouldRedirect, redirectPath, shouldReadonly, exist1, exist2] 
-                path_redirect_info  pri = ShouldRedirectV2(wPathName.c_str(), redirect_flags::check_file_presence, RemoveDirectoryInstance);
+                path_redirect_info  pri = ShouldRedirectV2(wPathName.c_str(), redirect_flags::check_file_presence | redirect_flags::ok_if_parent_in_pkg, RemoveDirectoryInstance);
                 if (pri.should_redirect)
                 {
                     std::wstring rldPathName = TurnPathIntoRootLocalDevice(wPathName.c_str());

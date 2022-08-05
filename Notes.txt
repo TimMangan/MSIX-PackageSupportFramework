@@ -1,4 +1,8 @@
 v.next
+* Incorporate platform changes per Microsoft
+* PathRedirectonV2 fix for DeVFS calculation.
+* Renumber debug instance startin numbers.  FRF=0, DynLib=30k Env=40k RegLeg=50k
+* Allow Copy and Rename fixups to handle empty redirected destinations and sources only in redirected area.
 
 v.2022.07.10
 * Fix DynamicLibraryFixup to allow for mixed cases in call by app.

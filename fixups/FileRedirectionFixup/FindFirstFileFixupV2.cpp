@@ -161,6 +161,7 @@ HANDLE __stdcall FindFirstFileExFixupV2(
     _Reserved_ LPVOID searchFilter,
     _In_ DWORD additionalFlags) noexcept try
 {
+    DWORD InstanceV2 = ++g_FileIntceptInstance;
     auto guard = g_reentrancyGuard.enter();
     if (!guard)
     {
@@ -170,32 +171,49 @@ HANDLE __stdcall FindFirstFileExFixupV2(
         return impl::FindFirstFileEx(fileName, infoLevelId, findFileData, searchOp, searchFilter, additionalFlags);
     }
 
-    DWORD FindFirstFileExInstanceV2 = ++g_FileIntceptInstance;
     
     std::wstring wFileName = widen(fileName);
 #if _DEBUG
-    LogString(FindFirstFileExInstanceV2, L"\tFindFirstFileExFixupV2: for fileName", wFileName.c_str());
     if (psf::is_ansi<CharT>)
-        Log(L"[%d] DEBUG IsAnsi call", FindFirstFileExInstanceV2);
+    {
+        LogString(InstanceV2, L"\tFindFirstFileExAFixupV2: for fileName", fileName);
+    }
     else
-        Log(L"[%d] DEBUG IsWide call", FindFirstFileExInstanceV2);
+    {
+        LogString(InstanceV2, L"\tFindFirstFileExWFixupV2: for fileName", fileName);
+    }
 
+    switch (infoLevelId)
+    {
+    case FindExInfoStandard:
+        Log(L"[%d]\t\tLevel FindExInfoStandard", InstanceV2);
+        break;
+    case FindExInfoBasic:
+        Log(L"[%d]\t\tLevel FindExInfoBasic", InstanceV2);
+        break;
+    case FindExInfoMaxInfoLevel:
+        Log(L"[%d]\t\tLevel FindExInfoMaxInfoLevel", InstanceV2);
+        break;
+    default:
+        Log(L"[%d]\t\tLevel unknown", InstanceV2);
+        break;
+    }
     switch (searchOp)
     {
     case FindExSearchNameMatch:
-        Log(L"[%d] SearchOp FindExSearchNameMatch",FindFirstFileExInstanceV2);
+        Log(L"[%d]\t\tSearchOp FindExSearchNameMatch",InstanceV2);
             break;
     case FindExSearchLimitToDirectories:
-        Log(L"[%d] SearchOp FindExSearchLimitToDirectories", FindFirstFileExInstanceV2);
+        Log(L"[%d]\t\tSearchOp FindExSearchLimitToDirectories", InstanceV2);
         break;
     case FindExSearchLimitToDevices:
-        Log(L"[%d] SearchOp FindExSearchLimitToDevices", FindFirstFileExInstanceV2);
+        Log(L"[%d]\t\tSearchOp FindExSearchLimitToDevices", InstanceV2);
         break;
     case FindExSearchMaxSearchOp:
-        Log(L"[%d] SearchOp FindExSearchMaxSearchOp", FindFirstFileExInstanceV2);
+        Log(L"[%d]\t\tSearchOp FindExSearchMaxSearchOp", InstanceV2);
         break;
     default:
-        Log(L"[%d] SearchOp Unknown=0x%x", FindFirstFileExInstanceV2,searchOp);
+        Log(L"[%d]\t\tSearchOp Unknown=0x%x", InstanceV2,searchOp);
         break;
     }
 #endif
@@ -205,28 +223,28 @@ HANDLE __stdcall FindFirstFileExFixupV2(
         {
             // This case is an invalid find request that accidentally works in normal find calls, but our redirection gets messed up.
 #if _DEBUG
-            Log(L"[%d] DEBUG TEST: Tweek bad call", FindFirstFileExInstanceV2);
+            Log(L"[%d] DEBUG TEST: Tweek bad call", InstanceV2);
 #endif
             wFileName[wFileName.length()-2] = wFileName[wFileName.length()-1];
             wFileName.resize(wFileName.length() - 1);
         }
     }
 
-    normalized_pathV2 pathAsRequestedNormalized = NormalizePathV2(wFileName.c_str(), FindFirstFileExInstanceV2);
+    normalized_pathV2 pathAsRequestedNormalized = NormalizePathV2(wFileName.c_str(), InstanceV2);
     std::wstring pathVirtualized = L"";
     if (pathAsRequestedNormalized.path_type != psf::dos_path_type::unknown &&
         pathAsRequestedNormalized.path_type != psf::dos_path_type::unc_absolute &&
         !IsUnderPackageRoot(pathAsRequestedNormalized.drive_absolute_path.c_str()) &&
         !IsUnderUserPackageWritablePackageRoot(pathAsRequestedNormalized.drive_absolute_path.c_str()))
     {
-        pathVirtualized = VirtualizePathV2(pathAsRequestedNormalized, FindFirstFileExInstanceV2);
+        pathVirtualized = VirtualizePathV2(pathAsRequestedNormalized, InstanceV2);
     }
     std::wstring pathDeVirtualized = DeVirtualizePathV2(pathAsRequestedNormalized);
-    std::wstring pathRedirected = RedirectedPathV2(pathAsRequestedNormalized, false, g_writablePackageRootPath.native(), FindFirstFileExInstanceV2);
+    std::wstring pathRedirected = RedirectedPathV2(pathAsRequestedNormalized, false, g_writablePackageRootPath.native(), InstanceV2);
     std::wstring pathDeRedirected = ReverseRedirectedToPackage(pathAsRequestedNormalized.original_path.c_str());
 
     auto result = std::make_unique<find_data2>();
-    result->RememberedInstance = FindFirstFileExInstanceV2;
+    result->RememberedInstance = InstanceV2;
     result->redirect_path = pathRedirected;
     result->package_vfs_path = pathVirtualized;
     result->requested_path = wFileName.c_str();// widen(fileName).c_str();
@@ -234,11 +252,11 @@ HANDLE __stdcall FindFirstFileExFixupV2(
     result->package_deredirect_path = pathDeRedirected;
 
 #if _DEBUG
-    Log(L"[%d] FindFirstFileExFixupV2 redirect_path        for [0] (from redir)   is %ls", FindFirstFileExInstanceV2, result->redirect_path.c_str());
-    Log(L"[%d] FindFirstFileExFixupV2 package_vfs_path     for [1] (from VFS)     is %ls", FindFirstFileExInstanceV2, result->package_vfs_path.c_str());
-    Log(L"[%d] FindFirstFileExFixupV2 requested_path       for [2] (from req)     is %ls", FindFirstFileExInstanceV2, result->requested_path.c_str());
-    Log(L"[%d] FindFirstFileExFixupV2 package_devfs_path   for [3] (from DeVFS)   is %ls", FindFirstFileExInstanceV2, result->package_devfs_path.c_str());
-    Log(L"[%d] FindFirstFileExFixupV2 package_deredir_path for [4] (from DeRedir) is %ls", FindFirstFileExInstanceV2, result->package_deredirect_path.c_str());
+    Log(L"[%d] FindFirstFileExFixupV2 redirect_path        for [0] (from redir)   is %ls", InstanceV2, result->redirect_path.c_str());
+    Log(L"[%d] FindFirstFileExFixupV2 package_vfs_path     for [1] (from VFS)     is %ls", InstanceV2, result->package_vfs_path.c_str());
+    Log(L"[%d] FindFirstFileExFixupV2 requested_path       for [2] (from req)     is %ls", InstanceV2, result->requested_path.c_str());
+    Log(L"[%d] FindFirstFileExFixupV2 package_devfs_path   for [3] (from DeVFS)   is %ls", InstanceV2, result->package_devfs_path.c_str());
+    Log(L"[%d] FindFirstFileExFixupV2 package_deredir_path for [4] (from DeRedir) is %ls", InstanceV2, result->package_deredirect_path.c_str());
 #endif
 
     [[maybe_unused]] auto ansiData = reinterpret_cast<WIN32_FIND_DATAA*>(findFileData);
@@ -273,7 +291,7 @@ HANDLE __stdcall FindFirstFileExFixupV2(
                 copy_find_data(*wideData, result->cached_data);
             }
 #if _DEBUG
-            Log(L"[%d] FindFirstFileExFixupV2[0] (from redirected): had results %ls", FindFirstFileExInstanceV2,findData->cFileName);
+            Log(L"[%d] FindFirstFileExFixupV2[0] (from redirected): had results %ls", InstanceV2,findData->cFileName);
 #endif
             AnyValidPath = true;
             AnyValidResult = true;
@@ -286,7 +304,7 @@ HANDLE __stdcall FindFirstFileExFixupV2(
             // Path doesn't exist or match any files. We can safely get away without the redirected file exists check
             result->redirect_path.clear();
 #if _DEBUG
-            Log(L"[%d] FindFirstFileExFixupV2[0] (from redirected): no results", FindFirstFileExInstanceV2);
+            Log(L"[%d] FindFirstFileExFixupV2[0] (from redirected): no results", InstanceV2);
 #endif
         }
 
@@ -296,7 +314,7 @@ HANDLE __stdcall FindFirstFileExFixupV2(
     else
     {
 #if _DEBUG
-        Log(L"[%d] FindFirstFileExFixupV2[0] (from redirected): no results possible", FindFirstFileExInstanceV2);
+        Log(L"[%d] FindFirstFileExFixupV2[0] (from redirected): no results possible", InstanceV2);
 #endif
     }
 
@@ -313,7 +331,7 @@ HANDLE __stdcall FindFirstFileExFixupV2(
         if (result->find_handles[1])
         {
 #if _DEBUG
-            Log(L"[%d] FindFirstFileExFixupV2[1] (from vfs_path):   had results", FindFirstFileExInstanceV2);
+            Log(L"[%d] FindFirstFileExFixupV2[1] (from vfs_path):   had results", InstanceV2);
 #endif
             AnyValidPath = true;
             AnyValidResult = true;
@@ -325,7 +343,7 @@ HANDLE __stdcall FindFirstFileExFixupV2(
                 AnyValidPath = true;
             result->package_vfs_path.clear();
 #if _DEBUG
-            Log(L"[%d] FindFirstFileExFixupV2[1] (from vfs_path):   no results", FindFirstFileExInstanceV2);
+            Log(L"[%d] FindFirstFileExFixupV2[1] (from vfs_path):   no results", InstanceV2);
 #endif
         }
         if (!result->find_handles[0])
@@ -337,7 +355,7 @@ HANDLE __stdcall FindFirstFileExFixupV2(
                     if (copy_find_data(*findData, *ansiData))
                     {
 #if _DEBUG
-                        Log(L"[%d] FindFirstFile error set by caller", FindFirstFileExInstanceV2);
+                        Log(L"[%d] FindFirstFileExFixup error set by caller", InstanceV2);
 #endif
                         // NOTE: Last error set by caller
                         return INVALID_HANDLE_VALUE;
@@ -358,7 +376,7 @@ HANDLE __stdcall FindFirstFileExFixupV2(
     else
     {
 #if _DEBUG
-        Log(L"[%d] FindFirstFileExFixupV2[1] (from vfs_path):   no results possible", FindFirstFileExInstanceV2);
+        Log(L"[%d] FindFirstFileExFixupV2[1] (from vfs_path):   no results possible", InstanceV2);
 #endif
     }
 
@@ -368,7 +386,7 @@ HANDLE __stdcall FindFirstFileExFixupV2(
     if (result->find_handles[2])
     {
 #if _DEBUG
-        Log(L"[%d] FindFirstFileExFixupV2[2] (from origial):    had results", FindFirstFileExInstanceV2);
+        Log(L"[%d] FindFirstFileExFixupV2[2] (from origial):    had results", InstanceV2);
 #endif
         AnyValidPath = true; 
         AnyValidResult = true;
@@ -380,7 +398,7 @@ HANDLE __stdcall FindFirstFileExFixupV2(
             AnyValidPath = true;
         result->requested_path.clear();
 #if _DEBUG
-        Log(L"[%d] FindFirstFileExFixupV2[2] (from original):   no results", FindFirstFileExInstanceV2);
+        Log(L"[%d] FindFirstFileExFixupV2[2] (from original):   no results", InstanceV2);
 #endif
     }
     if (!result->find_handles[0] &&
@@ -393,7 +411,7 @@ HANDLE __stdcall FindFirstFileExFixupV2(
                 if (copy_find_data(*findData, *ansiData))
                 {
 #if _DEBUG
-                    Log(L"[%d] FindFirstFileExFixupV2 error set by caller", FindFirstFileExInstanceV2);
+                    Log(L"[%d] FindFirstFileExFixupV2 error set by caller", InstanceV2);
 #endif
                     // NOTE: Last error set by caller
                     return INVALID_HANDLE_VALUE;
@@ -418,7 +436,7 @@ HANDLE __stdcall FindFirstFileExFixupV2(
         if (result->find_handles[3])
         {
 #if _DEBUG
-            Log(L"[%d] FindFirstFileExFixupV2[3] (from devirt):     had results", FindFirstFileExInstanceV2);
+            Log(L"[%d] FindFirstFileExFixupV2[3] (from deVFS):     had results", InstanceV2);
 #endif
             AnyValidPath = true; 
             AnyValidResult = true;
@@ -430,7 +448,7 @@ HANDLE __stdcall FindFirstFileExFixupV2(
                 AnyValidPath = true;
             result->requested_path.clear();
 #if _DEBUG
-            Log(L"[%d] FindFirstFileExFixupV2[3] (from devirt):     no results", FindFirstFileExInstanceV2);
+            Log(L"[%d] FindFirstFileExFixupV2[3] (from deVFS):     no results", InstanceV2);
 #endif
         }
         if (!result->find_handles[0] &&
@@ -444,7 +462,7 @@ HANDLE __stdcall FindFirstFileExFixupV2(
                     if (copy_find_data(*findData, *ansiData))
                     {
 #if _DEBUG
-                        Log(L"[%d] FindFirstFileExFixupV2 error set by caller", FindFirstFileExInstanceV2);
+                        Log(L"[%d] FindFirstFileExFixupV2 error set by caller", InstanceV2);
 #endif
                         // NOTE: Last error set by caller
                         return INVALID_HANDLE_VALUE;
@@ -464,7 +482,7 @@ HANDLE __stdcall FindFirstFileExFixupV2(
     else
     {
 #if _DEBUG
-        Log(L"[%d] FindFirstFileExFixupV2[3] (from devirt):     no results possible", FindFirstFileExInstanceV2);
+        Log(L"[%d] FindFirstFileExFixupV2[3] (from deVFS):     no results possible", InstanceV2);
 #endif
     }
 
@@ -476,7 +494,7 @@ HANDLE __stdcall FindFirstFileExFixupV2(
         if (result->find_handles[4])
         {
 #if _DEBUG
-            Log(L"[%d] FindFirstFileExFixupV2[4] (from deredir):    had results", FindFirstFileExInstanceV2);
+            Log(L"[%d] FindFirstFileExFixupV2[4] (from deredir):    had results", InstanceV2);
 #endif
             AnyValidPath = true;
             AnyValidResult = true;
@@ -488,7 +506,7 @@ HANDLE __stdcall FindFirstFileExFixupV2(
                 AnyValidPath = true;
             result->requested_path.clear();
 #if _DEBUG
-            Log(L"[%d] FindFirstFileExFixupV2[4] (from deredir):   no results", FindFirstFileExInstanceV2);
+            Log(L"[%d] FindFirstFileExFixupV2[4] (from deredir):   no results", InstanceV2);
 #endif
         }
         if (!result->find_handles[0] &&
@@ -503,7 +521,7 @@ HANDLE __stdcall FindFirstFileExFixupV2(
                     if (copy_find_data(*findData, *ansiData))
                     {
 #if _DEBUG
-                        Log(L"[%d] FindFirstFileV2 error set by caller", FindFirstFileExInstanceV2);
+                        Log(L"[%d] FindFirstFileExFixupV2 error set by caller", InstanceV2);
 #endif
                         // NOTE: Last error set by caller
                         return INVALID_HANDLE_VALUE;
@@ -521,7 +539,7 @@ HANDLE __stdcall FindFirstFileExFixupV2(
     else
     {
 #if _DEBUG
-        Log(L"[%d] FindFirstFileExFixupV2[4] (from deredir):    no results possible", FindFirstFileExInstanceV2);
+        Log(L"[%d] FindFirstFileExFixupV2[4] (from deredir):    no results possible", InstanceV2);
 #endif
     }
 
@@ -536,7 +554,7 @@ HANDLE __stdcall FindFirstFileExFixupV2(
             //result->cached_data = ansiData;  
         }
 #if _DEBUG
-        Log(L"[%d] FindFirstFileExFixupV2 returns %ls", FindFirstFileExInstanceV2, result->cached_data.cFileName);
+        Log(L"[%d] FindFirstFileExFixupV2 returns %ls", InstanceV2, result->cached_data.cFileName);
 #endif
         result->already_returned_list.push_back(result->cached_data.cFileName);
         ::SetLastError(ERROR_SUCCESS);
@@ -550,7 +568,7 @@ HANDLE __stdcall FindFirstFileExFixupV2(
             initialFindError = ERROR_FILE_NOT_FOUND;
         }
 #if _DEBUG
-        Log(L"[%d] FindFirstFileExFixupV2 returns 0x%x", FindFirstFileExInstanceV2, initialFindError);
+        Log(L"[%d] FindFirstFileExFixupV2 returns 0x%x", InstanceV2, initialFindError);
 #endif
         ::SetLastError(initialFindError);
         return INVALID_HANDLE_VALUE;
@@ -569,20 +587,424 @@ DECLARE_STRING_FIXUP(impl::FindFirstFileEx, FindFirstFileExFixupV2);
 
 
 template <typename CharT>
-HANDLE __stdcall FindFirstFileFixupV2(_In_ const CharT* fileName, _Out_ win32_find_data_t<CharT>* findFileData) noexcept
+HANDLE __stdcall FindFirstFileFixupV2(_In_ const CharT* fileName, _Out_ win32_find_data_t<CharT>* findFileData) noexcept try
 {
+    DWORD InstanceV2 = ++g_FileIntceptInstance;
+
+#if UseEX
     // For simplicity, just do what the OS appears to be doing and forward arguments on to FindFirstFileEx
-#if MOREDEBUG
+#if _DEBUG
     if constexpr (psf::is_ansi<CharT>)
     {
-        Log(L"FindFirstFile A redirected to FindFirstFileExFixupV2");
+        Log(L"[%d] FindFirstFile A redirected to FindFirstFileExFixupV2", ++g_FileIntceptInstance);
     }
     else
     {
-        Log(L"FimdFirstFile W redirected to FindFirstFileExFixupV2");
+        Log(L"[%d] FindFirstFile W redirected to FindFirstFileExFixupV2", ++g_FileIntceptInstance);
+    }
+#endif    
+    return FindFirstFileFixupV2(fileName, FindExInfoStandard, findFileData, FindExSearchNameMatch, nullptr, 0);
+#else
+    // This code must be maintained in lockstep with the Ex counterpart.
+    // It may be necessary to stay away from the Ex version, because, well apps are finicky.
+    auto guard = g_reentrancyGuard.enter();
+    if (!guard)
+    {
+#if _DEBUG
+        if constexpr (psf::is_ansi<CharT>)
+        {
+            LogString(InstanceV2, L"\tFindFirstFileAFixupV2: (unguarded) for fileName", fileName);
+        }   
+        else
+        {
+            LogString(InstanceV2, L"\tFindFirstFileWFixupV2: (unguarded) for fileName", fileName);
+        }
+#endif
+        return impl::FindFirstFile(fileName, findFileData);
+    }
+
+
+    std::wstring wFileName = widen(fileName);
+#if _DEBUG
+    
+    if (psf::is_ansi<CharT>)
+    {
+        LogString(InstanceV2, L"\tFindFirstFileAFixupV2: for fileName", fileName);
+    }
+    else
+    {
+        LogString(InstanceV2, L"\tFindFirstFileWFixupV2: for fileName", fileName);
     }
 #endif
-    return FindFirstFileExFixupV2(fileName, FindExInfoStandard, findFileData, FindExSearchNameMatch, nullptr, 0);
+
+    if (wFileName.length() > 3)
+    {
+        if (wFileName.substr(wFileName.length() - 3).compare(L"\\\\*") == 0)
+        {
+            // This case is an invalid find request that accidentally works in normal find calls, but our redirection gets messed up.
+#if _DEBUG
+            Log(L"[%d] DEBUG TEST: Tweek bad call", InstanceV2);
+#endif
+            wFileName[wFileName.length() - 2] = wFileName[wFileName.length() - 1];
+            wFileName.resize(wFileName.length() - 1);
+        }
+    }
+
+    normalized_pathV2 pathAsRequestedNormalized = NormalizePathV2(wFileName.c_str(), InstanceV2);
+    std::wstring pathVirtualized = L"";
+    if (pathAsRequestedNormalized.path_type != psf::dos_path_type::unknown &&
+        pathAsRequestedNormalized.path_type != psf::dos_path_type::unc_absolute &&
+        !IsUnderPackageRoot(pathAsRequestedNormalized.drive_absolute_path.c_str()) &&
+        !IsUnderUserPackageWritablePackageRoot(pathAsRequestedNormalized.drive_absolute_path.c_str()))
+    {
+        pathVirtualized = VirtualizePathV2(pathAsRequestedNormalized, InstanceV2);
+    }
+    std::wstring pathDeVirtualized = DeVirtualizePathV2(pathAsRequestedNormalized);
+    std::wstring pathRedirected = RedirectedPathV2(pathAsRequestedNormalized, false, g_writablePackageRootPath.native(), InstanceV2);
+    std::wstring pathDeRedirected = ReverseRedirectedToPackage(pathAsRequestedNormalized.original_path.c_str());
+
+    auto result = std::make_unique<find_data2>();
+    result->RememberedInstance = InstanceV2;
+    result->redirect_path = pathRedirected;
+    result->package_vfs_path = pathVirtualized;
+    result->requested_path = wFileName.c_str();// widen(fileName).c_str();
+    result->package_devfs_path = pathDeVirtualized;
+    result->package_deredirect_path = pathDeRedirected;
+
+#if _DEBUG
+    Log(L"[%d] FindFirstFileFixupV2 redirect_path        for [0] (from redir)   is %ls", InstanceV2, result->redirect_path.c_str());
+    Log(L"[%d] FindFirstFileFixupV2 package_vfs_path     for [1] (from VFS)     is %ls", InstanceV2, result->package_vfs_path.c_str());
+    Log(L"[%d] FindFirstFileFixupV2 requested_path       for [2] (from req)     is %ls", InstanceV2, result->requested_path.c_str());
+    Log(L"[%d] FindFirstFileFixupV2 package_devfs_path   for [3] (from DeVFS)   is %ls", InstanceV2, result->package_devfs_path.c_str());
+    Log(L"[%d] FindFirstFileFixupV2 package_deredir_path for [4] (from DeRedir) is %ls", InstanceV2, result->package_deredirect_path.c_str());
+#endif
+
+    [[maybe_unused]] auto ansiData = reinterpret_cast<WIN32_FIND_DATAA*>(findFileData);
+    [[maybe_unused]] auto wideData = reinterpret_cast<WIN32_FIND_DATAW*>(findFileData);
+    WIN32_FIND_DATAW* findData = psf::is_ansi<CharT> ? &result->cached_data : wideData;
+    DWORD initialFindError = ERROR_PATH_NOT_FOUND;
+    bool AnyValidResult = false;
+    bool AnyValidPath = false;
+    //
+    // [0] Open the redirected find handle
+    if (!pathRedirected.empty())
+    {
+        
+        result->find_handles[0].reset(impl::FindFirstFile(result->redirect_path.c_str(), findData ));
+        // Some applications really care about the failure reason. Try and make this the best that we can, preferring
+        // something like "file not found" over "path does not exist"
+        initialFindError = ::GetLastError();
+
+        if (result->find_handles[0])
+        {
+            if constexpr (psf::is_ansi<CharT>)
+            {
+                if (copy_find_data(*findData, *ansiData))
+                {
+                    // NOTE: Last error set by caller
+                    return INVALID_HANDLE_VALUE;
+                }
+            }
+            else
+            {
+                // No need to copy since we wrote directly into the output buffer
+                assert(findData == wideData);
+                copy_find_data(*wideData, result->cached_data);
+            }
+#if _DEBUG
+            Log(L"[%d] FindFirstFileFixupV2[0] (from redirected): had results %ls", InstanceV2, findData->cFileName);
+#endif
+            AnyValidPath = true;
+            AnyValidResult = true;
+        }
+        else
+        {
+            if (initialFindError == ERROR_FILE_NOT_FOUND)
+                AnyValidPath = true;
+
+            // Path doesn't exist or match any files. We can safely get away without the redirected file exists check
+            result->redirect_path.clear();
+#if _DEBUG
+            Log(L"[%d] FindFirstFileFixupV2[0] (from redirected): no results", InstanceV2);
+#endif
+        }
+
+        // reset for next level???
+        findData = (result->find_handles[0] || psf::is_ansi<CharT>) ? &result->cached_data : wideData;
+       
+    }
+    else
+    {
+#if _DEBUG
+        Log(L"[%d] FindFirstFileFixupV2[0] (from redirected): no results possible", InstanceV2);
+#endif
+    }
+
+    //
+    // [1] Open the package_vfsP_path handle if AppData or LocalAppData (letting the runtime handle other VFSs)
+    // runtime not doing what we want...
+    //if (IsUnderUserAppDataLocal(wPath.c_str()) || IsUnderUserAppDataRoaming(wPath.c_str()))
+    if (!pathVirtualized.empty())
+    {
+        ///auto vfspathSize = result->package_vfs_path.length();
+        ///result->package_vfs_path += pattern;
+        result->find_handles[1].reset(impl::FindFirstFile(result->package_vfs_path.c_str(),  findData));
+        ///result->package_vfs_path.resize(vfspathSize);
+        if (result->find_handles[1])
+        {
+#if _DEBUG
+            Log(L"[%d] FindFirstFileFixupV2[1] (from vfs_path):   had results", InstanceV2);
+#endif
+            AnyValidPath = true;
+            AnyValidResult = true;
+            initialFindError = ERROR_SUCCESS;
+        }
+        else
+        {
+            if (GetLastError() == ERROR_FILE_NOT_FOUND)
+                AnyValidPath = true;
+            result->package_vfs_path.clear();
+#if _DEBUG
+            Log(L"[%d] FindFirstFileFixupV2[1] (from vfs_path):   no results", InstanceV2);
+#endif
+        }
+        if (!result->find_handles[0])
+        {
+            if (result->find_handles[1])
+            {
+                if constexpr (psf::is_ansi<CharT>)
+                {
+                    if (copy_find_data(*findData, *ansiData))
+                    {
+#if _DEBUG
+                        Log(L"[%d] FindFirstFile error set by caller", InstanceV2);
+#endif
+                        // NOTE: Last error set by caller
+                        return INVALID_HANDLE_VALUE;
+                    }
+                }
+                else
+                {
+                    // No need to copy since we wrote directly into the output buffer
+                    assert(findData == wideData);
+                    copy_find_data(*wideData, result->cached_data);
+                }
+            }
+        }
+
+        // reset for next level???
+        findData = (result->find_handles[0] || result->find_handles[1] || psf::is_ansi<CharT>) ? &result->cached_data : wideData;
+    }
+    else
+    {
+#if _DEBUG
+        Log(L"[%d] FindFirstFileFixupV2[1] (from vfs_path):   no results possible", InstanceV2);
+#endif
+    }
+
+    //
+    // [2] Open the non-redirected find handle
+    result->find_handles[2].reset(impl::FindFirstFile(result->requested_path.c_str(),  findData));
+    if (result->find_handles[2])
+    {
+#if _DEBUG
+        Log(L"[%d] FindFirstFileFixupV2[2] (from origial):    had results", InstanceV2);
+#endif
+        AnyValidPath = true;
+        AnyValidResult = true;
+        initialFindError = ERROR_SUCCESS;
+    }
+    else
+    {
+        if (GetLastError() == ERROR_FILE_NOT_FOUND)
+            AnyValidPath = true;
+        result->requested_path.clear();
+#if _DEBUG
+        Log(L"[%d] FindFirstFileFixupV2[2] (from original):   no results", InstanceV2);
+#endif
+    }
+    if (!result->find_handles[0] &&
+        !result->find_handles[1])
+    {
+        if (result->find_handles[2])
+        {
+            if constexpr (psf::is_ansi<CharT>)
+            {
+                if (copy_find_data(*findData, *ansiData))
+                {
+#if _DEBUG
+                    Log(L"[%d] FindFirstFileFixupV2 error set by caller", InstanceV2);
+#endif
+                    // NOTE: Last error set by caller
+                    return INVALID_HANDLE_VALUE;
+                }
+            }
+            else
+            {
+                // No need to copy since we wrote directly into the output buffer
+                assert(findData == wideData);
+                copy_find_data(*wideData, result->cached_data);
+            }
+        }
+    }
+    // reset for next level???
+    findData = (result->find_handles[0] || result->find_handles[1] || result->find_handles[2] || psf::is_ansi<CharT>) ? &result->cached_data : wideData;
+
+    //
+    // [3] Open the devitrualized find handle
+    if (!pathDeVirtualized.empty())
+    {
+        result->find_handles[3].reset(impl::FindFirstFile(result->package_devfs_path.c_str(),  findData));
+        if (result->find_handles[3])
+        {
+#if _DEBUG
+            Log(L"[%d] FindFirstFileFixupV2[3] (from deVFS):     had results", InstanceV2);
+#endif
+            AnyValidPath = true;
+            AnyValidResult = true;
+            initialFindError = ERROR_SUCCESS;
+        }
+        else
+        {
+            if (GetLastError() == ERROR_FILE_NOT_FOUND)
+                AnyValidPath = true;
+            result->requested_path.clear();
+#if _DEBUG
+            Log(L"[%d] FindFirstFileFixupV2[3] (from deVFS):     no results", InstanceV2);
+#endif
+        }
+        if (!result->find_handles[0] &&
+            !result->find_handles[1] &&
+            !result->find_handles[2])
+        {
+            if (result->find_handles[3])
+            {
+                if constexpr (psf::is_ansi<CharT>)
+                {
+                    if (copy_find_data(*findData, *ansiData))
+                    {
+#if _DEBUG
+                        Log(L"[%d] FindFirstFileFixupV2 error set by caller", InstanceV2);
+#endif
+                        // NOTE: Last error set by caller
+                        return INVALID_HANDLE_VALUE;
+                    }
+                }
+                else
+                {
+                    // No need to copy since we wrote directly into the output buffer
+                    assert(findData == wideData);
+                    copy_find_data(*wideData, result->cached_data);
+                }
+            }
+        }
+        // reset for next level???
+        findData = (result->find_handles[0] || result->find_handles[1] || result->find_handles[2] || result->find_handles[3] || psf::is_ansi<CharT>) ? &result->cached_data : wideData;
+    }
+    else
+    {
+#if _DEBUG
+        Log(L"[%d] FindFirstFileFixupV2[3] (from deVFS):     no results possible", InstanceV2);
+#endif
+    }
+
+    //
+    // [4] Open the deredirected find handle
+    if (!pathDeRedirected.empty())
+    {
+        result->find_handles[4].reset(impl::FindFirstFile(result->package_deredirect_path.c_str(), findData));
+        if (result->find_handles[4])
+        {
+#if _DEBUG
+            Log(L"[%d] FindFirstFileFixupV2[4] (from deredir):    had results", InstanceV2);
+#endif
+            AnyValidPath = true;
+            AnyValidResult = true;
+            initialFindError = ERROR_SUCCESS;
+        }
+        else
+        {
+            if (GetLastError() == ERROR_FILE_NOT_FOUND)
+                AnyValidPath = true;
+            result->requested_path.clear();
+#if _DEBUG
+            Log(L"[%d] FindFirstFileFixupV2[4] (from deredir):   no results", InstanceV2);
+#endif
+        }
+        if (!result->find_handles[0] &&
+            !result->find_handles[1] &&
+            !result->find_handles[2] &&
+            !result->find_handles[3])
+        {
+            if (result->find_handles[4])
+            {
+                if constexpr (psf::is_ansi<CharT>)
+                {
+                    if (copy_find_data(*findData, *ansiData))
+                    {
+#if _DEBUG
+                        Log(L"[%d] FindFirstFileV2 error set by caller", InstanceV2);
+#endif
+                        // NOTE: Last error set by caller
+                        return INVALID_HANDLE_VALUE;
+                    }
+                }
+                else
+                {
+                    // No need to copy since we wrote directly into the output buffer
+                    assert(findData == wideData);
+                    copy_find_data(*wideData, result->cached_data);
+                }
+            }
+        }
+    }
+    else
+    {
+#if _DEBUG
+        Log(L"[%d] FindFirstFileFixupV2[4] (from deredir):    no results possible", InstanceV2);
+#endif
+    }
+
+
+
+    if (AnyValidResult)
+    {
+        if constexpr (psf::is_ansi<CharT>)
+        {
+            // return first result found
+            copy_find_data(*ansiData, result->cached_data);
+            //result->cached_data = ansiData;  
+        }
+#if _DEBUG
+        Log(L"[%d] FindFirstFileFixupV2 returns %ls", InstanceV2, result->cached_data.cFileName);
+#endif
+        result->already_returned_list.push_back(result->cached_data.cFileName);
+        ::SetLastError(ERROR_SUCCESS);
+    }
+    else
+    {
+        if (AnyValidPath)
+        {
+            // If in any of the potential locations, the directory exists but no files found,
+            // we prefer to return file not found.
+            initialFindError = ERROR_FILE_NOT_FOUND;
+        }
+#if _DEBUG
+        Log(L"[%d] FindFirstFileFixupV2 returns 0x%x", InstanceV2, initialFindError);
+#endif
+        ::SetLastError(initialFindError);
+        return INVALID_HANDLE_VALUE;
+    }
+    return reinterpret_cast<HANDLE>(result.release());
+#endif
+    
+}
+catch (...)
+{
+    // NOTE: Since we allocate our own "find handle" memory, we can't just forward on to the implementation
+    ::SetLastError(win32_from_caught_exception());
+    Log(L"***FindFirstFileFixupV2 Exception***");
+    return INVALID_HANDLE_VALUE;
 }
 DECLARE_STRING_FIXUP(impl::FindFirstFile, FindFirstFileFixupV2);
 

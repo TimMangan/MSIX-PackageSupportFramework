@@ -14,10 +14,18 @@ enum class redirect_flags
     ensure_directory_structure = 0x0001,
     copy_file = 0x0002,
     check_file_presence = 0x0004,
+    ok_if_parent_in_pkg = 0x0008,
 
     copy_on_read = ensure_directory_structure | copy_file,
 };
 DEFINE_ENUM_FLAG_OPERATORS(redirect_flags);
+
+enum FilePathArea
+{
+    FilePathArea_Package,
+    FilePathArea_Redirection,
+    FilePathArea_Native
+};
 
 template <typename T>
 inline constexpr bool flag_set(T value, T flag)
@@ -27,14 +35,22 @@ inline constexpr bool flag_set(T value, T flag)
 
 struct path_redirect_info
 {
+
     bool should_redirect = false;
     std::filesystem::path redirect_path;
+    std::filesystem::path vfs_path;
     bool shouldReadonly = false;
 
-    // These two values are set only if the Should code sees that the requested/redirected file exists.
+    FilePathArea Requested_FilePathArea = FilePathArea_Native;
+
+    // These values are set only if the Should code sees that the requested/redirected file exists.
     // This might only happen if check_presnece option is included in the call.
-    bool doesRequestedExist = false;
-    bool doesRedirectedExist = false;
+    bool doesRequestedExist = false;        // File as requested exists'
+    bool doesVFSExist = false;              // The request was a native path and file exists in the package.
+    bool doesRedirectedExist = false;       // The redirected already exists
+    bool doesDevirtualizedExist = false;    // The request was a package path and the native file/location exists.
+    //bool doesReveseRedirectionExist = false; //The request was in the redirection area and the package path exists.
+    bool doesPackageParentFolderExist = false; // The request may not be in the package, but the parent folder is.
 };
 
 
@@ -42,6 +58,7 @@ struct vfs_folder_mapping
 {
     std::filesystem::path path;
     std::filesystem::path package_vfs_relative_path; // E.g. "Windows"
+    bool is_native_to_vfs_in_platform;  // Indicates that this is a path that is handled by MSIX runtime for redirection to the package.
 };
 
 
@@ -49,6 +66,7 @@ struct path_redirection_spec
 {
     std::filesystem::path base_path;
     std::wregex pattern;
+    std::wstring patternWstring;
     std::filesystem::path redirect_targetbase;
     bool isExclusion;
     bool isReadOnly;
@@ -147,12 +165,22 @@ std::wstring ReverseRedirectedToPackage(const std::wstring input);
 std::filesystem::path GetPackageVFSPath(const wchar_t* fileName);
 std::filesystem::path GetPackageVFSPath(const char* fileName);
 
+// return the package path of a native path that uses this mapping
+std::filesystem::path PackagePathFromNativePath(vfs_folder_mapping mapping, const char * fileName);
+std::filesystem::path PackagePathFromNativePath(vfs_folder_mapping mapping, const wchar_t * fileName);
+
 
 /// <summary>
 ///  Given a file path, return it in root local device form, if possible, or in original form.
 /// </summary>
 std::string TurnPathIntoRootLocalDevice(const char* path);
 std::wstring TurnPathIntoRootLocalDevice(const wchar_t* path);
+
+// Given a string used for the VFS variable folder name in a package, return the native path.
+std::filesystem::path path_from_package_vfs_relative_path(std::wstring package_vfs_relative_path);
+
+// Given a path within the package, return the name of the VFS var  (e.g. "Windows")
+std::wstring GetVfsVarFromPackagePath(std::filesystem::path packagePath);
 
 extern DWORD g_FileIntceptInstance;
 
@@ -167,6 +195,9 @@ bool path_relative_to(const char* path, const std::filesystem::path& basePath);
 bool path_same_as(const wchar_t* path, const std::filesystem::path& basePath);
 bool path_same_as(const char* path, const std::filesystem::path& basePath);
 
+bool _stdcall IsUnderFolder(_In_ const char * fileName, _In_ const std::filesystem::path folder);
+bool _stdcall IsUnderFolder(_In_ const wchar_t * fileName, _In_ const std::filesystem::path folder);
+
 
 // Determines if the path of the filename falls under the user's appdata local or roaming folders.
 bool IsUnderUserAppDataLocal(_In_ const wchar_t* fileName);
@@ -178,7 +209,6 @@ bool IsUnderUserAppDataLocalPackages(_In_ const char* fileName);
 bool IsUnderUserAppDataRoaming(_In_ const wchar_t* fileName);
 bool IsUnderUserAppDataRoaming(_In_ const char* fileName);
 
-
 bool IsUnderUserPackageWritablePackageRoot(_In_ const char* fileName);
 bool IsUnderUserPackageWritablePackageRoot(_In_ const wchar_t* fileName);
 
@@ -188,6 +218,8 @@ bool IsUnderPackageRoot(_In_ const char* fileName);
 bool IsPackageRoot(_In_ const wchar_t* fileName);
 bool IsPackageRoot(_In_ const char* fileName);
 
+bool IsSpecialFile( const char* path);
+bool IsSpecialFile( const wchar_t* path);
 
 bool IsColonColonGuid(const char* path);
 bool IsColonColonGuid(const wchar_t* path);

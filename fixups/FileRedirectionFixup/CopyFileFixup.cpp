@@ -20,6 +20,7 @@ BOOL __stdcall CopyFileFixup(_In_ const CharT* existingFileName, _In_ const Char
 #if _DEBUG
             LogString(CopyFileInstance,L"CopyFileFixup from", existingFileName);
             LogString(CopyFileInstance,L"CopyFileFixup to",   newFileName);
+            Log(L"[%d] CopyFileFixup FileIfExists %d", CopyFileInstance, failIfExists);
 #endif
             
             // NOTE: We don't want to copy either file in the event one/both exist. Copying the source file would be
@@ -31,16 +32,34 @@ BOOL __stdcall CopyFileFixup(_In_ const CharT* existingFileName, _In_ const Char
             //       manually fail out ourselves if 'failIfExists' is true and the file exists in the package, but
             //       that's arguably worse since we currently aren't handling the case where an application tries to
             //       delete a file in its package path.
-            path_redirect_info  priSource = ShouldRedirectV2(existingFileName, redirect_flags::check_file_presence, CopyFileInstance);
-            path_redirect_info  priDest = ShouldRedirectV2(newFileName, redirect_flags::ensure_directory_structure, CopyFileInstance);
+            // NOTE2: THe app might try to copy a file using package path that isn't in the package but is in the redirection area.  This is OK.
+            //        The app might try to copy a file into the package.  We need to support this (by redirecting the copy) as long as
+            //        the parent folder of the requested destination is in the package. (i.e. if VFS\XXX is present it is OK to write to VFS/XXX/filename redirected
+            //
+
+            path_redirect_info  priSource = ShouldRedirectV2(existingFileName, redirect_flags::check_file_presence | redirect_flags::ok_if_parent_in_pkg, CopyFileInstance);
+            path_redirect_info  priDest = ShouldRedirectV2(newFileName, redirect_flags::ensure_directory_structure | redirect_flags::ok_if_parent_in_pkg, CopyFileInstance);
             if (priSource.should_redirect )
             {
                 std::wstring rldSourceRedirectPath = TurnPathIntoRootLocalDevice(widen(priSource.redirect_path).c_str());
                 std::wstring rldRedirectDest = TurnPathIntoRootLocalDevice(priDest.should_redirect ? priDest.redirect_path.c_str() : widen_argument(newFileName).c_str());
-                return impl::CopyFile(
+                BOOL bRet = impl::CopyFile(
                     rldSourceRedirectPath.c_str(),
                     rldRedirectDest.c_str(),
                     failIfExists);
+#if _DEBUG
+                LogString(CopyFileInstance, L"CopyFileFixup: Actual From", rldSourceRedirectPath.c_str());
+                LogString(CopyFileInstance, L"CopyFileFixup: Actual To", rldRedirectDest.c_str());
+                if (bRet)
+                {
+                    Log(L"[%d] CopyFileFixup: return SUCCESS", CopyFileInstance);
+                }
+                else
+                {
+                    Log(L"[%d] CopyFileFixup: return FAIL err=0x%x", CopyFileInstance, GetLastError());
+                }
+#endif
+                return bRet;
             }
             else
             {
@@ -49,10 +68,23 @@ BOOL __stdcall CopyFileFixup(_In_ const CharT* existingFileName, _In_ const Char
                 std::filesystem::path vfspath = GetPackageVFSPath(path.c_str());
                 std::wstring rldExistingFileName = TurnPathIntoRootLocalDevice(vfspath.has_filename() ? vfspath.c_str() : path.c_str());
                 std::wstring rldNewDirectory = TurnPathIntoRootLocalDevice(priDest.should_redirect ? priDest.redirect_path.c_str() : widen_argument(newFileName).c_str());
-                return impl::CopyFile(
+                BOOL bRet = impl::CopyFile(
                     rldExistingFileName.c_str(),
                     rldNewDirectory.c_str(),
                     failIfExists);
+#if _DEBUG
+                LogString(CopyFileInstance, L"CopyFileFixup: Actual From", rldExistingFileName.c_str());
+                LogString(CopyFileInstance, L"CopyFileFixup: Actual To", rldNewDirectory.c_str());
+                if (bRet)
+                {
+                    Log(L"[%d] CopyFileFixup: return SUCCESS", CopyFileInstance);
+                }
+                else
+                {
+                    Log(L"[%d] CopyFileFixup: return FAIL err=0x%x", CopyFileInstance, GetLastError());
+                }
+#endif
+                return bRet;
             }
         }
     }
@@ -104,8 +136,8 @@ BOOL __stdcall CopyFileExFixup(
 #endif
 
             // See note in CopyFileFixup for commentary on copy-on-read policy
-            path_redirect_info  priSource = ShouldRedirectV2(existingFileName, redirect_flags::check_file_presence, CopyFileExInstance);
-            path_redirect_info  priDest = ShouldRedirectV2(newFileName, redirect_flags::ensure_directory_structure, CopyFileExInstance);
+            path_redirect_info  priSource = ShouldRedirectV2(existingFileName, redirect_flags::check_file_presence | redirect_flags::ok_if_parent_in_pkg, CopyFileExInstance);
+            path_redirect_info  priDest = ShouldRedirectV2(newFileName, redirect_flags::ensure_directory_structure | redirect_flags::ok_if_parent_in_pkg, CopyFileExInstance);
             if (priSource.should_redirect)
             {
                 std::wstring rldSourceRedirectPath = TurnPathIntoRootLocalDevice(widen(priSource.redirect_path).c_str());
@@ -176,8 +208,8 @@ HRESULT __stdcall CopyFile2Fixup(
 #endif
 
             // See note in CopyFileFixup for commentary on copy-on-read policy
-            path_redirect_info  priSource = ShouldRedirectV2(existingFileName, redirect_flags::check_file_presence, CopyFile2Instance);
-            path_redirect_info  priDest = ShouldRedirectV2(newFileName, redirect_flags::ensure_directory_structure, CopyFile2Instance);
+            path_redirect_info  priSource = ShouldRedirectV2(existingFileName, redirect_flags::check_file_presence | redirect_flags::ok_if_parent_in_pkg, CopyFile2Instance);
+            path_redirect_info  priDest = ShouldRedirectV2(newFileName, redirect_flags::ensure_directory_structure | redirect_flags::ok_if_parent_in_pkg, CopyFile2Instance);
             if (priSource.should_redirect)
             {
                 return impl::CopyFile2(

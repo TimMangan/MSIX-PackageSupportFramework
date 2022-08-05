@@ -13,7 +13,7 @@
 
 extern std::vector<env_var_spec> g_envvar_envVarSpecs;
 
-DWORD g_EnvVarInterceptInstance = 0;
+DWORD g_EnvVarInterceptInstance = 40000;
 
 
 //ExpandEnvironmentStrings
