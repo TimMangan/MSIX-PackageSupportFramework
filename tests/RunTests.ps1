@@ -15,7 +15,8 @@ function RunTest($Arch, $Config)
             Push-Location $dir.FullName
             try
             {
-                $appxPath = "..\Appx\$($dir.Name).appx"
+                $appxPath = "..\Appx\$($dir.Name).appx" 
+                write-host "Creating and signing $($appxPath)"
                 . makeappx.exe pack /o /p "$appxPath" /f "$Arch$Config\FileMapping.txt" > "$($appxPath).makeappx.txt"
                 . signtool.exe sign /a /v /fd sha256 /f "$pfxPath" /p "CentennialFixupsTestSigning" "$appxPath" > "$($appxPath).signtool.txt"
             }
@@ -38,9 +39,44 @@ function RunTest($Arch, $Config)
     }
     finally
     {
+        write-host ""
+        write-host ""
+        write-host ""
+        write-host ""
+        write-host ""
+        write-host ""
+        write-host ""
+        write-host ""
+        write-host ""
+        write-host ""
+        write-host ""
+        write-host ""
+        write-host ""
+        write-host ""
+        write-host ""
+        write-host ""
+        write-host ""
+        write-host ""
+        write-host ""
+        write-host ""
+        write-host ""
+        write-host ""
+        write-host ""
+        write-host ""
+        write-host ""
+        write-host ""
+        write-host ""
+        write-host ""
+        write-host ""
+        write-host ""
+        write-host ""
+        write-host ""
+        write-host ""
+        write-host ""
+
         # Uninstall all packages on exit. Ideally Add-AppxPackage would give us back something that we could use here,
         # but alas we must hard-code it
-        $packagesToUninstall = @("ArchitectureTest", "CompositionTest", "FileSystemTest", "LongPathsTest", "WorkingDirectoryTest", "PowershellScriptTest", "DynamicLibraryTest", "RegLegacyTest", "EnvVarsATest", "EnvVarsWTest")
+        $packagesToUninstall = @("ArchitectureTest", "CompositionTest", "FileSystemTest", "LongPathsTest", "PackageDriveTest", "WorkingDirectoryTest", "PowershellScriptTest", "DynamicLibraryTest", "RegLegacyTest", "EnvVarsATest", "EnvVarsWTest")
         ####$packagesToUninstall = @("FileSystemTest")
         foreach ($pkg in $packagesToUninstall)
         {
@@ -73,12 +109,27 @@ write-host ""
 write-host ""
 write-host ""
 write-host ""
+write-host ""
 write-host ("Checking to see if a cert exists at " + $pfxPath)
 if (!(Test-Path "$pfxPath"))
 {
     write-host "Invoking Create Cert"
     Invoke-Expression "$PSScriptRoot\scenarios\signing\CreateCert.ps1 -Install -PasswordAsPlainText CentennialFixupsTestSigning" | Out-Null
 }
+write-host ""
+write-host ""
+write-host ""
+write-host ""
+write-host ""
+write-host ""
+write-host ""
+write-host ""
+write-host ""
+write-host ""
+write-host ""
+write-host ""
+write-host ""
+write-host ""
 
 write-host "Cert exists"
 
