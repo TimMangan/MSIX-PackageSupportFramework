@@ -27,7 +27,7 @@ static int DoFileEnumerationTest()
         return trace_last_error(L"FindFirstFile failed");
     }
 
-    std::set<iwstring> expected = { L"file.txt", L"other.txt" };
+    std::set<iwstring> expected = { L"file.txt", L"other.txt", L"copy.txt"};
     while (findHandle != INVALID_HANDLE_VALUE)
     {
         auto itr = expected.find(data.cFileName);
