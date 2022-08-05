@@ -343,12 +343,14 @@ private:
 			if (inside)
 			{
 				//LogString(L"DEBUG: Starting the script (inside) without waiting to finish", script.commandString.data());
-				auto res = std::thread(StartProcess, script.PsPath.c_str(), script.commandString.data(), script.currentDirectory.c_str(), script.showWindowAction, script.timeout, m_AttributeListInside.get());
+				std::thread pwrShellThread = std::thread(StartProcess, script.PsPath.c_str(), script.commandString.data(), script.currentDirectory.c_str(), script.showWindowAction, script.timeout, m_AttributeListInside.get());
+				pwrShellThread.detach();
 			}
 			else
 			{
 				//LogString(L"DEBUG: Starting the script (outside) without waiting to finish", script.commandString.data());
-				auto res = std::thread(StartProcess, script.PsPath.c_str(), script.commandString.data(), script.currentDirectory.c_str(), script.showWindowAction, script.timeout, m_AttributeListOutside.get());
+				std::thread pwrShellThread = std::thread(StartProcess, script.PsPath.c_str(), script.commandString.data(), script.currentDirectory.c_str(), script.showWindowAction, script.timeout, m_AttributeListOutside.get());
+				pwrShellThread.detach();
 			}
 		}
 	}
