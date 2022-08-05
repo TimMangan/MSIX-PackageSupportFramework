@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<configuration>
+  <applications>
+    <application>
+      <id>Fixed</id>
+      <executable>PackageDirectoryTest.exe</executable>
+      <workingDirectory></workingDirectory>
+    </application>
+  </applications>
+  <processes>
+    <process>
+      <executable>PsfLauncher.*</executable>
+    </process>
+    <process>
+      <executable>.*</executable>
+      <fixups>
+        <fixup>
+          <dll>FileRedirectionFixup.dll</dll>
+          <config>
+            <redirectedPaths>
+              <packageRelative></packageRelative>
+              <packageDriveRelative>
+                <pathConfig>
+                  <base>TestDriveFolder1</base>
+                  <patterns>
+                    <pattern>.*</pattern>
+                  </patterns>
+                </pathConfig>
+                <pathConfig>
+                  <base>TestDriveFolder2</base>
+                  <patterns>
+                    <pattern>.*</pattern>
+                  </patterns>
+                  <isExlusion>true</isExlusion>
+                </pathConfig>
+              </packageDriveRelative>
+              <knownFolders></knownFolders>
+            </redirectedPaths>
+          </config>
+        </fixup>
+      </fixups>
+    </process>
+  </processes>
+</configuration>

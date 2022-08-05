@@ -1,0 +1,35 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="src">
+      <UniqueIdentifier>{73FAB798-1D1B-429C-ACF5-B52FAACF8802}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="pkg">
+      <UniqueIdentifier>{EC8BE86C-49B8-401E-A457-7F671C88E0F2}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="main.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <Xml Include="AppxManifest.xml">
+      <Filter>pkg</Filter>
+    </Xml>
+    <Xml Include="config.xml">
+      <Filter>pkg</Filter>
+    </Xml>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="config.json">
+      <Filter>pkg</Filter>
+    </None>
+    <None Include="readme.md" />
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="FileMapping.txt">
+      <Filter>pkg</Filter>
+    </Text>
+  </ItemGroup>
+</Project>

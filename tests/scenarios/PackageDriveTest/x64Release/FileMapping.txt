@@ -1,0 +1,18 @@
+[Files]
+"AppxManifest.xml" "AppxManifest.xml"
+"config.json" "config.json"
+
+"..\..\x64\Release\PackageDriveTest.exe" "PackageDriveTest.exe"
+"..\..\..\x64\Release\PsfLauncher64.exe" "PsfLauncher.exe"
+"..\..\..\x64\Release\PsfRuntime64.dll" "PsfRuntime64.dll"
+"..\..\..\x64\Release\FileRedirectionFixup64.dll" "FileRedirectionFixup64.dll"
+
+"..\Assets\Logo44x44.png" "Assets\Logo44x44.png"
+"..\Assets\Logo150x150.png" "Assets\Logo150x150.png"
+
+"file.txt" "VFS\AppVPackageDrive\TestDriveFolder1\DriveFile1a.txt"
+"file.txt" "VFS\AppVPackageDrive\TestDriveFolder1\DriveFile1b.txt"
+"file.txt" "VFS\AppVPackageDrive\TestDriveFolder2\DriveFile2a.txt"
+"file.txt" "VFS\AppVPackageDrive\TestDriveFolder2\DriveFile2b.txt"
+"file.txt" "VFS\AppVPackageDrive\TestDriveFolder3\DriveFile3a.txt"
+"file.txt" "VFS\AppVPackageDrive\TestDriveFolder3\DriveFile3b.txt"

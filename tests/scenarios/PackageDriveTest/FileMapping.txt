@@ -1,0 +1,18 @@
+﻿[Files]
+"AppxManifest.xml" "AppxManifest.xml"
+"config.json" "config.json"
+
+"..\..\${Architecture}${Configuration}\PackageDriveTest.exe" "PackageDriveTest.exe"
+"..\..\..\${Architecture}${Configuration}\PsfLauncher${Bitness}.exe" "PsfLauncher.exe"
+"..\..\..\${Architecture}${Configuration}\PsfRuntime${Bitness}.dll" "PsfRuntime${Bitness}.dll"
+"..\..\..\${Architecture}${Configuration}\FileRedirectionFixup${Bitness}.dll" "FileRedirectionFixup${Bitness}.dll"
+
+"..\Assets\Logo44x44.png" "Assets\Logo44x44.png"
+"..\Assets\Logo150x150.png" "Assets\Logo150x150.png"
+
+"file.txt" "VFS\AppVPackageDrive\TestDriveFolder1\DriveFile1a.txt"
+"file.txt" "VFS\AppVPackageDrive\TestDriveFolder1\DriveFile1b.txt"
+"file.txt" "VFS\AppVPackageDrive\TestDriveFolder2\DriveFile2a.txt"
+"file.txt" "VFS\AppVPackageDrive\TestDriveFolder2\DriveFile2b.txt"
+"file.txt" "VFS\AppVPackageDrive\TestDriveFolder3\DriveFile3a.txt"
+"file.txt" "VFS\AppVPackageDrive\TestDriveFolder3\DriveFile3b.txt"
