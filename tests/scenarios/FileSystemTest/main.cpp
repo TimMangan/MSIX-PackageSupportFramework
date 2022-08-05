@@ -2,7 +2,6 @@
 // Copyright (C) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 //-------------------------------------------------------------------------------------------------------
-#define NOSKIP 1
 
 #include <conio.h>
 #include <fcntl.h>
@@ -84,7 +83,7 @@ int run()
 
     DisplayCWD();
 
-#if NOSKIP
+
     testResult = ModifyFileTests();
     result = result ? result : testResult;
 
@@ -115,11 +114,9 @@ int run()
     testResult = ReplaceFileTests();
     result = result ? result : testResult;
 
-
     testResult = CreateDirectoryTests();
     result = result ? result : testResult;
-
-
+    
     testResult = RemoveDirectoryTests();
     result = result ? result : testResult;
 
@@ -156,7 +153,7 @@ int run()
 
     testResult = MkRmDirTests(999996);
     result = result ? result : testResult;
-#endif
+
 
     testResult = OddDirectoryTests(999997);
     result = result ? result : testResult;
@@ -173,15 +170,12 @@ int wmain(int argc, const wchar_t** argv)
     if (result == ERROR_SUCCESS)
     {
         // The number of file mappings is different in 32-bit vs 64-bit
-#if NOSKIP
 #if !_M_IX86
-        test_initialize("File System Tests", 121);
+        test_initialize("File System Tests", 124);
 #else
-        test_initialize("File System Tests", 112);
+        test_initialize("File System Tests", 115);
 #endif
-#else
-        test_initialize("File System Tests", 5);
-#endif
+
 
         InitializeFolderMappings();
         result = run();

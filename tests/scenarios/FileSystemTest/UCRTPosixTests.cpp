@@ -14,6 +14,11 @@
 #include <fcntl.h>
 #include <share.h>
 
+#include <comdef.h>
+#include <winternl.h>
+
+
+
 auto _wfopenFunc = &::_wfopen;
 auto _wfopen_sFunc = &::_wfopen_s;
 

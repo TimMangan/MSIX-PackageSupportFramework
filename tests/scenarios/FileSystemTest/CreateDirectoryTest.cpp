@@ -53,7 +53,7 @@ static int DoCreateDirectoryTest(const std::filesystem::path& path, bool expectS
     trace_message(L"Expected result received.\n");
 
     clean_redirection_path();
-	write_entire_file(L"TèƨƭTè₥ƥℓáƭè\\file.txt", "Testing text");
+	write_entire_file(L"TèƨƭTè₥ƥℓáƭè\\fileDirTest.txt", "Testing text");
     trace_message(L"Now calling with CreateDirectoryEx...\n");
     if (::CreateDirectoryExW(L"TèƨƭTè₥ƥℓáƭè", path.c_str(), nullptr))
     {
@@ -62,7 +62,6 @@ static int DoCreateDirectoryTest(const std::filesystem::path& path, bool expectS
             trace_message(L"ERROR: Successfully created directory, but we were expecting failure\n", error_color);
             return ERROR_ASSERTION_FAILURE;
         }
-
         // The attributes of the two directories should match (As that's what CreateDirectoryEx does)
         auto attrFrom = ::GetFileAttributesW(L"TèƨƭTè₥ƥℓáƭè");
         auto attrTo = ::GetFileAttributesW(path.c_str());

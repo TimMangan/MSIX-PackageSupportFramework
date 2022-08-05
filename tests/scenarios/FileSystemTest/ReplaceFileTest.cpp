@@ -60,7 +60,7 @@ int ReplaceFileTests()
     auto backupFilePath = g_packageRootPath / L"ßáçƙúƥFïℓè.txt";
 
     // Copy from the package file
-    test_begin("Replace Redirected File with Package File Test");
+    test_begin("ReplaceFile with Backup on Redirected File with Package File Test");
     clean_redirection_path();
     write_entire_file(otherFilePath.c_str(), "You are reading file contents that should have been replaced");
     auto testResult = DoReplaceFileTest(packageFilePath, otherFilePath, backupFilePath, g_packageFileContents);
@@ -68,7 +68,7 @@ int ReplaceFileTests()
     test_end(testResult);
 
     // Copy to the package file
-    test_begin("Replace Package File with Redirected File Test");
+    test_begin("ReplaceFile with Backup Package File with Redirected File Test");
     clean_redirection_path();
     const char generatedFileContents[] = "You are reading from the generated file";
     write_entire_file(otherFilePath.c_str(), generatedFileContents);
@@ -77,7 +77,7 @@ int ReplaceFileTests()
     test_end(testResult);
 
     // Copy from the redirected package file
-    test_begin("Replace Redirected File with Redirected Package File Test");
+    test_begin("ReplaceFile with Backup Redirected File with Redirected Package File Test");
     clean_redirection_path();
     const char replacedFileContents[] = "You are reading from the redirected package file";
     write_entire_file(packageFilePath.c_str(), replacedFileContents);

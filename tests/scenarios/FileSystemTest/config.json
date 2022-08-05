@@ -35,112 +35,7 @@
                     ".*\\.[zZ][iI][pP].*"
                   ],
                   "isExclusion": true
-                },
-                {
-                  "base": "B4BFCC3A-DB2C-424C-B029-7FE99A87C641",
-                  "patterns": [
-                    ".*"
-                  ],
-                  "isExclusion": true
-                },
-                {
-                  "base": "FDD39AD0-238F-46AF-ADB4-6C85480369C7",
-                  "patterns": [
-                    ".*"
-                  ],
-                  "isExclusion": true
-                },
-                {
-                  "base": "56784854-C6CB-462B-8169-88E350ACB882",
-                  "patterns": [
-                    ".*"
-                  ],
-                  "isExclusion": true
-                },
-                {
-                  "base": "374DE290-123F-4565-9164-39C4925E467B",
-                  "patterns": [
-                    ".*"
-                  ],
-                  "isExclusion": true
-                },
-                {
-                  "base": "1777F761-68AD-4D8A-87BD-30B759FA33DD",
-                  "patterns": [
-                    ".*"
-                  ],
-                  "isExclusion": true
-                },
-                {
-                  "base": "4BD8D571-6D19-48D3-BE97-422220080E43",
-                  "patterns": [
-                    ".*"
-                  ],
-                  "isExclusion": true
-                },
-                {
-                  "base": "31C0DD25-9439-4F12-BF41-7FF4EDA38722",
-                  "patterns": [
-                    ".*"
-                  ],
-                  "isExclusion": true
-                },
-                {
-                  "base": "2C36C0AA-5812-4B87-BFD0-4CD0DFB19B39",
-                  "patterns": [
-                    ".*"
-                  ],
-                  "isExclusion": true
-                },
-                {
-                  "base": "69D2CF90-FC33-4FB7-9A0C-EBB0F0FCB43C",
-                  "patterns": [
-                    ".*"
-                  ],
-                  "isExclusion": true
-                },
-                {
-                  "base": "33E28130-4E1E-4676-835A-98395C3BC3BB",
-                  "patterns": [
-                    ".*"
-                  ],
-                  "isExclusion": true
-                },
-                {
-                  "base": "DE92C1C7-837F-4F69-A3BB-86E631204A23",
-                  "patterns": [
-                    ".*"
-                  ],
-                  "isExclusion": true
-                },
-                {
-                  "base": "AE50C081-EBD2-438A-8655-8A092E34987A",
-                  "patterns": [
-                    ".*"
-                  ],
-                  "isExclusion": true
-                },
-                {
-                  "base": "BD85E001-112E-431E-983B-7B15AC09FFF1",
-                  "patterns": [
-                    ".*"
-                  ],
-                  "isExclusion": true
-                },
-                {
-                  "base": "A63293E8-664E-48DB-A079-DF759E0509F7",
-                  "patterns": [
-                    ".*"
-                  ],
-                  "isExclusion": true
-                },
-                {
-                  "base": "18989B1D-99B5-455B-841C-AB7C74E4DDFC",
-                  "patterns": [
-                    ".*"
-                  ],
-                  "isExclusion": true
-                },
+                },                
                 {
                   "base": "",
                   "patterns": [
@@ -149,6 +44,139 @@
                 }
               ],
               "knownFolders": [
+                {
+                  "id": "B4BFCC3A-DB2C-424C-B029-7FE99A87C641",
+                  "relativePaths": [
+                    {
+                      "base": "",
+                      "patterns": [
+                        ".*"
+                      ],
+                      "isExclusion": true
+                    }
+                  ]
+                },
+                {
+                  "id": "FDD39AD0-238F-46AF-ADB4-6C85480369C7",
+                  "relativePaths": [
+                    {
+                      "base": "",
+                      "patterns": [
+                        ".*"
+                      ],
+                      "isExclusion": true
+                    }
+                  ]
+                },
+                {
+                  "id": "56784854-C6CB-462B-8169-88E350ACB882",
+                  "relativePaths": [
+                    {
+                      "base": "",
+                      "patterns": [
+                        ".*"
+                      ],
+                      "isExclusion": true
+                    }
+                  ]
+                },
+                {
+                  "id": "374DE290-123F-4565-9164-39C4925E467B",
+                  "relativePaths": [
+                    {
+                      "base": "",
+                      "patterns": [
+                        ".*"
+                      ],
+                      "isExclusion": true
+                    }
+                  ]
+                },
+                {
+                  "id": "1777F761-68AD-4D8A-87BD-30B759FA33DD",
+                  "relativePaths": [
+                    {
+                      "base": "",
+                      "patterns": [
+                        ".*"
+                      ],
+                      "isExclusion": true
+                    }
+                  ]
+                },
+                {
+                  "id": "4BD8D571-6D19-48D3-BE97-422220080E43",
+                  "relativePaths": [
+                    {
+                      "base": "",
+                      "patterns": [
+                        ".*"
+                      ],
+                      "isExclusion": true
+                    }
+                  ]
+                },
+                {
+                  "id": "31C0DD25-9439-4F12-BF41-7FF4EDA38722",
+                  "relativePaths": [
+                    {
+                      "base": "",
+                      "patterns": [
+                        ".*"
+                      ],
+                      "isExclusion": true
+                    }
+                  ]
+                },
+                {
+                  "id": "33E28130-4E1E-4676-835A-98395C3BC3BB",
+                  "relativePaths": [
+                    {
+                      "base": "",
+                      "patterns": [
+                        ".*"
+                      ],
+                      "isExclusion": true
+                    }
+                  ]
+                },
+                {
+                  "id": "AE50C081-EBD2-438A-8655-8A092E34987A",
+                  "relativePaths": [
+                    {
+                      "base": "",
+                      "patterns": [
+                        ".*"
+                      ],
+                      "isExclusion": true
+                    }
+                  ],
+                  "isExclusion": true
+                },
+                {
+                  "id": "A63293E8-664E-48DB-A079-DF759E0509F7",
+                  "relativePaths": [
+                    {
+                      "base": "",
+                      "patterns": [
+                        ".*"
+                      ],
+                      "isExclusion": true
+                    }
+                  ]
+                },
+                {
+                  "id": "18989B1D-99B5-455B-841C-AB7C74E4DDFC",
+                  "relativePaths": [
+                    {
+                      "base": "",
+                      "patterns": [
+                        ".*"
+                      ],
+                      "isExclusion": true
+                    }
+                  ]
+                },
                 {
                   "id": "System",
                   "relativePaths": [
@@ -171,7 +199,7 @@
                     }
                   ]
                 },
-                {
+                {  
                   "id": "ProgramFilesX86",
                   "relativePaths": [
                     {

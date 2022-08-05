@@ -44,13 +44,14 @@ typedef struct _OVERLAPPED {
 ***************************************************/
 
 //LPOVERLAPPED_COMPLETION_ROUTINE LPoverlappedCompletionRoutine;
-//void  LPoverlappedCompletionRoutine(
-//        [[maybe_unused]] ULONG dwErrorCode,
-//        [[maybe_unused]]  ULONG dwNumberOfBytesTransfered,
-//        [[maybe_unused]] LPOVERLAPPED lpOverlapped
-//)
-//{
-//}
+void WINAPI  CompletionRoutine(
+        [[maybe_unused]] ULONG dwErrorCode,
+        [[maybe_unused]]  ULONG dwNumberOfBytesTransfered,
+        [[maybe_unused]] LPOVERLAPPED lpOverlapped
+)
+{
+    trace_message(L"overlappedCompletionRoutine called.\n");
+}
 
 
 int OddDirectoryTests([[maybe_unused]] int TestNum)
@@ -109,17 +110,17 @@ int OddDirectoryTests([[maybe_unused]] int TestNum)
 
 
 
-    test_begin("CreateFile for Testing a directory");
+    test_begin("CreateFile for Testing a directory with no name should fail");
 
     testFileH = CreateFile(L"", 0x0, 0x7, NULL, 0x3, 0x2000000,NULL);
-    if (testFileH == INVALID_HANDLE_VALUE)
+    if (testFileH != INVALID_HANDLE_VALUE)
     {
-        testResult = GetLastError();
+        testResult = -1;
+        CloseHandle(testFileH);
     }
     else
     {
         testResult = ERROR_SUCCESS;
-        CloseHandle(testFileH);
     }
     result = result ? result : testResult;
     test_end(testResult);
@@ -127,16 +128,16 @@ int OddDirectoryTests([[maybe_unused]] int TestNum)
 
 
 
-    test_begin("CreateFile for Testing a directory2");
+    test_begin("CreateFile for Testing a directory with no name 2");
     testFileH = CreateFile(L"", FILE_LIST_DIRECTORY, 0x7, NULL, 0x3, FILE_FLAG_BACKUP_SEMANTICS, NULL);
-    if (testFileH == INVALID_HANDLE_VALUE)
+    if (testFileH != INVALID_HANDLE_VALUE)
     {
-        testResult = GetLastError();
+        testResult = -1;
+        CloseHandle(testFileH);
     }
     else
     {
         testResult = ERROR_SUCCESS;
-        CloseHandle(testFileH);
     }
     result = result ? result : testResult;
     test_end(testResult);
@@ -144,7 +145,7 @@ int OddDirectoryTests([[maybe_unused]] int TestNum)
 
 
 
-    test_begin("ReadDirectoryChangesEx for a VFS folder ");
+    test_begin("ReadDirectoryChanges for a VFS folder ");
     SetLastError(0);
     testFileH = CreateFile(FolderTest.c_str(), 
         FILE_LIST_DIRECTORY,
@@ -156,13 +157,14 @@ int OddDirectoryTests([[maybe_unused]] int TestNum)
     if (testFileH == INVALID_HANDLE_VALUE)
     {
         testResult = GetLastError();
+        trace_message(L"Unable to create file before monitoring.\n");
     }
     else
     {
         
         ULONG BUFSIZE = 4096;
         VOID * pBuff2 = malloc(BUFSIZE);
-
+        DWORD BytesIn;
         PFILE_NOTIFY_INFORMATION pBuffer = (PFILE_NOTIFY_INFORMATION)malloc(BUFSIZE);
         if (pBuffer != NULL && pBuff2 != NULL)
         {
@@ -175,13 +177,18 @@ int OddDirectoryTests([[maybe_unused]] int TestNum)
                 BUFSIZE,
                 TRUE,
                 0x17F,
-                nullptr,
+                &BytesIn,
                 pOverlapped,
-                nullptr); // LPoverlappedCompletionRoutine);
+                (LPOVERLAPPED_COMPLETION_ROUTINE) CompletionRoutine); 
             if (bRet == 0)
+            {
                 testResult = GetLastError();
+                trace_message(L"Unable to monitor directory.\n");
+            }
             else
-                testResult = 0;
+            {
+                testResult = ERROR_SUCCESS;
+            }
             CloseHandle(testFileH);
             free(pBuffer);
             free(pBuff2);
@@ -198,6 +205,189 @@ int OddDirectoryTests([[maybe_unused]] int TestNum)
 
 
 
+    test_begin("ReadDirectoryChangesEx for a VFS folder (Notify) ");
+    SetLastError(0);
+    testFileH = CreateFile(FolderTest.c_str(),
+        FILE_LIST_DIRECTORY,
+        FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
+        NULL,
+        OPEN_EXISTING,
+        FILE_FLAG_BACKUP_SEMANTICS | FILE_FLAG_OVERLAPPED,
+        NULL);
+    if (testFileH == INVALID_HANDLE_VALUE)
+    {
+        testResult = GetLastError();
+        trace_message(L"Unable to create file before monitoring.\n");
+    }
+    else
+    {
+
+        ULONG BUFSIZE = 4096;
+        VOID* pBuff2 = malloc(BUFSIZE);
+        DWORD BytesIn;
+        PFILE_NOTIFY_INFORMATION pBuffer = (PFILE_NOTIFY_INFORMATION)malloc(BUFSIZE);
+        if (pBuffer != NULL && pBuff2 != NULL)
+        {
+            pBuffer->NextEntryOffset = 0;
+
+            LPOVERLAPPED pOverlapped = (LPOVERLAPPED)pBuff2;
+
+
+            BOOL bRet = ReadDirectoryChangesExW(testFileH,
+                pBuffer,
+                BUFSIZE,
+                TRUE,
+                0x17F,
+                &BytesIn,
+                pOverlapped,
+                (LPOVERLAPPED_COMPLETION_ROUTINE)CompletionRoutine,
+                ReadDirectoryNotifyInformation); 
+            if (bRet == 0)
+            {
+                testResult = GetLastError();
+                trace_message(L"Unable to monitor directory.\n");
+            }
+            else
+            {
+                testResult = ERROR_SUCCESS;
+            }
+            CloseHandle(testFileH);
+            free(pBuffer);
+            free(pBuff2);
+        }
+        else
+        {
+            CloseHandle(testFileH);
+            testResult = -1;
+        }
+    }
+    result = result ? result : testResult;
+    test_end(testResult);
+    SubTestNum++;
+
+
+    test_begin("ReadDirectoryChangesEx for a VFS folder (NotifyExtended) ");
+    SetLastError(0);
+    testFileH = CreateFile(FolderTest.c_str(),
+        FILE_LIST_DIRECTORY,
+        FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
+        NULL,
+        OPEN_EXISTING,
+        FILE_FLAG_BACKUP_SEMANTICS | FILE_FLAG_OVERLAPPED,
+        NULL);
+    if (testFileH == INVALID_HANDLE_VALUE)
+    {
+        testResult = GetLastError();
+        trace_message(L"Unable to create file before monitoring.\n");
+    }
+    else
+    {
+
+        ULONG BUFSIZE = 4096;
+        VOID* pBuff2 = malloc(BUFSIZE);
+        DWORD BytesIn;
+        PFILE_NOTIFY_INFORMATION pBuffer = (PFILE_NOTIFY_INFORMATION)malloc(BUFSIZE);
+        if (pBuffer != NULL && pBuff2 != NULL)
+        {
+            pBuffer->NextEntryOffset = 0;
+
+            LPOVERLAPPED pOverlapped = (LPOVERLAPPED)pBuff2;
+
+
+            BOOL bRet = ReadDirectoryChangesExW(testFileH,
+                pBuffer,
+                BUFSIZE,
+                TRUE,
+                0x17F,
+                &BytesIn,
+                pOverlapped,
+                (LPOVERLAPPED_COMPLETION_ROUTINE)CompletionRoutine,
+                ReadDirectoryNotifyExtendedInformation);
+            if (bRet == 0)
+            {
+                testResult = GetLastError();
+                trace_message(L"Unable to monitor directory.\n");
+            }
+            else
+            {
+                testResult = ERROR_SUCCESS;
+            }
+            CloseHandle(testFileH);
+            free(pBuffer);
+            free(pBuff2);
+        }
+        else
+        {
+            CloseHandle(testFileH);
+            testResult = -1;
+        }
+    }
+    result = result ? result : testResult;
+    test_end(testResult);
+    SubTestNum++;
+
+
+    test_begin("ReadDirectoryChangesEx for a VFS folder (NotifyFull) ");
+    SetLastError(0);
+    testFileH = CreateFile(FolderTest.c_str(),
+        FILE_LIST_DIRECTORY,
+        FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
+        NULL,
+        OPEN_EXISTING,
+        FILE_FLAG_BACKUP_SEMANTICS | FILE_FLAG_OVERLAPPED,
+        NULL);
+    if (testFileH == INVALID_HANDLE_VALUE)
+    {
+        testResult = GetLastError();
+        trace_message(L"Unable to create file before monitoring.\n");
+    }
+    else
+    {
+
+        ULONG BUFSIZE = 4096;
+        VOID* pBuff2 = malloc(BUFSIZE);
+        DWORD BytesIn;
+        PFILE_NOTIFY_INFORMATION pBuffer = (PFILE_NOTIFY_INFORMATION)malloc(BUFSIZE);
+        if (pBuffer != NULL && pBuff2 != NULL)
+        {
+            pBuffer->NextEntryOffset = 0;
+
+            LPOVERLAPPED pOverlapped = (LPOVERLAPPED)pBuff2;
+
+
+            BOOL bRet = ReadDirectoryChangesExW(testFileH,
+                pBuffer,
+                BUFSIZE,
+                TRUE,
+                0x17F,
+                &BytesIn,
+                pOverlapped,
+                (LPOVERLAPPED_COMPLETION_ROUTINE)CompletionRoutine,
+                ReadDirectoryNotifyFullInformation);
+            if (bRet == 0)
+            {
+                testResult = GetLastError();
+                trace_message(L"Unable to monitor directory.\n");
+            }
+            else
+            {
+                testResult = ERROR_SUCCESS;
+            }
+            CloseHandle(testFileH);
+            free(pBuffer);
+            free(pBuff2);
+        }
+        else
+        {
+            CloseHandle(testFileH);
+            testResult = -1;
+        }
+    }
+    result = result ? result : testResult;
+    test_end(testResult);
+    SubTestNum++;
+
+
 
 #if _DEBUG
     Log("[%d] [%d] Ending OddDirectoryTests ********************************************************************************************", TestNum, 0);
@@ -205,4 +395,4 @@ int OddDirectoryTests([[maybe_unused]] int TestNum)
 
     return result;
 }
-//OddDirectoryTests = 5
+//OddDirectoryTests = 8

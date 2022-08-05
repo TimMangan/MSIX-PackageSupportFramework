@@ -72,6 +72,7 @@ static int ModifyFileTest(const std::wstring_view filename, const vfs_mapping& m
             trace_last_error(L"Error should have been set to ERROR_FILE_EXISTS when attempting to open with 'CREATE_NEW'.");
         }
         Log("Opened File to fail complete>>>>>");
+        SetLastError(0);
 
         auto file = createFunc(filePath.c_str(), creationDisposition);
         if (file == INVALID_HANDLE_VALUE)
@@ -248,7 +249,7 @@ static int ModifyFileTest(const std::wstring_view filename, const vfs_mapping& m
 
 int ModifyFileTests()
 {
-    int result = ERROR_SUCCESS;
+    int result = ERROR_SUCCESS;  
 
     for (auto& mapping : g_vfsMappings)
     {
