@@ -163,3 +163,55 @@ The value is from the following table:
 | `disabled` | Disables the redirection. Calls made by the app to an area will only see files in that area and will not receive COW (unless handled by the MSIX runtime itself). |
 
 
+ the dll based on the process it is running under.
+
+# JSON Examples
+To make things simpler to understand, here is a potential example configuration object that is using the built in defaults application to most applications:
+
+```
+...
+"fixups": [
+        {
+          "dll": "MFRFixup.dll",
+          "config": {}
+           }
+        }
+]
+...
+```
+
+To apply an override to change the local redirections to traditional or disabled, this might be used:
+
+```
+...
+"fixups": [
+        {
+          "dll": "MFRFixup.dll",
+          "config": {
+            "overideCOW": "default",
+             "overrideLocalRedirections": [
+                "ThisPCDesktopFolder": "disabled",
+                "Personal": "traditional",
+                "Common Desktop": "disabled",
+                "Common Documents": "disabled"
+             ]
+           }
+        }
+]
+...
+```
+
+To apply an override to prevent binary files to be written to the redirection area, this might be used:
+
+```
+...
+"fixups": [
+        {
+          "dll": "MFRFixup.dll",
+          "config": {
+            "overideCOW": "disablePE"
+           }
+        }
+]
+...
+```
