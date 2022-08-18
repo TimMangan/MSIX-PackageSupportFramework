@@ -40,7 +40,7 @@ namespace psf
         drive_relative,     // E.g. "C:path\to\file"
         rooted,             // E.g. "\path\to\file"
         relative,           // E.g. "path\to\file"
-        local_device,       // E.g. "\\.\C:\path\to\file"
+        local_device,       // E.g. "\\.\C:\path\to\file" (ex: namedpipes)
         root_local_device,  // E.g. "\\?\C:\path\to\file"
     };
 
@@ -82,7 +82,31 @@ namespace psf
         return dos_path_type::relative;
     }
 
-    inline DWORD get_full_path_name(const char* path, DWORD length, char* buffer, char** filePart = nullptr)
+
+    inline const wchar_t* DosPathTypeName(psf::dos_path_type input)
+    {
+        switch (input)
+        {
+        case psf::dos_path_type::unc_absolute:
+            return L"unc_absolute";
+        case psf::dos_path_type::drive_absolute:
+            return L"drive_absolute";
+        case psf::dos_path_type::drive_relative:
+            return L"drive_relative";
+        case psf::dos_path_type::rooted:
+            return L"rooted";
+        case psf::dos_path_type::relative:
+            return L"relative";
+        case psf::dos_path_type::local_device:
+            return L"local_device";
+        case psf::dos_path_type::root_local_device:
+            return L"root_local_device";
+        case psf::dos_path_type::unknown:
+        default:
+            return L"unknown";
+        }
+    }
+        inline DWORD get_full_path_name(const char* path, DWORD length, char* buffer, char** filePart = nullptr)
     {
         return ::GetFullPathNameA(path, length, buffer, filePart);
     }

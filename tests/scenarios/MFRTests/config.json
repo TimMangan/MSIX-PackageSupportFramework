@@ -1,0 +1,34 @@
+{
+  "applications": [
+    {
+      "id": "Fixed",
+      "executable": "MFRTests.exe",
+      "workingDirectory": ""
+    }
+  ],
+  "processes": [
+    {
+      "executable": "^PsfLauncher.*"
+    },
+    {
+      "executable": "^[Pp]ower[Ss]hell.*"
+    },
+    {
+      "executable": ".*",
+      "fixups": [
+        {
+          "dll": "WaitForDebuggerFixup.dll",
+          "config": {
+            "enabled": false
+          }
+        },
+        {
+          "dll": "MFRFixup.dll",
+          "config": {
+          }
+        }
+      ]
+    }
+  ]
+}
+

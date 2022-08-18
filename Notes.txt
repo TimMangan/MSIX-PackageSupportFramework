@@ -1,4 +1,7 @@
-v.next2022,08.05
+v.next
+ * Created new Managed File Redirection Fixup (MFRFixup) as a potential replacement for FileRedirectionFixup
+
+v.2022.08.05
 * Incorporate platform changes per Microsoft
 * PathRedirectonV2 fix for DeVFS calculation.
 * Renumber debug instance startin numbers.  FRF=0, DynLib=30k Env=40k RegLeg=50k

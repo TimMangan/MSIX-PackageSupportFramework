@@ -1,0 +1,25 @@
+[Files]
+"AppxManifest.xml" "AppxManifest.xml"
+"config.json" "config.json"
+
+"..\Assets\Logo44x44.png" "Assets\Logo44x44.png"
+"..\Assets\Logo150x150.png" "Assets\Logo150x150.png"
+
+"..\..\x64\Release\MFRTests.exe" "MFRTests.exe"
+"..\..\..\x64\Release\PsfLauncher64.exe" "PsfLauncher.exe"
+"..\..\..\x64\Release\PsfRuntime64.dll" "PsfRuntime64.dll"
+"..\..\..\x64\Release\MFRFixup64.dll" "MFRFixup64.dll"
+"..\..\..\x64\Release\WaitForDebuggerFixup64.dll" "WaitForDebuggerFixup64.dll"
+
+"file.txt" "VFS\ProgramFilesX64\PlaceholderTest\Placeholder.txt"
+"file.txt" "VFS\SystemX86\SystemX86Fïlè.txt"
+"file.txt" "VFS\AppData\AppDataFile.txt"
+"file.txt" "VFS\LocalAppData\LocalAppDataFile.txt"
+"file.txt" "VFS\ProgramFilesX64\ProgramFilesX64.txt"
+"file.txt" "VFS\Personal\PresonalFile.txt"
+"file.txt" "VFS\AppVPackageDrive\PackageDriveFile.txt"
+"file.txt" "PvadFile1.txt"
+"file.txt" "PvadFolder\PvadFile2.txt"
+
+"file.ini" "TestIniFilePVAD.ini"
+"file.ini" "VFS\ProgramFilesX64\PlaceholderTest\TestIniFileVfsPF.ini"
