@@ -258,6 +258,30 @@ void PreCreateFolders(std::wstring filepath, [[maybe_unused]] DWORD DllInstance,
 
 BOOL Cow(std::wstring from, std::wstring to, [[maybe_unused]] int DllInstance, [[maybe_unused]] std::wstring DebugString)
 {
+    switch (MFRConfiguration.COW)
+    {
+    case (DWORD)mfr::mfr_COW_types::COWdisableAll:
+        return false;
+    case (DWORD)mfr::mfr_COW_types::COWdisablePe:
+        if (from.length() > 4)
+        {
+            std::wstring ext = from.substr(from.length() - 4);
+            if (std::equal(ext.begin(), ext.end(), L".exe", psf::path_compare{}))
+                return false;            
+            if (std::equal(ext.begin(), ext.end(), L".dll", psf::path_compare{}))
+                return false;
+            if (std::equal(ext.begin(), ext.end(), L".com", psf::path_compare{}))
+                return false;
+            if (std::equal(ext.begin(), ext.end(), L".tlb", psf::path_compare{}))
+                return false;
+            if (std::equal(ext.begin(), ext.end(), L".ocx", psf::path_compare{}))
+                return false;
+        }
+        break;
+    case (DWORD)mfr::mfr_COW_types::COWdefault:
+    default:
+        break;
+    }
     // We may need to pre-create mising directories for the destination in the redirection area
     PreCreateFolders(to, DllInstance, DebugString);
 

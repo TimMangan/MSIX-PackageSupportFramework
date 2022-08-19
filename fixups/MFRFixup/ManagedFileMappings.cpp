@@ -64,7 +64,7 @@ namespace mfr
         g_MfrFolderMappings.push_back(mfr::mfr_folder_mapping{ true, FID_PublicDocuments,                  L"Common Documents",                L"Common Documents",        g_packageVfsRootPath / L"Common Documents"sv,       false, g_writablePackageRootPath / L"VFS\\Common Documents"sv,         mfr::mfr_redirect_flags::prefer_redirection_local });
 
         g_MfrFolderMappings.push_back(mfr::mfr_folder_mapping{ true, FID_RootDrive,                        L"AppVPackageDrive",                L"AppVPackageDrive",        g_packageVfsRootPath / L"AppVPackageDrive"sv,       false, g_writablePackageRootPath / L"VFS\\AppVPackageDrive"sv,         mfr::mfr_redirect_flags::prefer_redirection_containerized });
-        g_MfrFolderMappings.push_back(mfr::mfr_folder_mapping{ true, L"NotSupported",                      L"NotSupported",                    L"NotSupported",            g_packageRootPath,                                  false, g_writablePackageRootPath,                                      mfr::mfr_redirect_flags::prefer_redirection_containerized});
+        g_MfrFolderMappings.push_back(mfr::mfr_folder_mapping{ true, L"PVAD",                              L"PVAD",                            L"PVAD",                    g_packageRootPath,                                  false, g_writablePackageRootPath,                                      mfr::mfr_redirect_flags::prefer_redirection_containerized});
 #if _DEBUG
         //Log(L" MFR_Mappings initialized.");
 #endif

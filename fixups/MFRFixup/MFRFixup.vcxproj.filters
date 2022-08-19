@@ -45,6 +45,9 @@
     <ClInclude Include="DebugPathTesting.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="MFRConfiguration.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="dllmain.cpp">

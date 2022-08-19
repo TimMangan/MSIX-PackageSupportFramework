@@ -10,7 +10,7 @@
 #include "win32_error.h"
 #include "ManagedPathTypes.h"
 #include "ManagedFileMappings.h"
-
+#include "MfrConfiguration.h"
 
 
 extern std::filesystem::path g_packageRootPath;

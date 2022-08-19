@@ -15,6 +15,7 @@
 #include "Telemetry.h"
 
 #include "ManagedFileMappings.h"
+#include "MFRConfiguration.h"
 
 using namespace std::literals;
 
@@ -26,6 +27,7 @@ TRACELOGGING_DEFINE_PROVIDER(
     (0xf7f4e8c4, 0x9981, 0x5221, 0xe6, 0xfb, 0xff, 0x9d, 0xd1, 0xcd, 0xa4, 0xe1),
     TraceLoggingOptionMicrosoftTelemetry());
 
+mfr::mfr_configuration MFRConfiguration;
 
 void InitializeConfiguration()
 {
@@ -48,6 +50,43 @@ void InitializeConfiguration()
 #endif            
         [[maybe_unused]] auto& rootObject = rootConfig->as_object();
         traceDataStream << " config:\n";
+
+        if (auto pathsValue = rootObject.try_get("overideCOW"))
+        {
+            auto& overideCOWObject = pathsValue->as_object();
+            auto overideCOWValue = overideCOWObject.as_string().wstring();
+#if MOREDEBUG
+            Log("\t\tMFR CONFIG: Has overideCOW %s", overrideCOWValue);
+#endif 
+            if (overideCOWValue.compare(L"disablePe") == 0)
+            {
+                MFRConfiguration.COW = (DWORD)mfr::mfr_COW_types::COWdisablePe;
+            }
+            else if (overideCOWValue.compare(L"disableAll") == 0)
+            {
+                MFRConfiguration.COW = (DWORD)mfr::mfr_COW_types::COWdisableAll;
+            }
+            else
+            {
+                MFRConfiguration.COW = (DWORD)mfr::mfr_COW_types::COWdefault;
+            }
+        }
+
+        if (auto pathsValue = rootObject.try_get("overrideLocalRedirections"))
+        {
+#if MOREDEBUG
+            Log("\t\tMFR CONFIG: Has overrideLocalRedirections");
+#endif 
+        }
+
+
+        if (auto pathsValue = rootObject.try_get("overrideTraditionalRedirections"))
+        {
+#if MOREDEBUG
+            Log("\t\tMFR CONFIG: Has overrideTraditionalRedirections");
+#endif 
+        }
+
 
         TraceLoggingWrite(
             g_Log_ETW_ComponentProvider,
