@@ -19,6 +19,7 @@
 
 using namespace std::literals;
 
+#define MOREDEBUG 1
 
 TRACELOGGING_DECLARE_PROVIDER(g_Log_ETW_ComponentProvider);
 TRACELOGGING_DEFINE_PROVIDER(
@@ -48,43 +49,133 @@ void InitializeConfiguration()
 #if MOREDEBUG
         Log("\t\tMFRFixup CONFIG: Has config");
 #endif            
-        [[maybe_unused]] auto& rootObject = rootConfig->as_object();
+        auto& rootObject = rootConfig->as_object();
         traceDataStream << " config:\n";
-
-        if (auto pathsValue = rootObject.try_get("overideCOW"))
+        try
         {
-            auto& overideCOWObject = pathsValue->as_object();
-            auto overideCOWValue = overideCOWObject.as_string().wstring();
+            if (auto overrideCOWValue = rootObject.try_get("overrideCOW"))
+            {
+                ///o& overrideCOWObject = overrideCOWValue->as_object();
+                auto CowAsWstringView = overrideCOWValue->as_string().wstring();
+                std::wstring CowAsWstring = CowAsWstringView.data();
 #if MOREDEBUG
-            Log("\t\tMFR CONFIG: Has overideCOW %s", overrideCOWValue);
+                Log(L"\t\tMFR CONFIG: Has overideCOW %s", CowAsWstring.c_str());
 #endif 
-            if (overideCOWValue.compare(L"disablePe") == 0)
-            {
-                MFRConfiguration.COW = (DWORD)mfr::mfr_COW_types::COWdisablePe;
+                if (CowAsWstring.compare(L"disablePe") == 0)
+                {
+                    MFRConfiguration.COW = (DWORD)mfr::mfr_COW_types::COWdisablePe;
+                }
+                else if (CowAsWstring.compare(L"disableAll") == 0)
+                {
+                    MFRConfiguration.COW = (DWORD)mfr::mfr_COW_types::COWdisableAll;
+                }
+                else  if (CowAsWstring.compare(L"default") == 0)
+                {
+                    MFRConfiguration.COW = (DWORD)mfr::mfr_COW_types::COWdefault;
+                }
+                else
+                {
+                    Log(L"Bad json value ignored for overrideCOW %s", CowAsWstring.c_str());
+                    MFRConfiguration.COW = (DWORD)mfr::mfr_COW_types::COWdefault;
+                }
             }
-            else if (overideCOWValue.compare(L"disableAll") == 0)
+        }
+        catch (...)
+        {
+            Log(L"ERROR Reading config.json:  MFRTest in overrideLocalRedirections.");
+        }
+
+        try
+        {
+            if (auto ovValue = rootObject.try_get("overrideLocalRedirections"))
             {
-                MFRConfiguration.COW = (DWORD)mfr::mfr_COW_types::COWdisableAll;
+#if MOREDEBUG
+                Log("\t\tMFR CONFIG: Has overrideLocalRedirections");
+#endif 
+                const psf::json_array& ovArray = ovValue->as_array();
+
+                for (auto& ovMemberValue : ovArray)
+                {
+                    auto& ovMemberObj = ovMemberValue.as_object();
+
+                    std::wstring folderid = ovMemberObj.get("name").as_string().wstring().data();
+                    std::wstring mode = ovMemberObj.get("name").as_string().wstring().data();
+
+                    
+                   for (mfr::mfr_folder_mapping map : mfr::g_MfrFolderMappings)
+                   {
+                       if (std::equal(folderid.begin(), folderid.end(), map.FolderId.c_str(), psf::path_compare{}))
+                       {
+                           if (std::equal(mode.begin(), mode.end(), L"disabled", psf::path_compare{}))
+                           {
+                               map.Valid_mapping = false;
+                           }
+                           else if (std::equal(mode.begin(), mode.end(), L"traditional", psf::path_compare{}))
+                           {
+                               map.Valid_mapping = false;
+                           }
+                           else if (std::equal(mode.begin(), mode.end(), L"default", psf::path_compare{}))
+                           {
+                               // Do nothing
+                           }
+                           else
+                           {
+                               Log(L"Bad json value ignored for overrideLocalredirections %s %s", folderid.c_str(), mode.c_str());
+                           }
+                           break;
+                       }
+                   }
+                }
             }
-            else
+        }
+        catch (...)
+        {
+            Log(L"ERROR Reading config.json:  MFRTest in overrideLocalRedirections.");
+        }
+
+        try
+        {
+            if (auto ovValue = rootObject.try_get("overrideTraditionalRedirections"))
             {
-                MFRConfiguration.COW = (DWORD)mfr::mfr_COW_types::COWdefault;
+#if MOREDEBUG
+                Log("\t\tMFR CONFIG: Has overrideTraditionalRedirections");
+#endif 
+                const psf::json_array& ovArray = ovValue->as_array();
+
+                for (auto& ovMemberValue : ovArray)
+                {
+                    auto& ovMemberObj = ovMemberValue.as_object();
+
+                    std::wstring folderid = ovMemberObj.get("name").as_string().wstring().data();
+                    std::wstring mode = ovMemberObj.get("name").as_string().wstring().data();
+
+
+                    for (mfr::mfr_folder_mapping map : mfr::g_MfrFolderMappings)
+                    {
+                        if (std::equal(folderid.begin(), folderid.end(), map.FolderId.c_str(), psf::path_compare{}))
+                        {
+                            if (std::equal(mode.begin(), mode.end(), L"disabled", psf::path_compare{}))
+                            {
+                                map.Valid_mapping = false;
+                            }
+                            else if (std::equal(mode.begin(), mode.end(), L"default", psf::path_compare{}))
+                            {
+                                // Do nothing
+                            }
+                            else
+                            {
+                                Log(L"Bad json value ignored for overrideLocalTraditionalredirections %s %s", folderid.c_str(), mode.c_str());
+                            }
+                            break;
+                        }
+                    }
+                }
             }
         }
 
-        if (auto pathsValue = rootObject.try_get("overrideLocalRedirections"))
+        catch (...)
         {
-#if MOREDEBUG
-            Log("\t\tMFR CONFIG: Has overrideLocalRedirections");
-#endif 
-        }
-
-
-        if (auto pathsValue = rootObject.try_get("overrideTraditionalRedirections"))
-        {
-#if MOREDEBUG
-            Log("\t\tMFR CONFIG: Has overrideTraditionalRedirections");
-#endif 
+            Log(L"ERROR Reading config.json:  MFRTest in overrideTraditionalRedirections.");
         }
 
 

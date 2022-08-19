@@ -25,6 +25,25 @@
         {
           "dll": "MFRFixup.dll",
           "config": {
+            "overrideCOW": "default",
+            "overrideLocalRedirections": [
+              { 
+                "name" : "ThisPCDesktopFolder",
+                "mode" : "disabled" 
+              },
+              { 
+                "name" : "Personal",
+                "mode" : "default" 
+              },
+              { 
+                "name" : "Common Desktop",
+                "mode" : "disabled" 
+              },
+              { 
+                "name" : "Common Documents",
+                "mode" : "traditional" 
+              }
+            ]
           }
         }
       ]

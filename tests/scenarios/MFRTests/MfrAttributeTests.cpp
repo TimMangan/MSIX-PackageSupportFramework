@@ -259,6 +259,10 @@ int InitializeAttributeTests()
     MfrSetAttributeTest t_Redir_PF1D = { "Set Directory Redirected-folder VFS not in package", true, temp, FILE_ATTRIBUTE_DIRECTORY, false, INVALID_FILE_ATTRIBUTES, ERROR_FILE_NOT_FOUND };
     MfrSetAttributeFolderTests.push_back(t_Redir_PF1D);
 
+    // This attempt should be blocked by the default configuration PE filetype exclusions on COW
+    temp = g_Cwd + L"\\PsfLauncher.exe";
+    MfrSetAttributeTest t_Exe_PVAD1 = { "Set Package-file PVAD Exe to Hidden", true, temp, FILE_ATTRIBUTE_HIDDEN, false, INVALID_FILE_ATTRIBUTES, ERROR_ACCESS_DENIED };
+    MfrSetAttributeFileTests.push_back(t_Exe_PVAD1);
 
 
 
@@ -355,7 +359,7 @@ int RunAttributeTests()
     {
         if (testInput.enabled)
         {
-            std::string testname = "GetFileAttributes Folder Test: ";
+            std::string testname = "SetFileAttributes Folder Test: ";
             testname.append(testInput.TestName);
             test_begin(testname);
             auto testResult = GetFileAttributes(testInput.TestPath.c_str());

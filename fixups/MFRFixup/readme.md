@@ -99,9 +99,9 @@ The value of `overrideCOW` may be one of the following:
 | `default` | The default behavior. |
 
 ### overridelocalRedirections
-The `overrideLocalRedirections` element contains array of elements where the name of the element is one of the supported well-known FolderId and a value. 
+The `overrideLocalRedirections` element contains array of elements where each element contains a `name` and `mode`. 
 
-This name is to be written as standard strings without wildcards (not regex). The supported list of well-known FolderIds for `overrideLocalRedirections` are:
+The value of the `name` is to match a well-known FolderId shown in the table below. This name is to be written as standard strings without wildcards (not regex). The supported list of well-known FolderIds for `overrideLocalRedirections` are:
 
 | FolderId | Description |
 | ------------ | ----------- |
@@ -110,7 +110,7 @@ This name is to be written as standard strings without wildcards (not regex). Th
 | `Common Desktop`| This is the known folder ID for the entry for the Public Desktop folder.  |
 | `Common Documents`| This is the known folder ID for the entry for the Public Documents folder.  |
 
-The value is from the following table:
+The `mode` is from the following table:
 
 | Value | Description |
 | ----- | ----------- |
@@ -119,9 +119,9 @@ The value is from the following table:
 | `traditional` | Changes the direction of the redirection of this entry to the traditional style. |
 
 ### overrideTraditionalRedirections
-The `overrideTraditionalRedirections` element contains array of elements where the name of the element is one of the supported well-known FolderId (or FolderId with subfolder) and a value. 
+The `overrideTraditionalRedirections` element contains array of elements where each element contains a `name` and `mode`. 
 
-This name is to be written as standard strings without wildcards (not regex).  The supported list of well-known FolderIds for `overrideTraditionalRedirections` are:
+The value of the `name` is to match a well-known FolderId shown in the table below. This name is to be written as standard strings without wildcards (not regex). The supported list of well-known FolderIds for  `overrideTraditionalRedirections` are:
 
 | FolderId | Description |
 | ------------ | ----------- |
@@ -155,7 +155,7 @@ NOTES:
 > * Many of these names match against the Microsoft documentation for Known Folder IDs https://docs.microsoft.com/en-us/windows/win32/shell/knownfolderid.  Many of the well-known folders in that list are not specially handled by the packaging tool/runtime, so they are not part of this list.
 > * The PVAD entry is made up by this tool to specify files that are in the package path or redirection path but not under a VFS subfolder.
 
-The value is from the following table:
+The `mode` is from the following table:
 
 | Value | Description |
 | ----- | ----------- |
@@ -163,7 +163,7 @@ The value is from the following table:
 | `disabled` | Disables the redirection. Calls made by the app to an area will only see files in that area and will not receive COW (unless handled by the MSIX runtime itself). |
 
 
- the dll based on the process it is running under.
+
 
 # JSON Examples
 To make things simpler to understand, here is a potential example configuration object that is using the built in defaults application to most applications:
@@ -190,11 +190,24 @@ To apply an override to change the local redirections to traditional or disabled
           "config": {
             "overideCOW": "default",
              "overrideLocalRedirections": [
-                "ThisPCDesktopFolder": "disabled",
-                "Personal": "traditional",
-                "Common Desktop": "disabled",
-                "Common Documents": "disabled"
-             ]
+                {
+                    "name" : "ThisPCDesktopFolder",
+                    "mode" : "disabled"
+                },
+                {
+                    "name" : "Personal",
+                    "mode" :  "traditional"
+                },
+                {
+                    "name" : "Common Desktop",
+                    "mode" :  "disabled"
+                },
+                {
+                    "name" : "Common Documents",
+                    "mode" :  "disabled"
+                }
+             ],
+             "overrideTraditionalRedirectsions" : []
            }
         }
 ]
@@ -209,7 +222,7 @@ To apply an override to prevent binary files to be written to the redirection ar
         {
           "dll": "MFRFixup.dll",
           "config": {
-            "overideCOW": "disablePE"
+            "overideCOW": "disablePe"
            }
         }
 ]
