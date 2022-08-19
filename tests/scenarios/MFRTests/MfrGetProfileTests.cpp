@@ -6,10 +6,26 @@
 #include "MfrGetProfileTest.h"
 #include <stdio.h>
 
+
+std::vector< MfrGetProfileSectionNamesTest> MfrGetProfileSectionNamesTests;
 std::vector< MfrGetProfileSectionTest> MfrGetProfileSectionTests;
 std::vector<MfrGetProfileIntTest> MfrGetProfileIntTests;
 std::vector< MfrGetProfileStringTest> MfrGetProfileStringTests;
 
+int InitializeGetProfileTestsSectionNames()
+{
+    std::wstring temp;
+
+    // Requests to Native File Locations for GetPrivateProfileSection via existing VFS file with value present
+    MfrGetProfileSectionNamesTest ts_Native_PF1 = { "Section Native-file VFS exists in package", true, L"C:\\Program Files\\PlaceholderTest\\TestIniFileVfsPF.ini",  27, 3 };
+    MfrGetProfileSectionNamesTests.push_back(ts_Native_PF1);
+
+    // Requests to Native File Locations for GetPrivateProfileSection via Missing VFS file with value present
+    MfrGetProfileSectionNamesTest ts_Native_PF2 = { "Section Native-file VFS missing in package", true, L"C:\\Program Files\\PlaceholderTest\\Nonesuch.ini",  0, 0 };
+    MfrGetProfileSectionNamesTests.push_back(ts_Native_PF2);
+
+    return (int)MfrGetProfileSectionNamesTests.size();
+}
 
 int InitializeGetProfileTestsSection()
 {
@@ -240,6 +256,7 @@ int InitializeGetProfileTestsString()
 int InitializeGetProfileTests()
 {
     int count = 0;
+    count += InitializeGetProfileTestsSectionNames();
     count += InitializeGetProfileTestsSection();
     count += InitializeGetProfileTestsInt();
     count += InitializeGetProfileTestsString();
@@ -256,6 +273,47 @@ int RunGetProfileTests()
     wchar_t* buffer = (wchar_t*)malloc(testLen * sizeof(wchar_t));
     if (buffer != NULL)
     {
+        for (MfrGetProfileSectionNamesTest testInput : MfrGetProfileSectionNamesTests)
+        {
+            if (testInput.enabled)
+            {
+                std::string testname = "GetPrivateProfileSectionNames Test: ";
+                testname.append(testInput.TestName);
+                test_begin(testname);
+                auto testResult = GetPrivateProfileSectionNames( buffer, testLen, testInput.TestPath.c_str());
+                // The return is a set of null terminated strings with an extra null termination at the end.
+                // The count is the number of characters, including individual string null, but not the extra null at the end.
+                DWORD count = 0;
+                for (DWORD index = 0; index < testResult; index++)
+                {
+                    if (buffer[index] == NULL)
+                        count++;
+                }
+
+                if (testResult == testInput.Expected_Result_Length &&
+                    count == testInput.Expected_Result_NumberStrings)
+                {
+                    result = result ? result : ERROR_SUCCESS;
+                    test_end(ERROR_SUCCESS);
+                }
+                else
+                {
+                    std::wstring detail1 = L"ERROR: Returned value/Length incorrect. Expected=";
+                    detail1.append(std::to_wstring(testInput.Expected_Result_Length));
+                    detail1.append(L" Received=");
+                    detail1.append(std::to_wstring(testResult));
+                    detail1.append(L", and #strings expected=");
+                    detail1.append(std::to_wstring(testInput.Expected_Result_NumberStrings));
+                    detail1.append(L" Received=");
+                    detail1.append(std::to_wstring(count));
+                    detail1.append(L"\n");
+                    trace_message(detail1.c_str(), error_color);
+                    result = result ? result : -1;
+                    test_end(-1);
+                }
+            }
+        }
+
         for (MfrGetProfileSectionTest testInput : MfrGetProfileSectionTests)
         {
             if (testInput.enabled)

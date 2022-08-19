@@ -14,6 +14,15 @@
 #include "MFRConsts.h"
 
 
+struct MfrGetProfileSectionNamesTest
+{
+    std::string  TestName;
+    bool         enabled;
+    std::wstring TestPath;
+    DWORD        Expected_Result_Length;
+    DWORD        Expected_Result_NumberStrings;
+};
+
 struct MfrGetProfileSectionTest
 {
     std::string  TestName;
