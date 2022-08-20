@@ -61,9 +61,9 @@ void InitializeConfiguration()
 #if MOREDEBUG
                 Log(L"\t\tMFR CONFIG: Has overideCOW %s", CowAsWstring.c_str());
 #endif 
-                if (CowAsWstring.compare(L"disablePe") == 0)
+                if (CowAsWstring.compare(L"enablePe") == 0)
                 {
-                    MFRConfiguration.COW = (DWORD)mfr::mfr_COW_types::COWdisablePe;
+                    MFRConfiguration.COW = (DWORD)mfr::mfr_COW_types::COWenablePe;
                 }
                 else if (CowAsWstring.compare(L"disableAll") == 0)
                 {

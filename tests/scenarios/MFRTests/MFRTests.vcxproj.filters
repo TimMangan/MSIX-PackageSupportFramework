@@ -30,6 +30,9 @@
     <ClCompile Include="MfrGetProfileTests.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="MfrWriteProfileTests.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Xml Include="AppXManifest.xml">
@@ -62,6 +65,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="MFRConsts.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="MfrWriteProfileTest.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

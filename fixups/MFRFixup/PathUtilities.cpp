@@ -261,25 +261,34 @@ BOOL Cow(std::wstring from, std::wstring to, [[maybe_unused]] int DllInstance, [
     switch (MFRConfiguration.COW)
     {
     case (DWORD)mfr::mfr_COW_types::COWdisableAll:
+        // This means disable all COW
         return false;
-    case (DWORD)mfr::mfr_COW_types::COWdisablePe:
+    case (DWORD)mfr::mfr_COW_types::COWenablePe:
+        // This means disable the Pe exclusions
+       break;
+    case (DWORD)mfr::mfr_COW_types::COWdefault:
+    default:
+        if (from.find(L".exe") != std::wstring::npos)
+        {
+            if (from.find(L"NONONO") != std::wstring::npos)
+            {
+                return FALSE;
+            }
+        }
         if (from.length() > 4)
         {
             std::wstring ext = from.substr(from.length() - 4);
             if (std::equal(ext.begin(), ext.end(), L".exe", psf::path_compare{}))
-                return false;            
+                return false;
             if (std::equal(ext.begin(), ext.end(), L".dll", psf::path_compare{}))
                 return false;
             if (std::equal(ext.begin(), ext.end(), L".com", psf::path_compare{}))
                 return false;
             if (std::equal(ext.begin(), ext.end(), L".tlb", psf::path_compare{}))
-                return false;
-            if (std::equal(ext.begin(), ext.end(), L".ocx", psf::path_compare{}))
+  
+                if (std::equal(ext.begin(), ext.end(), L".ocx", psf::path_compare{}))
                 return false;
         }
-        break;
-    case (DWORD)mfr::mfr_COW_types::COWdefault:
-    default:
         break;
     }
     // We may need to pre-create mising directories for the destination in the redirection area

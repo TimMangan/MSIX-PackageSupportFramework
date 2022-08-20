@@ -536,6 +536,10 @@ int RunAttributeTests()
         {
             std::string testname = "SetFileAttributes File Test: ";
             testname.append(testInput.TestName);
+            if (testInput.TestPath.find(L".exe") != std::wstring::npos)
+            {
+                trace_message(L"TEST SPOT\n", warning_color);
+            }
             test_begin(testname);
             auto testResult = SetFileAttributes(testInput.TestPath.c_str(), testInput.fileAttributes);
             if (testResult == 0)

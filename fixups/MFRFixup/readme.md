@@ -95,8 +95,8 @@ The value of `overrideCOW` may be one of the following:
 | Value | Description |
 | ----- | ----------- |
 | `disableAll` | Disables all COW support in this fixup. |
-| `disablePe` | Disables all COW support in this fixup for files that are well known WinPE filetypes (such as exe, dll, com, tlb, and ocx). |
-| `default` | The default behavior. |
+| `enablePe` | Enables COW for all file types. |
+| `default` | The default behavior of COW on all files except for files that are well known WinPE filetypes (such as exe, dll, com, tlb, and ocx). |
 
 ### overridelocalRedirections
 The `overrideLocalRedirections` element contains array of elements where each element contains a `name` and `mode`. 

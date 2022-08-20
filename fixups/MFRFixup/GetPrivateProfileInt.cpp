@@ -16,6 +16,18 @@
 // NOTE: In addition to file based configuration, apps map put this data into the registry.  The app may call this with a null filename, or a filename that does not exist.
 //       In that case, we should call the native implementation which will return the registry or default result.
 
+#define WRAPPER_GETPRIVATEPROFILEINT(theDestinationFilename, debug) \
+    { \
+        std::wstring LongDestinationFilename = MakeLongPath(theDestinationFilename); \
+        retfinal = impl::GetPrivateProfileIntW(widen_argument(sectionName).c_str(), widen_argument(key).c_str(), nDefault, LongDestinationFilename.c_str()); \
+        if (debug) \
+        { \
+        Log(L"[%d] GetPrivateProfileIntFixup Returned uint: %d from '%s' ", DllInstance, retfinal, LongDestinationFilename.c_str()); \
+        } \
+        return retfinal; \
+    }
+
+
 template <typename CharT>
 UINT __stdcall GetPrivateProfileIntFixup(
     _In_opt_ const CharT* sectionName,
@@ -30,6 +42,10 @@ UINT __stdcall GetPrivateProfileIntFixup(
     {
         if (guard)
         {
+            bool debug = false;
+#if _DEBUG
+            debug = true;
+#endif
 #if _DEBUG
             if constexpr (psf::is_ansi<CharT>)
             {
@@ -77,6 +93,7 @@ UINT __stdcall GetPrivateProfileIntFixup(
                 std::wstring wfileName = widen(fileName);
                 mfr::mfr_path file_mfr = mfr::create_mfr_path(wfileName);
                 mfr::mfr_folder_mapping map;
+                std::wstring testWsRequested = file_mfr.Request_NormalizedPath.c_str();
                 std::wstring testWsNative;
                 std::wstring testWsRedirected;
                 std::wstring testWsPackage;
@@ -90,71 +107,45 @@ UINT __stdcall GetPrivateProfileIntFixup(
                     if (map.Valid_mapping)
                     {
                         // try the request path, which must be the local redirected version by definition, and then a package equivalent, then default 
-                        testWsRedirected = file_mfr.Request_NormalizedPath.c_str();
-                        testWsPackage = ReplacePathPart(file_mfr.Request_NormalizedPath.c_str(), map.NativePathBase, map.PackagePathBase);
+                        testWsRedirected = testWsRequested;
+                        testWsPackage = ReplacePathPart(testWsRequested.c_str(), map.NativePathBase, map.PackagePathBase);
                         if (PathExists(testWsRedirected.c_str()))
                         {
-                            retfinal = impl::GetPrivateProfileIntW(widen_argument(sectionName).c_str(), widen_argument(key).c_str(), nDefault, testWsRedirected.c_str());
-#if _DEBUG
-                            Log(L"[%d] GetPrivateProfileIntFixup Returned uint: %d from '%s' ", DllInstance, retfinal, testWsRedirected.c_str());
-#endif
-                            return retfinal;
+                            WRAPPER_GETPRIVATEPROFILEINT(testWsRedirected, debug);
                         }
                         else if (PathExists(testWsPackage.c_str()))
                         {
-                            retfinal = impl::GetPrivateProfileIntW(widen_argument(sectionName).c_str(), widen_argument(key).c_str(), nDefault, testWsPackage.c_str());
-#if _DEBUG
-                            Log(L"[%d] GetPrivateProfileIntFixup Returned uint: %d from '%s' ", DllInstance, retfinal, testWsPackage.c_str());
-#endif
-                            return retfinal;
+                            WRAPPER_GETPRIVATEPROFILEINT(testWsPackage, debug);
                         }
                         else
                         {
-                            retfinal = impl::GetPrivateProfileInt(sectionName, key, nDefault, fileName);
-#if _DEBUG
-                            Log(L"[%d] GetPrivateProfileIntFixup Returned uint: %d from registry or default ", DllInstance, retfinal);
-#endif
-                            return retfinal;
+                            // No file, calling allows for default value or to get from registry.
+                            WRAPPER_GETPRIVATEPROFILEINT(testWsRequested, debug);
                         }
                     }
                     map = mfr::Find_TraditionalRedirMapping_FromNativePath_ForwardSearch(file_mfr.Request_NormalizedPath.c_str());
                     if (map.Valid_mapping)
                     {
                         // try the redirected path, then package, then native, then default
-                        testWsRedirected = ReplacePathPart(file_mfr.Request_NormalizedPath.c_str(), map.NativePathBase, map.RedirectedPathBase);
-                        testWsPackage = ReplacePathPart(file_mfr.Request_NormalizedPath.c_str(), map.NativePathBase, map.PackagePathBase);
-                        testWsNative = ReplacePathPart(file_mfr.Request_NormalizedPath.c_str(), map.NativePathBase, map.PackagePathBase);
+                        testWsRedirected = ReplacePathPart(testWsRequested.c_str(), map.NativePathBase, map.RedirectedPathBase);
+                        testWsPackage = ReplacePathPart(testWsRequested.c_str(), map.NativePathBase, map.PackagePathBase);
+                        testWsNative = testWsRequested;
                         if (PathExists(testWsRedirected.c_str()))
                         {
-                            retfinal = impl::GetPrivateProfileIntW(widen_argument(sectionName).c_str(), widen_argument(key).c_str(), nDefault, testWsRedirected.c_str());
-#if _DEBUG
-                            Log(L"[%d] GetPrivateProfileIntFixup Returned uint: %d from '%s' ", DllInstance, retfinal, testWsRedirected.c_str());
-#endif
-                            return retfinal;
+                            WRAPPER_GETPRIVATEPROFILEINT(testWsRedirected, debug);
                         }
                         else if (PathExists(testWsPackage.c_str()))
                             {
-                                retfinal = impl::GetPrivateProfileIntW(widen_argument(sectionName).c_str(), widen_argument(key).c_str(), nDefault, testWsPackage.c_str());
-#if _DEBUG
-                                Log(L"[%d] GetPrivateProfileIntFixup Returned uint: %d from '%s' ", DllInstance, retfinal, testWsPackage.c_str());
-#endif
-                                return retfinal;
+                            WRAPPER_GETPRIVATEPROFILEINT(testWsPackage, debug);
                             }
                         else if (PathExists(testWsNative.c_str()))
                         {
-                            retfinal = impl::GetPrivateProfileIntW(widen_argument(sectionName).c_str(), widen_argument(key).c_str(), nDefault, testWsNative.c_str());
-#if _DEBUG
-                            Log(L"[%d] GetPrivateProfileIntFixup Returned uint: %d from '%s' ", DllInstance, retfinal, testWsNative.c_str());
-#endif
-                            return retfinal;
+                            WRAPPER_GETPRIVATEPROFILEINT(testWsNative, debug);
                         }
                         else
                         {
-                            retfinal = impl::GetPrivateProfileInt(sectionName, key, nDefault, fileName);
-#if _DEBUG
-                            Log(L"[%d] GetPrivateProfileIntFixup Returned uint: %d from registry or default ", DllInstance, retfinal);
-#endif
-                            return retfinal;
+                            // No file, calling allows for default value or to get from registry.
+                            WRAPPER_GETPRIVATEPROFILEINT(testWsRequested, debug);
                         }
                     }
                     break;
@@ -162,35 +153,24 @@ UINT __stdcall GetPrivateProfileIntFixup(
 #if MOREDEBUG
                     Log(L"[%d] GetPrivateProfileIntFixup    in_package_pvad_area", DllInstance);
 #endif
-                    map = mfr::Find_TraditionalRedirMapping_FromNativePath_ForwardSearch(file_mfr.Request_NormalizedPath.c_str());
+                    map = mfr::Find_TraditionalRedirMapping_FromPackagePath_ForwardSearch(file_mfr.Request_NormalizedPath.c_str());
                     if (map.Valid_mapping)
                     {
                         //// try the redirected path, then package, then don't need native, so default
-                        testWsRedirected = ReplacePathPart(file_mfr.Request_NormalizedPath.c_str(), map.PackagePathBase, map.RedirectedPathBase);
-                        testWsPackage = ReplacePathPart(file_mfr.Request_NormalizedPath.c_str(), map.NativePathBase, map.PackagePathBase);
+                        testWsRedirected = ReplacePathPart(testWsRequested.c_str(), map.PackagePathBase, map.RedirectedPathBase);
+                        testWsPackage = testWsRequested;
                         if (PathExists(testWsRedirected.c_str()))
                         {
-                            retfinal = impl::GetPrivateProfileIntW(widen_argument(sectionName).c_str(), widen_argument(key).c_str(), nDefault, testWsRedirected.c_str());
-#if _DEBUG
-                            Log(L"[%d] GetPrivateProfileIntFixup Returned uint: %d from '%s' ", DllInstance, retfinal, testWsRedirected.c_str());
-#endif
-                            return retfinal;
+                            WRAPPER_GETPRIVATEPROFILEINT(testWsRedirected, debug);
                         }
                         else if (PathExists(testWsPackage.c_str()))
                             {
-                                retfinal = impl::GetPrivateProfileIntW(widen_argument(sectionName).c_str(), widen_argument(key).c_str(), nDefault, testWsPackage.c_str());
-#if _DEBUG
-                                Log(L"[%d] GetPrivateProfileIntFixup Returned uint: %d from '%s' ", DllInstance, retfinal, testWsPackage.c_str());
-#endif
-                                return retfinal;
+                            WRAPPER_GETPRIVATEPROFILEINT(testWsPackage, debug);
                             }
                         else
                         {
-                            retfinal = impl::GetPrivateProfileInt(sectionName, key, nDefault, fileName);
-#if _DEBUG
-                            Log(L"[%d] GetPrivateProfileIntFixup Returned uint: %d from registry or default ", DllInstance, retfinal);
-#endif
-                            return retfinal;
+                            // No file, so calling requested provides default value or gets from registry.
+                            WRAPPER_GETPRIVATEPROFILEINT(testWsRequested, debug);
                         }
                     }
                     break;
@@ -198,75 +178,49 @@ UINT __stdcall GetPrivateProfileIntFixup(
 #if MOREDEBUG
                     Log(L"[%d] GetPrivateProfileIntFixup    in_package_vfs_area", DllInstance);
 #endif
-                    map = mfr::Find_LocalRedirMapping_FromNativePath_ForwardSearch(file_mfr.Request_NormalizedPath.c_str());
+                    map = mfr::Find_LocalRedirMapping_FromPackagePath_ForwardSearch(file_mfr.Request_NormalizedPath.c_str());
                     if (map.Valid_mapping)
                     {
                         // try the redirected path, then package path, then default.
-                        testWsPackage = file_mfr.Request_NormalizedPath.c_str();
-                        testWsRedirected = ReplacePathPart(file_mfr.Request_NormalizedPath.c_str(), map.PackagePathBase, map.RedirectedPathBase);
+                        testWsPackage = testWsRequested;
+                        testWsRedirected = ReplacePathPart(testWsRequested.c_str(), map.PackagePathBase, map.RedirectedPathBase);
                         if (PathExists(testWsRedirected.c_str()))
                         {
-                            retfinal = impl::GetPrivateProfileIntW(widen_argument(sectionName).c_str(), widen_argument(key).c_str(), nDefault, testWsRedirected.c_str());
-#if _DEBUG
-                            Log(L"[%d] GetPrivateProfileIntFixup Returned uint: %d from '%s' ", DllInstance, retfinal, testWsRedirected.c_str());
-#endif
-                            return retfinal;
+                            WRAPPER_GETPRIVATEPROFILEINT(testWsRedirected, debug);
                         }
                         else if (PathExists(testWsPackage.c_str()))
                         {
-                            retfinal = impl::GetPrivateProfileIntW(widen_argument(sectionName).c_str(), widen_argument(key).c_str(), nDefault, testWsPackage.c_str());
-#if _DEBUG
-                            Log(L"[%d] GetPrivateProfileIntFixup Returned uint: %d from '%s' ", DllInstance, retfinal, testWsPackage.c_str());
-#endif
-                            return retfinal;
+                            WRAPPER_GETPRIVATEPROFILEINT(testWsPackage, debug);
                         }
                         else
                         {
-                            retfinal = impl::GetPrivateProfileInt(sectionName, key, nDefault, fileName);
-#if _DEBUG
-                            Log(L"[%d] GetPrivateProfileIntFixup Returned uint: %d from registry or default ", DllInstance, retfinal);
-#endif
-                            return retfinal;
+                            // No file, so calling requested provides default value or gets from registry.
+                            WRAPPER_GETPRIVATEPROFILEINT(testWsRequested, debug);
                         }
                     }
-                    map = mfr::Find_TraditionalRedirMapping_FromNativePath_ForwardSearch(file_mfr.Request_NormalizedPath.c_str());
+                    map = mfr::Find_TraditionalRedirMapping_FromPackagePath_ForwardSearch(file_mfr.Request_NormalizedPath.c_str());
                     if (map.Valid_mapping)
                     {
                         // try the redirected path, then package, then native, then default
-                        testWsPackage = file_mfr.Request_NormalizedPath.c_str();
-                        testWsRedirected = ReplacePathPart(file_mfr.Request_NormalizedPath.c_str(), map.PackagePathBase, map.RedirectedPathBase);
-                        testWsNative = ReplacePathPart(file_mfr.Request_NormalizedPath.c_str(), map.PackagePathBase, map.NativePathBase);
+                        testWsPackage = testWsRequested;
+                        testWsRedirected = ReplacePathPart(testWsRequested.c_str(), map.PackagePathBase, map.RedirectedPathBase);
+                        testWsNative = ReplacePathPart(testWsRequested.c_str(), map.PackagePathBase, map.NativePathBase);
                         if (PathExists(testWsRedirected.c_str()))
                         {
-                            retfinal = impl::GetPrivateProfileIntW(widen_argument(sectionName).c_str(), widen_argument(key).c_str(), nDefault, testWsRedirected.c_str());
-#if _DEBUG
-                            Log(L"[%d] GetPrivateProfileIntFixup Returned uint: %d from '%s' ", DllInstance, retfinal, testWsRedirected.c_str());
-#endif
-                            return retfinal;
+                            WRAPPER_GETPRIVATEPROFILEINT(testWsRedirected, debug);
                         }   
                         else if (PathExists(testWsPackage.c_str()))
                         {
-                            retfinal = impl::GetPrivateProfileIntW(widen_argument(sectionName).c_str(), widen_argument(key).c_str(), nDefault, testWsPackage.c_str());
-#if _DEBUG
-                            Log(L"[%d] GetPrivateProfileIntFixup Returned uint: %d from '%s' ", DllInstance, retfinal, testWsPackage.c_str());
-#endif
-                            return retfinal;
+                            WRAPPER_GETPRIVATEPROFILEINT(testWsPackage, debug);
                         }
                         else if (PathExists(testWsNative.c_str()))
                         {
-                            retfinal = impl::GetPrivateProfileIntW(widen_argument(sectionName).c_str(), widen_argument(key).c_str(), nDefault, testWsNative.c_str());
-#if _DEBUG
-                            Log(L"[%d] GetPrivateProfileIntFixup Returned uint: %d from '%s' ", DllInstance, retfinal, testWsNative.c_str());
-#endif
-                            return retfinal;
+                            WRAPPER_GETPRIVATEPROFILEINT(testWsNative, debug);
                         }
                         else
                         {
-                            retfinal = impl::GetPrivateProfileInt(sectionName, key, nDefault, fileName);
-#if _DEBUG
-                            Log(L"[%d] GetPrivateProfileIntFixup Returned uint: %d from registry or default ", DllInstance, retfinal);
-#endif
-                            return retfinal;
+                            // No file, so calling requested provides default value or gets from registry.
+                            WRAPPER_GETPRIVATEPROFILEINT(testWsRequested, debug);
                         }
                     }
                     break;
@@ -278,41 +232,26 @@ UINT __stdcall GetPrivateProfileIntFixup(
                     if (map.Valid_mapping)
                     {
                         // try the redirected path, then package, then possibly native, then default.
-                        testWsRedirected = file_mfr.Request_NormalizedPath.c_str();
-                        testWsPackage = ReplacePathPart(file_mfr.Request_NormalizedPath.c_str(), map.RedirectedPathBase, map.PackagePathBase);
-                        testWsNative = ReplacePathPart(file_mfr.Request_NormalizedPath.c_str(), map.RedirectedPathBase, map.NativePathBase);
+                        testWsRedirected = testWsRequested;
+                        testWsPackage = ReplacePathPart(testWsRequested.c_str(), map.RedirectedPathBase, map.PackagePathBase);
+                        testWsNative = ReplacePathPart(testWsRequested.c_str(), map.RedirectedPathBase, map.NativePathBase);
                         if (PathExists(testWsRedirected.c_str()))
                         {
-                            retfinal = impl::GetPrivateProfileIntW(widen_argument(sectionName).c_str(), widen_argument(key).c_str(), nDefault, testWsRedirected.c_str());
-#if _DEBUG
-                            Log(L"[%d] GetPrivateProfileIntFixup Returned uint: %d from '%s' ", DllInstance, retfinal, testWsRedirected.c_str());
-#endif
-                            return retfinal;
+                            WRAPPER_GETPRIVATEPROFILEINT(testWsRedirected, debug);
                         }
                         else if (PathExists(testWsPackage.c_str()))
                         {
-                            retfinal = impl::GetPrivateProfileIntW(widen_argument(sectionName).c_str(), widen_argument(key).c_str(), nDefault, testWsPackage.c_str());
-#if _DEBUG
-                            Log(L"[%d] GetPrivateProfileIntFixup Returned uint: %d from '%s' ", DllInstance, retfinal, testWsPackage.c_str());
-#endif
-                            return retfinal;
+                            WRAPPER_GETPRIVATEPROFILEINT(testWsPackage, debug);
                         }
                         else if (testWsPackage.find(L"\\VFS\\") != std::wstring::npos &&
                                  PathExists(testWsNative.c_str()))
                         {
-                            retfinal = impl::GetPrivateProfileIntW(widen_argument(sectionName).c_str(), widen_argument(key).c_str(), nDefault, testWsNative.c_str());
-#if _DEBUG
-                            Log(L"[%d] GetPrivateProfileIntFixup Returned uint: %d from '%s' ", DllInstance, retfinal, testWsNative.c_str());
-#endif
-                            return retfinal;
+                            WRAPPER_GETPRIVATEPROFILEINT(testWsNative, debug);
                         }
                         else
                         {
-                            retfinal = impl::GetPrivateProfileInt(sectionName, key, nDefault, fileName);
-#if _DEBUG
-                            Log(L"[%d] GetPrivateProfileIntFixup Returned uint: %d from registry or default ", DllInstance, retfinal);
-#endif
-                            return retfinal;
+                            // No file, so calling requested provides default value or gets from registry.
+                            WRAPPER_GETPRIVATEPROFILEINT(testWsRequested, debug);
                         }
                     }
                     break;

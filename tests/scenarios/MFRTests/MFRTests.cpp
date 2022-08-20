@@ -55,8 +55,13 @@ extern int PlaceholderTest();
 #else
 extern int InitializeAttributeTests();
 extern int RunAttributeTests();
+
 extern int InitializeGetProfileTests();
 extern int RunGetProfileTests();
+
+extern int InitializeWriteProfileTests();
+extern int RunWriteProfileTests();
+
 #endif
 
 void InitializeGlobals()
@@ -71,6 +76,7 @@ void InitializeFolderMappings()
     int count = 0;
     count += InitializeAttributeTests();
     count += InitializeGetProfileTests();
+    count += InitializeWriteProfileTests();
     test_initialize("Managed File Redirection (MFR) Tests", count);
 }
 
@@ -89,6 +95,9 @@ int run()
     result = result ? result : testResult;
 
     testResult = RunGetProfileTests();;
+    result = result ? result : testResult;
+
+    testResult = RunWriteProfileTests();;
     result = result ? result : testResult;
 
 

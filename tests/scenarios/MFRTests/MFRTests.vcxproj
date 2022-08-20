@@ -178,6 +178,7 @@
     <ClCompile Include="MfrAttributeTests.cpp" />
     <ClCompile Include="MfrGetProfileTests.cpp" />
     <ClCompile Include="MFRTests.cpp" />
+    <ClCompile Include="MfrWriteProfileTests.cpp" />
     <ClCompile Include="PlaceholderTest.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -197,6 +198,7 @@
     <ClInclude Include="MfrAttributeTest.h" />
     <ClInclude Include="MFRConsts.h" />
     <ClInclude Include="MfrGetProfileTest.h" />
+    <ClInclude Include="MfrWriteProfileTest.h" />
   </ItemGroup>
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>

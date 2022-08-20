@@ -12,9 +12,9 @@ namespace mfr
 {
     enum class mfr_COW_types
     {
-        COWdefault = 0x0000,   //COW in use
-        COWdisableAll = 0x0001,   // COW disabled           
-        COWdisablePe = 0x0002,  // COW disabled for WinPE files.
+        COWdefault = 0x0000,   //COW in use with winPE disabled
+        COWdisableAll = 0x0001,   // COW fully disabled           
+        COWenablePe = 0x0002,  // COW in use for all files.
     };
     DEFINE_ENUM_FLAG_OPERATORS(mfr_COW_types);
 

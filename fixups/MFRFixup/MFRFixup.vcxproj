@@ -209,7 +209,9 @@
     <ClCompile Include="DebugPathTesting.cpp" />
     <ClCompile Include="dllmain.cpp" />
     <ClCompile Include="FID.cpp" />
-    <ClCompile Include="FileAttributes.cpp" />
+    <ClCompile Include="SetFileAttributes.cpp" />
+    <ClCompile Include="GetFileAttributes.cpp" />
+    <ClCompile Include="GetFileAttributesEx.cpp" />
     <ClCompile Include="GetPrivateProfileInt.cpp" />
     <ClCompile Include="GetPrivateProfileSection.cpp" />
     <ClCompile Include="GetPrivateProfileSectionNames.cpp" />
@@ -220,6 +222,9 @@
     <ClCompile Include="ManagedFileMappings.cpp" />
     <ClCompile Include="ManagedPathTypes.cpp" />
     <ClCompile Include="PathUtilities.cpp" />
+    <ClCompile Include="WritePrivateProfileSection.cpp" />
+    <ClCompile Include="WritePrivateProfileString.cpp" />
+    <ClCompile Include="WritePrivateProfileStruct.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="readme.md" />

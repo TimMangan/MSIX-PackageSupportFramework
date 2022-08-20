@@ -16,6 +16,41 @@
 // NOTE: In addition to file based configuration, apps map put this data into the registry.  The app may call this with a null filename, or a filename that does not exist.
 //       In that case, we should call the native implementation which will return the registry or default result.
 
+#define WRAPPER_GETPRIVATEPROFILESTRING(theDestinationFilename, debug) \
+    { \
+        std::wstring LongDestinationFilename = MakeLongPath(theDestinationFilename); \
+        if constexpr (psf::is_ansi<CharT>) \
+        { \
+            retfinal = impl::GetPrivateProfileString(appName, keyName, defaultString, string, stringLength, narrow(LongDestinationFilename.c_str()).c_str()); \
+            if (debug) \
+            { \
+                Log(L"[%d] GetPrivateProfileStringFixup: Ansi Returned length=0x%x from %s", DllInstance, retfinal, LongDestinationFilename.c_str()); \
+                if (retfinal > 0) \
+                { \
+                    LogString(DllInstance, L"GetPrivateProfileStringFixup: Ansi Returned string", string); \
+                } \
+            } \
+            return retfinal; \
+        } \
+        else \
+        { \
+            retfinal = impl::GetPrivateProfileString(appName, keyName, defaultString, string, stringLength, LongDestinationFilename.c_str()); \
+            if (debug) \
+            { \
+                if (retfinal > 0) \
+                { \
+                    Log(L"[%d] GetPrivateProfileStringFixup: Wide Returned length=0x%x from %s", DllInstance, retfinal, LongDestinationFilename.c_str()); \
+                    LogString(DllInstance, L"GetPrivateProfileStringFixup: Returned string", string); \
+                } \
+                else \
+                { \
+                    Log(L"[%d] GetPrivateProfileStringFixup: Returned string zero length from %s", DllInstance, LongDestinationFilename.c_str()); \
+                } \
+            } \
+            return retfinal; \
+        } \
+    }
+
 
 template <typename CharT>
 DWORD __stdcall GetPrivateProfileStringFixup(
@@ -27,6 +62,10 @@ DWORD __stdcall GetPrivateProfileStringFixup(
     _In_opt_ const CharT* fileName) noexcept
 {
     DWORD DllInstance = ++g_InterceptInstance;
+    bool debug = false;
+#if _DEBUG
+    debug = true;
+#endif
     DWORD retfinal;
     auto guard = g_reentrancyGuard.enter();
     try
@@ -83,6 +122,7 @@ DWORD __stdcall GetPrivateProfileStringFixup(
                 std::wstring wfileName = widen(fileName);
                 mfr::mfr_path file_mfr = mfr::create_mfr_path(wfileName);
                 mfr::mfr_folder_mapping map;
+                std::wstring testWsRequested = file_mfr.Request_NormalizedPath.c_str(); 
                 std::wstring testWsNative;
                 std::wstring testWsRedirected;
                 std::wstring testWsPackage;
@@ -96,156 +136,45 @@ DWORD __stdcall GetPrivateProfileStringFixup(
                     if (map.Valid_mapping)
                     {
                         // try the request path, which must be the local redirected version by definition, and then a package equivalent, then default 
-                        testWsRedirected = file_mfr.Request_NormalizedPath.c_str();
-                        testWsPackage = ReplacePathPart(file_mfr.Request_NormalizedPath.c_str(), map.NativePathBase, map.PackagePathBase);
+                        testWsRedirected = testWsRequested;
+                        testWsPackage = ReplacePathPart(testWsRequested.c_str(), map.NativePathBase, map.PackagePathBase);
                         if (PathExists(testWsRedirected.c_str()))
                         {
-                            if constexpr (psf::is_ansi<CharT>)
-                            {
-
-                                retfinal = impl::GetPrivateProfileString(appName, keyName, defaultString, string, stringLength,  narrow(testWsRedirected.c_str()).c_str());
-#if _DEBUG
-                                Log(L"[%d] GetPrivateProfileStringFixup: Ansi Returned length=0x%x", DllInstance, retfinal);
-                                if (retfinal > 0)
-                                    LogString(DllInstance, L"GetPrivateProfileStringFixup: Ansi Returned string", string);
-#endif
-                                return retfinal;
-                        }
-                            else
-                            {
-                                retfinal = impl::GetPrivateProfileString(appName, keyName, defaultString, string, stringLength, testWsRedirected.c_str());
-#if _DEBUG
-                                if (retfinal > 0)
-                                    LogString(DllInstance, L"GetPrivateProfileStringFixup: Returned string", string);
-                                else
-                                    Log(L"[%d] GetPrivateProfileStringFixup: Returned string zero length", DllInstance);
-#endif
-                                return retfinal;
-                            }
+                            WRAPPER_GETPRIVATEPROFILESTRING(testWsRedirected, debug);
                         }
                         else if (PathExists(testWsPackage.c_str()))
                         {
-                            if constexpr (psf::is_ansi<CharT>)
-                            {
-
-                                retfinal = impl::GetPrivateProfileString(appName, keyName, defaultString, string, stringLength, narrow(testWsPackage.c_str()).c_str());
-#if _DEBUG
-                                Log(L"[%d] GetPrivateProfileStringFixup: Ansi Returned length=0x%x", DllInstance, retfinal);
-                                if (retfinal > 0)
-                                    LogString(DllInstance, L"GetPrivateProfileStringFixup: Ansi Returned string", string);
-#endif
-                                return retfinal;
-                            }
-                            else
-                            {
-                                retfinal = impl::GetPrivateProfileString(appName, keyName, defaultString, string, stringLength, testWsPackage.c_str());
-#if _DEBUG
-                                if (retfinal > 0)
-                                    LogString(DllInstance, L"GetPrivateProfileStringFixup: Returned string", string);
-                                else
-                                    Log(L"[%d] GetPrivateProfileStringFixup: Returned string zero length", DllInstance);
-#endif
-                                return retfinal;
-                        }
+                            WRAPPER_GETPRIVATEPROFILESTRING(testWsPackage, debug);
                         }
                         else
                         {
-                            retfinal = impl::GetPrivateProfileString(appName, keyName, defaultString, string, stringLength, fileName);
-#if _DEBUG
-                            Log(L"[%d] GetPrivateProfileStringFixup Returned uint: %d from registry or default ", DllInstance, retfinal);
-#endif
-                            return retfinal;
+                            // No file, calling allows for default value or to get from registry.
+                            WRAPPER_GETPRIVATEPROFILESTRING(testWsRequested, debug);
                         }
                     }
                     map = mfr::Find_TraditionalRedirMapping_FromNativePath_ForwardSearch(file_mfr.Request_NormalizedPath.c_str());
                     if (map.Valid_mapping)
                     {
                         // try the redirected path, then package, then native, then default
-                        testWsRedirected = ReplacePathPart(file_mfr.Request_NormalizedPath.c_str(), map.NativePathBase, map.RedirectedPathBase);
-                        testWsPackage = ReplacePathPart(file_mfr.Request_NormalizedPath.c_str(), map.NativePathBase, map.PackagePathBase);
-                        testWsNative = ReplacePathPart(file_mfr.Request_NormalizedPath.c_str(), map.NativePathBase, map.PackagePathBase);
+                        testWsRedirected = ReplacePathPart(testWsRequested.c_str(), map.NativePathBase, map.RedirectedPathBase);
+                        testWsPackage = ReplacePathPart(testWsRequested.c_str(), map.NativePathBase, map.PackagePathBase);
+                        testWsNative = testWsRequested;
                         if (PathExists(testWsRedirected.c_str()))
                         {
-                            if constexpr (psf::is_ansi<CharT>)
-                            {
-
-                                retfinal = impl::GetPrivateProfileString(appName, keyName, defaultString, string, stringLength, narrow(testWsRedirected.c_str()).c_str());
-#if _DEBUG
-                                Log(L"[%d] GetPrivateProfileStringFixup: Ansi Returned length=0x%x", DllInstance, retfinal);
-                                if (retfinal > 0)
-                                    LogString(DllInstance, L"GetPrivateProfileStringFixup: Ansi Returned string", string);
-#endif
-                                return retfinal;
-                            }
-                            else
-                            {
-                                retfinal = impl::GetPrivateProfileString(appName, keyName, defaultString, string, stringLength, testWsRedirected.c_str());
-#if _DEBUG
-                                if (retfinal > 0)
-                                    LogString(DllInstance, L"GetPrivateProfileStringFixup: Returned string", string);
-                                else
-                                    Log(L"[%d] GetPrivateProfileStringFixup: Returned string zero length", DllInstance);
-#endif
-                                return retfinal;
-                            }
+                            WRAPPER_GETPRIVATEPROFILESTRING(testWsRedirected, debug);
                         }
                         else if (PathExists(testWsPackage.c_str()))
                         {
-                            if constexpr (psf::is_ansi<CharT>)
-                            {
-
-                                retfinal = impl::GetPrivateProfileString(appName, keyName, defaultString, string, stringLength, narrow(testWsPackage.c_str()).c_str());
-#if _DEBUG
-                                Log(L"[%d] GetPrivateProfileStringFixup: Ansi Returned length=0x%x", DllInstance, retfinal);
-                                if (retfinal > 0)
-                                    LogString(DllInstance, L"GetPrivateProfileStringFixup: Ansi Returned string", string);
-#endif
-                                return retfinal;
-                            }
-                            else
-                            {
-                                retfinal = impl::GetPrivateProfileString(appName, keyName, defaultString, string, stringLength, testWsPackage.c_str());
-#if _DEBUG
-                                if (retfinal > 0)
-                                    LogString(DllInstance, L"GetPrivateProfileStringFixup: Returned string", string);
-                                else
-                                    Log(L"[%d] GetPrivateProfileStringFixup: Returned string zero length", DllInstance);
-#endif
-                                return retfinal;
-                            }
+                            WRAPPER_GETPRIVATEPROFILESTRING(testWsPackage, debug);
                         }
                         else if (PathExists(testWsNative.c_str()))
                         {
-                            if constexpr (psf::is_ansi<CharT>)
-                            {
-
-                                retfinal = impl::GetPrivateProfileString(appName, keyName, defaultString, string, stringLength, narrow(testWsNative.c_str()).c_str());
-#if _DEBUG
-                                Log(L"[%d] GetPrivateProfileStringFixup: Ansi Returned length=0x%x", DllInstance, retfinal);
-                                if (retfinal > 0)
-                                    LogString(DllInstance, L"GetPrivateProfileStringFixup: Ansi Returned string", string);
-#endif
-                                return retfinal;
-                            }
-                            else
-                            {
-                                retfinal = impl::GetPrivateProfileString(appName, keyName, defaultString, string, stringLength, testWsNative.c_str());
-#if _DEBUG
-                                if (retfinal > 0)
-                                    LogString(DllInstance, L"GetPrivateProfileStringFixup: Returned string", string);
-                                else
-                                    Log(L"[%d] GetPrivateProfileStringFixup: Returned string zero length", DllInstance);
-#endif
-                                return retfinal;
-                            }
+                            WRAPPER_GETPRIVATEPROFILESTRING(testWsNative, debug);
                         }
                         else
                         {
-                            retfinal = impl::GetPrivateProfileString(appName, keyName, defaultString, string, stringLength, fileName);
-#if _DEBUG
-                            Log(L"[%d] GetPrivateProfileStringFixup Returned uint: %d from registry or default ", DllInstance, retfinal);
-#endif
-                            return retfinal;
+                            // No file, calling allows for default value or to get from registry.
+                            WRAPPER_GETPRIVATEPROFILESTRING(testWsRequested, debug);
                         }
                     }
                     break;
@@ -253,69 +182,24 @@ DWORD __stdcall GetPrivateProfileStringFixup(
 #if MOREDEBUG
                     Log(L"[%d] GetPrivateProfileStringFixup    in_package_pvad_area", DllInstance);
 #endif
-                    map = mfr::Find_TraditionalRedirMapping_FromNativePath_ForwardSearch(file_mfr.Request_NormalizedPath.c_str());
+                    map = mfr::Find_TraditionalRedirMapping_FromPackagePath_ForwardSearch(file_mfr.Request_NormalizedPath.c_str());
                     if (map.Valid_mapping)
                     {
                         //// try the redirected path, then package, then don't need native, so default
-                        testWsRedirected = ReplacePathPart(file_mfr.Request_NormalizedPath.c_str(), map.PackagePathBase, map.RedirectedPathBase);
-                        testWsPackage = ReplacePathPart(file_mfr.Request_NormalizedPath.c_str(), map.NativePathBase, map.PackagePathBase);
+                        testWsRedirected = ReplacePathPart(testWsRequested.c_str(), map.PackagePathBase, map.RedirectedPathBase);
+                        testWsPackage = testWsRequested;
                         if (PathExists(testWsRedirected.c_str()))
                         {
-                            if constexpr (psf::is_ansi<CharT>)
-                            {
-
-                                retfinal = impl::GetPrivateProfileString(appName, keyName, defaultString, string, stringLength, narrow(testWsRedirected.c_str()).c_str());
-#if _DEBUG
-                                Log(L"[%d] GetPrivateProfileStringFixup: Ansi Returned length=0x%x", DllInstance, retfinal);
-                                if (retfinal > 0)
-                                    LogString(DllInstance, L"GetPrivateProfileStringFixup: Ansi Returned string", string);
-#endif
-                                return retfinal;
-                            }
-                            else
-                            {
-                                retfinal = impl::GetPrivateProfileString(appName, keyName, defaultString, string, stringLength, testWsRedirected.c_str());
-#if _DEBUG
-                                if (retfinal > 0)
-                                    LogString(DllInstance, L"GetPrivateProfileStringFixup: Returned string", string);
-                                else
-                                    Log(L"[%d] GetPrivateProfileStringFixup: Returned string zero length", DllInstance);
-#endif
-                                return retfinal;
-                            }
+                            WRAPPER_GETPRIVATEPROFILESTRING(testWsRedirected, debug);
                         }
                         else if (PathExists(testWsPackage.c_str()))
                         {
-                            if constexpr (psf::is_ansi<CharT>)
-                            {
-
-                                retfinal = impl::GetPrivateProfileString(appName, keyName, defaultString, string, stringLength, narrow(testWsPackage.c_str()).c_str());
-#if _DEBUG
-                                Log(L"[%d] GetPrivateProfileStringFixup: Ansi Returned length=0x%x", DllInstance, retfinal);
-                                if (retfinal > 0)
-                                    LogString(DllInstance, L"GetPrivateProfileStringFixup: Ansi Returned string", string);
-#endif
-                                return retfinal;
-                            }
-                            else
-                            {
-                                retfinal = impl::GetPrivateProfileString(appName, keyName, defaultString, string, stringLength, testWsPackage.c_str());
-#if _DEBUG
-                                if (retfinal > 0)
-                                    LogString(DllInstance, L"GetPrivateProfileStringFixup: Returned string", string);
-                                else
-                                    Log(L"[%d] GetPrivateProfileStringFixup: Returned string zero length", DllInstance);
-#endif
-                                return retfinal;
-                            }
+                            WRAPPER_GETPRIVATEPROFILESTRING(testWsPackage, debug);
                         }
                         else
                         {
-                            retfinal = impl::GetPrivateProfileString(appName, keyName, defaultString, string, stringLength, fileName);
-#if _DEBUG
-                            Log(L"[%d] GetPrivateProfileStringFixup Returned uint: %d from registry or default ", DllInstance, retfinal);
-#endif
-                            return retfinal;
+                            // No file, calling allows for default value or to get from registry.
+                            WRAPPER_GETPRIVATEPROFILESTRING(testWsRequested, debug);
                         }
                     }
                     break;
@@ -323,160 +207,49 @@ DWORD __stdcall GetPrivateProfileStringFixup(
 #if MOREDEBUG
                     Log(L"[%d] GetPrivateProfileStringFixup    in_package_vfs_area", DllInstance);
 #endif
-                    map = mfr::Find_LocalRedirMapping_FromNativePath_ForwardSearch(file_mfr.Request_NormalizedPath.c_str());
+                    map = mfr::Find_LocalRedirMapping_FromPackagePath_ForwardSearch(file_mfr.Request_NormalizedPath.c_str());
                     if (map.Valid_mapping)
                     {
                         // try the redirected path, then package path, then default.
-                        testWsPackage = file_mfr.Request_NormalizedPath.c_str();
-                        testWsRedirected = ReplacePathPart(file_mfr.Request_NormalizedPath.c_str(), map.PackagePathBase, map.RedirectedPathBase);
+                        testWsPackage = testWsRequested;
+                        testWsRedirected = ReplacePathPart(testWsRequested.c_str(), map.PackagePathBase, map.RedirectedPathBase);
                         if (PathExists(testWsRedirected.c_str()))
                         {
-                            if constexpr (psf::is_ansi<CharT>)
-                            {
-
-                                retfinal = impl::GetPrivateProfileString(appName, keyName, defaultString, string, stringLength, narrow(testWsRedirected.c_str()).c_str());
-#if _DEBUG
-                                Log(L"[%d] GetPrivateProfileStringFixup: Ansi Returned length=0x%x", DllInstance, retfinal);
-                                if (retfinal > 0)
-                                    LogString(DllInstance, L"GetPrivateProfileStringFixup: Ansi Returned string", string);
-#endif
-                                return retfinal;
-                            }
-                            else
-                            {
-                                retfinal = impl::GetPrivateProfileString(appName, keyName, defaultString, string, stringLength, testWsRedirected.c_str());
-#if _DEBUG
-                                if (retfinal > 0)
-                                    LogString(DllInstance, L"GetPrivateProfileStringFixup: Returned string", string);
-                                else
-                                    Log(L"[%d] GetPrivateProfileStringFixup: Returned string zero length", DllInstance);
-#endif
-                                return retfinal;
-                            }
+                            WRAPPER_GETPRIVATEPROFILESTRING(testWsRedirected, debug);
                         }
                         else if (PathExists(testWsPackage.c_str()))
                         {
-                            if constexpr (psf::is_ansi<CharT>)
-                            {
-
-                                retfinal = impl::GetPrivateProfileString(appName, keyName, defaultString, string, stringLength, narrow(testWsPackage.c_str()).c_str());
-#if _DEBUG
-                                Log(L"[%d] GetPrivateProfileStringFixup: Ansi Returned length=0x%x", DllInstance, retfinal);
-                                if (retfinal > 0)
-                                    LogString(DllInstance, L"GetPrivateProfileStringFixup: Ansi Returned string", string);
-#endif
-                                return retfinal;
-                            }
-                            else
-                            {
-                                retfinal = impl::GetPrivateProfileString(appName, keyName, defaultString, string, stringLength, testWsPackage.c_str());
-#if _DEBUG
-                                if (retfinal > 0)
-                                    LogString(DllInstance, L"GetPrivateProfileStringFixup: Returned string", string);
-                                else
-                                    Log(L"[%d] GetPrivateProfileStringFixup: Returned string zero length", DllInstance);
-#endif
-                                return retfinal;
-                            }
+                            WRAPPER_GETPRIVATEPROFILESTRING(testWsPackage, debug);
                         }
                         else
                         {
-                            retfinal = impl::GetPrivateProfileString(appName, keyName, defaultString, string, stringLength, fileName);
-#if _DEBUG
-                            Log(L"[%d] GetPrivateProfileStringFixup Returned uint: %d from registry or default ", DllInstance, retfinal);
-#endif
-                            return retfinal;
+                            // No file, calling allows for default value or to get from registry.
+                            WRAPPER_GETPRIVATEPROFILESTRING(testWsRequested, debug);
                         }
                     }
-                    map = mfr::Find_TraditionalRedirMapping_FromNativePath_ForwardSearch(file_mfr.Request_NormalizedPath.c_str());
+                    map = mfr::Find_TraditionalRedirMapping_FromPackagePath_ForwardSearch(file_mfr.Request_NormalizedPath.c_str());
                     if (map.Valid_mapping)
                     {
                         // try the redirected path, then package, then native, then default
-                        testWsPackage = file_mfr.Request_NormalizedPath.c_str();
-                        testWsRedirected = ReplacePathPart(file_mfr.Request_NormalizedPath.c_str(), map.PackagePathBase, map.RedirectedPathBase);
-                        testWsNative = ReplacePathPart(file_mfr.Request_NormalizedPath.c_str(), map.PackagePathBase, map.NativePathBase);
+                        testWsPackage = testWsRequested;
+                        testWsRedirected = ReplacePathPart(testWsRequested.c_str(), map.PackagePathBase, map.RedirectedPathBase);
+                        testWsNative = ReplacePathPart(testWsRequested.c_str(), map.PackagePathBase, map.NativePathBase);
                         if (PathExists(testWsRedirected.c_str()))
                         {
-                            if constexpr (psf::is_ansi<CharT>)
-                            {
-
-                                retfinal = impl::GetPrivateProfileString(appName, keyName, defaultString, string, stringLength, narrow(testWsRedirected.c_str()).c_str());
-#if _DEBUG
-                                Log(L"[%d] GetPrivateProfileStringFixup: Ansi Returned length=0x%x", DllInstance, retfinal);
-                                if (retfinal > 0)
-                                    LogString(DllInstance, L"GetPrivateProfileStringFixup: Ansi Returned string", string);
-#endif
-                                return retfinal;
-                            }
-                            else
-                            {
-                                retfinal = impl::GetPrivateProfileString(appName, keyName, defaultString, string, stringLength, testWsRedirected.c_str());
-#if _DEBUG
-                                if (retfinal > 0)
-                                    LogString(DllInstance, L"GetPrivateProfileStringFixup: Returned string", string);
-                                else
-                                    Log(L"[%d] GetPrivateProfileStringFixup: Returned string zero length", DllInstance);
-#endif
-                                return retfinal;
-                            }
+                            WRAPPER_GETPRIVATEPROFILESTRING(testWsRedirected, debug);
                         }
                         else if (PathExists(testWsPackage.c_str()))
                         {
-                            if constexpr (psf::is_ansi<CharT>)
-                            {
-
-                                retfinal = impl::GetPrivateProfileString(appName, keyName, defaultString, string, stringLength, narrow(testWsPackage.c_str()).c_str());
-#if _DEBUG
-                                Log(L"[%d] GetPrivateProfileStringFixup: Ansi Returned length=0x%x", DllInstance, retfinal);
-                                if (retfinal > 0)
-                                    LogString(DllInstance, L"GetPrivateProfileStringFixup: Ansi Returned string", string);
-#endif
-                                return retfinal;
-                            }
-                            else
-                            {
-                                retfinal = impl::GetPrivateProfileString(appName, keyName, defaultString, string, stringLength, testWsPackage.c_str());
-#if _DEBUG
-                                if (retfinal > 0)
-                                    LogString(DllInstance, L"GetPrivateProfileStringFixup: Returned string", string);
-                                else
-                                    Log(L"[%d] GetPrivateProfileStringFixup: Returned string zero length", DllInstance);
-#endif
-                                return retfinal;
-                            }
+                            WRAPPER_GETPRIVATEPROFILESTRING(testWsPackage, debug);
                         }
                         else if (PathExists(testWsNative.c_str()))
                         {
-                            if constexpr (psf::is_ansi<CharT>)
-                            {
-
-                                retfinal = impl::GetPrivateProfileString(appName, keyName, defaultString, string, stringLength, narrow(testWsNative.c_str()).c_str());
-#if _DEBUG
-                                Log(L"[%d] GetPrivateProfileStringFixup: Ansi Returned length=0x%x", DllInstance, retfinal);
-                                if (retfinal > 0)
-                                    LogString(DllInstance, L"GetPrivateProfileStringFixup: Ansi Returned string", string);
-#endif
-                                return retfinal;
-                            }
-                            else
-                            {
-                                retfinal = impl::GetPrivateProfileString(appName, keyName, defaultString, string, stringLength, testWsNative.c_str());
-#if _DEBUG
-                                if (retfinal > 0)
-                                    LogString(DllInstance, L"GetPrivateProfileStringFixup: Returned string", string);
-                                else
-                                    Log(L"[%d] GetPrivateProfileStringFixup: Returned string zero length", DllInstance);
-#endif
-                                return retfinal;
-                            }
+                            WRAPPER_GETPRIVATEPROFILESTRING(testWsNative, debug);
                         }
                         else
                         {
-                            retfinal = impl::GetPrivateProfileString(appName, keyName, defaultString, string, stringLength, fileName);
-#if _DEBUG
-                            Log(L"[%d] GetPrivateProfileStringFixup Returned uint: %d from registry or default ", DllInstance, retfinal);
-#endif
-                            return retfinal;
+                            // No file, calling allows for default value or to get from registry.
+                            WRAPPER_GETPRIVATEPROFILESTRING(testWsRequested, debug);
                         }
                     }
                     break;
@@ -488,92 +261,26 @@ DWORD __stdcall GetPrivateProfileStringFixup(
                     if (map.Valid_mapping)
                     {
                         // try the redirected path, then package, then possibly native, then default.
-                        testWsRedirected = file_mfr.Request_NormalizedPath.c_str();
-                        testWsPackage = ReplacePathPart(file_mfr.Request_NormalizedPath.c_str(), map.RedirectedPathBase, map.PackagePathBase);
-                        testWsNative = ReplacePathPart(file_mfr.Request_NormalizedPath.c_str(), map.RedirectedPathBase, map.NativePathBase);
+                        testWsRedirected = testWsRequested;
+                        testWsPackage = ReplacePathPart(testWsRequested.c_str(), map.RedirectedPathBase, map.PackagePathBase);
+                        testWsNative = ReplacePathPart(testWsRequested.c_str(), map.RedirectedPathBase, map.NativePathBase);
                         if (PathExists(testWsRedirected.c_str()))
                         {
-                            if constexpr (psf::is_ansi<CharT>)
-                            {
-
-                                retfinal = impl::GetPrivateProfileString(appName, keyName, defaultString, string, stringLength, narrow(testWsRedirected.c_str()).c_str());
-#if _DEBUG
-                                Log(L"[%d] GetPrivateProfileStringFixup: Ansi Returned length=0x%x", DllInstance, retfinal);
-                                if (retfinal > 0)
-                                    LogString(DllInstance, L"GetPrivateProfileStringFixup: Ansi Returned string", string);
-#endif
-                                return retfinal;
-                            }
-                            else
-                            {
-                                retfinal = impl::GetPrivateProfileString(appName, keyName, defaultString, string, stringLength, testWsRedirected.c_str());
-#if _DEBUG
-                                if (retfinal > 0)
-                                    LogString(DllInstance, L"GetPrivateProfileStringFixup: Returned string", string);
-                                else
-                                    Log(L"[%d] GetPrivateProfileStringFixup: Returned string zero length", DllInstance);
-#endif
-                                return retfinal;
-                            }
+                            WRAPPER_GETPRIVATEPROFILESTRING(testWsRedirected, debug);
                         }
                         else if (PathExists(testWsPackage.c_str()))
                         {
-                            if constexpr (psf::is_ansi<CharT>)
-                            {
-
-                                retfinal = impl::GetPrivateProfileString(appName, keyName, defaultString, string, stringLength, narrow(testWsPackage.c_str()).c_str());
-#if _DEBUG
-                                Log(L"[%d] GetPrivateProfileStringFixup: Ansi Returned length=0x%x", DllInstance, retfinal);
-                                if (retfinal > 0)
-                                    LogString(DllInstance, L"GetPrivateProfileStringFixup: Ansi Returned string", string);
-#endif
-                                return retfinal;
-                        }
-                            else
-                            {
-                                retfinal = impl::GetPrivateProfileString(appName, keyName, defaultString, string, stringLength, testWsPackage.c_str());
-#if _DEBUG
-                                if (retfinal > 0)
-                                    LogString(DllInstance, L"GetPrivateProfileStringFixup: Returned string", string);
-                                else
-                                    Log(L"[%d] GetPrivateProfileStringFixup: Returned string zero length", DllInstance);
-#endif
-                                return retfinal;
-                            }
+                            WRAPPER_GETPRIVATEPROFILESTRING(testWsPackage, debug);
                         }
                         else if (testWsPackage.find(L"\\VFS\\") != std::wstring::npos &&
                                  PathExists(testWsNative.c_str()))
                         {
-                            if constexpr (psf::is_ansi<CharT>)
-                            {
-
-                                retfinal = impl::GetPrivateProfileString(appName, keyName, defaultString, string, stringLength, narrow(testWsNative.c_str()).c_str());
-#if _DEBUG
-                                Log(L"[%d] GetPrivateProfileStringFixup: Ansi Returned length=0x%x", DllInstance, retfinal);
-                                if (retfinal > 0)
-                                    LogString(DllInstance, L"GetPrivateProfileStringFixup: Ansi Returned string", string);
-#endif
-                                return retfinal;
-                            }
-                            else
-                            {
-                                retfinal = impl::GetPrivateProfileString(appName, keyName, defaultString, string, stringLength, testWsNative.c_str());
-#if _DEBUG
-                                if (retfinal > 0)
-                                    LogString(DllInstance, L"GetPrivateProfileStringFixup: Returned string", string);
-                                else
-                                    Log(L"[%d] GetPrivateProfileStringFixup: Returned string zero length", DllInstance);
-#endif
-                                return retfinal;
-                            }
+                            WRAPPER_GETPRIVATEPROFILESTRING(testWsNative, debug);
                         }
                         else
                         {
-                            retfinal = impl::GetPrivateProfileString(appName, keyName, defaultString, string, stringLength, fileName);
-#if _DEBUG
-                            Log(L"[%d] GetPrivateProfileStringFixup Returned uint: %d from registry or default ", DllInstance, retfinal);
-#endif
-                            return retfinal;
+                            // No file, calling allows for default value or to get from registry.
+                            WRAPPER_GETPRIVATEPROFILESTRING(testWsRequested, debug);
                         }
                     }
                     break;
