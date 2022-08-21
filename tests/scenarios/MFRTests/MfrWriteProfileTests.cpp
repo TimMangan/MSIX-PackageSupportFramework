@@ -146,7 +146,6 @@ int InitializeWriteProfileTestsSection()
 int InitializeWriteProfileTestsString()
 {
     std::wstring temp;
-#if YESNOW
 
     // Requests to Native File Locations for WritePrivateProfileString via existing VFS file with value present
     MfrWriteProfileStringTest ts_Native_PF1 = { "String Native-file VFS exists in package", true, L"C:\\Program Files\\PlaceholderTest\\TestIniFileVfsPF.ini", L"Section1", L"ItemString", L"InvalidString", 13, L"InvalidString" };
@@ -214,7 +213,7 @@ int InitializeWriteProfileTestsString()
     std::wstring nullpathS;
     MfrWriteProfileStringTest ts_NULL = { "String NULL FILE", true, nullpathS, L"Section1", L"ItemString", L"InvalidString", 0, L"" };
     MfrWriteProfileStringTests.push_back(ts_NULL);
-#endif
+
 
     return (int)MfrWriteProfileStringTests.size();
 }
@@ -306,7 +305,7 @@ int RunWriteProfileTests()
                 testname.append(testInput.TestName);
                 test_begin(testname);
                 auto testResult = WritePrivateProfileString(testInput.Section.c_str(), testInput.KeyName.c_str(), testInput.sDefault.c_str(), testInput.TestPath.c_str());
-                if (testResult == 0)
+                if (testResult != 0)
                 {
                     auto testResult2 = GetPrivateProfileString(testInput.Section.c_str(), testInput.KeyName.c_str(), testInput.sDefault.c_str(), buffer, testLen, testInput.TestPath.c_str());
                     if (testResult2 == testInput.Expected_Result_Length &&
