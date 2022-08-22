@@ -176,6 +176,8 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="MfrAttributeTests.cpp" />
+    <ClCompile Include="MfrCleanup.cpp" />
+    <ClCompile Include="MfrCopyFileTests.cpp" />
     <ClCompile Include="MfrGetProfileTests.cpp" />
     <ClCompile Include="MFRTests.cpp" />
     <ClCompile Include="MfrWriteProfileTests.cpp" />
@@ -195,6 +197,8 @@
     <Text Include="FileMapping.txt" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="MfrCleanup.h" />
+    <ClInclude Include="MfrCopyFileTest.h" />
     <ClInclude Include="MfrAttributeTest.h" />
     <ClInclude Include="MFRConsts.h" />
     <ClInclude Include="MfrGetProfileTest.h" />

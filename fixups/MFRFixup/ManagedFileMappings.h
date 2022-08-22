@@ -62,7 +62,7 @@ namespace mfr
 
     extern void Initialize_MFR_Mappings();
 
-
+    extern mfr_folder_mapping  MakeInvalidMapping();
     extern mfr_folder_mapping  Find_LocalRedirMapping_FromNativePath_ForwardSearch(std::wstring WsPath);
     extern mfr_folder_mapping  Find_LocalRedirMapping_FromPackagePath_ForwardSearch(std::wstring WsPath);
 

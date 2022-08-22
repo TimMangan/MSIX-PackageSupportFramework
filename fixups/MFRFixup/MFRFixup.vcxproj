@@ -206,6 +206,8 @@
   <ItemGroup>
     <ClCompile Include="..\..\CommonSrc\psf_logging.cpp" />
     <ClCompile Include="CopyFile.cpp" />
+    <ClCompile Include="CopyFile2.cpp" />
+    <ClCompile Include="CopyFileEx.cpp" />
     <ClCompile Include="DebugPathTesting.cpp" />
     <ClCompile Include="dllmain.cpp" />
     <ClCompile Include="FID.cpp" />

@@ -70,6 +70,13 @@ namespace mfr
 #endif
     } // Initialize_MFR_Mappings()
 
+    mfr_folder_mapping  MakeInvalidMapping()
+    {
+        mfr_folder_mapping none;
+        none.Valid_mapping = false;
+        return none;
+    }
+
     mfr_folder_mapping  Find_LocalRedirMapping_FromNativePath_ForwardSearch(std::wstring WsPath)
     {
         for (mfr_folder_mapping map : g_MfrFolderMappings)
@@ -83,9 +90,7 @@ namespace mfr
                 }
             }
         }
-        mfr_folder_mapping none;
-        none.Valid_mapping = false;
-        return none;
+        return MakeInvalidMapping();
     }  // Find_LocalRedirMapping_FromNativePath_ForwardSearch() 
 
 
@@ -106,9 +111,7 @@ namespace mfr
             }
         }
         // if still here, this might be PVAD, but PVADs don't map
-        mfr_folder_mapping none;
-        none.Valid_mapping = false;
-        return none;
+        return MakeInvalidMapping();
     } // Find_LocalRedirMapping_FromPackagePath_ForwardSearch() 
 
 
@@ -125,9 +128,7 @@ namespace mfr
                 }
             }
         }
-        mfr_folder_mapping none;
-        none.Valid_mapping = false;
-        return none;
+        return MakeInvalidMapping();
     }  // Find_TraditionalRedirMapping_FromNativePath_ForwardSearch() 
 
 #if DEAD2ME
@@ -157,12 +158,11 @@ namespace mfr
                 return *maplast;
             }
         }
-        mfr_folder_mapping none;
-        none.Valid_mapping = false;
-        return none;
+        return MakeInvalidMapping();
     }  // Find_TraditionalRedirMapping_FromRedirPath_BackwardSearch() 
 #endif
 
+   
     mfr_folder_mapping  Find_TraditionalRedirMapping_FromPackagePath_ForwardSearch(std::wstring WsPath)
     {
         mfr::mfr_folder_mapping packagemap;
@@ -201,9 +201,7 @@ namespace mfr
             packagemap.RedirectionFlags = mfr_redirect_flags::prefer_redirection_containerized;
             return packagemap;
         }
-        mfr_folder_mapping none;
-        none.Valid_mapping = false;
-        return none;
+        return MakeInvalidMapping();
     } // Find_TraditionalRedirMapping_FromPackagePath_ForwardSearch() 
 
 
@@ -220,9 +218,7 @@ namespace mfr
                 }
             }
         }
-        mfr_folder_mapping none;
-        none.Valid_mapping = false;
-        return none;
+        return MakeInvalidMapping();
     }  // Find_TraditionalRedirMapping_FromRedirectedPath_ForwardSearch()
 
 }

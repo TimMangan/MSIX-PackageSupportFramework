@@ -19,11 +19,14 @@
     <Filter Include="Source Files\Intercepts">
       <UniqueIdentifier>{85872544-1829-4cb9-8cd0-f68f5cf2e30c}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Source Files\Intercepts\PrivateProfile">
-      <UniqueIdentifier>{586b9f50-c89c-4463-89bb-ed4e408e5b01}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Source Files\Intercepts\Attributes">
       <UniqueIdentifier>{1de71a74-ff9b-48aa-9e96-8327a095d315}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Intercepts\CopyFiles">
+      <UniqueIdentifier>{8901a70a-4e66-47a1-9f76-c53de640783c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Intercepts\PrivateProfiles">
+      <UniqueIdentifier>{586b9f50-c89c-4463-89bb-ed4e408e5b01}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -71,9 +74,6 @@
     <ClCompile Include="ManagedPathTypes.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="CopyFile.cpp">
-      <Filter>Source Files\Intercepts</Filter>
-    </ClCompile>
     <ClCompile Include="PathUtilities.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -84,28 +84,28 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="GetPrivateProfileInt.cpp">
-      <Filter>Source Files\Intercepts\PrivateProfile</Filter>
+      <Filter>Source Files\Intercepts\PrivateProfiles</Filter>
     </ClCompile>
     <ClCompile Include="GetPrivateProfileSection.cpp">
-      <Filter>Source Files\Intercepts\PrivateProfile</Filter>
+      <Filter>Source Files\Intercepts\PrivateProfiles</Filter>
     </ClCompile>
     <ClCompile Include="GetPrivateProfileString.cpp">
-      <Filter>Source Files\Intercepts\PrivateProfile</Filter>
+      <Filter>Source Files\Intercepts\PrivateProfiles</Filter>
     </ClCompile>
     <ClCompile Include="GetPrivateProfileSectionNames.cpp">
-      <Filter>Source Files\Intercepts\PrivateProfile</Filter>
+      <Filter>Source Files\Intercepts\PrivateProfiles</Filter>
     </ClCompile>
     <ClCompile Include="GetPrivateProfileStruct.cpp">
-      <Filter>Source Files\Intercepts\PrivateProfile</Filter>
+      <Filter>Source Files\Intercepts\PrivateProfiles</Filter>
     </ClCompile>
     <ClCompile Include="WritePrivateProfileSection.cpp">
-      <Filter>Source Files\Intercepts\PrivateProfile</Filter>
+      <Filter>Source Files\Intercepts\PrivateProfiles</Filter>
     </ClCompile>
     <ClCompile Include="WritePrivateProfileString.cpp">
-      <Filter>Source Files\Intercepts\PrivateProfile</Filter>
+      <Filter>Source Files\Intercepts\PrivateProfiles</Filter>
     </ClCompile>
     <ClCompile Include="WritePrivateProfileStruct.cpp">
-      <Filter>Source Files\Intercepts\PrivateProfile</Filter>
+      <Filter>Source Files\Intercepts\PrivateProfiles</Filter>
     </ClCompile>
     <ClCompile Include="GetFileAttributes.cpp">
       <Filter>Source Files\Intercepts\Attributes</Filter>
@@ -115,6 +115,15 @@
     </ClCompile>
     <ClCompile Include="SetFileAttributes.cpp">
       <Filter>Source Files\Intercepts\Attributes</Filter>
+    </ClCompile>
+    <ClCompile Include="CopyFile.cpp">
+      <Filter>Source Files\Intercepts\CopyFiles</Filter>
+    </ClCompile>
+    <ClCompile Include="CopyFile2.cpp">
+      <Filter>Source Files\Intercepts\CopyFiles</Filter>
+    </ClCompile>
+    <ClCompile Include="CopyFileEx.cpp">
+      <Filter>Source Files\Intercepts\CopyFiles</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

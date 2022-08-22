@@ -14,6 +14,9 @@
       "executable": "^[Pp]ower[Ss]hell.*"
     },
     {
+      "executable": "^[Cc][Mm][Dd].*"
+    },
+    {
       "executable": ".*",
       "fixups": [
         {
@@ -27,21 +30,21 @@
           "config": {
             "overrideCOW": "default",
             "overrideLocalRedirections": [
-              { 
-                "name" : "ThisPCDesktopFolder",
-                "mode" : "disabled" 
+              {
+                "name": "ThisPCDesktopFolder",
+                "mode": "disabled"
               },
-              { 
-                "name" : "Personal",
-                "mode" : "default" 
+              {
+                "name": "Personal",
+                "mode": "default"
               },
-              { 
-                "name" : "Common Desktop",
-                "mode" : "disabled" 
+              {
+                "name": "Common Desktop",
+                "mode": "disabled"
               },
-              { 
-                "name" : "Common Documents",
-                "mode" : "traditional" 
+              {
+                "name": "Common Documents",
+                "mode": "traditional"
               }
             ]
           }
