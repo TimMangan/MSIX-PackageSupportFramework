@@ -234,7 +234,7 @@ To apply an override to prevent binary files to be written to the redirection ar
 ```
 
 ## Intercepts Supported
-The following APIs are expected to be targeted.  The current status for this work-in-progress is shown in the table below.  Most of these APIs have A/W variants for ansi/wide(Unicode) character variants in arguments.
+The following APIs are expected to be targeted.  The current status for this work-in-progress is shown in the table below.  Most of these APIs have A/W variants for ansi/wide(Unicode) character variants in arguments.  These APIs represent the active list in the FileRedirectionFixup; those marked as `may not be needed` provide no functional changes in the intercepts in the FileRedirectionFixup but merely log that they were called.  This fixup might follow suit.
 
 | API | Status |
 | --- | ------ |
