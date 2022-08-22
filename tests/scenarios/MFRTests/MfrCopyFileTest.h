@@ -36,7 +36,7 @@ struct MfrCopyFileExTest
     bool cleanupDocumentsSubfolder;
     std::wstring TestPathSource;
     std::wstring TestPathDestination;
-    // TODO
+    DWORD dwCopyFlags;
     bool Expected_Result;
     DWORD Expected_LastError;
 };
@@ -49,7 +49,7 @@ struct MfrCopyFile2Test
     bool cleanupDocumentsSubfolder;
     std::wstring TestPathSource;
     std::wstring TestPathDestination;
-    // TODO
-    DWORD Expected_Result;
+    COPYFILE2_EXTENDED_PARAMETERS* extendedParameters;
+    HRESULT Expected_Result;
     DWORD Expected_LastError;
 };

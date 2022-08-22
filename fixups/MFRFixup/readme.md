@@ -250,8 +250,8 @@ The following APIs are expected to be targeted.  The current status for this wor
 | WritePrivateProfileString | Complete |
 | WritePrivateProfileStruct | Complete |
 | CopyFile | Complete |
-| CopyFileEx | incomplete |
-| CopyFile2  | incomplete |
+| CopyFileEx | Complete |
+| CopyFile2  | Complete |
 | CreateFile | not started |
 | CreateFile2 | not started |
 | CreateDirectory | not started |
