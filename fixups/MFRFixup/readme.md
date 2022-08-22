@@ -8,6 +8,10 @@ The goals of this alternative are:
 > * An empty configuration for the fixup should handle most application needs.
 > * The configuration supports specifying changes to the internal configuration rather than needing to specify every little thing.
 
+| NOTICE |
+| --------------------------------------------------------------------------------------- |
+| ** PLEASE DO NOT USE THIS FIXUP AT THIS TIME.  IT IS A WORK IN PROGRESS AND NOT ALL INTERCEPTS HAVE BEEN COMPLETED.  A LIST OF INTERCEPTS AND THEIR STATUS IS GIVEN IN A TABLE AT THE BOTTOM OF THIS README. |
+
 ## Features
 When injected into a process, the MFRFixup supports the ability to:
 > * Cause certain files accessed in the package to be copied to a safe area where they may be locally manipulated as needed. Two styles of redirection are supported:
@@ -228,3 +232,44 @@ To apply an override to prevent binary files to be written to the redirection ar
 ]
 ...
 ```
+
+## Intercepts Supported
+The following APIs are expected to be targeted.  The current status for this work-in-progress is shown in the table below.  Most of these APIs have A/W variants for ansi/wide(Unicode) character variants in arguments.
+
+| API | Status |
+| --- | ------ |
+| GetFileAttributes | Complete |
+| GetFileAttributesEx | Complete |
+| SetFileAttributes | Complete |
+| GetPrivateProfileSectionNames | Complete |
+| GetPrivateProfileSection | Complete |
+| GetPrivateProfileString | Complete |
+| GetPrivateProfileInt | Complete |
+| GetPrivateProfileStruct | Complete |
+| WritePrivateProfileSection | Complete |
+| WritePrivateProfileString | Complete |
+| WritePrivateProfileStruct | Complete |
+| CopyFile | Complete |
+| CopyFileEx | incomplete |
+| CopyFile2  | incomplete |
+| CreateFile | not started |
+| CreateFile2 | not started |
+| CreateDirectory | not started |
+| CreateDirectoryEx | not started |
+| CreateHardLink | not started |
+| CreateSymbolicLink | not started |
+| DeleteFile | not started |
+| FindFirstFile | not started |
+| FindFirstFileEx | not started |
+| FindNextFile | not started |
+| FindClose | not started |
+| MoveFile | not started |
+| MoveFileEx | not started |
+| ReadDirectoryChangesW | not started, may not be needed |
+| ReadDirectoryChangesExW | not started, may not be needed |
+| RemoveDirectory | not started |
+| ReplaceFile | not started |
+| SearchPath | not started, may not be needed |
+| GetCurrentDirectory | not started, may not be needed |
+| SetCurrentDirectory | not started |
+
