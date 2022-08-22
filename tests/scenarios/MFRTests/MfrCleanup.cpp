@@ -17,17 +17,39 @@ struct _PROC_THREAD_ATTRIBUTE_LIST {};
 /// Utility to clean up the redirection area(s) used by these tests.
 /// It is really nice to do this without adding to the debug logging, so it will be an external process.
 /// </summary>
-DWORD MfrCleanup()
+
+DWORD RunThisCommandOutsideContainer(std::wstring commandArguments);
+
+DWORD MfrCleanupWritablePackageRoot()
 {
     std::wstring directoryPath = g_writablePackageRootPath.c_str();
 
-    std::wstring cmd = L"C:\\Windows\\System32\\cmd.exe";
     std::wstring arguments = L"/C rmdir /S /Q \"";
     arguments.append(directoryPath.c_str());
     arguments.append(L"\"");
+    return RunThisCommandOutsideContainer(arguments);
+}
+
+DWORD MfrCleanupLocalDocuments(std::wstring subfoldername)
+{
+    std::wstring directoryPath = psf::known_folder(FOLDERID_Documents);
+    directoryPath.append(L"\\");
+    directoryPath.append(subfoldername.c_str());
+
+    std::wstring arguments = L"/C rmdir /S /Q \"";
+    arguments.append(directoryPath.c_str());
+    arguments.append(L"\"");
+    return RunThisCommandOutsideContainer(arguments);
+}
+
+
+DWORD RunThisCommandOutsideContainer(std::wstring commandArguments)
+{
+    std::wstring cmd = L"C:\\Windows\\System32\\cmd.exe";
+
     std::wstring commandLine = cmd.c_str();
     commandLine.append(L" ");
-    commandLine.append(arguments.c_str());
+    commandLine.append(commandArguments.c_str());
 
     DWORD bytes = (DWORD)(512 * sizeof(wchar_t));
     wchar_t* CL = (wchar_t*)malloc(bytes);
@@ -78,7 +100,7 @@ DWORD MfrCleanup()
             , 0 // dwYCountChar
             , 0 // dwFillAttribute
             , STARTF_USESHOWWINDOW // dwFlags
-            , static_cast<WORD>(5) // wShowWindow
+            , static_cast<WORD>(0) // wShowWindow
             }
         };
 

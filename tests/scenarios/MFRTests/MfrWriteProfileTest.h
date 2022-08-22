@@ -18,6 +18,8 @@ struct MfrWriteProfileSectionTest
 {
     std::string  TestName;
     bool         enabled;
+    bool cleanupWritablePackageRoot;
+    bool cleanupDocumentsSubfolder;
     std::wstring TestPath;
     std::wstring Section;
     DWORD        Expected_Result_Length;
@@ -29,6 +31,8 @@ struct MfrWriteProfileStringTest
 {
     std::string  TestName;
     bool         enabled;
+    bool cleanupWritablePackageRoot;
+    bool cleanupDocumentsSubfolder;
     std::wstring TestPath;
     std::wstring Section;
     std::wstring KeyName;
@@ -41,6 +45,8 @@ struct MfrWriteProfileStructTest
 {
     std::string  TestName;
     bool         enabled;
+    bool cleanupWritablePackageRoot;
+    bool cleanupDocumentsSubfolder;
     std::wstring TestPath;
     std::wstring Section;
     // tbd

@@ -13,11 +13,13 @@
 #include "file_paths.h"
 #include "MFRConsts.h"
 
+
 struct MfrCopyFileTest
 {
     std::string TestName;
     bool enabled;
-    bool cleanup;
+    bool cleanupWritablePackageRoot;
+    bool cleanupDocumentsSubfolder;
     std::wstring TestPathSource;
     std::wstring TestPathDestination;
     bool FailIfExists;
@@ -30,7 +32,8 @@ struct MfrCopyFileExTest
 {
     std::string TestName;
     bool enabled;
-    bool cleanup;
+    bool cleanupWritablePackageRoot;
+    bool cleanupDocumentsSubfolder;
     std::wstring TestPathSource;
     std::wstring TestPathDestination;
     // TODO
@@ -42,7 +45,8 @@ struct MfrCopyFile2Test
 {
     std::string TestName;
     bool enabled;
-    bool cleanup;
+    bool cleanupWritablePackageRoot;
+    bool cleanupDocumentsSubfolder;
     std::wstring TestPathSource;
     std::wstring TestPathDestination;
     // TODO

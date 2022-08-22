@@ -13,4 +13,7 @@
 #include "file_paths.h"
 #include "MFRConsts.h"
 
-extern DWORD MfrCleanup();
+#define MFRTESTDOCS L"MFRTestDocs"
+
+extern DWORD MfrCleanupWritablePackageRoot();
+extern DWORD MfrCleanupLocalDocuments(std::wstring subfoldername);

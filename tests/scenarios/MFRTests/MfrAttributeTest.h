@@ -17,6 +17,8 @@ struct MfrAttributeTest
 {
     std::string TestName;
     bool enabled;
+    bool cleanupWritablePackageRoot;
+    bool cleanupDocumentsSubfolder;
     std::wstring TestPath;
     DWORD Expected_Result;
     DWORD Expected_LastError;
@@ -27,6 +29,8 @@ struct MfrAttributeExTest
 {
     std::string TestName;
     bool enabled;
+    bool cleanupWritablePackageRoot;
+    bool cleanupDocumentsSubfolder;
     std::wstring TestPath;
     bool Expect_Success;
     DWORD Expected_LastError;
@@ -36,6 +40,8 @@ struct MfrSetAttributeTest
 {
     std::string TestName;
     bool enabled;
+    bool cleanupWritablePackageRoot;
+    bool cleanupDocumentsSubfolder;
     std::wstring TestPath;
     DWORD fileAttributes;
     bool Expect_Success;

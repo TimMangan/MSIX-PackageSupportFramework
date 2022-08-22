@@ -18,6 +18,8 @@ struct MfrGetProfileSectionNamesTest
 {
     std::string  TestName;
     bool         enabled;
+    bool cleanupWritablePackageRoot;
+    bool cleanupDocumentsSubfolder;
     std::wstring TestPath;
     DWORD        Expected_Result_Length;
     DWORD        Expected_Result_NumberStrings;
@@ -27,6 +29,8 @@ struct MfrGetProfileSectionTest
 {
     std::string  TestName;
     bool         enabled;
+    bool cleanupWritablePackageRoot;
+    bool cleanupDocumentsSubfolder;
     std::wstring TestPath;
     std::wstring Section;
     DWORD        Expected_Result_Length;
@@ -37,6 +41,8 @@ struct MfrGetProfileIntTest
 {
     std::string  TestName;
     bool         enabled;
+    bool cleanupWritablePackageRoot;
+    bool cleanupDocumentsSubfolder;
     std::wstring TestPath;
     std::wstring Section;
     std::wstring KeyName;
@@ -49,6 +55,8 @@ struct MfrGetProfileStringTest
 {
     std::string  TestName;
     bool         enabled;
+    bool cleanupWritablePackageRoot;
+    bool cleanupDocumentsSubfolder;
     std::wstring TestPath;
     std::wstring Section;
     std::wstring KeyName;
