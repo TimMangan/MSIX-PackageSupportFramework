@@ -175,6 +175,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="CreateDirectoryTests.cpp" />
     <ClCompile Include="MfrAttributeTests.cpp" />
     <ClCompile Include="MfrCleanup.cpp" />
     <ClCompile Include="MfrCopyFileTests.cpp" />
@@ -197,6 +198,7 @@
     <Text Include="FileMapping.txt" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="MfrCreateDirectoryTests.h" />
     <ClInclude Include="MfrCleanup.h" />
     <ClInclude Include="MfrCopyFileTest.h" />
     <ClInclude Include="MfrAttributeTest.h" />

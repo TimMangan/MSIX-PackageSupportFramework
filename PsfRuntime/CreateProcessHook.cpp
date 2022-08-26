@@ -439,7 +439,7 @@ BOOL WINAPI CreateProcessFixup(
         if ((creationFlags & EXTENDED_STARTUPINFO_PRESENT) != 0)
         {
 #if _DEBUG
-            Log(L"\t[%d] CreateProcessFixup: Extended StartupInfo present but want to force running inside container. Try to fix this, but might not work on some apps.", CreateProcessInstance);
+            Log(L"\t[%d] CreateProcessFixup: Extended StartupInfo present but want to force running inside container unless app requested otherwise.", CreateProcessInstance);
             LogCreationFlags(CreateProcessInstance, PossiblyModifiedCreationFlags);
 #endif
             // Hopefully it is set to start in the container anyway.
@@ -448,19 +448,19 @@ BOOL WINAPI CreateProcessFixup(
                 STARTUPINFOEXA* si = reinterpret_cast<STARTUPINFOEXA*>(startupInfo);
                 if (!si->lpAttributeList )
                 {
-#ifdef _DEBUG
+#ifdef MOREDEBUG
                     Log(L"\t[%d] CreateProcessFixup no existing attributelist, just add one", CreateProcessInstance);
 #endif
                     si->lpAttributeList = partialList->get();
                 }
                 else
                 {
-#ifdef _DEBUG
+#ifdef MOREDEBUG
                     Log(L"\t[%d] CreateProcessFixup has existing attributelist, fix it up.", CreateProcessInstance);
 #endif
                     partialList = new MyProcThreadAttributeList(si->lpAttributeList, true, true);
                     si->lpAttributeList = partialList->get();
-#if _DEBUG
+#if MOREDEBUG
                     DumpStartupAttributes(reinterpret_cast<SIH_PROC_THREAD_ATTRIBUTE_LIST*>(si->lpAttributeList), CreateProcessInstance);
 #endif
                 }
@@ -470,19 +470,19 @@ BOOL WINAPI CreateProcessFixup(
                 STARTUPINFOEXW* si = reinterpret_cast<STARTUPINFOEXW*>(startupInfo);
                 if (!si->lpAttributeList)
                 {
-#ifdef _DEBUG
+#ifdef MOREDEBUG
                     Log(L"\t[%d] CreateProcessFixup no existing attributelist, just add one.", CreateProcessInstance);
 #endif
                     si->lpAttributeList = partialList->get();
                 }
                 else
                 {
-#ifdef _DEBUG
+#ifdef MOREDEBUG
                     Log(L"\t[%d] CreateProcessFixup has existing attributelist, fix it up.", CreateProcessInstance);
 #endif
                     partialList = new MyProcThreadAttributeList(si->lpAttributeList, true, true);
                     si->lpAttributeList = partialList->get();
-#if _DEBUG
+#if MOREDEBUG
                     DumpStartupAttributes(reinterpret_cast<SIH_PROC_THREAD_ATTRIBUTE_LIST*>(si->lpAttributeList), CreateProcessInstance);
 #endif
                 }
@@ -572,7 +572,7 @@ BOOL WINAPI CreateProcessFixup(
 #endif
     PossiblyModifiedCreationFlags |= CREATE_SUSPENDED;
 
-#if _DEBUG
+#if MOREDEBUG
     LogCreationFlags(CreateProcessInstance, PossiblyModifiedCreationFlags);
 #endif
 
@@ -836,25 +836,25 @@ BOOL WINAPI CreateProcessFixup(
         if ((PossiblyModifiedCreationFlags & EXTENDED_STARTUPINFO_PRESENT) != 0)
         {
 
-#if _DEBUG
+#if MOREDEBUG
             Log(L"\t[%d] CreateProcessFixup: CreateProcessImpl Attribute: Has extended Attribute.", CreateProcessInstance);
 #endif
             if constexpr (psf::is_ansi<CharT>)
             {
-#if _DEBUG
+#if MOREDEBUG
                 Log(L"\t[%d] CreateProcessFixup: CreateProcessImpl Attribute: narrow", CreateProcessInstance);
 #endif
                 STARTUPINFOEXA* si = reinterpret_cast<STARTUPINFOEXA*>(MyReplacementStartupInfo);
                 if (si->lpAttributeList != NULL)
                 {
-#if _DEBUG
+#if MOREDEBUG
                     DumpStartupAttributes(reinterpret_cast<SIH_PROC_THREAD_ATTRIBUTE_LIST*>(si->lpAttributeList), CreateProcessInstance);
 #endif
                     allowInjection = DoesAttributeSpecifyInside(reinterpret_cast<SIH_PROC_THREAD_ATTRIBUTE_LIST*>(si->lpAttributeList));
                 }
                 else
                 {
-#if _DEBUG
+#if MOREDEBUG
                     Log(L"\t[%d] CreateProcessFixup: CreateProcessImpl Attribute: attlist is null.", CreateProcessInstance);
 #endif
                     allowInjection = true;
@@ -862,20 +862,20 @@ BOOL WINAPI CreateProcessFixup(
             }
             else
             {
-#if _DEBUG
+#if MOREDEBUG
                 Log(L"\t[%d] CreateProcessFixup: CreateProcessImpl Attribute:: wide", CreateProcessInstance);
 #endif
                 STARTUPINFOEXW* si = reinterpret_cast<STARTUPINFOEXW*>(MyReplacementStartupInfo);
                 if (si->lpAttributeList != NULL)
                 {
-#if _DEBUG
+#if MOREDEBUG
                     DumpStartupAttributes(reinterpret_cast<SIH_PROC_THREAD_ATTRIBUTE_LIST*>(si->lpAttributeList), CreateProcessInstance);
 #endif
                     allowInjection = DoesAttributeSpecifyInside(reinterpret_cast<SIH_PROC_THREAD_ATTRIBUTE_LIST*>(si->lpAttributeList));
                 }
                 else
                 {
-#if _DEBUG
+#if MOREDEBUG
                     Log(L"\t[%d] CreateProcessFixup: CreateProcessImpl Attribute: attlist is null.", CreateProcessInstance);
 #endif
                     allowInjection = true;
@@ -884,7 +884,7 @@ BOOL WINAPI CreateProcessFixup(
         }
         else
         {
-#if _DEBUG
+#if MOREDEBUG
             Log(L"\t[%d] CreateProcessFixup: CreateProcessImpl Attribute: Does not have extended attribute and should be added.", CreateProcessInstance);
 #endif
             allowInjection = true;
@@ -909,31 +909,23 @@ BOOL WINAPI CreateProcessFixup(
                 if (b == false)
                 {
                     allowInjection = false;
-#if _DEBUG
-                    Log(L"\t[%d] CreateProcessFixup: New process has broken away, do not inject.", CreateProcessInstance);
-#endif
+                    Log(L"\t[%d] CreateProcessFixup: New process has broken away from container, do not inject.", CreateProcessInstance);
                 }
                 else
-                {
-#if _DEBUG
-                    Log(L"\t[%d] CreateProcessFixup: New process is in a job, allow.", CreateProcessInstance);
+                { 
+                    Log(L"\t[%d] CreateProcessFixup: New process is in a job, allow injection.", CreateProcessInstance);
                     // NOTE: we could maybe try to see if in the same job, but this is probably good enough.
-#endif
                 }
             }
             else
             {
-#if _DEBUG
                 Log(L"\t[%d] CreateProcessFixup: Unable to detect job status of new process, ignore for now and try to inject 0x%x 0x%x 0x%x.", CreateProcessInstance, res, GetLastError(),b);
-#endif
             }
         }
         catch (...)
         {
             allowInjection = false;
-#if _DEBUG
             Log(L"\t[%d] CreateProcessFixup: Exception while trying to determine job status of new process. Do not inject.", CreateProcessInstance);
-#endif
         }
     }
 
@@ -968,21 +960,19 @@ BOOL WINAPI CreateProcessFixup(
             }
             if (!foundany)
             {
-                Log(L"\t[%d] CreateProcessFixup: skip Injections to to json process match without fixup dlls.", CreateProcessInstance);
+                Log(L"\t[%d] CreateProcessFixup: skip Injections due to json process match without fixup dlls.", CreateProcessInstance);
                 allowInjection = false;
             }
         }
         else
         {
-            Log(L"\t[%d] CreateProcessFixup: skip Injections to to json process match without fixups.", CreateProcessInstance);
+            Log(L"\t[%d] CreateProcessFixup: skip Injections due to json process match without fixups.", CreateProcessInstance);
             allowInjection = false;
         }
     }
     else
     {
-#if _DEBUG
-        Log("\t[%d] CreateProcessFixup: Child process match not found; ?allow.", CreateProcessInstance);
-#endif
+        Log("\t[%d] CreateProcessFixup: Child process match not found?; allow injections anyway.", CreateProcessInstance);
     }
 
 

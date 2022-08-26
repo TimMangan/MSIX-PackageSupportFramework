@@ -39,6 +39,9 @@
     <ClCompile Include="MfrCleanup.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="CreateDirectoryTests.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Xml Include="AppXManifest.xml">
@@ -80,6 +83,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="MfrCleanup.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="MfrCreateDirectoryTests.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

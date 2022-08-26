@@ -49,6 +49,7 @@ namespace details
 std::filesystem::path g_PackageRootPath;
 std::filesystem::path g_writablePackageRootPath;
 std::wstring g_Cwd;
+std::filesystem::path g_PFs;
 
 #if DEBUGPATHTESTING
 extern int PlaceholderTest();
@@ -65,6 +66,9 @@ extern int RunWriteProfileTests();
 extern int InitializeCopyFileTests();
 extern int RunCopyFileTests();
 
+extern int InitializeCreateDirectoryTests();
+extern int RunCreateDirectoryTests();
+
 #endif
 
 void InitializeGlobals()
@@ -72,6 +76,7 @@ void InitializeGlobals()
     g_PackageRootPath = psf::current_package_path();
     g_writablePackageRootPath = std::filesystem::path(psf::known_folder(FOLDERID_LocalAppData).native()) / L"Packages" / psf::current_package_family_name() / LR"(LocalCache\Local\Microsoft\WritablePackageRoot)";
     g_Cwd = std::filesystem::current_path().c_str();
+    g_PFs = psf::known_folder(FOLDERID_ProgramFiles);
 }
 
 void InitializeFolderMappings()
@@ -81,6 +86,7 @@ void InitializeFolderMappings()
     count += InitializeGetProfileTests();
     count += InitializeWriteProfileTests();
     count += InitializeCopyFileTests();
+    count += InitializeCreateDirectoryTests();
     test_initialize("Managed File Redirection (MFR) Tests", count);
 }
 
@@ -105,6 +111,9 @@ int run()
     result = result ? result : testResult;
 
     testResult = RunCopyFileTests();;
+    result = result ? result : testResult;
+
+    testResult = RunCreateDirectoryTests();;
     result = result ? result : testResult;
 
 

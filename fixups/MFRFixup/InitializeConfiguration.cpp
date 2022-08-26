@@ -19,7 +19,7 @@
 
 using namespace std::literals;
 
-#define MOREDEBUG 1
+//#define MOREDEBUG 1
 
 TRACELOGGING_DECLARE_PROVIDER(g_Log_ETW_ComponentProvider);
 TRACELOGGING_DEFINE_PROVIDER(
@@ -82,7 +82,7 @@ void InitializeConfiguration()
         }
         catch (...)
         {
-            Log(L"ERROR Reading config.json:  MFRTest in overrideLocalRedirections.");
+            Log(L"ERROR Reading config.json:  MFRTest in overrideCOW.");
         }
 
         try
@@ -99,7 +99,7 @@ void InitializeConfiguration()
                     auto& ovMemberObj = ovMemberValue.as_object();
 
                     std::wstring folderid = ovMemberObj.get("name").as_string().wstring().data();
-                    std::wstring mode = ovMemberObj.get("name").as_string().wstring().data();
+                    std::wstring mode = ovMemberObj.get("mode").as_string().wstring().data();
 
                     
                    for (mfr::mfr_folder_mapping map : mfr::g_MfrFolderMappings)
@@ -120,7 +120,7 @@ void InitializeConfiguration()
                            }
                            else
                            {
-                               Log(L"Bad json value ignored for overrideLocalredirections %s %s", folderid.c_str(), mode.c_str());
+                               Log(L"Bad json value ignored for overrideLocalRedirections %s %s", folderid.c_str(), mode.c_str());
                            }
                            break;
                        }
@@ -147,7 +147,7 @@ void InitializeConfiguration()
                     auto& ovMemberObj = ovMemberValue.as_object();
 
                     std::wstring folderid = ovMemberObj.get("name").as_string().wstring().data();
-                    std::wstring mode = ovMemberObj.get("name").as_string().wstring().data();
+                    std::wstring mode = ovMemberObj.get("mode").as_string().wstring().data();
 
 
                     for (mfr::mfr_folder_mapping map : mfr::g_MfrFolderMappings)

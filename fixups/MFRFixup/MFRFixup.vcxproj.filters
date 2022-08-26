@@ -28,6 +28,30 @@
     <Filter Include="Source Files\Intercepts\PrivateProfiles">
       <UniqueIdentifier>{586b9f50-c89c-4463-89bb-ed4e408e5b01}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\Intercepts\CreateFiles">
+      <UniqueIdentifier>{bd0bc684-7434-4361-a079-0d29b6c81f48}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Intercepts\CreateDirectories">
+      <UniqueIdentifier>{6cd5e48b-765a-4888-bb4f-cbb0c1bde5c2}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Intercepts\CreateOthers">
+      <UniqueIdentifier>{9e25afc7-c7f3-466a-a980-a23ad6ee62c9}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Intercepts\Moves">
+      <UniqueIdentifier>{a9014d6d-de55-46b2-8646-d3bd6f60263a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Intercepts\DeletesAndRemoves">
+      <UniqueIdentifier>{4a0e2dd8-ccdf-409f-8d7e-94a26deab22c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Intercepts\Replaces">
+      <UniqueIdentifier>{a765c4b0-de13-4d51-a854-e90bad6187bb}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Intercepts\WorkingDirectories">
+      <UniqueIdentifier>{5f9d1f78-fefd-45c4-8c26-86ad814159ba}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Intercepts\FindsAndSearches">
+      <UniqueIdentifier>{a7870d12-0486-40da-add7-29f0358262e8}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="framework.h">
@@ -124,6 +148,12 @@
     </ClCompile>
     <ClCompile Include="CopyFileEx.cpp">
       <Filter>Source Files\Intercepts\CopyFiles</Filter>
+    </ClCompile>
+    <ClCompile Include="CreateDirectory.cpp">
+      <Filter>Source Files\Intercepts\CreateDirectories</Filter>
+    </ClCompile>
+    <ClCompile Include="CreateDirectoryEx.cpp">
+      <Filter>Source Files\Intercepts\CreateDirectories</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

@@ -208,6 +208,8 @@
     <ClCompile Include="CopyFile.cpp" />
     <ClCompile Include="CopyFile2.cpp" />
     <ClCompile Include="CopyFileEx.cpp" />
+    <ClCompile Include="CreateDirectory.cpp" />
+    <ClCompile Include="CreateDirectoryEx.cpp" />
     <ClCompile Include="DebugPathTesting.cpp" />
     <ClCompile Include="dllmain.cpp" />
     <ClCompile Include="FID.cpp" />
