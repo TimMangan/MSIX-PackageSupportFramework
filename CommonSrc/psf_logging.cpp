@@ -201,7 +201,14 @@ void LogString(DWORD inst, const wchar_t* name, const wchar_t* value)
         }
         else
         {
-            Log(L"[%d] %ls=%ls", inst, name, widen((const char*)value).c_str());
+            if (value != nullptr)
+            {
+                Log(L"[%d] %ls=%ls", inst, name, widen((const char*)value).c_str());
+            }
+            else
+            {
+                Log(L"[%d] %ls=NULL", inst, name);
+            }
         }
     }
 }
@@ -247,7 +254,14 @@ void LogString(DWORD rememberedInst, DWORD inst, const wchar_t* name, const wcha
         }
         else
         {
-            Log(L"[%d][%d] %ls=%ls", rememberedInst, inst, name, widen((const char*)value).c_str());
+            if (value != nullptr)
+            {
+                Log(L"[%d][%d] %ls=%ls", rememberedInst, inst, name, widen((const char*)value).c_str());
+            }
+            else
+            {
+                Log(L"[%d][%d] %ls=NULL", rememberedInst, inst, name);
+            }
         }
     }
 }

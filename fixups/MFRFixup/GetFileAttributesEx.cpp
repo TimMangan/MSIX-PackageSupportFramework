@@ -235,7 +235,8 @@ BOOL __stdcall GetFileAttributesExFixup(
 #endif
 
     SetLastError(0);
-    retfinal = impl::GetFileAttributesEx(fileName, infoLevelId, fileInformation);
+    std::wstring LongFileName = MakeLongPath(widen(fileName));
+    retfinal = impl::GetFileAttributesEx(LongFileName.c_str(), infoLevelId, fileInformation);
 #if _DEBUG
     Log(L"[%d] GetFileAttributesEx: returns retfinal=%d", DllInstance, retfinal);
     if (retfinal == 0)

@@ -12,3 +12,4 @@ extern std::filesystem::path g_PackageRootPath;
 extern std::filesystem::path g_writablePackageRootPath;
 extern std::wstring g_Cwd;
 extern std::filesystem::path g_PFs;
+extern std::filesystem::path g_Documents;

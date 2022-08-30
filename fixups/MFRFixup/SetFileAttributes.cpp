@@ -362,8 +362,8 @@ BOOL __stdcall SetFileAttributesFixup(_In_ const CharT* fileName, _In_ DWORD fil
         Log(L"[%d] SetFileAttributes Exception=0x%x", DllInstance, GetLastError());
     }
 #endif
-
-    retfinal = impl::SetFileAttributes(fileName, fileAttributes);
+    std::wstring LongFileName = MakeLongPath(widen(fileName));
+    retfinal = impl::SetFileAttributes(LongFileName.c_str(), fileAttributes);
 #if _DEBUG
     Log(L"[%d] SetFileAttributes: returns retfinal=%d", DllInstance, retfinal);
     if (retfinal == 0)

@@ -168,14 +168,18 @@ std::filesystem::path drive_absolute_to_normal(std::filesystem::path nativeRelat
 /// Given a file path, return a path that in the long path form
 /// </summary>
 /// <param name="path"></param>
-/// <returns></returns>
+/// <returns></retrns>
 std::wstring MakeLongPath(std::wstring path)
 {
-    size_t LongPathStartAt = path.find(L"\\\\?\\");
-    if (LongPathStartAt == std::wstring::npos)
+    size_t LocalDeviceStartAt = path.find(L"\\\\.\\");
+    if (LocalDeviceStartAt == std::wstring::npos)
     {
-        std::wstring outPath = L"\\\\?\\";
-        return outPath.append(path);
+        size_t LongPathStartAt = path.find(L"\\\\?\\");
+        if (LongPathStartAt == std::wstring::npos)
+        {
+            std::wstring outPath = L"\\\\?\\";
+            return outPath.append(path);
+        }
     }
     return path;
 }

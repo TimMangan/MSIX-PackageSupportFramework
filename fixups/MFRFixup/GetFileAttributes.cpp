@@ -225,8 +225,8 @@ DWORD __stdcall GetFileAttributesFixup(_In_ const CharT* fileName) noexcept
         Log(L"[%d] GetFileAttributes Exception=0x%x", DllInstance, GetLastError());
     }
 #endif
-
-    retfinal = impl::GetFileAttributes(fileName);
+    std::wstring LongFileName = MakeLongPath(widen(fileName));
+    retfinal = impl::GetFileAttributes(LongFileName.c_str());
 #if _DEBUG
     Log(L"[%d] GetFileAttributes: returns retfinal=%d", DllInstance, retfinal);
     if (retfinal == INVALID_FILE_ATTRIBUTES)

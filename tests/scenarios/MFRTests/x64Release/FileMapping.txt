@@ -16,7 +16,7 @@
 "file.txt" "VFS\AppData\AppDataFile.txt"
 "file.txt" "VFS\LocalAppData\LocalAppDataFile.txt"
 "file.txt" "VFS\ProgramFilesX64\ProgramFilesX64.txt"
-"file.txt" "VFS\Personal\PresonalFile.txt"
+"file.txt" "VFS\Personal\MFRTestDocs\PresonalFile.txt"
 "file.txt" "VFS\AppVPackageDrive\PackageDriveFile.txt"
 "file.txt" "PvadFile1.txt"
 "file.txt" "PvadFolder\PvadFile2.txt"

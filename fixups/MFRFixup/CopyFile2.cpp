@@ -33,7 +33,7 @@
         } \
         if (debug) \
         { \
-            if (retfinal) \
+            if (retfinal == ERROR_SUCCESS) \
             { \
                 Log(L"[%d] CopyFile2Fixup: return SUCCESS", DllInstance); \
             } \
@@ -42,7 +42,7 @@
                 Log(L"[%d] CopyFile2Fixup: return FAIL err=0x%x", DllInstance, GetLastError()); \
             } \
         } \
-        return retfinal; \
+        return (retfinal); \
     }
 
 
@@ -377,6 +377,8 @@ HRESULT __stdcall CopyFile2Fixup(
         Log(L"[%d] CopyFile2Fixup Exception=0x%x", DllInstance, GetLastError());
     }
 #endif
-    return impl::CopyFile2(existingFileName, newFileName, extendedParameters);
+    std::wstring LongFileName1 = MakeLongPath(widen(existingFileName));
+    std::wstring LongFileName2 = MakeLongPath(widen(newFileName));
+    return impl::CopyFile2(LongFileName1.c_str(), LongFileName2.c_str(), extendedParameters);
 }
 DECLARE_FIXUP(impl::CopyFile2, CopyFile2Fixup);

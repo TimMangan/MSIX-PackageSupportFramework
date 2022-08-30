@@ -434,6 +434,8 @@ BOOL __stdcall CreateDirectoryFixup(_In_ const CharT* pathName, _In_opt_ LPSECUR
 #if MOREDEBUG
                 Log(L"[%d] CreateDirectoryFixup    in_redirection_area_other", DllInstance);
 #endif
+                PreCreateFolders(testWsRedirected.c_str(), DllInstance, L"CreateDirectoryFixup");
+                return WRAPPER_CREATEDIRECTORY(testWsRedirected, securityAttributes, DllInstance, debug);
                 break;
             case mfr::mfr_path_types::in_other_drive_area:
             case mfr::mfr_path_types::is_protocol_path:
@@ -455,6 +457,7 @@ BOOL __stdcall CreateDirectoryFixup(_In_ const CharT* pathName, _In_opt_ LPSECUR
         Log(L"[%d] CreateDirectoryFixup Exception=0x%x", DllInstance, GetLastError());
     }
 #endif
-    return impl::CreateDirectory(pathName, securityAttributes);
+    std::wstring LongDirectory = MakeLongPath(widen(pathName));
+    return impl::CreateDirectory(LongDirectory.c_str(), securityAttributes);
 }
 DECLARE_STRING_FIXUP(impl::CreateDirectory, CreateDirectoryFixup);

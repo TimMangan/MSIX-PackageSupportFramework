@@ -383,6 +383,8 @@ BOOL __stdcall CopyFileExFixup(
         Log(L"[%d] CopyFileExFixup Exception=0x%x", DllInstance, GetLastError());
     }
 #endif
-    return impl::CopyFileEx(existingFileName, newFileName, progressRoutine, data, cancel, copyFlags);
+    std::wstring LongFileName1 = MakeLongPath(widen(existingFileName));
+    std::wstring LongFileName2 = MakeLongPath(widen(newFileName));
+    return impl::CopyFileEx(LongFileName1.c_str(), LongFileName2.c_str(), progressRoutine, data, cancel, copyFlags);
 }
 DECLARE_STRING_FIXUP(impl::CopyFileEx, CopyFileExFixup);

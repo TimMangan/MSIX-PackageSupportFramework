@@ -238,38 +238,38 @@ The following APIs are expected to be targeted.  The current status for this wor
 
 | API | Status |
 | --- | ------ |
+| CopyFile | Complete |
+| CopyFileEx | Complete |
+| CopyFile2  | Complete |
+| CreateFile | in test |
+| CreateFile2 | in test |
+| CreateDirectory | Complete |
+| CreateDirectoryEx | Complete |
+| CreateHardLink | not started |
+| CreateSymbolicLink | not started |
+| DeleteFile | In-test |
+| FindFirstFile | not started |
+| FindFirstFileEx | not started |
+| FindNextFile | not started |
+| FindClose | not started |
+| GetCurrentDirectory | not started, may not be needed |
 | GetFileAttributes | Complete |
 | GetFileAttributesEx | Complete |
-| SetFileAttributes | Complete |
 | GetPrivateProfileSectionNames | Complete |
 | GetPrivateProfileSection | Complete |
 | GetPrivateProfileString | Complete |
 | GetPrivateProfileInt | Complete |
 | GetPrivateProfileStruct | Complete |
-| WritePrivateProfileSection | Complete |
-| WritePrivateProfileString | Complete |
-| WritePrivateProfileStruct | Complete |
-| CopyFile | Complete |
-| CopyFileEx | Complete |
-| CopyFile2  | Complete |
-| CreateFile | not started |
-| CreateFile2 | not started |
-| CreateDirectory | not started |
-| CreateDirectoryEx | not started |
-| CreateHardLink | not started |
-| CreateSymbolicLink | not started |
-| DeleteFile | not started |
-| FindFirstFile | not started |
-| FindFirstFileEx | not started |
-| FindNextFile | not started |
-| FindClose | not started |
 | MoveFile | not started |
 | MoveFileEx | not started |
 | ReadDirectoryChangesW | not started, may not be needed |
 | ReadDirectoryChangesExW | not started, may not be needed |
-| RemoveDirectory | not started |
+| RemoveDirectory | in-test |
 | ReplaceFile | not started |
 | SearchPath | not started, may not be needed |
-| GetCurrentDirectory | not started, may not be needed |
-| SetCurrentDirectory | not started |
+| SetCurrentDirectory | not started, may not be needed |
+| SetFileAttributes | Complete |
+| WritePrivateProfileSection | Complete |
+| WritePrivateProfileString | Complete |
+| WritePrivateProfileStruct | Complete |
 

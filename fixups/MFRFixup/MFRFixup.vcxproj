@@ -210,9 +210,15 @@
     <ClCompile Include="CopyFileEx.cpp" />
     <ClCompile Include="CreateDirectory.cpp" />
     <ClCompile Include="CreateDirectoryEx.cpp" />
+    <ClCompile Include="CreateFile.cpp" />
+    <ClCompile Include="CreateFile2.cpp" />
+    <ClCompile Include="CreateHardLink.cpp" />
+    <ClCompile Include="CreateSymbolicLink.cpp" />
     <ClCompile Include="DebugPathTesting.cpp" />
+    <ClCompile Include="DeleteFile.cpp" />
     <ClCompile Include="dllmain.cpp" />
     <ClCompile Include="FID.cpp" />
+    <ClCompile Include="RemoveDirectory.cpp" />
     <ClCompile Include="SetFileAttributes.cpp" />
     <ClCompile Include="GetFileAttributes.cpp" />
     <ClCompile Include="GetFileAttributesEx.cpp" />

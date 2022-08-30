@@ -278,7 +278,7 @@ bool IsPackageRoot(_In_ const char* fileName)
 #pragma region SpecialtyPaths
 
 
-// Eliminate files like CONOUT$
+// Eliminate files like CONOUT$ and CONIN$
 bool IsSpecialFile(const char* path)
 {
     std::string sPath = path;

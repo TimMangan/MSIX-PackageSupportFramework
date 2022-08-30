@@ -155,6 +155,24 @@
     <ClCompile Include="CreateDirectoryEx.cpp">
       <Filter>Source Files\Intercepts\CreateDirectories</Filter>
     </ClCompile>
+    <ClCompile Include="RemoveDirectory.cpp">
+      <Filter>Source Files\Intercepts\DeletesAndRemoves</Filter>
+    </ClCompile>
+    <ClCompile Include="DeleteFile.cpp">
+      <Filter>Source Files\Intercepts\DeletesAndRemoves</Filter>
+    </ClCompile>
+    <ClCompile Include="CreateFile.cpp">
+      <Filter>Source Files\Intercepts\CreateFiles</Filter>
+    </ClCompile>
+    <ClCompile Include="CreateFile2.cpp">
+      <Filter>Source Files\Intercepts\CreateFiles</Filter>
+    </ClCompile>
+    <ClCompile Include="CreateHardLink.cpp">
+      <Filter>Source Files\Intercepts\CreateOthers</Filter>
+    </ClCompile>
+    <ClCompile Include="CreateSymbolicLink.cpp">
+      <Filter>Source Files\Intercepts\CreateOthers</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="readme.md" />

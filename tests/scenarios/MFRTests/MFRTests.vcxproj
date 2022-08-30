@@ -175,11 +175,13 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="CreateDirectoryTests.cpp" />
+    <ClCompile Include="MfrCreateDirectoryTests.cpp" />
     <ClCompile Include="MfrAttributeTests.cpp" />
     <ClCompile Include="MfrCleanup.cpp" />
     <ClCompile Include="MfrCopyFileTests.cpp" />
+    <ClCompile Include="MfrCreateFiles.cpp" />
     <ClCompile Include="MfrGetProfileTests.cpp" />
+    <ClCompile Include="MfrRemoveDeleteTests.cpp" />
     <ClCompile Include="MFRTests.cpp" />
     <ClCompile Include="MfrWriteProfileTests.cpp" />
     <ClCompile Include="PlaceholderTest.cpp" />
@@ -198,12 +200,14 @@
     <Text Include="FileMapping.txt" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="MfrCreateFileTest.h" />
     <ClInclude Include="MfrCreateDirectoryTests.h" />
     <ClInclude Include="MfrCleanup.h" />
     <ClInclude Include="MfrCopyFileTest.h" />
     <ClInclude Include="MfrAttributeTest.h" />
     <ClInclude Include="MFRConsts.h" />
     <ClInclude Include="MfrGetProfileTest.h" />
+    <ClInclude Include="MfrRemoveDeleteTests.h" />
     <ClInclude Include="MfrWriteProfileTest.h" />
   </ItemGroup>
   <ImportGroup Label="ExtensionTargets">

@@ -46,7 +46,7 @@ namespace mfr
     // Defines a mapping between Native, Package, and Redirected locations
     struct mfr_folder_mapping
     {
-        bool                    Valid_mapping;  // used in place of a null mapping.
+        bool                    Valid_mapping = false;  // used in place of a null mapping.
         std::filesystem::path   NativePathBase;
         std::wstring            FolderId;
         std::wstring            VFSFolderName;

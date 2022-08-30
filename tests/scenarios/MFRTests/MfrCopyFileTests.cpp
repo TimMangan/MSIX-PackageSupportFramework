@@ -106,12 +106,11 @@ int InitializeCopyFileTestArray()
     MfrCopyFileTests.push_back(t_Redir_PF3);
 
     // Local Documents test
-    tempS = g_Cwd + L"\\VFS\\Personal\\PresonalFile.txt";
+    tempS = g_Cwd + L"\\VFS\\Personal\\MFRTestDocs\\PresonalFile.txt";
     tempD = psf::known_folder(FOLDERID_Documents);
     tempD.append(L"\\");
     tempD.append(MFRTESTDOCS);
-    tempD.append(L"\\");
-    tempD.append(L"CopiedPresonalFile.txt");
+    tempD.append(L"\\Copy\\CopiedPresonalFile.txt");
     MfrCopyFileTest t_LocalDoc_1 = { "CopyFile Package-file VFS to Local Documents to succeed",              true, true,  true,  
                                 tempS, tempD, true, true, ERROR_SUCCESS };
     MfrCopyFileTests.push_back(t_LocalDoc_1);
@@ -124,7 +123,7 @@ int InitializeCopyFileTestArray()
     tempD = psf::known_folder(FOLDERID_Documents);
     tempD.append(L"\\");
     tempD.append(MFRTESTDOCS);
-    tempD.append(L"\\");
+    tempD.append(L"\\Copy\\");
     tempD.append(L"ReCopiedPresonalFile.txt");
     MfrCopyFileTest t_LocalDoc_3 = { "CopyFile Local Documents to Local Documents to succeed",              true, false, false, 
                                 tempS, tempD, true, true, ERROR_SUCCESS };
@@ -228,12 +227,11 @@ int InitializeCopyFileExTestArray()
     MfrCopyFileExTests.push_back(t_Redir_PF3);
 
     // Local Documents test
-    tempS = g_Cwd + L"\\VFS\\Personal\\PresonalFile.txt";
+    tempS = g_Cwd + L"\\VFS\\Personal\\MFRTestDocs\\PresonalFile.txt";
     tempD = psf::known_folder(FOLDERID_Documents);
     tempD.append(L"\\");
     tempD.append(MFRTESTDOCS);
-    tempD.append(L"\\");
-    tempD.append(L"CopiedPresonalFile.txt");
+    tempD.append(L"\\Copy\\CopiedPresonalFile.txt");
     MfrCopyFileExTest t_LocalDoc_1 = { "CopyFileEx Package-file VFS to Local Documents to succeed",              true, true,  true,
                                 tempS, tempD, COPY_FILE_FAIL_IF_EXISTS, true, ERROR_SUCCESS };
     MfrCopyFileExTests.push_back(t_LocalDoc_1);
@@ -246,7 +244,7 @@ int InitializeCopyFileExTestArray()
     tempD = psf::known_folder(FOLDERID_Documents);
     tempD.append(L"\\");
     tempD.append(MFRTESTDOCS);
-    tempD.append(L"\\");
+    tempD.append(L"\\Copy\\");
     tempD.append(L"ReCopiedPresonalFile.txt");
     MfrCopyFileExTest t_LocalDoc_3 = { "CopyFileEx Local Documents to Local Documents to succeed",              true, false, false,
                                 tempS, tempD, COPY_FILE_FAIL_IF_EXISTS, true, ERROR_SUCCESS };
@@ -364,12 +362,11 @@ int InitializeCopyFile2TestArray()
     MfrCopyFile2Tests.push_back(t_Redir_PF3);
 
     // Local Documents test
-    tempS = g_Cwd + L"\\VFS\\Personal\\PresonalFile.txt";
+    tempS = g_Cwd + L"\\VFS\\Personal\\MFRTestDocs\\PresonalFile.txt";
     tempD = psf::known_folder(FOLDERID_Documents);
     tempD.append(L"\\");
     tempD.append(MFRTESTDOCS);
-    tempD.append(L"\\");
-    tempD.append(L"CopiedPresonalFile.txt");
+    tempD.append(L"\\MFRTestDocs\\CopiedPresonalFile.txt");
     MfrCopyFile2Test t_LocalDoc_1 = { "CopyFile2 Package-file VFS to Local Documents to succeed",              true, true,  true,
                                 tempS, tempD, &extendedParameters1, S_OK, ERROR_SUCCESS };
     MfrCopyFile2Tests.push_back(t_LocalDoc_1);
@@ -509,7 +506,7 @@ BOOL CopyFileIndividualTest(MfrCopyFileTest testInput)
 }
 
 
-HRESULT CopyFile2IndividualTest(MfrCopyFile2Test testInput)
+int CopyFile2IndividualTest(MfrCopyFile2Test testInput)
 {
     int result = ERROR_SUCCESS;
     if (testInput.enabled)
@@ -544,11 +541,11 @@ HRESULT CopyFile2IndividualTest(MfrCopyFile2Test testInput)
         }
 
         auto testResult = CopyFile2(testInput.TestPathSource.c_str(), testInput.TestPathDestination.c_str(), testInput.extendedParameters);
-        if (testResult == 0)
+        if (testResult != 0)
         {
             DWORD cErr = GetLastError();
             // call failed
-            if (testInput.Expected_Result)
+            if (testInput.Expected_Result == ERROR_SUCCESS)
             {
                 // should have succeeded
                 std::wstring detail1 = L"ERROR: Returned value incorrect. Expected=";
@@ -592,7 +589,7 @@ HRESULT CopyFile2IndividualTest(MfrCopyFile2Test testInput)
         else
         {
             // call succeeded
-            if (testInput.Expected_Result)
+            if (testInput.Expected_Result == ERROR_SUCCESS)
             {
                 // cool!
                 result = ERROR_SUCCESS;
