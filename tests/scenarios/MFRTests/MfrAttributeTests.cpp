@@ -3,7 +3,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 //-------------------------------------------------------------------------------------------------------
 
-#include "MfrAttributeTest.h"
+#include "MfrAttributeTests.h"
 #include "MfrCleanup.h"
 #include <stdio.h>
 
@@ -20,30 +20,48 @@ int InitializeAttributeTests()
     std::wstring temp;
 
     // Requests to Native File Locations for GetFileAttributes via VFS
+    temp = g_NativePF;
+    temp.append(L"\\PlaceholderTest\\Placeholder.txt");
     MfrAttributeTest t_Native_PF1 = { "Native-file VFS exists in package", true, true, true, 
-                                    L"C:\\Program Files\\PlaceholderTest\\Placeholder.txt", 0x20, ERROR_SUCCESS };
+                                    temp.c_str(), 0x20, ERROR_SUCCESS };
     MfrAttributeFileTests.push_back(t_Native_PF1);
 
-    MfrAttributeTest t_Native_PF2 = { "Native-file VFS missing in package", true, false, false, 
-                                    L"C:\\Program Files\\PlaceholderTest\\MissingPlaceholder.txt", INVALID_FILE_ATTRIBUTES, ERROR_FILE_NOT_FOUND };
+    temp = g_NativePF;
+    temp.append(L"\\PlaceholderTest\\MissingPlaceholder.txt");
+    MfrAttributeTest t_Native_PF2 = { "Native-file VFS missing in package", true, false, false,
+                                    temp.c_str(), INVALID_FILE_ATTRIBUTES, ERROR_FILE_NOT_FOUND };
     MfrAttributeFileTests.push_back(t_Native_PF2);
 
+    temp = g_NativePF;
+    temp.append(L"\\MissingPlaceholderTest\\MissingPlaceholder.txt");
     MfrAttributeTest t_Native_PF3 = { "Native-file VFS parent-folder missing in package", true, false, false,
-                                    L"C:\\Program Files\\MissingPlaceholderTest\\MissingPlaceholder.txt", INVALID_FILE_ATTRIBUTES, ERROR_PATH_NOT_FOUND };
+                                    temp.c_str(), INVALID_FILE_ATTRIBUTES, ERROR_PATH_NOT_FOUND };
     MfrAttributeFileTests.push_back(t_Native_PF3);
 
     // Requests to Package File Locations for GetFileAttributes using VFS
+#if _M_IX86
+    temp = g_Cwd + L"\\VFS\\ProgramFilesX86\\PlaceholderTest\\Placeholder.txt";
+#else
     temp = g_Cwd + L"\\VFS\\ProgramFilesX64\\PlaceholderTest\\Placeholder.txt";
+#endif
     MfrAttributeTest t_Vfs_PF1 = { "Package-file VFS exists in package", true, false, false, 
                                     temp, 0x20, ERROR_SUCCESS };
     MfrAttributeFileTests.push_back(t_Vfs_PF1);
 
+#if _M_IX86
+    temp = g_Cwd + L"\\VFS\\ProgramFilesX86\\PlaceholderTest\\MissingPlaceholder.txt";
+#else
     temp = g_Cwd + L"\\VFS\\ProgramFilesX64\\PlaceholderTest\\MissingPlaceholder.txt";
+#endif
     MfrAttributeTest t_Vfs_PF2 = { "Package-file VFS missing in package", true, false, false, 
                                     temp, INVALID_FILE_ATTRIBUTES, ERROR_FILE_NOT_FOUND };
     MfrAttributeFileTests.push_back(t_Vfs_PF2);
 
+#if _M_IX86
+    temp = g_Cwd + L"\\VFS\\ProgramFilesX86\\MissingPlaceholderTest\\MissingPlaceholder.txt";
+#else
     temp = g_Cwd + L"\\VFS\\ProgramFilesX64\\MissingPlaceholderTest\\MissingPlaceholder.txt";
+#endif
     MfrAttributeTest t_Vfs_PF3 = { "Package-file VFS parent-folder missing in package", true, false, false, 
                                     temp, INVALID_FILE_ATTRIBUTES, ERROR_PATH_NOT_FOUND };
     MfrAttributeFileTests.push_back(t_Vfs_PF3);
@@ -51,19 +69,31 @@ int InitializeAttributeTests()
 
     // Requests to Redirected File Locations for GetFileAttributes using VFS
     temp = g_writablePackageRootPath.c_str();
+#if _M_IX86
+    temp.append(L"\\VFS\\ProgramFilesX86\\PlaceholderTest\\Placeholder.txt");
+#else
     temp.append(L"\\VFS\\ProgramFilesX64\\PlaceholderTest\\Placeholder.txt");
+#endif
     MfrAttributeTest t_Redir_PF1 = { "Redirected-file VFS exists in package", true, true, true, 
                                     temp, 0x20, ERROR_SUCCESS };
     MfrAttributeFileTests.push_back(t_Redir_PF1);
 
     temp = g_writablePackageRootPath.c_str();
+#if _M_IX86
+    temp.append(L"\\VFS\\ProgramFilesX86\\PlaceholderTest\\MissingPlaceholder.txt");
+#else
     temp.append(L"\\VFS\\ProgramFilesX64\\PlaceholderTest\\MissingPlaceholder.txt");
+#endif
     MfrAttributeTest t_Redir_PF2 = { "Redirected-file VFS missing in package", true, false, false, 
                                     temp, INVALID_FILE_ATTRIBUTES, ERROR_FILE_NOT_FOUND };
     MfrAttributeFileTests.push_back(t_Redir_PF2);
 
     temp = g_writablePackageRootPath.c_str();
+#if _M_IX86
+    temp.append(L"\\VFS\\ProgramFilesX86\\MissingPlaceholderTest\\MissingPlaceholder.txt");
+#else
     temp.append(L"\\VFS\\ProgramFilesX64\\MissingPlaceholderTest\\MissingPlaceholder.txt");
+#endif
     MfrAttributeTest t_Redir_PF3 = { "Redirected-file VFS parent-folder missing in package", true, false, false, 
                                     temp, INVALID_FILE_ATTRIBUTES, ERROR_PATH_NOT_FOUND };
     MfrAttributeFileTests.push_back(t_Redir_PF3);
@@ -115,50 +145,80 @@ int InitializeAttributeTests()
 
 
     // Requests to Native folder Locations for GetFileAttributes via VFS
-    MfrAttributeTest t_Native_PFo1 = { "Native-folder VFS exists in package", true, true, true, 
-                                    L"C:\\Program Files\\PlaceholderTest", 0x10, ERROR_SUCCESS };
+    temp = g_NativePF;
+    temp.append(L"\\PlaceholderTest");
+    MfrAttributeTest t_Native_PFo1 = { "Native-folder VFS exists in package", true, true, true,
+                                    temp.c_str(), 0x10, ERROR_SUCCESS };
     MfrAttributeFolderTests.push_back(t_Native_PFo1);
 
-    MfrAttributeTest t_Native_PFo2 = { "Native-folder VFS missing in package", true, false, false, 
-                                    L"C:\\Program Files\\MissingPlaceholderTest", INVALID_FILE_ATTRIBUTES, ERROR_FILE_NOT_FOUND };
+    temp = g_NativePF;
+    temp.append(L"\\MissingPlaceholderTest");
+    MfrAttributeTest t_Native_PFo2 = { "Native-folder VFS missing in package", true, false, false,
+                                    temp.c_str(), INVALID_FILE_ATTRIBUTES, ERROR_FILE_NOT_FOUND };
     MfrAttributeFolderTests.push_back(t_Native_PFo2);
 
-    MfrAttributeTest t_Native_PFo3 = { "Native-folder VFS parent-folder missing in package", true, false, false, 
-                                    L"C:\\Program Files\\MissingPlaceholderTest\\MissingPlaceholder2", INVALID_FILE_ATTRIBUTES, ERROR_PATH_NOT_FOUND };
+    temp = g_NativePF;
+    temp.append(L"\\MissingPlaceholderTest\\MissingPlaceholder2");
+    MfrAttributeTest t_Native_PFo3 = { "Native-folder VFS parent-folder missing in package", true, false, false,
+                                    temp.c_str(), INVALID_FILE_ATTRIBUTES, ERROR_PATH_NOT_FOUND };
     MfrAttributeFolderTests.push_back(t_Native_PFo3);
 
 
     // Requests to Package Folder Locations for GetFileAttributes using VFS
+#if _M_IX86
+    temp = g_Cwd + L"\\VFS\\ProgramFilesX86\\PlaceholderTest";
+#else
     temp = g_Cwd + L"\\VFS\\ProgramFilesX64\\PlaceholderTest";
+#endif
     MfrAttributeTest t_Vfs_PFo1 = { "Package-folder VFS exists in package", true, true, true, 
                                     temp, 0x10, ERROR_SUCCESS };
     MfrAttributeFolderTests.push_back(t_Vfs_PFo1);
 
+#if _M_IX86
+    temp = g_Cwd + L"\\VFS\\ProgramFilesX86\\MissingPlaceholderTest";
+#else
     temp = g_Cwd + L"\\VFS\\ProgramFilesX64\\MissingPlaceholderTest";
+#endif
     MfrAttributeTest t_Vfs_PFo2 = { "Package-folder VFS missing in package", true, false, false, 
                                     temp, INVALID_FILE_ATTRIBUTES, ERROR_FILE_NOT_FOUND };
     MfrAttributeFolderTests.push_back(t_Vfs_PFo2);
 
+#if _M_IX86
+    temp = g_Cwd + L"\\VFS\\ProgramFilesX86\\MissingPlaceholderTest\\MissingPlaceholder2";
+#else
     temp = g_Cwd + L"\\VFS\\ProgramFilesX64\\MissingPlaceholderTest\\MissingPlaceholder2";
-    MfrAttributeTest t_Vfs_PFo3 = { "Package-folder VFS parent-folder missing in package", true, false, false, 
+#endif
+    MfrAttributeTest t_Vfs_PFo3 = { "Package-folder VFS parent-folder missing in package", true, false, false,
                                     temp, INVALID_FILE_ATTRIBUTES, ERROR_PATH_NOT_FOUND };
     MfrAttributeFolderTests.push_back(t_Vfs_PFo3);
 
     // Requests to Redir Folder Locations for GetFileAttributes using VFS
     temp = g_writablePackageRootPath.c_str();
+#if _M_IX86
+    temp.append(L"\\VFS\\ProgramFilesX86\\PlaceholderTest");
+#else
     temp.append(L"\\VFS\\ProgramFilesX64\\PlaceholderTest");
+#endif
     MfrAttributeTest t_Redir_PFo1 = { "Redirected-folder VFS exists in package", true, true, true, 
                                     temp, 0x10, ERROR_SUCCESS };
     MfrAttributeFolderTests.push_back(t_Redir_PFo1);
 
     temp = g_writablePackageRootPath.c_str();
+#if _M_IX86
+    temp.append(L"\\VFS\\ProgramFilesX86\\MissingPlaceholderTest");
+#else
     temp.append(L"\\VFS\\ProgramFilesX64\\MissingPlaceholderTest");
+#endif
     MfrAttributeTest t_Redir_PFo2 = { "Redirected-folder VFS missing in package", true, false, false, 
                                     temp, INVALID_FILE_ATTRIBUTES, ERROR_FILE_NOT_FOUND };
     MfrAttributeFolderTests.push_back(t_Redir_PFo2);
 
     temp = g_writablePackageRootPath.c_str();
+#if _M_IX86
+    temp.append(L"\\VFS\\ProgramFilesX86\\MissingPlaceholderTest\\MissingPlaceholder2");
+#else
     temp.append(L"\\VFS\\ProgramFilesX64\\MissingPlaceholderTest\\MissingPlaceholder2");
+#endif
     MfrAttributeTest t_Redir_PFo3 = { "Redirected-folder VFS parent-folder missing in package", true, false, false, 
                                     temp, INVALID_FILE_ATTRIBUTES, ERROR_PATH_NOT_FOUND };
     MfrAttributeFolderTests.push_back(t_Redir_PFo3);
@@ -167,31 +227,49 @@ int InitializeAttributeTests()
 
 
     // Requests to Native File Locations for GetFileAttributesEx via VFS
-    MfrAttributeExTest t_Native_ExPF1 = { "Ex Native-file VFS exists in package", true, true, true, 
-                                    L"C:\\Program Files\\PlaceholderTest\\Placeholder.txt", true, ERROR_SUCCESS };
+    temp = g_NativePF;
+    temp.append(L"\\PlaceholderTest\\Placeholder.txt");
+    MfrAttributeExTest t_Native_ExPF1 = { "Ex Native-file VFS exists in package", true, true, true,
+                                    temp.c_str(), true, ERROR_SUCCESS };
     MfrAttributeExFileTests.push_back(t_Native_ExPF1);
 
-    MfrAttributeExTest t_Native_ExPF2 = { "Ex Native-file VFS missing in package", true, false, false, 
-                                    L"C:\\Program Files\\PlaceholderTest\\MissingPlaceholder.txt", false, ERROR_FILE_NOT_FOUND };
+    temp = g_NativePF;
+    temp.append(L"\\PlaceholderTest\\MissingPlaceholder.txt");
+    MfrAttributeExTest t_Native_ExPF2 = { "Ex Native-file VFS missing in package", true, false, false,
+                                    temp.c_str(), false, ERROR_FILE_NOT_FOUND };
     MfrAttributeExFileTests.push_back(t_Native_ExPF2);
 
-    MfrAttributeExTest t_Native_ExPF3 = { "Ex Native-file VFS parent-folder missing in package", true, false, false, 
-                                    L"C:\\Program Files\\MissingPlaceholderTest\\MissingPlaceholder.txt", false, ERROR_PATH_NOT_FOUND };
+    temp = g_NativePF;
+    temp.append(L"\\MissingPlaceholderTest\\MissingPlaceholder.txt");
+    MfrAttributeExTest t_Native_ExPF3 = { "Ex Native-file VFS parent-folder missing in package", true, false, false,
+                                    temp.c_str(), false, ERROR_PATH_NOT_FOUND };
     MfrAttributeExFileTests.push_back(t_Native_ExPF3);
 
 
     // Requests to Package File Locations for GetFileAttributesEx using VFS
+#if _M_IX86
+    temp = g_Cwd + L"\\VFS\\ProgramFilesX86\\PlaceholderTest\\Placeholder.txt";
+#else
     temp = g_Cwd + L"\\VFS\\ProgramFilesX64\\PlaceholderTest\\Placeholder.txt";
+#endif
     MfrAttributeExTest t_Vfs_ExPF1 = { "Ex Package-file VFS exists in package", true, true, true, 
                                     temp, true, ERROR_SUCCESS };
     MfrAttributeExFileTests.push_back(t_Vfs_ExPF1);
 
+#if _M_IX86
+    temp = g_Cwd + L"\\VFS\\ProgramFilesX86\\PlaceholderTest\\MissingPlaceholder.txt";
+#else
     temp = g_Cwd + L"\\VFS\\ProgramFilesX64\\PlaceholderTest\\MissingPlaceholder.txt";
+#endif
     MfrAttributeExTest t_Vfs_ExPF2 = { "Ex Package-file VFS missing in package", true, false, false, 
                                     temp, false, ERROR_FILE_NOT_FOUND };
     MfrAttributeExFileTests.push_back(t_Vfs_ExPF2);
 
+#if _M_IX86
+    temp = g_Cwd + L"\\VFS\\ProgramFilesX86\\MissingPlaceholderTest\\MissingPlaceholder.txt";
+#else
     temp = g_Cwd + L"\\VFS\\ProgramFilesX64\\MissingPlaceholderTest\\MissingPlaceholder.txt";
+#endif
     MfrAttributeExTest t_Vfs_ExPF3 = { "Ex Package-file VFS parent-folder missing in package", true, false, false, 
                                     temp, false, ERROR_PATH_NOT_FOUND };
     MfrAttributeExFileTests.push_back(t_Vfs_ExPF3);
@@ -199,19 +277,31 @@ int InitializeAttributeTests()
 
     // Requests to Redirected File Locations for GetFileAttributesEx using VFS
     temp = g_writablePackageRootPath.c_str();
+#if _M_IX86
+    temp.append(L"\\VFS\\ProgramFilesX86\\PlaceholderTest\\Placeholder.txt");
+#else
     temp.append(L"\\VFS\\ProgramFilesX64\\PlaceholderTest\\Placeholder.txt");
+#endif
     MfrAttributeExTest t_Redir_ExPF1 = { "Ex Redirected-file VFS exists in package", true, true, true, 
                                     temp, true, ERROR_SUCCESS };
     MfrAttributeExFileTests.push_back(t_Redir_ExPF1);
 
     temp = g_writablePackageRootPath.c_str();
+#if _M_IX86
+    temp.append(L"\\VFS\\ProgramFilesX86\\PlaceholderTest\\MissingPlaceholder.txt");
+#else
     temp.append(L"\\VFS\\ProgramFilesX64\\PlaceholderTest\\MissingPlaceholder.txt");
-    MfrAttributeExTest t_Redir_ExPF2 = { "Ex Redirected-file VFS missing in package", true, false, false, 
+#endif
+    MfrAttributeExTest t_Redir_ExPF2 = { "Ex Redirected-file VFS missing in package", true, false, false,
                                     temp, false, ERROR_FILE_NOT_FOUND };
     MfrAttributeExFileTests.push_back(t_Redir_ExPF2);
 
     temp = g_writablePackageRootPath.c_str();
+#if _M_IX86
+    temp.append(L"\\VFS\\ProgramFilesX86\\MissingPlaceholderTest\\MissingPlaceholder.txt");
+#else
     temp.append(L"\\VFS\\ProgramFilesX64\\MissingPlaceholderTest\\MissingPlaceholder.txt");
+#endif
     MfrAttributeExTest t_Redir_ExPF3 = { "Ex Redirected-file VFS parent-folder missing in package", true, false, false, 
                                     temp, false, ERROR_PATH_NOT_FOUND };
     MfrAttributeExFileTests.push_back(t_Redir_ExPF3);
@@ -258,53 +348,79 @@ int InitializeAttributeTests()
 
 
     // Requests to Native File Locations for SetFileAttributes via VFS
-    MfrSetAttributeTest t_Native_SetPF1 = { "Set Native-file VFS exists in package", true, true, true, 
-                                    L"C:\\Program Files\\PlaceholderTest\\Placeholder.txt", FILE_ATTRIBUTE_NORMAL, true, 0x20, ERROR_SUCCESS };
+    temp = g_NativePF;
+    temp.append(L"\\PlaceholderTest\\Placeholder.txt");
+    MfrSetAttributeTest t_Native_SetPF1 = { "Set Native-file VFS exists in package", true, true, true,
+                                    temp.c_str(), FILE_ATTRIBUTE_NORMAL, true, 0x20, ERROR_SUCCESS };
     MfrSetAttributeFileTests.push_back(t_Native_SetPF1);
 
-    MfrSetAttributeTest t_Native_SetPF2 = { "Set Native-file VFS missing in package", true, false, false, 
-                                    L"C:\\Program Files\\PlaceholderTest\\MissingPlaceholder.txt", FILE_ATTRIBUTE_NORMAL, false, INVALID_FILE_ATTRIBUTES, ERROR_FILE_NOT_FOUND };
+    temp = g_NativePF;
+    temp.append(L"\\PlaceholderTest\\MissingPlaceholder.txt");
+    MfrSetAttributeTest t_Native_SetPF2 = { "Set Native-file VFS missing in package", true, false, false,
+                                    temp.c_str(), FILE_ATTRIBUTE_NORMAL, false, INVALID_FILE_ATTRIBUTES, ERROR_FILE_NOT_FOUND };
     MfrSetAttributeFileTests.push_back(t_Native_SetPF2);
 
+    temp = g_NativePF;
+    temp.append(L"\\MissingPlaceholderTest\\MissingPlaceholder.txt");
     MfrSetAttributeTest t_Native_SetPF3 = { "Set Native-file VFS parent-folder missing in package", true, false, false,
-                                    L"C:\\Program Files\\MissingPlaceholderTest\\MissingPlaceholder.txt", FILE_ATTRIBUTE_NORMAL, false, INVALID_FILE_ATTRIBUTES, ERROR_PATH_NOT_FOUND };
+                                    temp.c_str(), FILE_ATTRIBUTE_NORMAL, false, INVALID_FILE_ATTRIBUTES, ERROR_PATH_NOT_FOUND };
     MfrSetAttributeFileTests.push_back(t_Native_SetPF3);
 
     // Requests to Package File Locations for SetFileAttributes using VFS
+#if _M_IX86
+    temp = g_Cwd + L"\\VFS\\ProgramFilesX86\\PlaceholderTest\\Placeholder.txt";
+#else
     temp = g_Cwd + L"\\VFS\\ProgramFilesX64\\PlaceholderTest\\Placeholder.txt";
+#endif
     MfrSetAttributeTest t_Vfs_SetPF1 = { "Set Package-file VFS exists in package", true, true, true, 
                                     temp, FILE_ATTRIBUTE_NORMAL, true, 0x20, ERROR_SUCCESS };
     MfrSetAttributeFileTests.push_back(t_Vfs_SetPF1);
 
+#if _M_IX86
+    temp = g_Cwd + L"\\VFS\\ProgramFilesX86\\PlaceholderTest\\MissingPlaceholder.txt";
+#else
     temp = g_Cwd + L"\\VFS\\ProgramFilesX64\\PlaceholderTest\\MissingPlaceholder.txt";
+#endif
     MfrSetAttributeTest t_Vfs_SetPF2 = { "Set Package-file VFS missing in package", true, false, false, 
                                     temp, FILE_ATTRIBUTE_NORMAL, false, INVALID_FILE_ATTRIBUTES, ERROR_FILE_NOT_FOUND };
     MfrSetAttributeFileTests.push_back(t_Vfs_SetPF2);
 
+#if _M_IX86
+    temp = g_Cwd + L"\\VFS\\ProgramFilesX86\\MissingPlaceholderTest\\MissingPlaceholder.txt";
+#else
     temp = g_Cwd + L"\\VFS\\ProgramFilesX64\\MissingPlaceholderTest\\MissingPlaceholder.txt";
+#endif
     MfrSetAttributeTest t_Vfs_SetPF3 = { "Set Package-file VFS parent-folder missing in package", true, false, false, 
                                     temp, FILE_ATTRIBUTE_NORMAL, false, INVALID_FILE_ATTRIBUTES, ERROR_PATH_NOT_FOUND };
     MfrSetAttributeFileTests.push_back(t_Vfs_SetPF3);
 
     // Request to set hidden file
     MfrSetAttributeTest t_Native_SetPF1H = { "Set Hidden Native-file VFS exists in package", true, false, false, 
-                                    L"C:\\Program Files\\PlaceholderTest\\Placeholder.txt", FILE_ATTRIBUTE_HIDDEN, true, FILE_ATTRIBUTE_HIDDEN, ERROR_SUCCESS };
+                                    (g_NativePF + L"\\PlaceholderTest\\Placeholder.txt"), FILE_ATTRIBUTE_HIDDEN, true, FILE_ATTRIBUTE_HIDDEN, ERROR_SUCCESS };
     MfrSetAttributeFileTests.push_back(t_Native_SetPF1H);
 
 
     // Requests to create folders using SetFileAttribute which is not really a thing?
     MfrSetAttributeTest t_Native_SetPF1D = { "Set Directory Native-folder VFS not in package", true, false, false, 
-                                    L"C:\\Program Files\\PlaceholderTest\\SubFolder1", FILE_ATTRIBUTE_DIRECTORY, false, INVALID_FILE_ATTRIBUTES, ERROR_FILE_NOT_FOUND };
+                                    (g_NativePF + L"\\PlaceholderTest\\SubFolder1"), FILE_ATTRIBUTE_DIRECTORY, false, INVALID_FILE_ATTRIBUTES, ERROR_FILE_NOT_FOUND };
     MfrSetAttributeFolderTests.push_back(t_Native_SetPF1D);
 
+#if _M_IX86
+    temp = g_Cwd + L"\\VFS\\ProgramFilesX86\\PlaceholderTest\\Subfolder2";
+#else
     temp = g_Cwd + L"\\VFS\\ProgramFilesX64\\PlaceholderTest\\Subfolder2";
+#endif
     MfrSetAttributeTest t_Vfs_SetPF1D = { "Set Directory Package-folder VFS not in package", true, false, false, 
                                     temp, FILE_ATTRIBUTE_DIRECTORY, false, INVALID_FILE_ATTRIBUTES, ERROR_FILE_NOT_FOUND };
     MfrSetAttributeFolderTests.push_back(t_Vfs_SetPF1D);
 
 
     temp = g_writablePackageRootPath.c_str();
+#if _M_IX86
+    temp.append(L"\\VFS\\ProgramFilesX86\\PlaceholderTest\\Subfolder3");
+#else
     temp.append(L"\\VFS\\ProgramFilesX64\\PlaceholderTest\\Subfolder3");
+#endif
     MfrSetAttributeTest t_Redir_PF1D = { "Set Directory Redirected-folder VFS not in package", true, false, false, 
                                     temp, FILE_ATTRIBUTE_DIRECTORY, false, INVALID_FILE_ATTRIBUTES, ERROR_FILE_NOT_FOUND };
     MfrSetAttributeFolderTests.push_back(t_Redir_PF1D);

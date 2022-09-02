@@ -52,6 +52,7 @@ namespace impl
 
     inline auto MoveFile = psf::detoured_string_function(&::MoveFileA, &::MoveFileW);
     inline auto MoveFileEx = psf::detoured_string_function(&::MoveFileExA, &::MoveFileExW);
+    inline auto MoveFileWithProgress = psf::detoured_string_function(&::MoveFileWithProgressA, &::MoveFileWithProgressW);
 
     inline auto RemoveDirectory = psf::detoured_string_function(&::RemoveDirectoryA, &::RemoveDirectoryW);
 

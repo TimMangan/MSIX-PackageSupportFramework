@@ -171,15 +171,12 @@ std::filesystem::path drive_absolute_to_normal(std::filesystem::path nativeRelat
 /// <returns></retrns>
 std::wstring MakeLongPath(std::wstring path)
 {
-    size_t LocalDeviceStartAt = path.find(L"\\\\.\\");
-    if (LocalDeviceStartAt == std::wstring::npos)
+    // Only add to full paths on a drive letter
+    psf::dos_path_type dosType = psf::path_type(path.c_str());
+    if (dosType == psf::dos_path_type::drive_absolute)
     {
-        size_t LongPathStartAt = path.find(L"\\\\?\\");
-        if (LongPathStartAt == std::wstring::npos)
-        {
-            std::wstring outPath = L"\\\\?\\";
-            return outPath.append(path);
-        }
+        std::wstring outPath = L"\\\\?\\";
+        return outPath.append(path);
     }
     return path;
 }

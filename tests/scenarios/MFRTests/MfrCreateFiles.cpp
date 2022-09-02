@@ -3,7 +3,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 //-------------------------------------------------------------------------------------------------------
 
-#include "MfrCreateFileTest.h"
+#include "MfrCreateFileTests.h"
 #include "MfrCleanup.h"
 #include <stdio.h>
 
@@ -22,60 +22,69 @@ int InitializeCreateFileTests1()
     std::wstring temp;
 
     // Requests to Native File Locations for CreateFile via VFS Read
+    temp = g_NativePF + L"\\PlaceholderTest\\Placeholder.txt";
     MfrCreateFileTest t_Native_PFR1 = { "Native-file VFS exists in package Read existing", true, true, true,
-                                       L"C:\\Program Files\\PlaceholderTest\\Placeholder.txt", 
+                                       temp.c_str(),
                                        GENERIC_READ, FILE_SHARE_READ, nullptr, OPEN_EXISTING,FILE_ATTRIBUTE_NORMAL,
                                        true, ERROR_SUCCESS };
     MfrCreateFileTests1.push_back(t_Native_PFR1);
 
+    temp = g_NativePF + L"\\PlaceholderTest\\NoneSuchFile.txt";
     MfrCreateFileTest t_Native_PFR2 = { "Native-file VFS missing in package Read existing", true, true, true,
-                                       L"C:\\Program Files\\PlaceholderTest\\NoneSuchFile.txt",
+                                       temp.c_str(),
                                        GENERIC_READ, FILE_SHARE_READ, nullptr, OPEN_EXISTING,FILE_ATTRIBUTE_NORMAL,
                                        false, ERROR_FILE_NOT_FOUND };
     MfrCreateFileTests1.push_back(t_Native_PFR2);
 
+    temp = g_NativePF + L"\\PlaceholderTest\\NoneSuchFolder\\NoneSuchFile.txt";
     MfrCreateFileTest t_Native_PFR3 = { "Native-file VFS folder missing in package Read existing", true, true, true,
-                                       L"C:\\Program Files\\NoneSuchFolder\\NoneSuchFile.txt",
+                                       temp.c_str(),
                                        GENERIC_READ, FILE_SHARE_READ, nullptr, OPEN_EXISTING,FILE_ATTRIBUTE_NORMAL,
                                        false, ERROR_FILE_NOT_FOUND };
     MfrCreateFileTests1.push_back(t_Native_PFR3);
 
 
     // Requests to Native File Locations for CreateFile via VFS New
+    temp = g_NativePF + L"\\PlaceholderTest\\Placeholder.txt";
     MfrCreateFileTest t_Native_PFN1 = { "Native-file VFS exists in package New existing", true, true, true,
-                                       L"C:\\Program Files\\PlaceholderTest\\Placeholder.txt",
+                                       temp.c_str(),
                                        GENERIC_READ, FILE_SHARE_READ, nullptr, CREATE_NEW, FILE_ATTRIBUTE_NORMAL,
                                        false, ERROR_FILE_EXISTS };
     MfrCreateFileTests1.push_back(t_Native_PFN1);
 
+    temp = g_NativePF + L"\\PlaceholderTest\\NoneSuchFile.txt";
     MfrCreateFileTest t_Native_PFN2 = { "Native-file VFS missing in package New existing", true, true, true,
-                                       L"C:\\Program Files\\PlaceholderTest\\NoneSuchFile.txt",
+                                       temp.c_str(),
                                        GENERIC_READ, FILE_SHARE_READ, nullptr, CREATE_NEW, FILE_ATTRIBUTE_NORMAL,
                                        true, ERROR_SUCCESS };
     MfrCreateFileTests1.push_back(t_Native_PFN2);
 
+    temp = g_NativePF + L"\\NoneSuchFolder\\NoneSuchFile.txt";
     MfrCreateFileTest t_Native_PFN3 = { "Native-file VFS folder missing in package New existing", true, true, true,
-                                       L"C:\\Program Files\\NoneSuchFolder\\NoneSuchFile.txt",
+                                       temp.c_str(),
                                        GENERIC_READ, FILE_SHARE_READ, nullptr, CREATE_NEW, FILE_ATTRIBUTE_NORMAL,
                                        true, ERROR_SUCCESS };
     MfrCreateFileTests1.push_back(t_Native_PFN3);
 
 
     // Requests to Native File Locations for CreateFile via VFS TruncateExisting
+    temp = g_NativePF + L"\\PlaceholderTest\\Placeholder.txt";
     MfrCreateFileTest t_Native_PFT1 = { "Native-file VFS exists in package Truncate existing", true, true, true,
-                                       L"C:\\Program Files\\PlaceholderTest\\Placeholder.txt",
+                                       temp.c_str(),
                                        GENERIC_WRITE, FILE_SHARE_READ, nullptr, TRUNCATE_EXISTING, FILE_ATTRIBUTE_NORMAL,
                                        true, ERROR_SUCCESS };
     MfrCreateFileTests1.push_back(t_Native_PFT1);
 
+    temp = g_NativePF + L"\\PlaceholderTest\\NoneSuchFile.txt";
     MfrCreateFileTest t_Native_PFT2 = { "Native-file VFS missing in package Truncate existing", true, true, true,
-                                       L"C:\\Program Files\\PlaceholderTest\\NoneSuchFile.txt",
+                                       temp.c_str(),
                                        GENERIC_WRITE, FILE_SHARE_READ, nullptr, TRUNCATE_EXISTING, FILE_ATTRIBUTE_NORMAL,
                                        false, ERROR_FILE_NOT_FOUND };
     MfrCreateFileTests1.push_back(t_Native_PFT2);
 
+    temp = g_NativePF + L"\\PlaceholderTest\\NoneSuchFolder\\NoneSuchFile.txt";
     MfrCreateFileTest t_Native_PFT3 = { "Native-file VFS folder missing in package Truncate existing", true, true, true,
-                                       L"C:\\Program Files\\NoneSuchFolder\\NoneSuchFile.txt",
+                                       temp.c_str(),
                                        GENERIC_WRITE, FILE_SHARE_READ, nullptr, TRUNCATE_EXISTING, FILE_ATTRIBUTE_NORMAL,
                                        false, ERROR_FILE_NOT_FOUND };
     MfrCreateFileTests1.push_back(t_Native_PFT3);
@@ -83,20 +92,23 @@ int InitializeCreateFileTests1()
 
 
     // Requests to Native File Locations for CreateFile via VFS OpenAlways
+    temp = g_NativePF + L"\\PlaceholderTest\\Placeholder.txt";
     MfrCreateFileTest t_Native_PFOA1 = { "Native-file VFS exists in package OpenAlways existing", true, true, true,
-                                       L"C:\\Program Files\\PlaceholderTest\\Placeholder.txt",
+                                       temp.c_str(),
                                        GENERIC_WRITE, FILE_SHARE_READ, nullptr, OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL,
                                        true, ERROR_SUCCESS };
     MfrCreateFileTests1.push_back(t_Native_PFOA1);
 
+    temp = g_NativePF + L"\\PlaceholderTest\\NoneSuchFile.txt";
     MfrCreateFileTest t_Native_PFOA2 = { "Native-file VFS missing in package OpenAlways existing", true, true, true,
-                                       L"C:\\Program Files\\PlaceholderTest\\NoneSuchFile.txt",
+                                       temp.c_str(),
                                        GENERIC_WRITE, FILE_SHARE_READ, nullptr, OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL,
                                        true, ERROR_SUCCESS };
     MfrCreateFileTests1.push_back(t_Native_PFOA2);
 
+    temp = g_NativePF + L"\\NoneSuchFolder\\NoneSuchFile.txt";
     MfrCreateFileTest t_Native_PFOA3 = { "Native-file VFS folder missing in package OpenAlways existing", true, true, true,
-                                       L"C:\\Program Files\\NoneSuchFolder\\NoneSuchFile.txt",
+                                       temp.c_str(),
                                        GENERIC_WRITE, FILE_SHARE_READ, nullptr, OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL,
                                        true, ERROR_SUCCESS };
     MfrCreateFileTests1.push_back(t_Native_PFOA3);
@@ -104,20 +116,23 @@ int InitializeCreateFileTests1()
 
 
     // Requests to Native File Locations for CreateFile via VFS CreateAlways
+    temp = g_NativePF + L"\\PlaceholderTest\\Placeholder.txt";
     MfrCreateFileTest t_Native_PFA1 = { "Native-file VFS exists in package CreateAlways existing", true, true, true,
-                                       L"C:\\Program Files\\PlaceholderTest\\Placeholder.txt",
+                                       temp.c_str(),
                                        GENERIC_WRITE, FILE_SHARE_READ, nullptr, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL,
                                        true, ERROR_SUCCESS };
     MfrCreateFileTests1.push_back(t_Native_PFA1);
 
+    temp = g_NativePF + L"\\PlaceholderTest\\NoneSuchFile.txt";
     MfrCreateFileTest t_Native_PFA2 = { "Native-file VFS missing in package CreateAlways existing", true, true, true,
-                                       L"C:\\Program Files\\PlaceholderTest\\NoneSuchFile.txt",
+                                       temp.c_str(),
                                        GENERIC_WRITE, FILE_SHARE_READ, nullptr, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL,
                                        true, ERROR_SUCCESS };
     MfrCreateFileTests1.push_back(t_Native_PFA2);
 
+    temp = g_NativePF + L"\\NoneSuchFolder\\NoneSuchFile.txt";
     MfrCreateFileTest t_Native_PFA3 = { "Native-file VFS folder missing in package CreateAlways existing", true, true, true,
-                                       L"C:\\Program Files\\NoneSuchFolder\\NoneSuchFile.txt",
+                                       temp.c_str(),
                                        GENERIC_WRITE, FILE_SHARE_READ, nullptr, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL,
                                        true, ERROR_SUCCESS };
     MfrCreateFileTests1.push_back(t_Native_PFA3);
@@ -131,23 +146,27 @@ int InitializeCreateFileTests1()
 int InitializeCreateFileTests2()
 {
         std::wstring temp;
-
+#if _M_IX86
+        std::wstring VfsPf = g_Cwd + L"\\VFS\\ProgramFilesX86";
+#else
+        std::wstring VfsPf = g_Cwd + L"\\VFS\\ProgramFilesX64";
+#endif
     // Requests to Package File Locations for CreateFile via VFS Read
-    temp = g_Cwd + L"\\VFS\\ProgramFilesX64\\PlaceholderTest\\Placeholder.txt";
+    temp = VfsPf + L"\\PlaceholderTest\\Placeholder.txt";
     MfrCreateFileTest t_Native_PFR1 = { "Package-file VFS exists in package Read existing", true, true, true,
                                        temp.c_str(),
                                        GENERIC_READ, FILE_SHARE_READ, nullptr, OPEN_EXISTING,FILE_ATTRIBUTE_NORMAL,
                                        true, ERROR_SUCCESS };
     MfrCreateFileTests2.push_back(t_Native_PFR1);
 
-    temp = g_Cwd + L"\\VFS\\ProgramFilesX64\\PlaceholderTest\\NoneSuchFile.txt";
+    temp = VfsPf + L"\\PlaceholderTest\\NoneSuchFile.txt";
     MfrCreateFileTest t_Native_PFR2 = { "Package-file VFS missing in package Read existing", true, true, true,
                                        temp.c_str(),
                                        GENERIC_READ, FILE_SHARE_READ, nullptr, OPEN_EXISTING,FILE_ATTRIBUTE_NORMAL,
                                        false, ERROR_FILE_NOT_FOUND };
     MfrCreateFileTests2.push_back(t_Native_PFR2);
 
-    temp = g_Cwd + L"\\VFS\\ProgramFilesX64\\NoneSuchFolder\\NoneSuchFile.txt";
+    temp = VfsPf + L"\\NoneSuchFolder\\NoneSuchFile.txt";
     MfrCreateFileTest t_Native_PFR3 = { "Package-file VFS folder missing in package Read existing", true, true, true,
                                        temp.c_str(),
                                        GENERIC_READ, FILE_SHARE_READ, nullptr, OPEN_EXISTING,FILE_ATTRIBUTE_NORMAL,
@@ -156,21 +175,21 @@ int InitializeCreateFileTests2()
 
 
     // Requests to Package File Locations for CreateFile via VFS New
-    temp = g_Cwd + L"\\VFS\\ProgramFilesX64\\PlaceholderTest\\Placeholder.txt";
+    temp = VfsPf + L"\\PlaceholderTest\\Placeholder.txt";
     MfrCreateFileTest t_Native_PFN1 = { "Package-file VFS exists in package New existing", true, true, true,
                                        temp.c_str(),
                                        GENERIC_READ, FILE_SHARE_READ, nullptr, CREATE_NEW, FILE_ATTRIBUTE_NORMAL,
                                        false, ERROR_FILE_EXISTS };
     MfrCreateFileTests2.push_back(t_Native_PFN1);
 
-    temp = g_Cwd + L"\\VFS\\ProgramFilesX64\\PlaceholderTest\\NoneSuchFile.txt";
+    temp = VfsPf + L"\\PlaceholderTest\\NoneSuchFile.txt";
     MfrCreateFileTest t_Native_PFN2 = { "Package-file VFS missing in package New existing", true, true, true,
                                        temp.c_str(),
                                        GENERIC_READ, FILE_SHARE_READ, nullptr, CREATE_NEW, FILE_ATTRIBUTE_NORMAL,
                                        true, ERROR_SUCCESS };
     MfrCreateFileTests2.push_back(t_Native_PFN2);
 
-    temp = g_Cwd + L"\\VFS\\ProgramFilesX64\\NoneSuchFolder\\NoneSuchFile.txt";
+    temp = VfsPf + L"\\NoneSuchFolder\\NoneSuchFile.txt";
     MfrCreateFileTest t_Native_PFN3 = { "Package-file VFS folder missing in package New existing", true, true, true,
                                        temp.c_str(),
                                        GENERIC_READ, FILE_SHARE_READ, nullptr, CREATE_NEW, FILE_ATTRIBUTE_NORMAL,
@@ -179,21 +198,21 @@ int InitializeCreateFileTests2()
 
 
     // Requests to Native File Locations for CreateFile via VFS TruncateExisting
-    temp = g_Cwd + L"\\VFS\\ProgramFilesX64\\PlaceholderTest\\Placeholder.txt";
+    temp = VfsPf + L"\\PlaceholderTest\\Placeholder.txt";
     MfrCreateFileTest t_Native_PFT1 = { "Package-file VFS exists in package Truncate existing", true, true, true,
                                        temp.c_str(),
                                        GENERIC_WRITE, FILE_SHARE_READ, nullptr, TRUNCATE_EXISTING, FILE_ATTRIBUTE_NORMAL,
                                        true, ERROR_SUCCESS };
     MfrCreateFileTests2.push_back(t_Native_PFT1);
 
-    temp = g_Cwd + L"\\VFS\\ProgramFilesX64\\PlaceholderTest\\NoneSuchFile.txt";
+    temp = VfsPf + L"\\PlaceholderTest\\NoneSuchFile.txt";
     MfrCreateFileTest t_Native_PFT2 = { "Package-file VFS missing in package Truncate existing", true, true, true,
                                        temp.c_str(),
                                        GENERIC_WRITE, FILE_SHARE_READ, nullptr, TRUNCATE_EXISTING, FILE_ATTRIBUTE_NORMAL,
                                        false, ERROR_FILE_NOT_FOUND };
     MfrCreateFileTests2.push_back(t_Native_PFT2);
 
-    temp = g_Cwd + L"\\VFS\\ProgramFilesX64\\NoneSuchFolder\\NoneSuchFile.txt";
+    temp = VfsPf + L"\\NoneSuchFolder\\NoneSuchFile.txt";
     MfrCreateFileTest t_Native_PFT3 = { "Package-file VFS folder missing in package Truncate existing", true, true, true,
                                        temp.c_str(),
                                        GENERIC_WRITE, FILE_SHARE_READ, nullptr, TRUNCATE_EXISTING, FILE_ATTRIBUTE_NORMAL,
@@ -203,21 +222,21 @@ int InitializeCreateFileTests2()
 
 
     // Requests to Package File Locations for CreateFile via VFS OpenAlways
-    temp = g_Cwd + L"\\VFS\\ProgramFilesX64\\PlaceholderTest\\Placeholder.txt";
+    temp = VfsPf + L"\\PlaceholderTest\\Placeholder.txt";
     MfrCreateFileTest t_Native_PFOA1 = { "Package-file VFS exists in package OpenAlways existing", true, true, true,
                                        temp.c_str(),
                                        GENERIC_WRITE, FILE_SHARE_READ, nullptr, OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL,
                                        true, ERROR_SUCCESS };
     MfrCreateFileTests2.push_back(t_Native_PFOA1);
 
-    temp = g_Cwd + L"\\VFS\\ProgramFilesX64\\PlaceholderTest\\NoneSuchFile.txt";
+    temp = VfsPf + L"\\PlaceholderTest\\NoneSuchFile.txt";
     MfrCreateFileTest t_Native_PFOA2 = { "Package-file VFS missing in package OpenAlways existing", true, true, true,
                                        temp.c_str(),
                                        GENERIC_WRITE, FILE_SHARE_READ, nullptr, OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL,
                                        true, ERROR_SUCCESS };
     MfrCreateFileTests2.push_back(t_Native_PFOA2);
 
-    temp = g_Cwd + L"\\VFS\\ProgramFilesX64\\NoneSuchFolder\\NoneSuchFile.txt";
+    temp = VfsPf + L"\\NoneSuchFolder\\NoneSuchFile.txt";
     MfrCreateFileTest t_Native_PFOA3 = { "Package-file VFS folder missing in package OpenAlways existing", true, true, true,
                                        temp.c_str(),
                                        GENERIC_WRITE, FILE_SHARE_READ, nullptr, OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL,
@@ -227,21 +246,21 @@ int InitializeCreateFileTests2()
 
 
     // Requests to Package File Locations for CreateFile via VFS CreateAlways
-    temp = g_Cwd + L"\\VFS\\ProgramFilesX64\\PlaceholderTest\\Placeholder.txt";
+    temp = VfsPf + L"\\PlaceholderTest\\Placeholder.txt";
     MfrCreateFileTest t_Native_PFA1 = { "Package-file VFS exists in package CreateAlways existing", true, true, true,
                                        temp.c_str(),
                                        GENERIC_WRITE, FILE_SHARE_READ, nullptr, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL,
                                        true, ERROR_SUCCESS };
     MfrCreateFileTests2.push_back(t_Native_PFA1);
 
-    temp = g_Cwd + L"\\VFS\\ProgramFilesX64\\PlaceholderTest\\NoneSuchFile.txt";
+    temp = VfsPf + L"\\PlaceholderTest\\NoneSuchFile.txt";
     MfrCreateFileTest t_Native_PFA2 = { "Package-file VFS missing in package CreateAlways existing", true, true, true,
                                        temp.c_str(),
                                        GENERIC_WRITE, FILE_SHARE_READ, nullptr, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL,
                                        true, ERROR_SUCCESS };
     MfrCreateFileTests2.push_back(t_Native_PFA2);
 
-    temp = g_Cwd + L"\\VFS\\ProgramFilesX64\\NoneSuchFolder\\NoneSuchFile.txt";
+    temp = VfsPf + L"\\NoneSuchFolder\\NoneSuchFile.txt";
     MfrCreateFileTest t_Native_PFA3 = { "Package-file VFS folder missing in package CreateAlways existing", true, true, true,
                                        temp.c_str(),
                                        GENERIC_WRITE, FILE_SHARE_READ, nullptr, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL,
@@ -260,7 +279,12 @@ int InitializeCreateFileTests3()
 
     // Requests to Redirected File Locations for CreateFile via VFS Read
     temp = g_writablePackageRootPath.c_str();
+
+#if _M_IX86
+    temp.append(L"\\VFS\\ProgramFilesX86\\PlaceholderTest\\Placeholder.txt");
+#else
     temp.append(L"\\VFS\\ProgramFilesX64\\PlaceholderTest\\Placeholder.txt");
+#endif
     MfrCreateFileTest t_Native_PFR1 = { "Redirected-file VFS exists in package Read existing", true, true, true,
                                        temp.c_str(),
                                        GENERIC_READ, FILE_SHARE_READ, nullptr, OPEN_EXISTING,FILE_ATTRIBUTE_NORMAL,
@@ -268,7 +292,11 @@ int InitializeCreateFileTests3()
     MfrCreateFileTests3.push_back(t_Native_PFR1);
 
     temp = g_writablePackageRootPath.c_str();
+#if _M_IX86
+    temp.append(L"\\VFS\\ProgramFilesX86\\PlaceholderTest\\NoneSuchFile.txt");
+#else
     temp.append(L"\\VFS\\ProgramFilesX64\\PlaceholderTest\\NoneSuchFile.txt");
+#endif
     MfrCreateFileTest t_Native_PFR2 = { "Redirected-file VFS missing in package Read existing", true, true, true,
                                        temp.c_str(),
                                        GENERIC_READ, FILE_SHARE_READ, nullptr, OPEN_EXISTING,FILE_ATTRIBUTE_NORMAL,
@@ -276,7 +304,11 @@ int InitializeCreateFileTests3()
     MfrCreateFileTests3.push_back(t_Native_PFR2);
 
     temp = g_writablePackageRootPath.c_str();
+#if _M_IX86
+    temp.append(L"\\VFS\\ProgramFilesX86\\NoneSuchFolder\\NoneSuchFile.txt");
+#else
     temp.append(L"\\VFS\\ProgramFilesX64\\NoneSuchFolder\\NoneSuchFile.txt");
+#endif
     MfrCreateFileTest t_Native_PFR3 = { "Redirected-file VFS folder missing in package Read existing", true, true, true,
                                        temp.c_str(),
                                        GENERIC_READ, FILE_SHARE_READ, nullptr, OPEN_EXISTING,FILE_ATTRIBUTE_NORMAL,
@@ -286,7 +318,11 @@ int InitializeCreateFileTests3()
 
     // Requests to Redirected File Locations for CreateFile via VFS New
     temp = g_writablePackageRootPath.c_str();
+#if _M_IX86
+    temp.append(L"\\VFS\\ProgramFilesX86\\PlaceholderTest\\Placeholder.txt");
+#else
     temp.append(L"\\VFS\\ProgramFilesX64\\PlaceholderTest\\Placeholder.txt");
+#endif
     MfrCreateFileTest t_Native_PFN1 = { "Redirected-file VFS exists in package New existing", true, true, true,
                                        temp.c_str(),
                                        GENERIC_READ, FILE_SHARE_READ, nullptr, CREATE_NEW, FILE_ATTRIBUTE_NORMAL,
@@ -294,7 +330,11 @@ int InitializeCreateFileTests3()
     MfrCreateFileTests3.push_back(t_Native_PFN1);
 
     temp = g_writablePackageRootPath.c_str();
+#if _M_IX86
+    temp.append(L"\\VFS\\ProgramFilesX86\\PlaceholderTest\\NoneSuchFile.txt");
+#else
     temp.append(L"\\VFS\\ProgramFilesX64\\PlaceholderTest\\NoneSuchFile.txt");
+#endif
     MfrCreateFileTest t_Native_PFN2 = { "Redirected-file VFS missing in package New existing", true, true, true,
                                        temp.c_str(),
                                        GENERIC_READ, FILE_SHARE_READ, nullptr, CREATE_NEW, FILE_ATTRIBUTE_NORMAL,
@@ -302,7 +342,11 @@ int InitializeCreateFileTests3()
     MfrCreateFileTests3.push_back(t_Native_PFN2);
 
     temp = g_writablePackageRootPath.c_str();
+#if _M_IX86
+    temp.append(L"\\VFS\\ProgramFilesX86\\NoneSuchFolder\\NoneSuchFile.txt");
+#else
     temp.append(L"\\VFS\\ProgramFilesX64\\NoneSuchFolder\\NoneSuchFile.txt");
+#endif
     MfrCreateFileTest t_Native_PFN3 = { "Redirected-file VFS folder missing in package New existing", true, true, true,
                                        temp.c_str(),
                                        GENERIC_READ, FILE_SHARE_READ, nullptr, CREATE_NEW, FILE_ATTRIBUTE_NORMAL,
@@ -312,7 +356,11 @@ int InitializeCreateFileTests3()
 
     // Requests to Redirected File Locations for CreateFile via VFS TruncateExisting
     temp = g_writablePackageRootPath.c_str();
+#if _M_IX86
+    temp.append(L"\\VFS\\ProgramFilesX86\\PlaceholderTest\\Placeholder.txt");
+#else
     temp.append(L"\\VFS\\ProgramFilesX64\\PlaceholderTest\\Placeholder.txt");
+#endif
     MfrCreateFileTest t_Native_PFT1 = { "Redirected-file VFS exists in package Truncate existing", true, true, true,
                                        temp.c_str(),
                                        GENERIC_WRITE, FILE_SHARE_READ, nullptr, TRUNCATE_EXISTING, FILE_ATTRIBUTE_NORMAL,
@@ -320,7 +368,11 @@ int InitializeCreateFileTests3()
     MfrCreateFileTests3.push_back(t_Native_PFT1);
 
     temp = g_writablePackageRootPath.c_str();
+#if _M_IX86
+    temp.append(L"\\VFS\\ProgramFilesX86\\PlaceholderTest\\NoneSuchFile.txt");
+#else
     temp.append(L"\\VFS\\ProgramFilesX64\\PlaceholderTest\\NoneSuchFile.txt");
+#endif
     MfrCreateFileTest t_Native_PFT2 = { "Redirected-file VFS missing in package Truncate existing", true, true, true,
                                        temp.c_str(),
                                        GENERIC_WRITE, FILE_SHARE_READ, nullptr, TRUNCATE_EXISTING, FILE_ATTRIBUTE_NORMAL,
@@ -328,7 +380,11 @@ int InitializeCreateFileTests3()
     MfrCreateFileTests3.push_back(t_Native_PFT2);
 
     temp = g_writablePackageRootPath.c_str();
+#if _M_IX86
+    temp.append(L"\\VFS\\ProgramFilesX86\\NoneSuchFolder\\NoneSuchFile.txt");
+#else
     temp.append(L"\\VFS\\ProgramFilesX64\\NoneSuchFolder\\NoneSuchFile.txt");
+#endif
     MfrCreateFileTest t_Native_PFT3 = { "Redirected-file VFS folder missing in package Truncate existing", true, true, true,
                                        temp.c_str(),
                                        GENERIC_WRITE, FILE_SHARE_READ, nullptr, TRUNCATE_EXISTING, FILE_ATTRIBUTE_NORMAL,
@@ -339,7 +395,11 @@ int InitializeCreateFileTests3()
 
     // Requests to Redirected File Locations for CreateFile via VFS OpenAlways
     temp = g_writablePackageRootPath.c_str();
+#if _M_IX86
+    temp.append(L"\\VFS\\ProgramFilesX86\\PlaceholderTest\\Placeholder.txt");
+#else
     temp.append(L"\\VFS\\ProgramFilesX64\\PlaceholderTest\\Placeholder.txt");
+#endif
     MfrCreateFileTest t_Native_PFOA1 = { "Redirected-file VFS exists in package OpenAlways existing", true, true, true,
                                        temp.c_str(),
                                        GENERIC_WRITE, FILE_SHARE_READ, nullptr, OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL,
@@ -347,7 +407,11 @@ int InitializeCreateFileTests3()
     MfrCreateFileTests3.push_back(t_Native_PFOA1);
 
     temp = g_writablePackageRootPath.c_str();
+#if _M_IX86
+    temp.append(L"\\VFS\\ProgramFilesX86\\PlaceholderTest\\NoneSuchFile.txt");
+#else
     temp.append(L"\\VFS\\ProgramFilesX64\\PlaceholderTest\\NoneSuchFile.txt");
+#endif
     MfrCreateFileTest t_Native_PFOA2 = { "Redirected-file VFS missing in package OpenAlways existing", true, true, true,
                                        temp.c_str(),
                                        GENERIC_WRITE, FILE_SHARE_READ, nullptr, OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL,
@@ -355,7 +419,11 @@ int InitializeCreateFileTests3()
     MfrCreateFileTests3.push_back(t_Native_PFOA2);
 
     temp = g_writablePackageRootPath.c_str();
+#if _M_IX86
+    temp.append(L"\\VFS\\ProgramFilesX86\\NoneSuchFolder\\NoneSuchFile.txt");
+#else
     temp.append(L"\\VFS\\ProgramFilesX64\\NoneSuchFolder\\NoneSuchFile.txt");
+#endif
     MfrCreateFileTest t_Native_PFOA3 = { "Redirected-file VFS folder missing in package OpenAlways existing", true, true, true,
                                        temp.c_str(),
                                        GENERIC_WRITE, FILE_SHARE_READ, nullptr, OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL,
@@ -366,7 +434,11 @@ int InitializeCreateFileTests3()
 
     // Requests to Redirected File Locations for CreateFile via VFS CreateAlways
     temp = g_writablePackageRootPath.c_str();
+#if _M_IX86
+    temp.append(L"\\VFS\\ProgramFilesX86\\PlaceholderTest\\Placeholder.txt");
+#else
     temp.append(L"\\VFS\\ProgramFilesX64\\PlaceholderTest\\Placeholder.txt");
+#endif
     MfrCreateFileTest t_Native_PFA1 = { "Redirected-file VFS exists in package CreateAlways existing", true, true, true,
                                        temp.c_str(),
                                        GENERIC_WRITE, FILE_SHARE_READ, nullptr, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL,
@@ -374,7 +446,11 @@ int InitializeCreateFileTests3()
     MfrCreateFileTests3.push_back(t_Native_PFA1);
 
     temp = g_writablePackageRootPath.c_str();
+#if _M_IX86
+    temp.append(L"\\VFS\\ProgramFilesX86\\PlaceholderTest\\NoneSuchFile.txt");
+#else
     temp.append(L"\\VFS\\ProgramFilesX64\\PlaceholderTest\\NoneSuchFile.txt");
+#endif
     MfrCreateFileTest t_Native_PFA2 = { "Redirected-file VFS missing in package CreateAlways existing", true, true, true,
                                        temp.c_str(),
                                        GENERIC_WRITE, FILE_SHARE_READ, nullptr, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL,
@@ -382,7 +458,11 @@ int InitializeCreateFileTests3()
     MfrCreateFileTests3.push_back(t_Native_PFA2);
 
     temp = g_writablePackageRootPath.c_str();
+#if _M_IX86
+    temp.append(L"\\VFS\\ProgramFilesX86\\NoneSuchFolder\\NoneSuchFile.txt");
+#else
     temp.append(L"\\VFS\\ProgramFilesX64\\NoneSuchFolder\\NoneSuchFile.txt");
+#endif
     MfrCreateFileTest t_Native_PFA3 = { "Redirected-file VFS folder missing in package CreateAlways existing", true, true, true,
                                        temp.c_str(),
                                        GENERIC_WRITE, FILE_SHARE_READ, nullptr, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL,
@@ -809,8 +889,9 @@ int InitializeCreateFile2Tests1()
    
 
     // Requests to Native File Locations for CreateFile via VFS Read
+    temp = g_NativePF + L"\\PlaceholderTest\\Placeholder.txt";
     MfrCreateFile2Test t_Native_PFR1 = { "Native-file VFS exists in package Read existing", true, true, true,
-                                       L"C:\\Program Files\\PlaceholderTest\\Placeholder.txt",
+                                       temp.c_str(),
                                        GENERIC_READ, FILE_SHARE_READ, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, FILE_FLAG_RANDOM_ACCESS, SECURITY_IMPERSONATION,
                                        true, ERROR_SUCCESS };
     MfrCreateFile2Tests1.push_back(t_Native_PFR1);

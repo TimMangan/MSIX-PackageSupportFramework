@@ -12,7 +12,9 @@
 "..\..\..\Win32\Release\WaitForDebuggerFixup32.dll" "WaitForDebuggerFixup32.dll"
 
 "file.txt" "VFS\ProgramFilesX64\PlaceholderTest\Placeholder.txt"
+"file.txt" "VFS\ProgramFilesX86\PlaceholderTest\Placeholder.txt"
 "file.txt" "VFS\SystemX86\SystemX86Fïlè.txt"
+"file.txt" "VFS\SystemX64\SystemX64Fïlè.txt"
 "file.txt" "VFS\AppData\AppDataFile.txt"
 "file.txt" "VFS\LocalAppData\LocalAppDataFile.txt"
 "file.txt" "VFS\ProgramFilesX64\ProgramFilesX64.txt"
@@ -23,3 +25,4 @@
 
 "file.ini" "TestIniFilePVAD.ini"
 "file.ini" "VFS\ProgramFilesX64\PlaceholderTest\TestIniFileVfsPF.ini"
+"file.ini" "VFS\ProgramFilesX86\PlaceholderTest\TestIniFileVfsPF.ini"

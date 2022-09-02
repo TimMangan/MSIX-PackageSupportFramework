@@ -3,7 +3,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 //-------------------------------------------------------------------------------------------------------
 
-#include "MfrGetProfileTest.h"
+#include "MfrGetProfileTests.h"
 #include "MfrCleanup.h"
 #include <stdio.h>
 
@@ -18,11 +18,11 @@ int InitializeGetProfileTestsSectionNames()
     std::wstring temp;
 
     // Requests to Native File Locations for GetPrivateProfileSection via existing VFS file with value present
-    MfrGetProfileSectionNamesTest ts_Native_PF1 = { "Section Native-file VFS exists in package", true, true, true, L"C:\\Program Files\\PlaceholderTest\\TestIniFileVfsPF.ini",  27, 3 };
+    MfrGetProfileSectionNamesTest ts_Native_PF1 = { "Section Native-file VFS exists in package", true, true, true, (g_NativePF + L"\\PlaceholderTest\\TestIniFileVfsPF.ini"),  27, 3 };
     MfrGetProfileSectionNamesTests.push_back(ts_Native_PF1);
 
     // Requests to Native File Locations for GetPrivateProfileSection via Missing VFS file with value present
-    MfrGetProfileSectionNamesTest ts_Native_PF2 = { "Section Native-file VFS missing in package", true, false, false, L"C:\\Program Files\\PlaceholderTest\\Nonesuch.ini",  0, 0 };
+    MfrGetProfileSectionNamesTest ts_Native_PF2 = { "Section Native-file VFS missing in package", true, false, false, (g_NativePF + L"\\PlaceholderTest\\Nonesuch.ini"),  0, 0 };
     MfrGetProfileSectionNamesTests.push_back(ts_Native_PF2);
 
 
@@ -35,16 +35,25 @@ int InitializeGetProfileTestsSection()
 {
     std::wstring temp;
 
+    std::wstring VFSPF = g_Cwd;
+    std::wstring REVFSPF = g_writablePackageRootPath.c_str();
+#if _M_IX86
+    VFSPF.append(L"\\VFS\\ProgramFilesX86");
+    REVFSPF.append(L"\\VFS\\ProgramFilesX86");
+#else
+    VFSPF.append(L"\\VFS\\ProgramFilesX64");
+    REVFSPF.append(L"\\VFS\\ProgramFilesX64");
+#endif
 
 
     // Requests to Native File Locations for GetPrivateProfileSection via existing VFS file with value present
     MfrGetProfileSectionTest ts_Native_PF1 = { "Section Native-file VFS exists in package", true, true, true, 
-                                    L"C:\\Program Files\\PlaceholderTest\\TestIniFileVfsPF.ini", L"Section2", 19, L"UnusedItem=Nothing" };
+                                    (g_NativePF + L"\\PlaceholderTest\\TestIniFileVfsPF.ini"), L"Section2", 19, L"UnusedItem=Nothing" };
     MfrGetProfileSectionTests.push_back(ts_Native_PF1);
 
     // Requests to Native File Locations for GetPrivateProfileSection via Missing VFS file with value present
     MfrGetProfileSectionTest ts_Native_PF2 = { "Section Native-file VFS missing in package", true, false, false, 
-                                    L"C:\\Program Files\\PlaceholderTest\\Nonesuch.ini", L"Section2", 0, L"" };
+                                    (g_NativePF + L"\\PlaceholderTest\\Nonesuch.ini"), L"Section2", 0, L"" };
     MfrGetProfileSectionTests.push_back(ts_Native_PF2);
 
 
@@ -64,30 +73,30 @@ int InitializeGetProfileTestsSection()
 
 
     // Requests to Package VFS File Locations for GetPrivateProfileSection via existing VFS file with value present
-    temp = g_PackageRootPath.c_str();
-    temp.append(L"\\VFS\\ProgramFilesX64\\PlaceholderTest\\TestIniFileVfsPF.ini");
+    temp = VFSPF;
+    temp.append(L"\\PlaceholderTest\\TestIniFileVfsPF.ini");
     MfrGetProfileSectionTest ts_PackageVFS_PF1 = { "Section Package-file VFS exists in package", true, false, false, 
                                     temp.c_str() ,  L"Section2", 19, L"UnusedItem=Nothing" };
     MfrGetProfileSectionTests.push_back(ts_PackageVFS_PF1);
 
     // Requests to Package VFS File Locations for GetPrivateProfileSection via Missing VFS file with value present
-    temp = g_PackageRootPath.c_str();
-    temp.append(L"\\VFS\\ProgramFilesX64\\PlaceholderTest\\Nonesuch.ini");
+    temp = VFSPF;
+    temp.append(L"\\PlaceholderTest\\Nonesuch.ini");
     MfrGetProfileSectionTest ts_PackageVFS_PF2 = { "Section Package-file VFS missing in package", true, false, false, 
                                     temp.c_str(),  L"Section2", 0, L"" };
     MfrGetProfileSectionTests.push_back(ts_PackageVFS_PF2);
 
 
     // Requests to Redirected VFS File Locations for GetPrivateProfileSection via existing VFS file with value present
-    temp = g_writablePackageRootPath.c_str();
-    temp.append(L"\\VFS\\ProgramFilesX64\\PlaceholderTest\\TestIniFileVfsPF.ini");
+    temp = REVFSPF;
+    temp.append(L"\\PlaceholderTest\\TestIniFileVfsPF.ini");
     MfrGetProfileSectionTest ts_RedirectedVFS_PF1 = { "Section Redirected-file VFS exists in package", true, false, false, 
                                     temp.c_str() ,  L"Section2", 19, L"UnusedItem=Nothing" };
     MfrGetProfileSectionTests.push_back(ts_RedirectedVFS_PF1);
 
     // Requests to Redirected VFS File Locations for GetPrivateProfileSection via Missing VFS file with value present
-    temp = g_writablePackageRootPath.c_str();
-    temp.append(L"\\VFS\\ProgramFilesX64\\PlaceholderTest\\Nonesuch.ini");
+    temp = REVFSPF;
+    temp.append(L"\\PlaceholderTest\\Nonesuch.ini");
     MfrGetProfileSectionTest ts_RedirectedVFS_PF2 = { "Section Redirected-file VFS missing in package", true, false, false, 
                                     temp.c_str(),  L"Section2", 0, L"" };
     MfrGetProfileSectionTests.push_back(ts_RedirectedVFS_PF2);
@@ -126,14 +135,24 @@ int InitializeGetProfileTestsInt()
 {
     std::wstring temp;
 
+    std::wstring VFSPF = g_Cwd;
+    std::wstring REVFSPF = g_writablePackageRootPath.c_str();
+#if _M_IX86
+    VFSPF.append(L"\\VFS\\ProgramFilesX86");
+    REVFSPF.append(L"\\VFS\\ProgramFilesX86");
+#else
+    VFSPF.append(L"\\VFS\\ProgramFilesX64");
+    REVFSPF.append(L"\\VFS\\ProgramFilesX64");
+#endif
+
     // Requests to Native File Locations for GetPrivateProfileInt via existing VFS file with value present
     MfrGetProfileIntTest t_Native_PF1 = { "Int Native-file VFS exists in package", true, true, true, 
-                                    L"C:\\Program Files\\PlaceholderTest\\TestIniFileVfsPF.ini", L"Section1", L"ItemInt", 666, 1957 };
+                                    (g_NativePF + L"\\PlaceholderTest\\TestIniFileVfsPF.ini"), L"Section1", L"ItemInt", 666, 1957 };
     MfrGetProfileIntTests.push_back(t_Native_PF1);
 
     // Requests to Native File Locations for GetPrivateProfileInt via Missing VFS file with value present
     MfrGetProfileIntTest t_Native_PF2 = { "Int Native-file VFS missing in package", true, false, false, 
-                                    L"C:\\Program Files\\PlaceholderTest\\Nonesuch.ini", L"Section1", L"ItemInt", 666, 666 };
+                                    (g_NativePF + L"\\PlaceholderTest\\Nonesuch.ini"), L"Section1", L"ItemInt", 666, 666 };
     MfrGetProfileIntTests.push_back(t_Native_PF2);
 
 
@@ -153,30 +172,30 @@ int InitializeGetProfileTestsInt()
 
 
     // Requests to Package VFS File Locations for GetPrivateProfileInt via existing VFS file with value present
-    temp = g_PackageRootPath.c_str();
-    temp.append(L"\\VFS\\ProgramFilesX64\\PlaceholderTest\\TestIniFileVfsPF.ini");
+    temp = VFSPF;
+    temp.append(L"\\PlaceholderTest\\TestIniFileVfsPF.ini");
     MfrGetProfileIntTest t_PackageVFS_PF1 = { "Int Package-file VFS exists in package", true, false, false, 
                                     temp.c_str() , L"Section1", L"ItemInt", 666, 1957 };
     MfrGetProfileIntTests.push_back(t_PackageVFS_PF1);
 
     // Requests to Package VFS File Locations for GetPrivateProfileInt via Missing VFS file with value present
-    temp = g_PackageRootPath.c_str();
-    temp.append(L"\\VFS\\ProgramFilesX64\\PlaceholderTest\\Nonesuch.ini");
+    temp = VFSPF;
+    temp.append(L"\\PlaceholderTest\\Nonesuch.ini");
     MfrGetProfileIntTest t_PackageVFS_PF2 = { "Int Package-file VFS missing in package", true, false, false, 
                                     temp.c_str(), L"Section1", L"ItemInt", 666, 666 };
     MfrGetProfileIntTests.push_back(t_PackageVFS_PF2);
 
 
     // Requests to Redirected VFS File Locations for GetPrivateProfileInt via existing VFS file with value present
-    temp = g_writablePackageRootPath.c_str();
-    temp.append(L"\\VFS\\ProgramFilesX64\\PlaceholderTest\\TestIniFileVfsPF.ini");
+    temp = REVFSPF;
+    temp.append(L"\\PlaceholderTest\\TestIniFileVfsPF.ini");
     MfrGetProfileIntTest t_RedirectedVFS_PF1 = { "Int Redirected-file VFS exists in package", true, false, false, 
                                     temp.c_str() , L"Section1", L"ItemInt", 666, 1957 };
     MfrGetProfileIntTests.push_back(t_RedirectedVFS_PF1);
 
     // Requests to Redirected VFS File Locations for GetPrivateProfileInt via Missing VFS file with value present
-    temp = g_writablePackageRootPath.c_str();
-    temp.append(L"\\VFS\\ProgramFilesX64\\PlaceholderTest\\Nonesuch.ini");
+    temp = REVFSPF;
+    temp.append(L"\\PlaceholderTest\\Nonesuch.ini");
     MfrGetProfileIntTest t_RedirectedVFS_PF2 = { "Int Redirected-file VFS missing in package", true, false, false, 
                                     temp.c_str(), L"Section1", L"ItemInt", 666, 666 };
     MfrGetProfileIntTests.push_back(t_RedirectedVFS_PF2);
@@ -217,12 +236,12 @@ int InitializeGetProfileTestsString()
 
     // Requests to Native File Locations for GetPrivateProfileString via existing VFS file with value present
     MfrGetProfileStringTest ts_Native_PF1 = { "String Native-file VFS exists in package", true, true, true, 
-                                    L"C:\\Program Files\\PlaceholderTest\\TestIniFileVfsPF.ini", L"Section1", L"ItemString", L"InvalidString",11, L"ValidString" };
+                                    (g_NativePF + L"\\PlaceholderTest\\TestIniFileVfsPF.ini"), L"Section1", L"ItemString", L"InvalidString",11, L"ValidString" };
     MfrGetProfileStringTests.push_back(ts_Native_PF1);
 
     // Requests to Native File Locations for GetPrivateProfileString via Missing VFS file with value present
     MfrGetProfileStringTest ts_Native_PF2 = { "String Native-file VFS missing in package", true, false, false, 
-                                    L"C:\\Program Files\\PlaceholderTest\\Nonesuch.ini", L"Section1", L"ItemString", L"InvalidString", 13, L"InvalidString" };
+                                    (g_NativePF + L"\\PlaceholderTest\\Nonesuch.ini"), L"Section1", L"ItemString", L"InvalidString", 13, L"InvalidString" };
     MfrGetProfileStringTests.push_back(ts_Native_PF2);
 
 

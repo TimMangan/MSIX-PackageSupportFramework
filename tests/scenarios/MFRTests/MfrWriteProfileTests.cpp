@@ -3,7 +3,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 //-------------------------------------------------------------------------------------------------------
 
-#include "MfrWriteProfileTest.h"
+#include "MfrWriteProfileTests.h"
 #include "MfrCleanup.h"
 #include <stdio.h>
 
@@ -13,7 +13,7 @@ std::vector<MfrWriteProfileStructTest> MfrWriteProfileStructTests;
 
 wchar_t* makesectionbuffer(std::wstring test)
 {
-    wchar_t* buffer = (wchar_t*)malloc((DWORD)(92*sizeof(wchar_t)));  // yeah, we loose this memory but it's only a test.
+    wchar_t* buffer = (wchar_t*)malloc((92*sizeof(wchar_t)));  // yeah, we loose this memory but it's only a test.
     if (buffer != NULL)
     {
         memcpy_s(buffer, (DWORD)(92*sizeof(wchar_t)), test.c_str(), (DWORD)(test.length()*sizeof(wchar_t)));
@@ -27,6 +27,16 @@ int InitializeWriteProfileTestsSection()
 {
     std::wstring temp;
 
+    std::wstring VFSPF = g_Cwd;
+    std::wstring REVFSPF = g_writablePackageRootPath.c_str();
+#if _M_IX86
+    VFSPF.append(L"\\VFS\\ProgramFilesX86");
+    REVFSPF.append(L"\\VFS\\ProgramFilesX86");
+#else
+    VFSPF.append(L"\\VFS\\ProgramFilesX64");
+    REVFSPF.append(L"\\VFS\\ProgramFilesX64");
+#endif
+
 
     // Requests to Native File Locations for WritePrivateProfileSection via existing VFS file with value present
     std::wstring test1 = L"UnusedItem=Nothing1";
@@ -34,7 +44,7 @@ int InitializeWriteProfileTestsSection()
     if (buffer1 == NULL)
         return 0;
     MfrWriteProfileSectionTest ts_Native_PF1 = { "Section Native-file VFS exists in package", true, true, true, 
-                                    L"C:\\Program Files\\PlaceholderTest\\TestIniFileVfsPF.ini", L"Section4", (DWORD)test1.length()+1, buffer1};
+                                    (g_NativePF + L"\\PlaceholderTest\\TestIniFileVfsPF.ini"), L"Section4", (DWORD)test1.length()+1, buffer1};
     MfrWriteProfileSectionTests.push_back(ts_Native_PF1);
 
 
@@ -44,7 +54,7 @@ int InitializeWriteProfileTestsSection()
     if (buffer2 == NULL)
         return 0;
     MfrWriteProfileSectionTest ts_Native_PF2 = { "Section Native-file VFS missing in package", true, false, false, 
-                                    L"C:\\Program Files\\PlaceholderTest\\Nonesuch.ini", L"Section4",  (DWORD)test2.length() + 1, buffer2 };
+                                    (g_NativePF + L"\\PlaceholderTest\\Nonesuch.ini"), L"Section4",  (DWORD)test2.length() + 1, buffer2 };
     MfrWriteProfileSectionTests.push_back(ts_Native_PF2);
 
 
@@ -76,8 +86,8 @@ int InitializeWriteProfileTestsSection()
     wchar_t* buffer5 = makesectionbuffer(test5);
     if (buffer5 == NULL)
         return 0;
-    temp = g_PackageRootPath.c_str();
-    temp.append(L"\\VFS\\ProgramFilesX64\\PlaceholderTest\\TestIniFileVfsPF.ini");
+    temp = VFSPF;
+    temp.append(L"\\PlaceholderTest\\TestIniFileVfsPF.ini");
     MfrWriteProfileSectionTest ts_PackageVFS_PF1 = { "Section Package-file VFS exists in package", true, false, false, 
                                     temp.c_str() ,  L"Section4", (DWORD)test5.length() + 1, buffer5 };
     MfrWriteProfileSectionTests.push_back(ts_PackageVFS_PF1);
@@ -87,8 +97,8 @@ int InitializeWriteProfileTestsSection()
     wchar_t* buffer6 = makesectionbuffer(test6);
     if (buffer6 == NULL)
         return 0;
-    temp = g_PackageRootPath.c_str();
-    temp.append(L"\\VFS\\ProgramFilesX64\\PlaceholderTest\\Nonesuch.ini");
+    temp = VFSPF;
+    temp.append(L"\\PlaceholderTest\\Nonesuch.ini");
     MfrWriteProfileSectionTest ts_PackageVFS_PF2 = { "Section Package-file VFS missing in package", true, false, false, 
                                     temp.c_str(),  L"Section4",  (DWORD)test6.length() + 1, buffer6 };
     MfrWriteProfileSectionTests.push_back(ts_PackageVFS_PF2);
@@ -99,8 +109,8 @@ int InitializeWriteProfileTestsSection()
     wchar_t* buffer7 = makesectionbuffer(test7);
     if (buffer7 == NULL)
         return 0;
-    temp = g_writablePackageRootPath.c_str();
-    temp.append(L"\\VFS\\ProgramFilesX64\\PlaceholderTest\\TestIniFileVfsPF.ini");
+    temp = REVFSPF;
+    temp.append(L"\\PlaceholderTest\\TestIniFileVfsPF.ini");
     MfrWriteProfileSectionTest ts_RedirectedVFS_PF1 = { "Section Redirected-file VFS exists in package", true, false, false, 
                                     temp.c_str() ,  L"Section4", (DWORD)test7.length() + 1, buffer7 };
     MfrWriteProfileSectionTests.push_back(ts_RedirectedVFS_PF1);
@@ -110,8 +120,8 @@ int InitializeWriteProfileTestsSection()
     wchar_t* buffer8 = makesectionbuffer(test8);
     if (buffer8 == NULL)
         return 0;
-    temp = g_writablePackageRootPath.c_str();
-    temp.append(L"\\VFS\\ProgramFilesX64\\PlaceholderTest\\Nonesuch.ini");
+    temp = REVFSPF;
+    temp.append(L"\\PlaceholderTest\\Nonesuch.ini");
     MfrWriteProfileSectionTest ts_RedirectedVFS_PF2 = { "Section Redirected-file VFS missing in package", true, false, false, 
                                     temp.c_str(),  L"Section4",  (DWORD)test8.length() + 1, buffer8 };
     MfrWriteProfileSectionTests.push_back(ts_RedirectedVFS_PF2);
@@ -162,14 +172,24 @@ int InitializeWriteProfileTestsString()
 {
     std::wstring temp;
 
+    std::wstring VFSPF = g_Cwd;
+    std::wstring REVFSPF = g_writablePackageRootPath.c_str();
+#if _M_IX86
+    VFSPF.append(L"\\VFS\\ProgramFilesX86");
+    REVFSPF.append(L"\\VFS\\ProgramFilesX86");
+#else
+    VFSPF.append(L"\\VFS\\ProgramFilesX64");
+    REVFSPF.append(L"\\VFS\\ProgramFilesX64");
+#endif
+
     // Requests to Native File Locations for WritePrivateProfileString via existing VFS file with value present
     MfrWriteProfileStringTest ts_Native_PF1 = { "String Native-file VFS exists in package", true, true, true, 
-                                    L"C:\\Program Files\\PlaceholderTest\\TestIniFileVfsPF.ini", L"Section1", L"ItemString", L"InvalidString", 13, L"InvalidString" };
+                                    (g_NativePF + L"\\PlaceholderTest\\TestIniFileVfsPF.ini"), L"Section1", L"ItemString", L"InvalidString", 13, L"InvalidString" };
     MfrWriteProfileStringTests.push_back(ts_Native_PF1);
 
     // Requests to Native File Locations for WritePrivateProfileString via Missing VFS file with value present
     MfrWriteProfileStringTest ts_Native_PF2 = { "String Native-file VFS missing in package", true, false, false, 
-                                    L"C:\\Program Files\\PlaceholderTest\\Nonesuch.ini", L"Section1", L"ItemString", L"InvalidString", 13, L"InvalidString" };
+                                    (g_NativePF + L"\\PlaceholderTest\\Nonesuch.ini"), L"Section1", L"ItemString", L"InvalidString", 13, L"InvalidString" };
     MfrWriteProfileStringTests.push_back(ts_Native_PF2);
 
 
@@ -189,30 +209,30 @@ int InitializeWriteProfileTestsString()
 
 
     // Requests to Package VFS File Locations for WritePrivateProfileString via existing VFS file with value present
-    temp = g_PackageRootPath.c_str();
-    temp.append(L"\\VFS\\ProgramFilesX64\\PlaceholderTest\\TestIniFileVfsPF.ini");
+    temp = VFSPF;
+    temp.append(L"\\PlaceholderTest\\TestIniFileVfsPF.ini");
     MfrWriteProfileStringTest ts_PackageVFS_PF1 = { "String Package-file VFS exists in package", true, false, false, 
                                     temp.c_str() , L"Section1", L"ItemString", L"InvalidString", 13, L"InvalidString" };
     MfrWriteProfileStringTests.push_back(ts_PackageVFS_PF1);
 
     // Requests to Package VFS File Locations for WritePrivateProfileString via Missing VFS file with value present
-    temp = g_PackageRootPath.c_str();
-    temp.append(L"\\VFS\\ProgramFilesX64\\PlaceholderTest\\Nonesuch.ini");
+    temp = VFSPF;
+    temp.append(L"\\PlaceholderTest\\Nonesuch.ini");
     MfrWriteProfileStringTest ts_PackageVFS_PF2 = { "String Package-file VFS missing in package", true, false, false, 
                                     temp.c_str(), L"Section1", L"ItemString", L"InvalidString", 13, L"InvalidString" };
     MfrWriteProfileStringTests.push_back(ts_PackageVFS_PF2);
 
 
     // Requests to Redirected VFS File Locations for WritePrivateProfileString via existing VFS file with value present
-    temp = g_writablePackageRootPath.c_str();
-    temp.append(L"\\VFS\\ProgramFilesX64\\PlaceholderTest\\TestIniFileVfsPF.ini");
+    temp = REVFSPF;
+    temp.append(L"\\PlaceholderTest\\TestIniFileVfsPF.ini");
     MfrWriteProfileStringTest ts_RedirectedVFS_PF1 = { "String Redirected-file VFS exists in package", true, false, false, 
                                     temp.c_str() , L"Section1", L"ItemString",  L"InvalidString", 13, L"InvalidString" };
     MfrWriteProfileStringTests.push_back(ts_RedirectedVFS_PF1);
 
     // Requests to Redirected VFS File Locations for WritePrivateProfileString via Missing VFS file with value present
-    temp = g_writablePackageRootPath.c_str();
-    temp.append(L"\\VFS\\ProgramFilesX64\\PlaceholderTest\\Nonesuch.ini");
+    temp = REVFSPF;
+    temp.append(L"\\PlaceholderTest\\Nonesuch.ini");
     MfrWriteProfileStringTest ts_RedirectedVFS_PF2 = { "String Redirected-file VFS missing in package", true, false, false, 
                                     temp.c_str(), L"Section1", L"ItemString", L"InvalidString", 13, L"InvalidString" };
     MfrWriteProfileStringTests.push_back(ts_RedirectedVFS_PF2);
@@ -250,6 +270,16 @@ int InitializeWriteProfileTestsString()
 int InitializeWriteProfileTestsStruct()
 {
     std::wstring temp;
+
+    std::wstring VFSPF = g_Cwd;
+    std::wstring REVFSPF = g_writablePackageRootPath.c_str();
+#if _M_IX86
+    VFSPF.append(L"\\VFS\\ProgramFilesX86");
+    REVFSPF.append(L"\\VFS\\ProgramFilesX86");
+#else
+    VFSPF.append(L"\\VFS\\ProgramFilesX64");
+    REVFSPF.append(L"\\VFS\\ProgramFilesX64");
+#endif
 
     return (int)MfrWriteProfileStructTests.size();
 }

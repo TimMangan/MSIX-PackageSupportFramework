@@ -16,15 +16,13 @@ int InitializeRemoveDirectoryTestArray()
     std::wstring tempD;
 
     // Requests to Native File Locations for NativeDirectory via VFS
-    tempD = g_PFs.native().c_str();
-    tempD.append(L"\\PlaceholderTest");
+    tempD = g_NativePF + L"\\PlaceholderTest";
     MfrRemoveDirectoryTest ts_Native_P1 = { "RemoveDirectory Native-folder VFS exists in package and redir",  true, true,  true,
                                 tempD, tempD, true, ERROR_SUCCESS, 0x10, ERROR_SUCCESS };
     MfrRemoveDirectoryTests.push_back(ts_Native_P1);
 
    
-    tempD = g_PFs.native().c_str();
-    tempD.append(L"\\NoneSuchDirTest");
+    tempD = g_NativePF + L"\\NoneSuchDirTest";
     MfrRemoveDirectoryTest ts_Native_P2 = { "RemoveDirectory Native-folder missing from package and is in redir",  true, false,  false,
                                 tempD, tempD, true, ERROR_SUCCESS, INVALID_FILE_ATTRIBUTES,  ERROR_FILE_NOT_FOUND };
     MfrRemoveDirectoryTests.push_back(ts_Native_P2);
@@ -46,20 +44,17 @@ int InitializeDeleteFileTestArray()
 
 
     // Requests to Native File Locations for NativeFile via VFS
-    tempD = g_PFs.native().c_str();
-    tempD.append(L"\\PlaceholderTest\\Placeholder.txt");
+    tempD = g_NativePF + L"\\PlaceholderTest\\Placeholder.txt";
     MfrDeleteFileTest ts_Native_PF1 = { "DeleteFile Native-file VFS exists in package and redir",  true, true,  true,
                                 tempD, tempD, true, ERROR_SUCCESS, 0x20, ERROR_SUCCESS };
     MfrDeleteFileTests.push_back(ts_Native_PF1);
 
-    tempD = g_PFs.native().c_str();
-    tempD.append(L"\\PlaceholderTest\\NoneSuch.txt");
+    tempD = g_NativePF + L"\\PlaceholderTest\\NoneSuch.txt";
     MfrDeleteFileTest ts_Native_PF2 = { "DeleteFile Native-file VFS missing (folder exists) in package and is in redir",  true, false,  false,
                                 tempD, tempD, true, ERROR_SUCCESS, INVALID_FILE_ATTRIBUTES, ERROR_FILE_NOT_FOUND };
     MfrDeleteFileTests.push_back(ts_Native_PF2);
 
-    tempD = g_PFs.native().c_str();
-    tempD.append(L"\\NoneSuchDirTest\\NoneSuch.txt");
+    tempD = g_NativePF + L"\\NoneSuchDirTest\\NoneSuch.txt";
     MfrDeleteFileTest ts_Native_PF3 = { "DeleteFile Native-folder missing from package and is in redir",  true, false,  false,
                                 tempD, tempD, true, ERROR_SUCCESS, INVALID_FILE_ATTRIBUTES, ERROR_PATH_NOT_FOUND };
     MfrDeleteFileTests.push_back(ts_Native_PF3);

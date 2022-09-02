@@ -15,7 +15,7 @@ int InitializeCreateDirectoryTestArray()
     std::wstring tempD;
 
     // Requests to Native File Locations for CreateDirectory via VFS
-    tempD = g_PFs.native().c_str();
+    tempD = g_NativePF;
     tempD.append(L"\\PlaceholderTest");
     MfrCreateDirectoryTest ts_Native_PF1 = { "CreateDirectory Native-folder VFS exists in package",  true, true,  true,
                                 tempD, true, ERROR_SUCCESS };
@@ -23,8 +23,13 @@ int InitializeCreateDirectoryTestArray()
 
     // Requests to Package File Locations for CreateDirectory VFS
     // 
-    tempD = g_PFs.native().c_str();
+    tempD = g_NativePF;
+
+#if _M_IX86
+    tempD.append(L"\\VFS\\ProgramFilesX86\\NotPreviousExistingDirectoryTest");
+#else
     tempD.append(L"\\VFS\\ProgramFilesX64\\NotPreviousExistingDirectoryTest");
+#endif
     MfrCreateDirectoryTest ts_Package_PF1 = { "CreateDirectory Non-Existing Directory in Package VFS Test",  true, true,  true,
                                 tempD, true, ERROR_SUCCESS };
     MfrCreateDirectoryTests.push_back(ts_Package_PF1);
@@ -38,13 +43,21 @@ int InitializeCreateDirectoryTestArray()
     
     // Requests to Redirected File Locations for CreateDirectory using VFS
     tempD = g_writablePackageRootPath.c_str();
+#if _M_IX86
+    tempD.append(L"\\VFS\\ProgramFilesX86\\PlaceholderTest\\NewFolder1");
+#else
     tempD.append(L"\\VFS\\ProgramFilesX64\\PlaceholderTest\\NewFolder1");
+#endif
     MfrCreateDirectoryTest t_Redir_PF1 = { "Redirected-file VFS missing in package with parent present", true, true, true, 
                                     tempD, true, ERROR_SUCCESS };
     MfrCreateDirectoryTests.push_back(t_Redir_PF1);
 
     tempD = g_writablePackageRootPath.c_str();
+#if _M_IX86
     tempD.append(L"\\VFS\\ProgramFilesX64\\PlaceholderTest\\NewFolder2\\NewFolder3");
+#else
+    tempD.append(L"\\VFS\\ProgramFilesX64\\PlaceholderTest\\NewFolder2\\NewFolder3");
+#endif
     MfrCreateDirectoryTest t_Redir_PF2 = { "Redirected-file VFS missing in package with parent missing", true, true, true, 
                                     tempD, true, ERROR_SUCCESS };
     MfrCreateDirectoryTests.push_back(t_Redir_PF2);
@@ -66,9 +79,9 @@ int InitializeCreateDirectoryExTestArray()
     std::wstring tempD;
 
     // Requests to Native File Locations for CopyFile via VFS
-    tempS = g_PFs.native().c_str();
+    tempS = g_NativePF;
     tempS.append(L"\\PlaceholderTest");
-    tempD = g_PFs.native().c_str();
+    tempD = g_NativePF;;
     tempD.append(L"\\PlaceholderTestCopied");
     MfrCreateDirectoryExTest ts_Native_PF1 = { "CreateDirectoryEx from Native-folder VFS exists in package", true, true,  true,
                                 tempS, tempD, true, ERROR_SUCCESS };
@@ -77,7 +90,7 @@ int InitializeCreateDirectoryExTestArray()
 
     // Requests to Package File Locations for CreateDirectory VFS
     // 
-    tempD = g_PFs.native().c_str();
+    tempD = g_NativePF;
     tempD.append(L"\\VFS\\ProgramFilesX64\\NotPreviousExistingDirectoryTest");
     MfrCreateDirectoryExTest ts_Package_PF1 = { "CreateDirectory Non-Existing Directory in Package VFS Test",  true, true,  true,
                                 tempS, tempD, true, ERROR_SUCCESS };

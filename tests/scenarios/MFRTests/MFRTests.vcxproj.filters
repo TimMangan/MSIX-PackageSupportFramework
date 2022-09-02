@@ -48,6 +48,12 @@
     <ClCompile Include="MfrCreateFiles.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="MfrCreateOthersTests.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="MfrMoveFilesTests.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Xml Include="AppXManifest.xml">
@@ -73,19 +79,19 @@
     </Text>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="MfrAttributeTest.h">
+    <ClInclude Include="MfrAttributeTests.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="MfrGetProfileTest.h">
+    <ClInclude Include="MfrGetProfileTests.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="MFRConsts.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="MfrWriteProfileTest.h">
+    <ClInclude Include="MfrWriteProfileTests.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="MfrCopyFileTest.h">
+    <ClInclude Include="MfrCopyFileTests.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="MfrCleanup.h">
@@ -97,7 +103,13 @@
     <ClInclude Include="MfrRemoveDeleteTests.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="MfrCreateFileTest.h">
+    <ClInclude Include="MfrCreateFileTests.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="MfrCreateOthersTests.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="MfrMoveFilesTests.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

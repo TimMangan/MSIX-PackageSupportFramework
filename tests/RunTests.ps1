@@ -140,7 +140,7 @@ if(!(Test-Path "$PSScriptRoot\scenarios\Appx"))
 
 RunTest "x64" "Debug"
 #RunTest "x64" "Release"
-#RunTest "x86" "Debug"
+RunTest "x86" "Debug"
 #RunTest "x86" "Release"
 
 

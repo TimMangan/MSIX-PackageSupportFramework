@@ -98,7 +98,7 @@ namespace mfr
                 outputPath.Request_MfrPathType = mfr::mfr_path_types::is_protocol_path;
             }
             else if (wInputPath.compare(L"CONOUT$") == 0 ||
-                     wInputPath.compare(L"CONIN$") )
+                     wInputPath.compare(L"CONIN$") == 0 )
             {
                 outputPath.Request_NormalizedPath = inputPath;
                 outputPath.Request_MfrPathType = mfr::mfr_path_types::unsupported_for_intercepts;

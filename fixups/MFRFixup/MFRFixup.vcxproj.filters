@@ -173,6 +173,15 @@
     <ClCompile Include="CreateSymbolicLink.cpp">
       <Filter>Source Files\Intercepts\CreateOthers</Filter>
     </ClCompile>
+    <ClCompile Include="MoveFile.cpp">
+      <Filter>Source Files\Intercepts\Moves</Filter>
+    </ClCompile>
+    <ClCompile Include="MoveFileEx.cpp">
+      <Filter>Source Files\Intercepts\Moves</Filter>
+    </ClCompile>
+    <ClCompile Include="MoveFileWithProgress.cpp">
+      <Filter>Source Files\Intercepts\Moves</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="readme.md" />

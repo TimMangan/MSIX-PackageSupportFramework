@@ -17,8 +17,8 @@
 #include "file_paths.h"
 #include <iostream>
 
-#include "MfrAttributeTest.h"
-#include "MfrGetProfileTest.h"
+//#include "MfrAttributeTest.h"
+//#include "MfrGetProfileTest.h"
 
 namespace details
 {
@@ -51,6 +51,7 @@ std::filesystem::path g_writablePackageRootPath;
 std::wstring g_Cwd;
 std::filesystem::path g_PFs;
 std::filesystem::path g_Documents;
+std::wstring g_NativePF;
 
 #if DEBUGPATHTESTING
 extern int PlaceholderTest();
@@ -70,9 +71,14 @@ extern int RunCopyFileTests();
 extern int InitializeCreateDirectoryTests();
 extern int RunCreateDirectoryTests();
 
-
 extern int InitializeCreateFileTests();
 extern int RunCreateFileTests();
+
+extern int InitializeCreateOthersTests();
+extern int RunCreateOthersTests();
+
+extern int InitializeMoveFilesTests();
+extern int RunMoveFilesTests();
 
 extern int InitializeRemoveDeleteTests();
 extern int RunRemoveDeleteTests();
@@ -86,17 +92,35 @@ void InitializeGlobals()
     g_Cwd = std::filesystem::current_path().c_str();
     g_PFs = psf::known_folder(FOLDERID_ProgramFiles);
     g_Documents = psf::known_folder(FOLDERID_Documents);
+
+#if _M_IX86
+    g_NativePF = L"C:\\Program Files (x86)";
+#else
+    g_NativePF = L"C:\\Program Files";
+#endif
+
 }
 
 void InitializeFolderMappings()
 {
+    std::wstring temp;
     int count = 0;
     count += InitializeAttributeTests();
+    temp = L"InitializeAttributeTests ";  temp.append(std::to_wstring(count)); temp.append(L"\n"); std::wcout << temp.c_str();
     count += InitializeGetProfileTests();
+    temp = L"InitializeGetProfileTests ";  temp.append(std::to_wstring(count)); temp.append(L"\n"); std::wcout << temp.c_str();
     count += InitializeWriteProfileTests();
+    temp = L"InitializeWriteProfileTests ";  temp.append(std::to_wstring(count)); temp.append(L"\n"); std::wcout << temp.c_str();
     count += InitializeCopyFileTests();
+    temp = L"InitializeCopyFileTests ";  temp.append(std::to_wstring(count)); temp.append(L"\n"); std::wcout << temp.c_str();
     count += InitializeCreateDirectoryTests();
+    temp = L"InitializeCreateDirectoryTests ";  temp.append(std::to_wstring(count)); temp.append(L"\n"); std::wcout << temp.c_str();
     count += InitializeCreateFileTests();
+    temp = L"InitializeCreateFileTests ";  temp.append(std::to_wstring(count)); temp.append(L"\n"); std::wcout << temp.c_str();
+    count += InitializeCreateOthersTests();
+    temp = L"InitializeCreateOthersTests ";  temp.append(std::to_wstring(count)); temp.append(L"\n"); std::wcout << temp.c_str();
+    count += InitializeMoveFilesTests();
+    temp = L"InitializeMoveFilesTests ";  temp.append(std::to_wstring(count)); temp.append(L"\n"); std::wcout << temp.c_str();
     count += InitializeRemoveDeleteTests();
     test_initialize("Managed File Redirection (MFR) Tests", count);
 }
@@ -128,6 +152,12 @@ int run()
     result = result ? result : testResult;
 
     testResult = RunCreateFileTests();;
+    result = result ? result : testResult;
+
+    testResult = RunCreateOthersTests();;
+    result = result ? result : testResult;
+
+    testResult = RunMoveFilesTests();;
     result = result ? result : testResult;
 
     testResult = RunRemoveDeleteTests();;

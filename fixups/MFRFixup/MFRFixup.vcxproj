@@ -218,6 +218,9 @@
     <ClCompile Include="DeleteFile.cpp" />
     <ClCompile Include="dllmain.cpp" />
     <ClCompile Include="FID.cpp" />
+    <ClCompile Include="MoveFile.cpp" />
+    <ClCompile Include="MoveFileEx.cpp" />
+    <ClCompile Include="MoveFileWithProgress.cpp" />
     <ClCompile Include="RemoveDirectory.cpp" />
     <ClCompile Include="SetFileAttributes.cpp" />
     <ClCompile Include="GetFileAttributes.cpp" />

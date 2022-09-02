@@ -241,13 +241,13 @@ The following APIs are expected to be targeted.  The current status for this wor
 | CopyFile | Complete |
 | CopyFileEx | Complete |
 | CopyFile2  | Complete |
-| CreateFile | in test |
-| CreateFile2 | in test |
+| CreateFile | Complete |
+| CreateFile2 | Complete |
 | CreateDirectory | Complete |
 | CreateDirectoryEx | Complete |
-| CreateHardLink | not started |
-| CreateSymbolicLink | not started |
-| DeleteFile | In-test |
+| CreateHardLink | Complete |
+| CreateSymbolicLink | Complete |
+| DeleteFile | Complete |
 | FindFirstFile | not started |
 | FindFirstFileEx | not started |
 | FindNextFile | not started |
@@ -260,11 +260,12 @@ The following APIs are expected to be targeted.  The current status for this wor
 | GetPrivateProfileString | Complete |
 | GetPrivateProfileInt | Complete |
 | GetPrivateProfileStruct | Complete |
-| MoveFile | not started |
-| MoveFileEx | not started |
+| MoveFile | Complete |
+| MoveFileEx | Complete |
+| MoveFileWithProgress | Complete |
 | ReadDirectoryChangesW | not started, may not be needed |
 | ReadDirectoryChangesExW | not started, may not be needed |
-| RemoveDirectory | in-test |
+| RemoveDirectory | Complete |
 | ReplaceFile | not started |
 | SearchPath | not started, may not be needed |
 | SetCurrentDirectory | not started, may not be needed |
@@ -273,3 +274,5 @@ The following APIs are expected to be targeted.  The current status for this wor
 | WritePrivateProfileString | Complete |
 | WritePrivateProfileStruct | Complete |
 
+Additionally, there are numberous "Transacted" API calls that are generally not used and are ignored.  
+Calls that use open file handles, such as ReadFile, WriteFile, and CloseHandle, are also ignored.
