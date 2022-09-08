@@ -26,7 +26,7 @@ DWORD MfrCleanupWritablePackageRoot()
 
     std::wstring arguments = L"/C rmdir /S /Q \"";
     arguments.append(directoryPath.c_str());
-    arguments.append(L"\"");
+    arguments.append(L"\" >nul  2>&1"); // hide not errors like not found
     return RunThisCommandOutsideContainer(arguments);
 }
 
@@ -38,7 +38,7 @@ DWORD MfrCleanupLocalDocuments(std::wstring subfoldername)
 
     std::wstring arguments = L"/C rmdir /S /Q \"";
     arguments.append(directoryPath.c_str());
-    arguments.append(L"\"");
+    arguments.append(L"\" >nul  2>&1");  // hide not errors like not found
     return RunThisCommandOutsideContainer(arguments);
 }
 
@@ -118,7 +118,7 @@ DWORD RunThisCommandOutsideContainer(std::wstring commandArguments)
             cmd.c_str(),
             CL,
             nullptr, nullptr, // Process/ThreadAttributes
-            true, // InheritHandles
+            false, // InheritHandles
             CreationFlags,
             nullptr, // Environment
             nullptr, //currentDirectory,

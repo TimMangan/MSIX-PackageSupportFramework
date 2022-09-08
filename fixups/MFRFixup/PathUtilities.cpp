@@ -172,11 +172,17 @@ std::filesystem::path drive_absolute_to_normal(std::filesystem::path nativeRelat
 std::wstring MakeLongPath(std::wstring path)
 {
     // Only add to full paths on a drive letter
-    psf::dos_path_type dosType = psf::path_type(path.c_str());
-    if (dosType == psf::dos_path_type::drive_absolute)
+    if (path.length() > 0)
     {
-        std::wstring outPath = L"\\\\?\\";
-        return outPath.append(path);
+        psf::dos_path_type dosType = psf::path_type(path.c_str());
+        if (dosType == psf::dos_path_type::drive_absolute)
+        {
+            if (path.length() > 3)   // Don't extend C:\ as it messes up FindFirstFile(Ex)
+            {
+                std::wstring outPath = L"\\\\?\\";
+                return outPath.append(path);
+            }
+        }
     }
     return path;
 }

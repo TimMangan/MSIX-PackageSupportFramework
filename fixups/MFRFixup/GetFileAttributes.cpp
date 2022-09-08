@@ -15,14 +15,14 @@
 
 #include "ManagedPathTypes.h"
 #include "PathUtilities.h"
+#include "DetermineCohorts.h"
 
 #if _DEBUG
 //#define DEBUGPATHTESTING 1
 #include "DebugPathTesting.h"
 #endif
 
-#include "FunctionImplementations.h"
-#include <psf_logging.h>
+
 
 
 #define WRAPPER_GETFILEATTRIBUTES(theDestinationFilename, debug) \
@@ -44,8 +44,12 @@ DWORD __stdcall GetFileAttributesFixup(_In_ const CharT* fileName) noexcept
 {
     DWORD DllInstance = ++g_InterceptInstance;
     bool debug = false;
+    bool moreDebug = false;
 #if _DEBUG
     debug = true;
+#endif
+#if MOREDEBUG
+    moreDebug = true;
 #endif
     DWORD retfinal;
     auto guard = g_reentrancyGuard.enter();
@@ -73,138 +77,130 @@ DWORD __stdcall GetFileAttributesFixup(_In_ const CharT* fileName) noexcept
 #endif
             // This get is inheirently a read-only operation in all cases.
             // We prefer to use the redirecton case, if present.
-            mfr::mfr_path file_mfr = mfr::create_mfr_path(wfileName);
-            mfr::mfr_folder_mapping map;
-            std::wstring testWsRequested = file_mfr.Request_NormalizedPath.c_str();
-            std::wstring testWsNative;
-            std::wstring testWsPackage;
-            std::wstring testWsRedirected;
-            switch (file_mfr.Request_MfrPathType)
+            Cohorts cohorts;
+            DetermineCohorts(wfileName, &cohorts, moreDebug, DllInstance, L"GetAttributesFixup");
+
+            switch (cohorts.file_mfr.Request_MfrPathType)
             {
             case mfr::mfr_path_types::in_native_area:
-                map = mfr::Find_LocalRedirMapping_FromNativePath_ForwardSearch(file_mfr.Request_NormalizedPath.c_str());
-                if (map.Valid_mapping)
+                if (cohorts.map.Valid_mapping)
                 {
-                    // try the request path, which must be the local redirected version by definition, and then a package equivalent = 
-                    testWsRedirected = testWsRequested;
-                    WRAPPER_GETFILEATTRIBUTES(testWsRedirected, debug);
+                    switch (cohorts.map.RedirectionFlags)
+                    {
+                    case mfr::mfr_redirect_flags::prefer_redirection_local:
+                        // try the request path, which must be the local redirected version by definition, and then a package equivalent = 
+                        WRAPPER_GETFILEATTRIBUTES(cohorts.WsRedirected, debug);  // returns if successful.
 
-                    testWsPackage = ReplacePathPart(testWsRequested.c_str(), map.NativePathBase, map.PackagePathBase);
-                    WRAPPER_GETFILEATTRIBUTES(testWsPackage, debug);
-
+                        WRAPPER_GETFILEATTRIBUTES(cohorts.WsPackage, debug);  // returns if successful.
+                        // Both failed if here
 #if _DEBUG
-                    Log(L"[%d] GetFileAttributes returns file '%s' and result 0x%x and error =0x%x", DllInstance, testWsPackage.c_str(), retfinal, GetLastError());
+                        Log(L"[%d] GetFileAttributes returns with result 0x%x and error =0x%x", DllInstance, retfinal, GetLastError());
 #endif
-                    return retfinal;
-                }
-                map = mfr::Find_TraditionalRedirMapping_FromNativePath_ForwardSearch(file_mfr.Request_NormalizedPath.c_str());
-                if (map.Valid_mapping)
-                {
-                    // try the redirected path, then package, then native.
-                    testWsRedirected = ReplacePathPart(testWsRequested.c_str(), map.NativePathBase, map.RedirectedPathBase);
-                    WRAPPER_GETFILEATTRIBUTES(testWsRedirected, debug);
+                        return retfinal;
+                    case mfr::mfr_redirect_flags::prefer_redirection_containerized:
+                    case mfr::mfr_redirect_flags::prefer_redirection_if_package_vfs:
+                        // try the redirected path, then package, then native.
+                        WRAPPER_GETFILEATTRIBUTES(cohorts.WsRedirected, debug);   // returns if successful.
 
-                    testWsPackage = ReplacePathPart(testWsRequested.c_str(), map.NativePathBase, map.PackagePathBase);
-                    WRAPPER_GETFILEATTRIBUTES(testWsPackage, debug);
+                        WRAPPER_GETFILEATTRIBUTES(cohorts.WsPackage, debug);   // returns if successful.
 
-                    testWsNative = testWsRequested;
-                    WRAPPER_GETFILEATTRIBUTES(testWsNative, debug);
-                    
+                        WRAPPER_GETFILEATTRIBUTES(cohorts.WsNative, debug);   // returns if successful.
+                        // All failed if here
 #if _DEBUG
-                    Log(L"[%d] GetFileAttributes returns file '%s' and result 0x%x and error =0x%x", DllInstance, testWsNative.c_str(), retfinal, GetLastError());
+                        Log(L"[%d] GetFileAttributes returns with result 0x%x and error =0x%x", DllInstance, retfinal, GetLastError());
 #endif
-                    return retfinal;
+                        return retfinal;
+                    case mfr::mfr_redirect_flags::prefer_redirection_none:
+                    case mfr::mfr_redirect_flags::disabled:
+                    default:
+                        // just fall through to unguarded code
+                        break;
+                    }
                 }
                 break;
             case mfr::mfr_path_types::in_package_pvad_area:
-                map = mfr::Find_TraditionalRedirMapping_FromPackagePath_ForwardSearch(file_mfr.Request_NormalizedPath.c_str());
-                if (map.Valid_mapping)
+                if (cohorts.map.Valid_mapping)
                 {
-                    //// try the redirected path, then package, then don't need native.
-                    testWsRedirected = ReplacePathPart(testWsRequested.c_str(), map.PackagePathBase, map.RedirectedPathBase);
-                    WRAPPER_GETFILEATTRIBUTES(testWsRedirected, debug);
+                    switch (cohorts.map.RedirectionFlags)
+                    {
+                    case mfr::mfr_redirect_flags::prefer_redirection_local:
+                        // not possible, fall through
+                        break;
+                    case mfr::mfr_redirect_flags::prefer_redirection_containerized:
+                    case mfr::mfr_redirect_flags::prefer_redirection_if_package_vfs:
+                        //// try the redirected path, then package, then don't need native.
+                        WRAPPER_GETFILEATTRIBUTES(cohorts.WsRedirected, debug);   // returns if successful.
 
-                    testWsPackage = testWsRequested;
-                    WRAPPER_GETFILEATTRIBUTES(testWsPackage, debug);
-
+                        WRAPPER_GETFILEATTRIBUTES(cohorts.WsPackage, debug);   // returns if successful.
+                        // Both failed if here
 #if _DEBUG
-                    Log(L"[%d] GetFileAttributes returns file '%s' and result 0x%x and error =0x%x", DllInstance, testWsPackage.c_str(), retfinal, GetLastError());
+                        Log(L"[%d] GetFileAttributes returns with result 0x%x and error =0x%x", DllInstance, retfinal, GetLastError());
 #endif
-                    return retfinal;
+                        return retfinal;
+                    case mfr::mfr_redirect_flags::prefer_redirection_none:
+                    case mfr::mfr_redirect_flags::disabled:
+                    default:
+                        // just fall through to unguarded code
+                        break;
+                    }
                 }
                 break;
             case mfr::mfr_path_types::in_package_vfs_area:
-                map = mfr::Find_LocalRedirMapping_FromPackagePath_ForwardSearch(file_mfr.Request_NormalizedPath.c_str());
-                if (map.Valid_mapping)
+                if (cohorts.map.Valid_mapping)
                 {
-                    // try the request path, which must be the local redirected version by definition, and then a package equivalent.
-                    testWsRedirected = ReplacePathPart(testWsRequested.c_str(), map.PackagePathBase, map.RedirectedPathBase);
-                    WRAPPER_GETFILEATTRIBUTES(testWsRedirected, debug);
+                    switch (cohorts.map.RedirectionFlags)
+                    {
+                    case mfr::mfr_redirect_flags::prefer_redirection_local:
 
-                    testWsPackage = testWsRequested;
-                    WRAPPER_GETFILEATTRIBUTES(testWsPackage, debug);
+                        // try the request path, which must be the local redirected version by definition, and then a package equivalent.
+                        WRAPPER_GETFILEATTRIBUTES(cohorts.WsRedirected, debug);   // returns if successful.
 
+                        WRAPPER_GETFILEATTRIBUTES(cohorts.WsPackage, debug);   // returns if successful.
+                        // Both failed if here
 #if _DEBUG
-                    Log(L"[%d] GetFileAttributes returns file '%s' and result 0x%x and error =0x%x", DllInstance, testWsPackage.c_str(), retfinal, GetLastError());
+                        Log(L"[%d] GetFileAttributes returns with result 0x%x and error =0x%x", DllInstance, retfinal, GetLastError());
 #endif
-                    return retfinal;
-                }
-                map = mfr::Find_TraditionalRedirMapping_FromPackagePath_ForwardSearch(file_mfr.Request_NormalizedPath.c_str());
-                if (map.Valid_mapping)
-                {
-                    // try the redirected path, then package, then native.
-                    testWsRedirected = ReplacePathPart(testWsRequested.c_str(), map.PackagePathBase, map.RedirectedPathBase);
-                    WRAPPER_GETFILEATTRIBUTES(testWsRedirected, debug);
+                        return retfinal;
+                    case mfr::mfr_redirect_flags::prefer_redirection_containerized:
+                    case mfr::mfr_redirect_flags::prefer_redirection_if_package_vfs:
+                        // try the redirected path, then package, then native.
+                        WRAPPER_GETFILEATTRIBUTES(cohorts.WsRedirected, debug);  // returns if successful.
 
-                    testWsPackage = testWsRequested;
-                    WRAPPER_GETFILEATTRIBUTES(testWsPackage, debug);
+                        WRAPPER_GETFILEATTRIBUTES(cohorts.WsPackage, debug);  // returns if successful.
 
-                    testWsNative = ReplacePathPart(testWsRequested.c_str(), map.PackagePathBase, map.NativePathBase);
-                    WRAPPER_GETFILEATTRIBUTES(testWsNative, debug);
-
+                        WRAPPER_GETFILEATTRIBUTES(cohorts.WsNative, debug);  // returns if successful.
+                        // All failed if here
 #if _DEBUG
-                    Log(L"[%d] GetFileAttributes returns file '%s' and result 0x%x and error =0x%x", DllInstance, testWsNative.c_str(), retfinal, GetLastError());
+                        Log(L"[%d] GetFileAttributes returns with result 0x%x and error =0x%x", DllInstance, retfinal, GetLastError());
 #endif
-                    return retfinal;
+                        return retfinal;
+                    case mfr::mfr_redirect_flags::prefer_redirection_none:
+                    case mfr::mfr_redirect_flags::disabled:
+                    default:
+                        // just fall through to unguarded code
+                        break;
+                    }
                 }
                 break;
             case mfr::mfr_path_types::in_redirection_area_writablepackageroot:
-#if MOREDEBUG
-                Log(L"[%d] GetFileAttributes    in_redirection_area_writablepackageroot", DllInstance);
-#endif
-                map = mfr::Find_TraditionalRedirMapping_FromRedirectedPath_ForwardSearch(file_mfr.Request_NormalizedPath.c_str());
-                if (map.Valid_mapping)
+                if (cohorts.map.Valid_mapping)
                 {
-                    // try the redirected path, then package, then native.
-                    testWsRedirected = testWsRequested;
-                    WRAPPER_GETFILEATTRIBUTES(testWsRedirected, debug);
+                    // try the redirected path, then package, then native if relevant.
+                    WRAPPER_GETFILEATTRIBUTES(cohorts.WsRedirected, debug);  // returns if successful.
 
-                    testWsPackage = ReplacePathPart(testWsRequested.c_str(), map.RedirectedPathBase, map.PackagePathBase);
-                    WRAPPER_GETFILEATTRIBUTES(testWsPackage, debug);
+                    WRAPPER_GETFILEATTRIBUTES(cohorts.WsPackage, debug);  // returns if successful.
 
-                    if (map.DoesRuntimeMapNativeToVFS)
+                    if (cohorts.UsingNative)
                     {
-                        testWsNative = ReplacePathPart(testWsRequested.c_str(), map.RedirectedPathBase, map.NativePathBase);
-                        WRAPPER_GETFILEATTRIBUTES(testWsNative, debug);
-
-#if _DEBUG
-                        Log(L"[%d] GetFileAttributes returns file '%s' and result 0x%x and error =0x%x", DllInstance, testWsNative.c_str(), retfinal, GetLastError());
-#endif
-                        return retfinal;
+                        WRAPPER_GETFILEATTRIBUTES(cohorts.WsNative, debug);  // returns if successful.
                     }
-                    else
-                    {
 #if _DEBUG
-                        Log(L"[%d] GetFileAttributes returns file '%s' and result 0x%x and error =0x%x", DllInstance, testWsPackage.c_str(), retfinal, GetLastError());
+                    Log(L"[%d] GetFileAttributes returns with result 0x%x and error =0x%x", DllInstance, retfinal, GetLastError());
 #endif
-                        return retfinal;
-                    }
+                    return retfinal;
                 }
                 break;
             case mfr::mfr_path_types::in_redirection_area_other:
-#if MOREDEBUG
-                Log(L"[%d] GetFileAttributes    in_redirection_area_other", DllInstance);
-#endif
                 break;
             case mfr::mfr_path_types::in_other_drive_area:
             case mfr::mfr_path_types::is_protocol_path:

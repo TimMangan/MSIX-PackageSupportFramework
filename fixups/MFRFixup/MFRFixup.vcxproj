@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Debug|Win32">
@@ -194,8 +194,11 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="DetermineCohorts.h" />
     <ClInclude Include="DebugPathTesting.h" />
     <ClInclude Include="FID.h" />
+    <ClInclude Include="FindData3.h" />
+    <ClInclude Include="FindFirstHelpers.h" />
     <ClInclude Include="MFRConfiguration.h" />
     <ClInclude Include="framework.h" />
     <ClInclude Include="FunctionImplementations.h" />
@@ -216,12 +219,19 @@
     <ClCompile Include="CreateSymbolicLink.cpp" />
     <ClCompile Include="DebugPathTesting.cpp" />
     <ClCompile Include="DeleteFile.cpp" />
+    <ClCompile Include="DetermineCohorts.cpp" />
     <ClCompile Include="dllmain.cpp" />
     <ClCompile Include="FID.cpp" />
+    <ClCompile Include="FindClose.cpp" />
+    <ClCompile Include="FindFirstFile.cpp" />
+    <ClCompile Include="FindFirstFileEx.cpp" />
+    <ClCompile Include="FindFirstHelpers.cpp" />
+    <ClCompile Include="FindNextFile.cpp" />
     <ClCompile Include="MoveFile.cpp" />
     <ClCompile Include="MoveFileEx.cpp" />
     <ClCompile Include="MoveFileWithProgress.cpp" />
     <ClCompile Include="RemoveDirectory.cpp" />
+    <ClCompile Include="ReplaceFile.cpp" />
     <ClCompile Include="SetFileAttributes.cpp" />
     <ClCompile Include="GetFileAttributes.cpp" />
     <ClCompile Include="GetFileAttributesEx.cpp" />

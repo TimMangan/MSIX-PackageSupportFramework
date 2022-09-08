@@ -78,6 +78,15 @@
     <ClInclude Include="MFRConfiguration.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="FindData3.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="FindFirstHelpers.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="DetermineCohorts.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="dllmain.cpp">
@@ -181,6 +190,27 @@
     </ClCompile>
     <ClCompile Include="MoveFileWithProgress.cpp">
       <Filter>Source Files\Intercepts\Moves</Filter>
+    </ClCompile>
+    <ClCompile Include="ReplaceFile.cpp">
+      <Filter>Source Files\Intercepts\Replaces</Filter>
+    </ClCompile>
+    <ClCompile Include="FindClose.cpp">
+      <Filter>Source Files\Intercepts\FindsAndSearches</Filter>
+    </ClCompile>
+    <ClCompile Include="FindFirstFile.cpp">
+      <Filter>Source Files\Intercepts\FindsAndSearches</Filter>
+    </ClCompile>
+    <ClCompile Include="FindNextFile.cpp">
+      <Filter>Source Files\Intercepts\FindsAndSearches</Filter>
+    </ClCompile>
+    <ClCompile Include="FindFirstFileEx.cpp">
+      <Filter>Source Files\Intercepts\FindsAndSearches</Filter>
+    </ClCompile>
+    <ClCompile Include="FindFirstHelpers.cpp">
+      <Filter>Source Files\Intercepts\FindsAndSearches</Filter>
+    </ClCompile>
+    <ClCompile Include="DetermineCohorts.cpp">
+      <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

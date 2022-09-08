@@ -248,10 +248,10 @@ The following APIs are expected to be targeted.  The current status for this wor
 | CreateHardLink | Complete |
 | CreateSymbolicLink | Complete |
 | DeleteFile | Complete |
-| FindFirstFile | not started |
-| FindFirstFileEx | not started |
-| FindNextFile | not started |
-| FindClose | not started |
+| FindFirstFile | Complete |
+| FindFirstFileEx | Complete |
+| FindNextFile | Complete |
+| FindClose | Complete |
 | GetCurrentDirectory | not started, may not be needed |
 | GetFileAttributes | Complete |
 | GetFileAttributesEx | Complete |
@@ -266,7 +266,7 @@ The following APIs are expected to be targeted.  The current status for this wor
 | ReadDirectoryChangesW | not started, may not be needed |
 | ReadDirectoryChangesExW | not started, may not be needed |
 | RemoveDirectory | Complete |
-| ReplaceFile | not started |
+| ReplaceFile | Complete |
 | SearchPath | not started, may not be needed |
 | SetCurrentDirectory | not started, may not be needed |
 | SetFileAttributes | Complete |

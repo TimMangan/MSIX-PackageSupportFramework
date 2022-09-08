@@ -80,8 +80,15 @@ extern int RunCreateOthersTests();
 extern int InitializeMoveFilesTests();
 extern int RunMoveFilesTests();
 
+extern int InitializeReplaceFileTests();
+extern int RunReplaceFileTests();
+
 extern int InitializeRemoveDeleteTests();
 extern int RunRemoveDeleteTests();
+
+
+extern int InitializeFindFileTests();
+extern int RunFindFileTests();
 
 #endif
 
@@ -106,22 +113,16 @@ void InitializeFolderMappings()
     std::wstring temp;
     int count = 0;
     count += InitializeAttributeTests();
-    temp = L"InitializeAttributeTests ";  temp.append(std::to_wstring(count)); temp.append(L"\n"); std::wcout << temp.c_str();
     count += InitializeGetProfileTests();
-    temp = L"InitializeGetProfileTests ";  temp.append(std::to_wstring(count)); temp.append(L"\n"); std::wcout << temp.c_str();
     count += InitializeWriteProfileTests();
-    temp = L"InitializeWriteProfileTests ";  temp.append(std::to_wstring(count)); temp.append(L"\n"); std::wcout << temp.c_str();
     count += InitializeCopyFileTests();
-    temp = L"InitializeCopyFileTests ";  temp.append(std::to_wstring(count)); temp.append(L"\n"); std::wcout << temp.c_str();
     count += InitializeCreateDirectoryTests();
-    temp = L"InitializeCreateDirectoryTests ";  temp.append(std::to_wstring(count)); temp.append(L"\n"); std::wcout << temp.c_str();
     count += InitializeCreateFileTests();
-    temp = L"InitializeCreateFileTests ";  temp.append(std::to_wstring(count)); temp.append(L"\n"); std::wcout << temp.c_str();
     count += InitializeCreateOthersTests();
-    temp = L"InitializeCreateOthersTests ";  temp.append(std::to_wstring(count)); temp.append(L"\n"); std::wcout << temp.c_str();
     count += InitializeMoveFilesTests();
-    temp = L"InitializeMoveFilesTests ";  temp.append(std::to_wstring(count)); temp.append(L"\n"); std::wcout << temp.c_str();
+    count += InitializeReplaceFileTests();
     count += InitializeRemoveDeleteTests();
+    count += InitializeFindFileTests();
     test_initialize("Managed File Redirection (MFR) Tests", count);
 }
 
@@ -139,28 +140,35 @@ int run()
     testResult = RunAttributeTests();
     result = result ? result : testResult;
 
-    testResult = RunGetProfileTests();;
+    testResult = RunGetProfileTests();
     result = result ? result : testResult;
 
-    testResult = RunWriteProfileTests();;
+    testResult = RunWriteProfileTests();
     result = result ? result : testResult;
 
-    testResult = RunCopyFileTests();;
+    testResult = RunCopyFileTests();
     result = result ? result : testResult;
 
-    testResult = RunCreateDirectoryTests();;
+    testResult = RunCreateDirectoryTests();
     result = result ? result : testResult;
 
-    testResult = RunCreateFileTests();;
+    testResult = RunCreateFileTests();
     result = result ? result : testResult;
 
-    testResult = RunCreateOthersTests();;
+    testResult = RunCreateOthersTests();
     result = result ? result : testResult;
 
-    testResult = RunMoveFilesTests();;
+    testResult = RunMoveFilesTests();
     result = result ? result : testResult;
 
-    testResult = RunRemoveDeleteTests();;
+    testResult = RunReplaceFileTests();
+    result = result ? result : testResult;
+
+    testResult = RunRemoveDeleteTests();
+    result = result ? result : testResult;
+
+
+    testResult = RunFindFileTests();
     result = result ? result : testResult;
 
 

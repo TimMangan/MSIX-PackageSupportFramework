@@ -26,3 +26,14 @@
 "file.ini" "TestIniFilePVAD.ini"
 "file.ini" "VFS\ProgramFilesX64\PlaceholderTest\TestIniFileVfsPF.ini"
 "file.ini" "VFS\ProgramFilesX86\PlaceholderTest\TestIniFileVfsPF.ini"
+
+"file.ini" "VFS\ProgramFilesX64\PlaceholderTest2\TestFileVfsPF1.ini"
+"file.ini" "VFS\ProgramFilesX86\PlaceholderTest2\TestFileVfsPF1.ini"
+"file.ini" "VFS\ProgramFilesX64\PlaceholderTest2\TestFileVfsPF2.ini"
+"file.ini" "VFS\ProgramFilesX86\PlaceholderTest2\TestFileVfsPF2.ini"
+"file.ini" "VFS\ProgramFilesX64\PlaceholderTest2\DiffTestFileVfsPF3.ini"
+"file.ini" "VFS\ProgramFilesX86\PlaceholderTest2\DiffTestFileVfsPF3.ini"
+
+"file.ini" "VFS\ProgramFilesX64\PlaceholderTest3\Subdir\DiffTestFileVfsPF3.ini"
+"file.ini" "VFS\ProgramFilesX86\PlaceholderTest3\Subdir\DiffTestFileVfsPF3.ini"
+

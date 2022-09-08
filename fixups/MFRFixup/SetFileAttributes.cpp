@@ -15,14 +15,13 @@
 
 #include "ManagedPathTypes.h"
 #include "PathUtilities.h"
+#include "DetermineCohorts.h"
 
 #if _DEBUG
 //#define DEBUGPATHTESTING 1
 #include "DebugPathTesting.h"
 #endif
 
-#include "FunctionImplementations.h"
-#include <psf_logging.h>
 
 
 #define WRAPPER_SETFILEATTRIBUTES(theDestinationFilename, debug) \
@@ -44,8 +43,12 @@ BOOL __stdcall SetFileAttributesFixup(_In_ const CharT* fileName, _In_ DWORD fil
     auto guard = g_reentrancyGuard.enter();
     DWORD DllInstance = ++g_InterceptInstance;
     bool debug = false;
+    bool moreDebug = false;
 #if _DEBUG
     debug = true;
+#endif
+#if MOREDEBUG
+    moreDebug = true;
 #endif
     BOOL retfinal;
     try
@@ -58,290 +61,283 @@ BOOL __stdcall SetFileAttributesFixup(_In_ const CharT* fileName, _In_ DWORD fil
 #endif
             // This get is inheirently a write operation in all cases.
             // We may need to copy the file first.
-            mfr::mfr_path file_mfr = mfr::create_mfr_path(wfileName);
-            mfr::mfr_folder_mapping map;
-            std::wstring testWsRequested = file_mfr.Request_NormalizedPath.c_str();
-            std::wstring testWsNative;
-            std::wstring testWsPackage;
-            std::wstring testWsRedirected;
-            switch (file_mfr.Request_MfrPathType)
+            Cohorts cohorts;
+            DetermineCohorts(wfileName, &cohorts, moreDebug, DllInstance, L"SetFileAttributesFixup");
+
+            switch (cohorts.file_mfr.Request_MfrPathType)
             {
             case mfr::mfr_path_types::in_native_area:
-#if MOREDEBUG
-                Log(L"[%d] SetFileAttributes    in_native_area", DllInstance);
-#endif
-                map = mfr::Find_LocalRedirMapping_FromNativePath_ForwardSearch(file_mfr.Request_NormalizedPath.c_str());
-                if (map.Valid_mapping)
+                if (cohorts.map.Valid_mapping)
                 {
-#if MOREDEBUG
-                    Log(L"[%d] SetFileAttributes    match on LocalRedirMapping", DllInstance);
-#endif
-                    // try the request path, which must be the local redirected version by definition, and then a package equivalent using COW
-                    testWsRedirected = testWsRequested;
-                    testWsPackage = ReplacePathPart(testWsRequested.c_str(), map.RedirectedPathBase, map.PackagePathBase);
-                    if (PathExists(testWsRedirected.c_str()))
+                    switch (cohorts.map.RedirectionFlags)
                     {
-                        WRAPPER_SETFILEATTRIBUTES(testWsRedirected, debug);
-                    }
-                    else if (PathExists(testWsPackage.c_str()))
-                    {
-                        if (Cow(testWsPackage, testWsRedirected, DllInstance, L"SetFileAttributes"))
+                    case mfr::mfr_redirect_flags::prefer_redirection_local:
+                        // try the request path, which must be the local redirected version by definition, and then a package equivalent using COW
+                        if (PathExists(cohorts.WsRedirected.c_str()))
                         {
-                            WRAPPER_SETFILEATTRIBUTES(testWsRedirected, debug);
+                            WRAPPER_SETFILEATTRIBUTES(cohorts.WsRedirected, debug);  // always returns
                         }
-                        else
+                        else if (PathExists(cohorts.WsPackage.c_str()))
                         {
-                            WRAPPER_SETFILEATTRIBUTES(testWsPackage, debug);
-                        }
-                    }
-                    else if (PathParentExists(testWsPackage.c_str()))
-                    {
-                        PreCreateFolders(testWsRedirected.c_str(), DllInstance, L"SetFileAttributes");
-                        WRAPPER_SETFILEATTRIBUTES(testWsRedirected, debug);
-                    }
-                    else
-                    {
-                        // There isn't such a file anywhere.  We want to create the redirection parent folder and let this call against the redirected file to create there.
-                        PreCreateFolders(testWsRequested.c_str(), DllInstance, L"SetFileAttributes");
-                        WRAPPER_SETFILEATTRIBUTES(testWsRedirected, debug);
-                    }
-                }
-                map = mfr::Find_TraditionalRedirMapping_FromNativePath_ForwardSearch(file_mfr.Request_NormalizedPath.c_str());
-                if (map.Valid_mapping)
-                {
-#if MOREDEBUG
-                    Log(L"[%d] SetFileAttributes    match on TraditionalRedirMapping", DllInstance);
-#endif
-                    // try the redirected path, then package (via COW), then native (possibly via COW).
-                    testWsRedirected = ReplacePathPart(testWsRequested.c_str(), map.NativePathBase, map.RedirectedPathBase);
-                    testWsPackage = ReplacePathPart(testWsRequested.c_str(), map.NativePathBase, map.PackagePathBase);
-                    testWsNative = testWsRequested.c_str();
-#if MOREDEBUG
-                    Log(L"[%d] SetFileAttributes      RedirPath=%s", DllInstance, testWsRedirected.c_str());
-                    Log(L"[%d] SetFileAttributes    PackagePath=%s", DllInstance, testWsPackage.c_str());
-                    Log(L"[%d] SetFileAttributes     NativePath=%s", DllInstance, testWsNative.c_str());
-#endif
-                    if (PathExists(testWsRedirected.c_str()))
-                    {
-                        WRAPPER_SETFILEATTRIBUTES(testWsRedirected, debug);
-                    }
-                    else if (PathExists(testWsPackage.c_str()))
-                    {
-                        if (Cow(testWsPackage, testWsRedirected, DllInstance, L"SetFileAttributes"))
-                        {
-                            WRAPPER_SETFILEATTRIBUTES(testWsRedirected, debug);
-                        }
-                        else
-                        {
-                            WRAPPER_SETFILEATTRIBUTES(testWsPackage, debug);
-                        }
-                    }
-                    else if (PathExists(testWsNative.c_str()))
-                    {
-                        // TODO: This might not be the best way to decide is COW is appropriate.  
-                        //       Possibly we should always do it, or possibly only if the equivalent VFS folder exists in the package.
-                        //       Setting attributes on an external file subject to traditional redirection seems an unlikely scenario that we need COW, but it might make an old app work.
-                        if (map.DoesRuntimeMapNativeToVFS)
-                        {
-                            if (Cow(testWsNative, testWsRedirected, DllInstance, L"SetFileAttributes"))
+                            if (Cow(cohorts.WsPackage, cohorts.WsRedirected, DllInstance, L"SetFileAttributes"))
                             {
-                                WRAPPER_SETFILEATTRIBUTES(testWsRedirected, debug);
+                                WRAPPER_SETFILEATTRIBUTES(cohorts.WsRedirected, debug); // always returns
                             }
                             else
                             {
-                                WRAPPER_SETFILEATTRIBUTES(testWsNative, debug);
+                                WRAPPER_SETFILEATTRIBUTES(cohorts.WsPackage, debug); // always returns
+                            }
+                        }
+                        else if (PathParentExists(cohorts.WsPackage.c_str()))
+                        {
+                            PreCreateFolders(cohorts.WsRedirected.c_str(), DllInstance, L"SetFileAttributes");
+                            WRAPPER_SETFILEATTRIBUTES(cohorts.WsRedirected, debug) // always returns
+                        }
+                        else
+                        {
+                            // There isn't such a file anywhere.  We want to create the redirection parent folder and let this call against the redirected file to create there.
+                            PreCreateFolders(cohorts.WsRequested.c_str(), DllInstance, L"SetFileAttributes");
+                            WRAPPER_SETFILEATTRIBUTES(cohorts.WsRedirected, debug); // always returns
+                        }
+                        break;
+                    case mfr::mfr_redirect_flags::prefer_redirection_containerized:
+                    case mfr::mfr_redirect_flags::prefer_redirection_if_package_vfs:
+
+                        // try the redirected path, then package (via COW), then native (possibly via COW).
+                        if (PathExists(cohorts.WsRedirected.c_str()))
+                        {
+                            WRAPPER_SETFILEATTRIBUTES(cohorts.WsRedirected, debug);
+                        }
+                        else if (PathExists(cohorts.WsPackage.c_str()))
+                        {
+                            if (Cow(cohorts.WsPackage, cohorts.WsRedirected, DllInstance, L"SetFileAttributes"))
+                            {
+                                WRAPPER_SETFILEATTRIBUTES(cohorts.WsRedirected, debug);
+                            }
+                            else
+                            {
+                                WRAPPER_SETFILEATTRIBUTES(cohorts.WsPackage, debug);
+                            }
+                        }
+                        else if (PathExists(cohorts.WsNative.c_str()))
+                        {
+                            // TODO: This might not be the best way to decide is COW is appropriate.  
+                            //       Possibly we should always do it, or possibly only if the equivalent VFS folder exists in the package.
+                            //       Setting attributes on an external file subject to traditional redirection seems an unlikely scenario that we need COW, but it might make an old app work.
+                            if (cohorts.map.DoesRuntimeMapNativeToVFS)
+                            {
+                                if (Cow(cohorts.WsNative, cohorts.WsRedirected, DllInstance, L"SetFileAttributes"))
+                                {
+                                    WRAPPER_SETFILEATTRIBUTES(cohorts.WsRedirected, debug);
+                                }
+                                else
+                                {
+                                    WRAPPER_SETFILEATTRIBUTES(cohorts.WsNative, debug);
+                                }
+                            }
+                            else
+                            {
+                                WRAPPER_SETFILEATTRIBUTES(cohorts.WsNative, debug);
                             }
                         }
                         else
                         {
-                            WRAPPER_SETFILEATTRIBUTES(testWsNative, debug);
+                            // There isn't such a file anywhere.  We want to create the redirection parent folder and let this call against the redirected file to create there.
+                            PreCreateFolders(cohorts.WsRequested.c_str(), DllInstance, L"SetFileAttributes");
+                            WRAPPER_SETFILEATTRIBUTES(cohorts.WsRequested, debug);
                         }
-                    }
-                    else
-                    {
-                        // There isn't such a file anywhere.  We want to create the redirection parent folder and let this call against the redirected file to create there.
-                        PreCreateFolders(testWsRequested.c_str(), DllInstance, L"SetFileAttributes");
-                        WRAPPER_SETFILEATTRIBUTES(testWsRequested, debug);
+                        break;
+                    case mfr::mfr_redirect_flags::prefer_redirection_none:
+                    case mfr::mfr_redirect_flags::disabled:
+                    default:
+                        // just fall through to unguarded code
+                        break;
                     }
                 }
                 break;
             case mfr::mfr_path_types::in_package_pvad_area:
-#if MOREDEBUG
-                Log(L"[%d] SetFileAttributes    in_package_pvad_area", DllInstance);
-#endif
-                map = mfr::Find_TraditionalRedirMapping_FromPackagePath_ForwardSearch(file_mfr.Request_NormalizedPath.c_str());
-                if (map.Valid_mapping)
+                if (cohorts.map.Valid_mapping)
                 {
-                    //// try the redirected path, then package (COW), then don't need native.
-                    testWsPackage = testWsRequested;
-                    testWsRedirected = ReplacePathPart(testWsRequested.c_str(), map.PackagePathBase, map.RedirectedPathBase);
-                    if (PathExists(testWsRedirected.c_str()))
+                    switch (cohorts.map.RedirectionFlags)
                     {
-                        WRAPPER_SETFILEATTRIBUTES(testWsRedirected, debug);
-                    }
-                    else if (PathExists(testWsPackage.c_str()))
-                    {
-                        if (Cow(testWsPackage, testWsRedirected, DllInstance, L"SetFileAttributes"))
+                    case mfr::mfr_redirect_flags::prefer_redirection_local:
+                        // not possible, fall through
+                        break;
+                    case mfr::mfr_redirect_flags::prefer_redirection_containerized:
+                    case mfr::mfr_redirect_flags::prefer_redirection_if_package_vfs:
+                        //// try the redirected path, then package (COW), then don't need native.
+                        if (PathExists(cohorts.WsRedirected.c_str()))
                         {
-                            WRAPPER_SETFILEATTRIBUTES(testWsRedirected, debug);
+                            WRAPPER_SETFILEATTRIBUTES(cohorts.WsRedirected, debug);
+                        }
+                        else if (PathExists(cohorts.WsPackage.c_str()))
+                        {
+                            if (Cow(cohorts.WsPackage, cohorts.WsRedirected, DllInstance, L"SetFileAttributes"))
+                            {
+                                WRAPPER_SETFILEATTRIBUTES(cohorts.WsRedirected, debug);
+                            }
+                            else
+                            {
+                                WRAPPER_SETFILEATTRIBUTES(cohorts.WsPackage, debug);
+                            }
                         }
                         else
                         {
-                            WRAPPER_SETFILEATTRIBUTES(testWsPackage, debug);
+                            // There isn't such a file anywhere.  We want to create the redirection parent folder and let this call against the redirected file to create there.
+                            PreCreateFolders(cohorts.WsRedirected.c_str(), DllInstance, L"SetFileAttributes");
+                            WRAPPER_SETFILEATTRIBUTES(cohorts.WsRedirected, debug);
                         }
-                    }
-                    else
-                    {
-                        // There isn't such a file anywhere.  We want to create the redirection parent folder and let this call against the redirected file to create there.
-                        PreCreateFolders(testWsRedirected.c_str(), DllInstance, L"SetFileAttributes");
-                        WRAPPER_SETFILEATTRIBUTES(testWsRedirected, debug);
+                        break;
+                    case mfr::mfr_redirect_flags::prefer_redirection_none:
+                    case mfr::mfr_redirect_flags::disabled:
+                    default:
+                        // just fall through to unguarded code
+                        break;
                     }
                 }
                 break;
             case mfr::mfr_path_types::in_package_vfs_area:
-#if MOREDEBUG
-                Log(L"[%d] SetFileAttributes    in_package_vfs_area", DllInstance);
-#endif
-                map = mfr::Find_LocalRedirMapping_FromPackagePath_ForwardSearch(file_mfr.Request_NormalizedPath.c_str());
-                if (map.Valid_mapping)
+                if (cohorts.map.Valid_mapping)
                 {
-                    // try the redirection path, then the package (COW).
-                    testWsPackage = testWsRequested;
-                    testWsRedirected = ReplacePathPart(testWsRequested.c_str(), map.PackagePathBase, map.RedirectedPathBase);
-                    if (PathExists(testWsRedirected.c_str()))
+                    switch (cohorts.map.RedirectionFlags)
                     {
-                        WRAPPER_SETFILEATTRIBUTES(testWsRedirected, debug);
-                    }
-                    else if (PathExists(testWsPackage.c_str()))
-                    {
-                        if (Cow(testWsPackage, testWsRedirected, DllInstance, L"SetFileAttributes"))
+                    case mfr::mfr_redirect_flags::prefer_redirection_local:
+                        if (PathExists(cohorts.WsRedirected.c_str()))
                         {
-                            WRAPPER_SETFILEATTRIBUTES(testWsRedirected, debug);
+                            WRAPPER_SETFILEATTRIBUTES(cohorts.WsRedirected, debug);
                         }
-                        else
+                        else if (PathExists(cohorts.WsPackage.c_str()))
                         {
-                            WRAPPER_SETFILEATTRIBUTES(testWsPackage, debug);
-                        }
-                    }
-                    else
-                    {
-                        // There isn't such a file anywhere.  We want to create the redirection parent folder and let this call against the redirected file to create there.
-                        PreCreateFolders(testWsRedirected.c_str(), DllInstance, L"SetFileAttributes");
-                        WRAPPER_SETFILEATTRIBUTES(testWsRedirected, debug);
-                    }
-                }
-                map = mfr::Find_TraditionalRedirMapping_FromPackagePath_ForwardSearch(file_mfr.Request_NormalizedPath.c_str());
-                if (map.Valid_mapping)
-                {
-                    // try the redirection path, then the package (COW), then native (possibly COW)
-                    testWsPackage = testWsRequested;
-                    testWsRedirected = ReplacePathPart(testWsRequested.c_str(), map.PackagePathBase, map.RedirectedPathBase);
-                    testWsNative = ReplacePathPart(testWsRequested.c_str(), map.PackagePathBase, map.NativePathBase);
-                    if (PathExists(testWsRedirected.c_str()))
-                    {
-                        WRAPPER_SETFILEATTRIBUTES(testWsRedirected, debug);
-                    }
-                    else if (PathExists(testWsPackage.c_str()))
-                    {
-                        if (Cow(testWsPackage, testWsRedirected, DllInstance, L"SetFileAttributes"))
-                        {
-                            WRAPPER_SETFILEATTRIBUTES(testWsRedirected, debug);
-                        }
-                        else
-                        {
-                            WRAPPER_SETFILEATTRIBUTES(testWsPackage, debug);
-                        }
-                    }
-                    else if (PathExists(testWsNative.c_str()))
-                    {
-                        // TODO: This might not be the best way to decide is COW is appropriate.  
-                        //       Possibly we should always do it, or possibly only if the equivalent VFS folder exists in the package.
-                        //       Setting attributes on an external file subject to traditional redirection seems an unlikely scenario that we need COW, but it might make an old app work.
-                        if (map.DoesRuntimeMapNativeToVFS)
-                        {
-                            if (Cow(testWsNative, testWsRedirected, DllInstance, L"SetFileAttributes"))
+                            if (Cow(cohorts.WsPackage, cohorts.WsRedirected, DllInstance, L"SetFileAttributes"))
                             {
-                                WRAPPER_SETFILEATTRIBUTES(testWsRedirected, debug);
+                                WRAPPER_SETFILEATTRIBUTES(cohorts.WsRedirected, debug);
                             }
                             else
                             {
-                                WRAPPER_SETFILEATTRIBUTES(testWsNative, debug);
+                                WRAPPER_SETFILEATTRIBUTES(cohorts.WsPackage, debug);
+                            }
+                        }
+                        else
+                        {
+                            // There isn't such a file anywhere.  We want to create the redirection parent folder and let this call against the redirected file to create there.
+                            PreCreateFolders(cohorts.WsRedirected.c_str(), DllInstance, L"SetFileAttributes");
+                            WRAPPER_SETFILEATTRIBUTES(cohorts.WsRedirected, debug);
+                        }
+                        break;
+                    case mfr::mfr_redirect_flags::prefer_redirection_containerized:
+                    case mfr::mfr_redirect_flags::prefer_redirection_if_package_vfs:
+                        // try the redirection path, then the package (COW), then native (possibly COW)
+                        if (PathExists(cohorts.WsRedirected.c_str()))
+                        {
+                            WRAPPER_SETFILEATTRIBUTES(cohorts.WsRedirected, debug);
+                        }
+                        else if (PathExists(cohorts.WsPackage.c_str()))
+                        {
+                            if (Cow(cohorts.WsPackage, cohorts.WsRedirected, DllInstance, L"SetFileAttributes"))
+                            {
+                                WRAPPER_SETFILEATTRIBUTES(cohorts.WsRedirected, debug);
+                            }
+                            else
+                            {
+                                WRAPPER_SETFILEATTRIBUTES(cohorts.WsPackage, debug);
+                            }
+                        }
+                        else if (PathExists(cohorts.WsNative.c_str()))
+                        {
+                            // TODO: This might not be the best way to decide is COW is appropriate.  
+                            //       Possibly we should always do it, or possibly only if the equivalent VFS folder exists in the package.
+                            //       Setting attributes on an external file subject to traditional redirection seems an unlikely scenario that we need COW, but it might make an old app work.
+                            if (cohorts.map.DoesRuntimeMapNativeToVFS)
+                            {
+                                if (Cow(cohorts.WsNative, cohorts.WsRedirected, DllInstance, L"SetFileAttributes"))
+                                {
+                                    WRAPPER_SETFILEATTRIBUTES(cohorts.WsRedirected, debug);
+                                }
+                                else
+                                {
+                                    WRAPPER_SETFILEATTRIBUTES(cohorts.WsNative, debug);
+                                }
+                            }
+                            else
+                            {
+                                // There isn't such a file anywhere.  We want to create the redirection parent folder and let this call against the redirected file to create there or update registry.
+                                PreCreateFolders(cohorts.WsRedirected.c_str(), DllInstance, L"SetFileAttributes");
+                                WRAPPER_SETFILEATTRIBUTES(cohorts.WsRedirected, debug);
+                            }
+                        }
+                        else
+                        {
+                            // There isn't such a file anywhere.  We want to create the redirection parent folder and let this call against the redirected file to create there.
+                            PreCreateFolders(cohorts.WsRedirected.c_str(), DllInstance, L"SetFileAttributes");
+                            WRAPPER_SETFILEATTRIBUTES(cohorts.WsRedirected, debug);
+                        }
+                        break;
+                    case mfr::mfr_redirect_flags::prefer_redirection_none:
+                    case mfr::mfr_redirect_flags::disabled:
+                    default:
+                        // just fall through to unguarded code
+                        break;
+                    }
+                }
+                break;
+            case mfr::mfr_path_types::in_redirection_area_writablepackageroot:
+                if (cohorts.map.Valid_mapping)
+                {
+                    // try the redirected path, then package (COW), then possibly native (Possibly COW).
+                    if (PathExists(cohorts.WsRedirected.c_str()))
+                    {
+                        WRAPPER_SETFILEATTRIBUTES(cohorts.WsRedirected, debug);
+                    }
+                    else if (PathExists(cohorts.WsPackage.c_str()))
+                    {
+                        if (Cow(cohorts.WsPackage, cohorts.WsRedirected, DllInstance, L"SetFileAttributes"))
+                        {
+                            WRAPPER_SETFILEATTRIBUTES(cohorts.WsRedirected, debug);
+                        }
+                        else
+                        {
+                            WRAPPER_SETFILEATTRIBUTES(cohorts.WsPackage, debug);
+                        }
+                    }
+                    else if (cohorts.UsingNative)
+                    {
+                        if (PathExists(cohorts.WsNative.c_str()))
+                        {
+                            // TODO: This might not be the best way to decide is COW is appropriate.  
+                            //       Possibly we should always do it, or possibly only if the equivalent VFS folder exists in the package.
+                            //       Setting attributes on an external file subject to traditional redirection seems an unlikely scenario that we need COW, but it might make an old app work.
+                            if (cohorts.map.DoesRuntimeMapNativeToVFS)
+                            {
+                                if (Cow(cohorts.WsNative, cohorts.WsRedirected, DllInstance, L"SetFileAttributes"))
+                                {
+                                    WRAPPER_SETFILEATTRIBUTES(cohorts.WsRedirected, debug);
+                                }
+                                else
+                                {
+                                    WRAPPER_SETFILEATTRIBUTES(cohorts.WsNative, debug);
+                                }
+                            }
+                            else
+                            {
+                                WRAPPER_SETFILEATTRIBUTES(cohorts.WsNative, debug);
                             }
                         }
                         else
                         {
                             // There isn't such a file anywhere.  We want to create the redirection parent folder and let this call against the redirected file to create there or update registry.
-                            PreCreateFolders(testWsRedirected.c_str(), DllInstance, L"SetFileAttributes");
-                            WRAPPER_SETFILEATTRIBUTES(testWsRedirected, debug);
-                        }
-                    }
-                    else
-                    {
-                        // There isn't such a file anywhere.  We want to create the redirection parent folder and let this call against the redirected file to create there.
-                        PreCreateFolders(testWsRedirected.c_str(), DllInstance, L"SetFileAttributes");
-                        WRAPPER_SETFILEATTRIBUTES(testWsRedirected, debug);
-                    }
-                }
-                break;
-            case mfr::mfr_path_types::in_redirection_area_writablepackageroot:
-#if MOREDEBUG
-                Log(L"[%d] SetFileAttributes    in_redirection_area_writablepackageroot", DllInstance);
-#endif
-                map = mfr::Find_TraditionalRedirMapping_FromRedirectedPath_ForwardSearch(file_mfr.Request_NormalizedPath.c_str());
-                if (map.Valid_mapping)
-                {
-                    // try the redirected path, then package (COW), then possibly native (Possibly COW).
-                    testWsRedirected = testWsRequested;
-                    testWsPackage = ReplacePathPart(testWsRequested.c_str(), map.RedirectedPathBase, map.PackagePathBase);
-                    testWsNative = ReplacePathPart(testWsRequested.c_str(), map.RedirectedPathBase, map.NativePathBase);
-                    if (PathExists(testWsRedirected.c_str()))
-                    {
-                        WRAPPER_SETFILEATTRIBUTES(testWsRedirected, debug);
-                    }
-                    else if (PathExists(testWsPackage.c_str()))
-                    {
-                        if (Cow(testWsPackage, testWsRedirected, DllInstance, L"SetFileAttributes"))
-                        {
-                            WRAPPER_SETFILEATTRIBUTES(testWsRedirected, debug);
-                        }
-                        else
-                        {
-                            WRAPPER_SETFILEATTRIBUTES(testWsPackage, debug);
-                        }
-                    }
-                    else if (PathExists(testWsNative.c_str()))
-                    {
-                        // TODO: This might not be the best way to decide is COW is appropriate.  
-                        //       Possibly we should always do it, or possibly only if the equivalent VFS folder exists in the package.
-                        //       Setting attributes on an external file subject to traditional redirection seems an unlikely scenario that we need COW, but it might make an old app work.
-                        if (map.DoesRuntimeMapNativeToVFS)
-                        {
-                            if (Cow(testWsNative, testWsRedirected, DllInstance, L"SetFileAttributes"))
-                            {
-                                WRAPPER_SETFILEATTRIBUTES(testWsRedirected, debug);
-                            }
-                            else
-                            {
-                                WRAPPER_SETFILEATTRIBUTES(testWsNative, debug);
-                            }
-                        }
-                        else
-                        {
-                            WRAPPER_SETFILEATTRIBUTES(testWsNative, debug);
+                            PreCreateFolders(cohorts.WsRedirected.c_str(), DllInstance, L"SetFileAttributes");
+                            WRAPPER_SETFILEATTRIBUTES(cohorts.WsRedirected, debug);
                         }
                     }
                     else
                     {
                         // There isn't such a file anywhere.  We want to create the redirection parent folder and let this call against the redirected file to create there or update registry.
-                        PreCreateFolders(testWsRedirected.c_str(), DllInstance, L"SetFileAttributes");
-                        WRAPPER_SETFILEATTRIBUTES(testWsRedirected, debug);
+                        PreCreateFolders(cohorts.WsRedirected.c_str(), DllInstance, L"SetFileAttributes");
+                        WRAPPER_SETFILEATTRIBUTES(cohorts.WsRedirected, debug);
                     }
                 }
                 break;
             case mfr::mfr_path_types::in_redirection_area_other:
-#if MOREDEBUG
-                Log(L"[%d] SetFileAttributes    in_redirection_area_other", DllInstance);
-#endif
                 break;
             case mfr::mfr_path_types::in_other_drive_area:
             case mfr::mfr_path_types::is_protocol_path:

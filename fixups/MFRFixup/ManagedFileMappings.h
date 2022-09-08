@@ -19,7 +19,7 @@ namespace mfr
         prefer_redirection_if_package_vfs = 0x0003,   // The intent depends on whether the VFS folder is present in the package:
                                                         //      Yes: intent is that any new/modified files are redirected to the containerized redirection area.
                                                         //      No:  intent is that any new/modified files are directed to the native path area.
-                                                        prefer_redirection_local = 0x0004,   // The intent is that package files should be found and used, but new/modified files are directed to the native path area.
+        prefer_redirection_local = 0x0004,   // The intent is that package files should be found and used, but new/modified files are directed to the native path area.
     };
     DEFINE_ENUM_FLAG_OPERATORS(mfr_redirect_flags);
 
@@ -51,10 +51,10 @@ namespace mfr
         std::wstring            FolderId;
         std::wstring            VFSFolderName;
         std::filesystem::path   PackagePathBase;
-        bool                    DoesRuntimeMapNativeToVFS;   // Indicates that this is a path that is handled by MSIX runtime for redirection to the package.
+        bool                    DoesRuntimeMapNativeToVFS = false;   // Indicates that this is a path that is handled by MSIX runtime for redirection to the package.
         std::filesystem::path   RedirectedPathBase;
 
-        mfr_redirect_flags      RedirectionFlags;
+        mfr_redirect_flags      RedirectionFlags = mfr_redirect_flags::disabled;
 
     };
 
