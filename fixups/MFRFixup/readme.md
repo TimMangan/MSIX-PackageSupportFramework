@@ -1,5 +1,5 @@
 # Managed File Redirection Fixup (MFRFixup)
-The `MFRFixup` is a newer alternative to the `File Redirection Fixup` to handle file accesses when running software in the MSIX Container.
+The `MFRFixup` is a newer alternative to the `File Redirection Fixup` to handle file accesses when running software in the MSIX Container.  If file redirection help is needed in a package, you must choose between these two fixups as they intercept the same APIs (in other words, you can't include both the `MFRFixup` and `File Redirection Fixup`). 
 
 The goals of this alternative are:
 > * A clean design that considers the odd needs of applications up-front, eliminating much of the special case patch-work now in the FRF.
@@ -10,7 +10,7 @@ The goals of this alternative are:
 
 | NOTICE |
 | --------------------------------------------------------------------------------------- |
-| ** PLEASE DO NOT USE THIS FIXUP AT THIS TIME.  IT IS A WORK IN PROGRESS AND NOT ALL INTERCEPTS HAVE BEEN COMPLETED.  A LIST OF INTERCEPTS AND THEIR STATUS IS GIVEN IN A TABLE AT THE BOTTOM OF THIS README. |
+| ** PLEASE DO NOT USE THIS FIXUP AT THIS TIME.  IT IS A WORK IN PROGRESS. WHILE ALL KNOWN NECESSARY INTERCEPTS HAVE BEEN COMPLETED AND UNIT TESTED, TESTING AGAINST A SUITE OF KNOWN APPLICATIONS IS STILL UNDER WAY.  A LIST OF API INTERCEPTS USED BY THIS FIXUP AND THEIR STATUS IS GIVEN IN A TABLE AT THE BOTTOM OF THIS README. |
 
 ## Features
 When injected into a process, the MFRFixup supports the ability to:
