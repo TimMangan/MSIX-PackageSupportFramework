@@ -192,7 +192,7 @@ To apply an override to change the local redirections to traditional or disabled
         {
           "dll": "MFRFixup.dll",
           "config": {
-            "overideCOW": "default",
+            "overrideCOW": "default",
              "overrideLocalRedirections": [
                 {
                     "name" : "ThisPCDesktopFolder",
@@ -226,7 +226,7 @@ To apply an override to prevent binary files to be written to the redirection ar
         {
           "dll": "MFRFixup.dll",
           "config": {
-            "overideCOW": "disablePe"
+            "overrideCOW": "disablePe"
            }
         }
 ]
