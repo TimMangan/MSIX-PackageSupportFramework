@@ -22,4 +22,4 @@ struct Cohorts
     bool UsingNative = true;
 };
 
-extern void DetermineCohorts(std::wstring requestedPath, Cohorts *cohorts, bool UseMoreDebug, DWORD DllInstance, const wchar_t* FixupName);
+extern void DetermineCohorts(std::wstring requestedPath, Cohorts *cohorts, bool UseMoreDebug, DWORD dllInstance, const wchar_t* FixupName);

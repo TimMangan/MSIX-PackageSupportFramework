@@ -11,5 +11,5 @@
 #if _DEBUG
 extern std::vector<std::wstring> DebugPathTestingList;
 
-extern void DebugPathTesting(DWORD DllInstance);
+extern void DebugPathTesting(DWORD dllInstance);
 #endif

@@ -32,7 +32,7 @@ BOOL __stdcall FindCloseFixup(_Inout_ HANDLE findHandle) noexcept
     }
 
 #if _DEBUG
-    DWORD DllInstance = ++g_InterceptInstance;
+    DWORD dllInstance = ++g_InterceptInstance;
 #endif
     if (findHandle == INVALID_HANDLE_VALUE)
     {
@@ -42,7 +42,7 @@ BOOL __stdcall FindCloseFixup(_Inout_ HANDLE findHandle) noexcept
 
 #if _DEBUG
     auto data = reinterpret_cast<FindData3*>(findHandle);
-    Log(L"[%d][%d] FindCloseFixup.", data->RememberedInstance, DllInstance);
+    Log(L"[%d][%d] FindCloseFixup.", data->RememberedInstance, dllInstance);
 #endif
 
     delete reinterpret_cast<FindData3*>(findHandle);

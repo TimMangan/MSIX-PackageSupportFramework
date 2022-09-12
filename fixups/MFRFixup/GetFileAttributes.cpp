@@ -33,7 +33,7 @@
         { \
             if (debug) \
             { \
-                Log(L"[%d] GetFileAttributes returns file '%s' and result 0x%x", DllInstance, LongDestinationFilename.c_str(), retfinal); \
+                Log(L"[%d] GetFileAttributes returns file '%s' and result 0x%x", dllInstance, LongDestinationFilename.c_str(), retfinal); \
             } \
             return retfinal; \
         } \
@@ -42,7 +42,7 @@
 template <typename CharT>
 DWORD __stdcall GetFileAttributesFixup(_In_ const CharT* fileName) noexcept
 {
-    DWORD DllInstance = ++g_InterceptInstance;
+    DWORD dllInstance = ++g_InterceptInstance;
     bool debug = false;
     bool moreDebug = false;
 #if _DEBUG
@@ -61,24 +61,24 @@ DWORD __stdcall GetFileAttributesFixup(_In_ const CharT* fileName) noexcept
 #if _DEBUG
             if constexpr (psf::is_ansi<CharT>)
             {
-                LogString(DllInstance, L"GetFileAttributesFixupA for fileName", wfileName.c_str());
+                LogString(dllInstance, L"GetFileAttributesFixupA for fileName", wfileName.c_str());
             }
             else
             {
-                LogString(DllInstance, L"GetFileAttributesFixupW for fileName", wfileName.c_str());
+                LogString(dllInstance, L"GetFileAttributesFixupW for fileName", wfileName.c_str());
             }
 #endif
 
 #if DEBUGPATHTESTING
             if (wfileName.compare(L"C:\\Program Files\\PlaceholderTest\\Placeholder.txt") == 0)
             {
-                DebugPathTesting(DllInstance);
+                DebugPathTesting(dllInstance);
             }
 #endif
             // This get is inheirently a read-only operation in all cases.
             // We prefer to use the redirecton case, if present.
             Cohorts cohorts;
-            DetermineCohorts(wfileName, &cohorts, moreDebug, DllInstance, L"GetAttributesFixup");
+            DetermineCohorts(wfileName, &cohorts, moreDebug, dllInstance, L"GetAttributesFixup");
 
             switch (cohorts.file_mfr.Request_MfrPathType)
             {
@@ -94,7 +94,7 @@ DWORD __stdcall GetFileAttributesFixup(_In_ const CharT* fileName) noexcept
                         WRAPPER_GETFILEATTRIBUTES(cohorts.WsPackage, debug);  // returns if successful.
                         // Both failed if here
 #if _DEBUG
-                        Log(L"[%d] GetFileAttributes returns with result 0x%x and error =0x%x", DllInstance, retfinal, GetLastError());
+                        Log(L"[%d] GetFileAttributes returns with result 0x%x and error =0x%x", dllInstance, retfinal, GetLastError());
 #endif
                         return retfinal;
                     case mfr::mfr_redirect_flags::prefer_redirection_containerized:
@@ -107,7 +107,7 @@ DWORD __stdcall GetFileAttributesFixup(_In_ const CharT* fileName) noexcept
                         WRAPPER_GETFILEATTRIBUTES(cohorts.WsNative, debug);   // returns if successful.
                         // All failed if here
 #if _DEBUG
-                        Log(L"[%d] GetFileAttributes returns with result 0x%x and error =0x%x", DllInstance, retfinal, GetLastError());
+                        Log(L"[%d] GetFileAttributes returns with result 0x%x and error =0x%x", dllInstance, retfinal, GetLastError());
 #endif
                         return retfinal;
                     case mfr::mfr_redirect_flags::prefer_redirection_none:
@@ -134,7 +134,7 @@ DWORD __stdcall GetFileAttributesFixup(_In_ const CharT* fileName) noexcept
                         WRAPPER_GETFILEATTRIBUTES(cohorts.WsPackage, debug);   // returns if successful.
                         // Both failed if here
 #if _DEBUG
-                        Log(L"[%d] GetFileAttributes returns with result 0x%x and error =0x%x", DllInstance, retfinal, GetLastError());
+                        Log(L"[%d] GetFileAttributes returns with result 0x%x and error =0x%x", dllInstance, retfinal, GetLastError());
 #endif
                         return retfinal;
                     case mfr::mfr_redirect_flags::prefer_redirection_none:
@@ -151,14 +151,13 @@ DWORD __stdcall GetFileAttributesFixup(_In_ const CharT* fileName) noexcept
                     switch (cohorts.map.RedirectionFlags)
                     {
                     case mfr::mfr_redirect_flags::prefer_redirection_local:
-
                         // try the request path, which must be the local redirected version by definition, and then a package equivalent.
                         WRAPPER_GETFILEATTRIBUTES(cohorts.WsRedirected, debug);   // returns if successful.
 
                         WRAPPER_GETFILEATTRIBUTES(cohorts.WsPackage, debug);   // returns if successful.
                         // Both failed if here
 #if _DEBUG
-                        Log(L"[%d] GetFileAttributes returns with result 0x%x and error =0x%x", DllInstance, retfinal, GetLastError());
+                        Log(L"[%d] GetFileAttributes returns with result 0x%x and error =0x%x", dllInstance, retfinal, GetLastError());
 #endif
                         return retfinal;
                     case mfr::mfr_redirect_flags::prefer_redirection_containerized:
@@ -171,7 +170,7 @@ DWORD __stdcall GetFileAttributesFixup(_In_ const CharT* fileName) noexcept
                         WRAPPER_GETFILEATTRIBUTES(cohorts.WsNative, debug);  // returns if successful.
                         // All failed if here
 #if _DEBUG
-                        Log(L"[%d] GetFileAttributes returns with result 0x%x and error =0x%x", DllInstance, retfinal, GetLastError());
+                        Log(L"[%d] GetFileAttributes returns with result 0x%x and error =0x%x", dllInstance, retfinal, GetLastError());
 #endif
                         return retfinal;
                     case mfr::mfr_redirect_flags::prefer_redirection_none:
@@ -185,19 +184,31 @@ DWORD __stdcall GetFileAttributesFixup(_In_ const CharT* fileName) noexcept
             case mfr::mfr_path_types::in_redirection_area_writablepackageroot:
                 if (cohorts.map.Valid_mapping)
                 {
-                    // try the redirected path, then package, then native if relevant.
-                    WRAPPER_GETFILEATTRIBUTES(cohorts.WsRedirected, debug);  // returns if successful.
-
-                    WRAPPER_GETFILEATTRIBUTES(cohorts.WsPackage, debug);  // returns if successful.
-
-                    if (cohorts.UsingNative)
+                    switch (cohorts.map.RedirectionFlags)
                     {
-                        WRAPPER_GETFILEATTRIBUTES(cohorts.WsNative, debug);  // returns if successful.
-                    }
+                    case mfr::mfr_redirect_flags::prefer_redirection_local:
+                        // not possible
+                        break;
+                    case mfr::mfr_redirect_flags::prefer_redirection_containerized:
+                    case mfr::mfr_redirect_flags::prefer_redirection_if_package_vfs:
+                        // try the redirected path, then package, then native if relevant.
+                        WRAPPER_GETFILEATTRIBUTES(cohorts.WsRedirected, debug);  // returns if successful.
+
+                        WRAPPER_GETFILEATTRIBUTES(cohorts.WsPackage, debug);  // returns if successful.
+
+                        if (cohorts.UsingNative)
+                        {
+                            WRAPPER_GETFILEATTRIBUTES(cohorts.WsNative, debug);  // returns if successful.
+                        }
 #if _DEBUG
-                    Log(L"[%d] GetFileAttributes returns with result 0x%x and error =0x%x", DllInstance, retfinal, GetLastError());
+                        Log(L"[%d] GetFileAttributes returns with result 0x%x and error =0x%x", dllInstance, retfinal, GetLastError());
 #endif
-                    return retfinal;
+                        return retfinal;
+                    case mfr::mfr_redirect_flags::prefer_redirection_none:
+                    case mfr::mfr_redirect_flags::disabled:
+                    default:
+                        break;
+                    }
                 }
                 break;
             case mfr::mfr_path_types::in_redirection_area_other:
@@ -214,20 +225,28 @@ DWORD __stdcall GetFileAttributesFixup(_In_ const CharT* fileName) noexcept
     }
 #if _DEBUG
     // Fall back to assuming no redirection is necessary if exception
-    LOGGED_CATCHHANDLER(DllInstance, L"GetFileAttributesTest")
+    LOGGED_CATCHHANDLER(dllInstance, L"GetFileAttributesTest")
 #else
     catch (...)
     {
-        Log(L"[%d] GetFileAttributes Exception=0x%x", DllInstance, GetLastError());
+        Log(L"[%d] GetFileAttributes Exception=0x%x", dllInstance, GetLastError());
     }
 #endif
-    std::wstring LongFileName = MakeLongPath(widen(fileName));
-    retfinal = impl::GetFileAttributes(LongFileName.c_str());
+    if (fileName != nullptr)
+    {
+        std::wstring LongFileName = MakeLongPath(widen(fileName));
+        retfinal = impl::GetFileAttributes(LongFileName.c_str());
+    }
+    else
+    {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        retfinal = INVALID_FILE_ATTRIBUTES; //impl::GetFileAttributes(fileName);
+    }
 #if _DEBUG
-    Log(L"[%d] GetFileAttributes: returns retfinal=%d", DllInstance, retfinal);
+    Log(L"[%d] GetFileAttributes: returns retfinal=%d", dllInstance, retfinal);
     if (retfinal == INVALID_FILE_ATTRIBUTES)
     {
-        Log(L"[%d] GetFileAttributes: No Redirect returns GetLastError=0x%x", DllInstance, GetLastError());
+        Log(L"[%d] GetFileAttributes: No Redirect returns GetLastError=0x%x", dllInstance, GetLastError());
     }
 #endif
     return retfinal;

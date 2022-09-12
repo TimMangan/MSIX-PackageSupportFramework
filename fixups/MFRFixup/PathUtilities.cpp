@@ -229,7 +229,7 @@ bool PathParentExists(const wchar_t* path)
 /// Given a file path, ensure all directories are created so that we can do a file operation on the file.
 /// </summary>
 /// <param name="filepath"></param>
-void PreCreateFolders(std::wstring filepath, [[maybe_unused]] DWORD DllInstance, [[maybe_unused]] std::wstring DebugMessage)
+void PreCreateFolders(std::wstring filepath, [[maybe_unused]] DWORD dllInstance, [[maybe_unused]] std::wstring DebugMessage)
 {
     std::wstring notlongfilepath = MakeNotLongPath(filepath);
     size_t position;
@@ -257,13 +257,13 @@ void PreCreateFolders(std::wstring filepath, [[maybe_unused]] DWORD DllInstance,
         if (bDebug != 0)
         {
 #if _DEBUG
-            Log(L"[%d] %s pre-create folder '%s'", DllInstance, DebugMessage.c_str(), (*partial).c_str());
+            Log(L"[%d] %s pre-create folder '%s'", dllInstance, DebugMessage.c_str(), (*partial).c_str());
 #endif
         }
     }
 } // PreCreateFolders()
 
-BOOL Cow(std::wstring from, std::wstring to, [[maybe_unused]] int DllInstance, [[maybe_unused]] std::wstring DebugString)
+BOOL Cow(std::wstring from, std::wstring to, [[maybe_unused]] int dllInstance, [[maybe_unused]] std::wstring DebugString)
 {
     switch (MFRConfiguration.COW)
     {
@@ -299,17 +299,17 @@ BOOL Cow(std::wstring from, std::wstring to, [[maybe_unused]] int DllInstance, [
         break;
     }
     // We may need to pre-create mising directories for the destination in the redirection area
-    PreCreateFolders(to, DllInstance, DebugString);
+    PreCreateFolders(to, dllInstance, DebugString);
 
 #if _DEBUG
-    Log(L"[%d] %s COW file '%s' to '%s'", DllInstance, DebugString.c_str(), MakeLongPath(from).c_str(), MakeLongPath(to).c_str());
+    Log(L"[%d] %s COW file '%s' to '%s'", dllInstance, DebugString.c_str(), MakeLongPath(from).c_str(), MakeLongPath(to).c_str());
 #endif
     BOOL bRet = ::CopyFileW(MakeLongPath(from).c_str(), MakeLongPath(to).c_str(),true);
 #if _DEBUG
     if (bRet == 0)
     {
         DWORD eCode = GetLastError();
-        Log(L"[%d] %s COW failed, error=0x%d", DllInstance, DebugString.c_str(), eCode);
+        Log(L"[%d] %s COW failed, error=0x%d", dllInstance, DebugString.c_str(), eCode);
     }
 #endif
     return bRet;

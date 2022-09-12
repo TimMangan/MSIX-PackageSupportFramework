@@ -16,19 +16,16 @@
 
 #include "ManagedPathTypes.h"
 #include "PathUtilities.h"
+#include "DetermineCohorts.h"
 
 
-#include "FunctionImplementations.h"
-#include <psf_logging.h>
-
-
-BOOL  WRAPPER_DELETEFILE(std::wstring theDeletingFile, DWORD DllInstance, bool debug)
+BOOL  WRAPPER_DELETEFILE(std::wstring theDeletingFile, DWORD dllInstance, bool debug)
 {
     std::wstring LongDeletingFile = MakeLongPath(theDeletingFile);
     BOOL retfinal = impl::DeleteFileW(LongDeletingFile.c_str());
     if (debug)
     {
-        Log(L"[%d] DeleteFile returns on file '%s' and result 0x%x", DllInstance, LongDeletingFile.c_str(), retfinal);
+        Log(L"[%d] DeleteFile returns on file '%s' and result 0x%x", dllInstance, LongDeletingFile.c_str(), retfinal);
     }
     return retfinal;
 }
@@ -37,11 +34,16 @@ BOOL  WRAPPER_DELETEFILE(std::wstring theDeletingFile, DWORD DllInstance, bool d
 template <typename CharT>
 BOOL __stdcall DeleteFileFixup(_In_ const CharT* pathName) noexcept
 {
-    DWORD DllInstance = ++g_InterceptInstance;
+    DWORD dllInstance = ++g_InterceptInstance;
     bool debug = false;
 #if _DEBUG
     debug = true;
 #endif
+    bool moredebug = false;
+#if MOREDEBUG
+    moredebug = true;
+#endif
+
     auto guard = g_reentrancyGuard.enter();
     BOOL retfinal;
     try
@@ -50,40 +52,29 @@ BOOL __stdcall DeleteFileFixup(_In_ const CharT* pathName) noexcept
         {
             std::wstring wPathName = widen(pathName);
 #if _DEBUG
-            LogString(DllInstance, L"DeleteFileFixup for pathName", wPathName.c_str());
+            LogString(dllInstance, L"DeleteFileFixup for pathName", wPathName.c_str());
 #endif
             std::replace(wPathName.begin(), wPathName.end(), L'/', L'\\');
 
+            Cohorts cohorts;
+            DetermineCohorts(wPathName, &cohorts, moredebug, dllInstance, L"DeleteFileFixup");
+
             // This get is inheirently a write operation in all cases.
             // There is no need to COW, just create the redirected folder, but may need to create parent folders first.
-            mfr::mfr_path file_mfr = mfr::create_mfr_path(wPathName);
-            mfr::mfr_folder_mapping map;
-            std::wstring testWsRequested = file_mfr.Request_NormalizedPath.c_str();
-            std::wstring testWsNative;
-            std::wstring testWsPackage;
-            std::wstring testWsRedirected;
 
-            switch (file_mfr.Request_MfrPathType)
+            switch (cohorts.file_mfr.Request_MfrPathType)
             {
             case mfr::mfr_path_types::in_native_area:
-#if MOREDEBUG
-                Log(L"[%d] DeleteFileFixup    in_native_area", DllInstance);
-#endif
-                map = mfr::Find_LocalRedirMapping_FromNativePath_ForwardSearch(file_mfr.Request_NormalizedPath.c_str());
-                if (map.Valid_mapping)
+                if (cohorts.map.Valid_mapping &&
+                    cohorts.map.RedirectionFlags == mfr::mfr_redirect_flags::prefer_redirection_local)
                 {
-#if MOREDEBUG
-                    Log(L"[%d] DeleteFileFixup    match on LocalRedirMapping", DllInstance);
-#endif
                     // try the request path, which must be the local redirected version by definition, and then a package equivalent
-                    testWsRedirected = testWsRequested;
-                    testWsPackage = ReplacePathPart(testWsRequested.c_str(), map.RedirectedPathBase, map.PackagePathBase);
-                    if (PathExists(testWsRedirected.c_str()))
+                    if (PathExists(cohorts.WsRedirected.c_str()))
                     {
                         // Still do this to set attributes
-                        retfinal = WRAPPER_DELETEFILE(testWsRedirected, DllInstance, debug);
+                        retfinal = WRAPPER_DELETEFILE(cohorts.WsRedirected, dllInstance, debug);
 #if IMPROVE_RETURN_ACCURACY
-                        if (PathExists(testWsPackage.c_str()))
+                        if (PathExists(cohorts.WsPackage.c_str()))
                         {
                             retfinal = FALSE;
                             SetLastError(ERROR_ACCESS_DENIED);
@@ -94,7 +85,7 @@ BOOL __stdcall DeleteFileFixup(_In_ const CharT* pathName) noexcept
 #endif
                         return retfinal;
                     }
-                    else if (PathExists(testWsPackage.c_str()))
+                    else if (PathExists(cohorts.WsPackage.c_str()))
                     {
                         retfinal = FALSE;
                         SetLastError(ERROR_ACCESS_DENIED);
@@ -114,27 +105,17 @@ BOOL __stdcall DeleteFileFixup(_In_ const CharT* pathName) noexcept
                         return retfinal;
                     }
                 }
-                map = mfr::Find_TraditionalRedirMapping_FromNativePath_ForwardSearch(file_mfr.Request_NormalizedPath.c_str());
-                if (map.Valid_mapping)
+                else if (cohorts.map.Valid_mapping &&
+                         (cohorts.map.RedirectionFlags == mfr::mfr_redirect_flags::prefer_redirection_containerized ||
+                          cohorts.map.RedirectionFlags == mfr::mfr_redirect_flags::prefer_redirection_if_package_vfs))
                 {
-#if MOREDEBUG
-                    Log(L"[%d] DeleteFileFixup    match on TraditionalRedirMapping", DllInstance);
-#endif
                     // try the redirected path, then package (via COW), then native (possibly via COW).
-                    testWsRedirected = ReplacePathPart(testWsRequested.c_str(), map.NativePathBase, map.RedirectedPathBase);
-                    testWsPackage = ReplacePathPart(testWsRequested.c_str(), map.NativePathBase, map.PackagePathBase);
-                    testWsNative = testWsRequested.c_str();
-#if MOREDEBUG
-                    Log(L"[%d] DeleteFileFixup      RedirPath=%s", DllInstance, testWsRedirected.c_str());
-                    Log(L"[%d] DeleteFileFixup    PackagePath=%s", DllInstance, testWsPackage.c_str());
-                    Log(L"[%d] DeleteFileFixup     NativePath=%s", DllInstance, testWsNative.c_str());
-#endif
-                    if (PathExists(testWsRedirected.c_str()))
+                    if (PathExists(cohorts.WsRedirected.c_str()))
                     {
-                        retfinal = WRAPPER_DELETEFILE(testWsRedirected, DllInstance, debug);
+                        retfinal = WRAPPER_DELETEFILE(cohorts.WsRedirected, dllInstance, debug);
                         return retfinal;
                     }
-                    else if (PathExists(testWsPackage.c_str()))
+                    else if (PathExists(cohorts.WsPackage.c_str()))
                     {
                         retfinal = FALSE;
                         SetLastError(ERROR_ACCESS_DENIED);
@@ -143,29 +124,29 @@ BOOL __stdcall DeleteFileFixup(_In_ const CharT* pathName) noexcept
 #endif
                         return retfinal;
                     }
+                    else if (cohorts.UsingNative &&
+                             PathExists(cohorts.WsNative.c_str()))
+                    {
+                        retfinal = WRAPPER_DELETEFILE(cohorts.WsNative, dllInstance, debug);
+                        return retfinal;
+                    }
                     else
                     {
                         // There isn't such a file anywhere.
-                        return WRAPPER_DELETEFILE(testWsRequested, DllInstance, debug);
+                        return WRAPPER_DELETEFILE(cohorts.WsRequested, dllInstance, debug);
                     }
                 }
                 break;
             case mfr::mfr_path_types::in_package_pvad_area:
-#if MOREDEBUG
-                Log(L"[%d] DeleteFileFixup    in_package_pvad_area", DllInstance);
-#endif
-                map = mfr::Find_TraditionalRedirMapping_FromPackagePath_ForwardSearch(file_mfr.Request_NormalizedPath.c_str());
-                if (map.Valid_mapping)
+                if (cohorts.map.Valid_mapping)
                 {
                     //// try the redirected path, then package (COW), then don't need native.
-                    testWsPackage = testWsRequested;
-                    testWsRedirected = ReplacePathPart(testWsRequested.c_str(), map.PackagePathBase, map.RedirectedPathBase);
-                    if (PathExists(testWsRedirected.c_str()))
+                    if (PathExists(cohorts.WsRedirected.c_str()))
                     {
-                        retfinal = WRAPPER_DELETEFILE(testWsRedirected, DllInstance, debug);
+                        retfinal = WRAPPER_DELETEFILE(cohorts.WsRedirected, dllInstance, debug);
                         return retfinal;
                     }
-                    else if (PathExists(testWsPackage.c_str()))
+                    else if (PathExists(cohorts.WsPackage.c_str()))
                     {
                         retfinal = FALSE;
                         SetLastError(ERROR_ACCESS_DENIED);
@@ -187,21 +168,16 @@ BOOL __stdcall DeleteFileFixup(_In_ const CharT* pathName) noexcept
                 }
                 break;
             case mfr::mfr_path_types::in_package_vfs_area:
-#if MOREDEBUG
-                Log(L"[%d] DeleteFileFixup    in_package_vfs_area", DllInstance);
-#endif
-                map = mfr::Find_LocalRedirMapping_FromPackagePath_ForwardSearch(file_mfr.Request_NormalizedPath.c_str());
-                if (map.Valid_mapping)
+                if (cohorts.map.Valid_mapping &&
+                    cohorts.map.RedirectionFlags == mfr::mfr_redirect_flags::prefer_redirection_local)
                 {
                     // try the redirection path, then the package (COW).
-                    testWsPackage = testWsRequested;
-                    testWsRedirected = ReplacePathPart(testWsRequested.c_str(), map.PackagePathBase, map.RedirectedPathBase);
-                    if (PathExists(testWsRedirected.c_str()))
+                    if (PathExists(cohorts.WsRedirected.c_str()))
                     {
-                        retfinal = WRAPPER_DELETEFILE(testWsRedirected, DllInstance, debug);
+                        retfinal = WRAPPER_DELETEFILE(cohorts.WsRedirected, dllInstance, debug);
                         return retfinal;
                     }
-                    else if (PathExists(testWsPackage.c_str()))
+                    else if (PathExists(cohorts.WsPackage.c_str()))
                     {
                         retfinal = false;
                         SetLastError(ERROR_ACCESS_DENIED);
@@ -221,25 +197,29 @@ BOOL __stdcall DeleteFileFixup(_In_ const CharT* pathName) noexcept
                         return retfinal;
                     }
                 }
-                map = mfr::Find_TraditionalRedirMapping_FromPackagePath_ForwardSearch(file_mfr.Request_NormalizedPath.c_str());
-                if (map.Valid_mapping)
+                else if (cohorts.map.Valid_mapping &&
+                         (cohorts.map.RedirectionFlags == mfr::mfr_redirect_flags::prefer_redirection_containerized ||
+                          cohorts.map.RedirectionFlags == mfr::mfr_redirect_flags::prefer_redirection_if_package_vfs))
                 {
                     // try the redirection path, then the package (COW), then native (possibly COW)
-                    testWsPackage = testWsRequested;
-                    testWsRedirected = ReplacePathPart(testWsRequested.c_str(), map.PackagePathBase, map.RedirectedPathBase);
-                    testWsNative = ReplacePathPart(testWsRequested.c_str(), map.PackagePathBase, map.NativePathBase);
-                    if (PathExists(testWsRedirected.c_str()))
+                    if (PathExists(cohorts.WsRedirected.c_str()))
                     {
-                        retfinal = WRAPPER_DELETEFILE(testWsRedirected, DllInstance, debug);
+                        retfinal = WRAPPER_DELETEFILE(cohorts.WsRedirected, dllInstance, debug);
                         return retfinal;
                     }
-                    else if (PathExists(testWsPackage.c_str()))
+                    else if (PathExists(cohorts.WsPackage.c_str()))
                     {
                         retfinal = FALSE;
                         SetLastError(ERROR_ACCESS_DENIED);
 #if _DEBUG
                         Log("[%d] DeleteFileFixup: Setting return code to ERROR_ACCESS_DENIED.");
 #endif
+                        return retfinal;
+                    }
+                    else if (cohorts.UsingNative &&
+                             PathExists(cohorts.WsNative.c_str()))
+                    {
+                        retfinal = WRAPPER_DELETEFILE(cohorts.WsNative, dllInstance, debug);
                         return retfinal;
                     }
                     else
@@ -254,22 +234,15 @@ BOOL __stdcall DeleteFileFixup(_In_ const CharT* pathName) noexcept
                 }
                 break;
             case mfr::mfr_path_types::in_redirection_area_writablepackageroot:
-#if MOREDEBUG
-                Log(L"[%d] DeleteFileFixup    in_redirection_area_writablepackageroot", DllInstance);
-#endif
-                map = mfr::Find_TraditionalRedirMapping_FromRedirectedPath_ForwardSearch(file_mfr.Request_NormalizedPath.c_str());
-                if (map.Valid_mapping)
+                if (cohorts.map.Valid_mapping)
                 {
                     // try the redirected path, then package (COW), then possibly native (Possibly COW).
-                    testWsRedirected = testWsRequested;
-                    testWsPackage = ReplacePathPart(testWsRequested.c_str(), map.RedirectedPathBase, map.PackagePathBase);
-                    testWsNative = ReplacePathPart(testWsRequested.c_str(), map.RedirectedPathBase, map.NativePathBase);
-                    if (PathExists(testWsRedirected.c_str()))
+                    if (PathExists(cohorts.WsRedirected.c_str()))
                     {
-                        retfinal = WRAPPER_DELETEFILE(testWsRedirected, DllInstance, debug);
+                        retfinal = WRAPPER_DELETEFILE(cohorts.WsRedirected, dllInstance, debug);
                         return retfinal;
                     }
-                    else if (PathExists(testWsPackage.c_str()))
+                    else if (PathExists(cohorts.WsPackage.c_str()))
                     {
                         retfinal = FALSE;
                         SetLastError(ERROR_ACCESS_DENIED);
@@ -278,9 +251,10 @@ BOOL __stdcall DeleteFileFixup(_In_ const CharT* pathName) noexcept
 #endif
                         return retfinal;
                     }
-                    else if (PathExists(testWsNative.c_str()))
+                    else if (cohorts.UsingNative &&
+                             PathExists(cohorts.WsNative.c_str()))
                     {
-                        retfinal = WRAPPER_DELETEFILE(testWsNative, DllInstance, debug);
+                        retfinal = WRAPPER_DELETEFILE(cohorts.WsNative, dllInstance, debug);
                         return retfinal;
                     }
                     else
@@ -296,38 +270,6 @@ BOOL __stdcall DeleteFileFixup(_In_ const CharT* pathName) noexcept
                 }
                 break;
             case mfr::mfr_path_types::in_redirection_area_other:
-#if MOREDEBUG
-                Log(L"[%d] DeleteFileFixup    in_redirection_area_other", DllInstance);
-#endif
-                if (PathExists(testWsRedirected.c_str()))
-                {
-                    retfinal = WRAPPER_DELETEFILE(testWsRedirected, DllInstance, debug);
-                    return retfinal;
-                }
-                else if (PathExists(testWsPackage.c_str()))
-                {
-                    retfinal = FALSE;
-                    SetLastError(ERROR_ACCESS_DENIED);
-#if _DEBUG
-                    Log("[%d] DeleteFileFixup: Setting return code to ERROR_ACCESS_DENIED.");
-#endif
-                    return retfinal;
-                }
-                else if (PathExists(testWsNative.c_str()))
-                {
-                    retfinal = WRAPPER_DELETEFILE(testWsNative, DllInstance, debug);
-                    return retfinal;
-                }
-                else
-                {
-                    // There isn't such a file anywhere.
-                    retfinal = FALSE;
-                    SetLastError(ERROR_FILE_NOT_FOUND);
-#if _DEBUG
-                    Log("[%d] DeleteFileFixup: Setting return code to ERROR_FILE_NOT_FOUND.");
-#endif
-                    return retfinal;
-                }
                 break;
             case mfr::mfr_path_types::in_other_drive_area:
             case mfr::mfr_path_types::is_protocol_path:
@@ -342,14 +284,26 @@ BOOL __stdcall DeleteFileFixup(_In_ const CharT* pathName) noexcept
     }
 #if _DEBUG
     // Fall back to assuming no redirection is necessary if exception
-    LOGGED_CATCHHANDLER(DllInstance, L"DeleteFile")
+    LOGGED_CATCHHANDLER(dllInstance, L"DeleteFile")
 #else
     catch (...)
     {
-        Log(L"[%d] DeleteFileFixup Exception=0x%x", DllInstance, GetLastError());
+        Log(L"[%d] DeleteFileFixup Exception=0x%x", dllInstance, GetLastError());
     }
 #endif
-    std::wstring LongDeletingFile = MakeLongPath(widen(pathName));
-    return impl::DeleteFile(LongDeletingFile.c_str());
+    if (pathName != nullptr)
+    {
+        std::wstring LongDeletingFile = MakeLongPath(widen(pathName));
+        retfinal =  impl::DeleteFile(LongDeletingFile.c_str());
+    }
+    else
+    {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        retfinal = 0; //  impl::DeleteFile(pathName);
+    }
+#if _DEBUG
+    Log(L"[%d] DeleteFileFixup returns 0x%x", dllInstance, retfinal);
+#endif
+    return retfinal;
 }
 DECLARE_STRING_FIXUP(impl::DeleteFile, DeleteFileFixup);

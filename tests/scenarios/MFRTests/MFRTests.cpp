@@ -90,6 +90,10 @@ extern int RunRemoveDeleteTests();
 extern int InitializeFindFileTests();
 extern int RunFindFileTests();
 
+
+extern int InitializeOddDirectoryTests();
+extern int RunOddDirectoryTests();
+
 #endif
 
 void InitializeGlobals()
@@ -123,6 +127,7 @@ void InitializeFolderMappings()
     count += InitializeReplaceFileTests();
     count += InitializeRemoveDeleteTests();
     count += InitializeFindFileTests();
+    count += InitializeOddDirectoryTests();
     test_initialize("Managed File Redirection (MFR) Tests", count);
 }
 
@@ -171,6 +176,9 @@ int run()
     testResult = RunFindFileTests();
     result = result ? result : testResult;
 
+
+    testResult = RunOddDirectoryTests();
+    result = result ? result : testResult;
 
     return result;
 #endif

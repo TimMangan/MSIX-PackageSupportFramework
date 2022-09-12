@@ -49,6 +49,8 @@ namespace mfr
         g_MfrFolderMappings.push_back(mfr::mfr_folder_mapping{ true, FID_Fonts,                            L"Fonts",                           L"Fonts",                   g_packageVfsRootPath / L"Fonts"sv,                  false, g_writablePackageRootPath / L"VFS\\Fonts"sv,                    mfr::mfr_redirect_flags::prefer_redirection_containerized });
         g_MfrFolderMappings.push_back(mfr::mfr_folder_mapping{ true, FID_Windows,                          L"Windows",                         L"Windows",                 g_packageVfsRootPath / L"Windows"sv,                true,  g_writablePackageRootPath / L"VFS\\Windows"sv,                  mfr::mfr_redirect_flags::prefer_redirection_containerized });
 
+        // Exclude the AppRepository from redirection, but add rest of ProgramData.
+        g_MfrFolderMappings.push_back(mfr::mfr_folder_mapping{ true, FID_ProgramData / LR"(Microsoft\\Windows\\AppRepository)", L"Common AppData\\Microsoft\\Windows\\AppRepository",  L"UnofficialAppRepository",          g_packageVfsRootPath / L"Common AppData\\Microsoft\\Windows\\AppRepository"sv,  true,  g_writablePackageRootPath / L"VFS\\Common AppData\\Microsoft\\Windows\\AppRepository"sv,           mfr::mfr_redirect_flags::prefer_redirection_none});
         g_MfrFolderMappings.push_back(mfr::mfr_folder_mapping{ true, FID_ProgramData,                      L"Common AppData",                  L"Common AppData",          g_packageVfsRootPath / L"Common AppData"sv,         true,  g_writablePackageRootPath / L"VFS\\Common AppData"sv,           mfr::mfr_redirect_flags::prefer_redirection_containerized });
 
         // These are additional folders that may appear in MSIX packages and need help

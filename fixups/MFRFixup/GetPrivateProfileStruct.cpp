@@ -10,6 +10,7 @@
 
 #include "ManagedPathTypes.h"
 #include "PathUtilities.h"
+#include "DetermineCohorts.h"
 
 // Microsoft documentation: https://docs.microsoft.com/en-us/windows/win32/api/winbase/nf-winbase-getprivateprofilestruct
 
@@ -29,7 +30,7 @@
         } \
         if (debug) \
         { \
-            Log(L"[%d] GetPrivateProfileStructFixup Returned is: %d from '%s' ", DllInstance, retfinal, LongDestinationFilename.c_str()); \
+            Log(L"[%d] GetPrivateProfileStructFixup Returned is: %d from '%s' ", dllInstance, retfinal, LongDestinationFilename.c_str()); \
         } \
         return retfinal; \
     }
@@ -43,12 +44,17 @@ BOOL __stdcall GetPrivateProfileStructFixup(
     _In_ UINT uSizeStruct,
     _In_opt_ const CharT* fileName) noexcept
 {
-    DWORD DllInstance = ++g_InterceptInstance;
+    DWORD dllInstance = ++g_InterceptInstance;
     BOOL retfinal;
-    bool debug = false;
+    [[maybe_unused]] bool debug = false;
 #if _DEBUG
     debug = true;
 #endif
+    [[maybe_unused]] bool moredebug = false;
+#if MOREDEBUG
+    moredebug = true;
+#endif
+
     auto guard = g_reentrancyGuard.enter();
     try
     {
@@ -58,180 +64,192 @@ BOOL __stdcall GetPrivateProfileStructFixup(
             if (fileName != NULL)
             {
 #if DEBUG
-                LogString(DllInstance, L"GetPrivateProfileStructFixup for fileName", fileName);
+                LogString(dllInstance, L"GetPrivateProfileStructFixup for fileName", fileName);
 #endif
 
                 // This get is inheirently a read-only operation in all cases.
                 // We prefer to use the redirecton case, if present.
                 std::wstring wfileName = widen(fileName);
-                mfr::mfr_path file_mfr = mfr::create_mfr_path(wfileName);
-                mfr::mfr_folder_mapping map;
-                std::wstring testWsRequested = file_mfr.Request_NormalizedPath.c_str();
-                std::wstring testWsNative;
-                std::wstring testWsRedirected;
-                std::wstring testWsPackage;
-                switch (file_mfr.Request_MfrPathType)
+
+                Cohorts cohorts;
+                DetermineCohorts(wfileName, &cohorts, moredebug, dllInstance, L"GetPrivateProfileStructFixup");
+
+                switch (cohorts.file_mfr.Request_MfrPathType)
                 {
                 case mfr::mfr_path_types::in_native_area:
-#if MOREDEBUG
-                    Log(L"[%d] GetPrivateProfileStructFixup    in_native_area", DllInstance);
-#endif
-                    map = mfr::Find_LocalRedirMapping_FromNativePath_ForwardSearch(file_mfr.Request_NormalizedPath.c_str());
-                    if (map.Valid_mapping)
+                    if (cohorts.map.Valid_mapping)
                     {
-                        // try the request path, which must be the local redirected version by definition, and then a package equivalent, then default 
-                        testWsRedirected = testWsRequested;
-                        testWsPackage = ReplacePathPart(testWsRequested.c_str(), map.NativePathBase, map.PackagePathBase);
-                        if (PathExists(testWsRedirected.c_str()))
+                        switch (cohorts.map.RedirectionFlags)
                         {
-                            WRAPPER_GETPRIVATEPROFILESTRUCT(testWsRedirected, debug);
-                        }
-                        else if (PathExists(testWsPackage.c_str()))
-                        {
-                            WRAPPER_GETPRIVATEPROFILESTRUCT(testWsPackage, debug);
-                        }
-                        else
-                        {
-                            // No file, calling allows for default value or to get from registry.
-                            WRAPPER_GETPRIVATEPROFILESTRUCT(testWsRequested, debug);
-                        }
-                    }
-                    map = mfr::Find_TraditionalRedirMapping_FromNativePath_ForwardSearch(file_mfr.Request_NormalizedPath.c_str());
-                    if (map.Valid_mapping)
-                    {
-                        // try the redirected path, then package, then native, then default
-                        testWsRedirected = ReplacePathPart(testWsRequested.c_str(), map.NativePathBase, map.RedirectedPathBase);
-                        testWsPackage = ReplacePathPart(testWsRequested.c_str(), map.NativePathBase, map.PackagePathBase);
-                        testWsNative = testWsRequested;
-                        if (PathExists(testWsRedirected.c_str()))
-                        {
-                            WRAPPER_GETPRIVATEPROFILESTRUCT(testWsRedirected, debug);
-                        }
-                        else if (PathExists(testWsPackage.c_str()))
-                        {
-                            WRAPPER_GETPRIVATEPROFILESTRUCT(testWsPackage, debug);
-                        }
-                        else if (PathExists(testWsNative.c_str()))
-                        {
-                            WRAPPER_GETPRIVATEPROFILESTRUCT(testWsNative, debug);
-                        }
-                        else
-                        {
-                            // No file, calling allows for default value or to get from registry.
-                            WRAPPER_GETPRIVATEPROFILESTRUCT(testWsRequested, debug);
+                        case mfr::mfr_redirect_flags::prefer_redirection_local:
+                            // try the request path, which must be the local redirected version by definition, and then a package equivalent, then default 
+                            if (PathExists(cohorts.WsRedirected.c_str()))
+                            {
+                                WRAPPER_GETPRIVATEPROFILESTRUCT(cohorts.WsRedirected, debug);
+                            }
+                            else if (PathExists(cohorts.WsPackage.c_str()))
+                            {
+                                WRAPPER_GETPRIVATEPROFILESTRUCT(cohorts.WsPackage, debug);
+                            }
+                            else
+                            {
+                                // No file, calling allows for default value or to get from registry.
+                                WRAPPER_GETPRIVATEPROFILESTRUCT(cohorts.WsRequested, debug);
+                            }
+                            break;
+                        case mfr::mfr_redirect_flags::prefer_redirection_containerized:
+                        case mfr::mfr_redirect_flags::prefer_redirection_if_package_vfs:
+                            // try the redirected path, then package, then native, then default
+                            if (PathExists(cohorts.WsRedirected.c_str()))
+                            {
+                                WRAPPER_GETPRIVATEPROFILESTRUCT(cohorts.WsRedirected, debug);
+                            }
+                            else if (PathExists(cohorts.WsPackage.c_str()))
+                            {
+                                WRAPPER_GETPRIVATEPROFILESTRUCT(cohorts.WsPackage, debug);
+                            }
+                            else if (cohorts.UsingNative &&
+                                     PathExists(cohorts.WsNative.c_str()))
+                            {
+                                WRAPPER_GETPRIVATEPROFILESTRUCT(cohorts.WsNative, debug);
+                            }
+                            else
+                            {
+                                // No file, calling allows for default value or to get from registry.
+                                WRAPPER_GETPRIVATEPROFILESTRUCT(cohorts.WsRequested, debug);
+                            }
+                            break;
+                        case mfr::mfr_redirect_flags::prefer_redirection_none:
+                        case mfr::mfr_redirect_flags::disabled:
+                        default:
+                            // just fall through to unguarded code
+                            break;
                         }
                     }
                     break;
                 case mfr::mfr_path_types::in_package_pvad_area:
-#if MOREDEBUG
-                    Log(L"[%d] GetPrivateProfileStructFixup    in_package_pvad_area", DllInstance);
-#endif
-                    map = mfr::Find_TraditionalRedirMapping_FromPackagePath_ForwardSearch(file_mfr.Request_NormalizedPath.c_str());
-                    if (map.Valid_mapping)
+                    if (cohorts.map.Valid_mapping)
                     {
-                        //// try the redirected path, then package, then don't need native, so default
-                        testWsRedirected = ReplacePathPart(testWsRequested.c_str(), map.PackagePathBase, map.RedirectedPathBase);
-                        testWsPackage = testWsRequested;
-                        if (PathExists(testWsRedirected.c_str()))
+                        switch (cohorts.map.RedirectionFlags)
                         {
-                            WRAPPER_GETPRIVATEPROFILESTRUCT(testWsRedirected, debug);
+                        case mfr::mfr_redirect_flags::prefer_redirection_local:
+                            // not possible, fall through
+                            break;
+                        case mfr::mfr_redirect_flags::prefer_redirection_containerized:
+                        case mfr::mfr_redirect_flags::prefer_redirection_if_package_vfs:
+                            //// try the redirected path, then package, then don't need native, so default
+                            if (PathExists(cohorts.WsRedirected.c_str()))
+                            {
+                                WRAPPER_GETPRIVATEPROFILESTRUCT(cohorts.WsRedirected, debug);
+                            }
+                            else if (PathExists(cohorts.WsPackage.c_str()))
+                            {
+                                WRAPPER_GETPRIVATEPROFILESTRUCT(cohorts.WsPackage, debug);
+                            }
+                            else
+                            {
+                                // No file, calling allows for default value or to get from registry.
+                                WRAPPER_GETPRIVATEPROFILESTRUCT(cohorts.WsRequested, debug);
+                            }
+                            break;
+                        case mfr::mfr_redirect_flags::prefer_redirection_none:
+                        case mfr::mfr_redirect_flags::disabled:
+                        default:
+                            // just fall through to unguarded code
+                            break;
+                            }
                         }
-                        else if (PathExists(testWsPackage.c_str()))
-                        {
-                            WRAPPER_GETPRIVATEPROFILESTRUCT(testWsPackage, debug);
-                        }
-                        else
-                        {
-                            // No file, calling allows for default value or to get from registry.
-                            WRAPPER_GETPRIVATEPROFILESTRUCT(testWsRequested, debug);
-                        }
-                    }
                     break;
                 case mfr::mfr_path_types::in_package_vfs_area:
-#if MOREDEBUG
-                    Log(L"[%d] GetPrivateProfileStructFixup    in_package_vfs_area", DllInstance);
-#endif
-                    map = mfr::Find_LocalRedirMapping_FromPackagePath_ForwardSearch(file_mfr.Request_NormalizedPath.c_str());
-                    if (map.Valid_mapping)
+                    if (cohorts.map.Valid_mapping)
                     {
-                        // try the redirected path, then package path,  then default.
-                        testWsPackage = testWsRequested;
-                        testWsRedirected = ReplacePathPart(testWsRequested.c_str(), map.PackagePathBase, map.RedirectedPathBase);
-                        if (PathExists(testWsRedirected.c_str()))
+                        switch (cohorts.map.RedirectionFlags)
                         {
-                            WRAPPER_GETPRIVATEPROFILESTRUCT(testWsRedirected, debug);
+                        case mfr::mfr_redirect_flags::prefer_redirection_local:
+                            // try the redirected path, then package path,  then default.
+                            if (PathExists(cohorts.WsRedirected.c_str()))
+                            {
+                                WRAPPER_GETPRIVATEPROFILESTRUCT(cohorts.WsRedirected, debug);
+                            }
+                            else if (PathExists(cohorts.WsPackage.c_str()))
+                            {
+                                WRAPPER_GETPRIVATEPROFILESTRUCT(cohorts.WsPackage, debug);
+                            }
+                            else
+                            {
+                                // No file, calling allows for default value or to get from registry.
+                                WRAPPER_GETPRIVATEPROFILESTRUCT(cohorts.WsRequested, debug);
+                            }
+                            break;
+                        case mfr::mfr_redirect_flags::prefer_redirection_containerized:
+                        case mfr::mfr_redirect_flags::prefer_redirection_if_package_vfs:
+                            // try the redirected path, then package, then native, then default
+                           if (PathExists(cohorts.WsRedirected.c_str()))
+                            {
+                                WRAPPER_GETPRIVATEPROFILESTRUCT(cohorts.WsRedirected, debug);
+                            }
+                            else if (PathExists(cohorts.WsPackage.c_str()))
+                            {
+                                WRAPPER_GETPRIVATEPROFILESTRUCT(cohorts.WsPackage, debug);
+                            }
+                            else if (cohorts.UsingNative &&
+                                     PathExists(cohorts.WsNative.c_str()))
+                            {
+                                WRAPPER_GETPRIVATEPROFILESTRUCT(cohorts.WsNative, debug);
+                            }
+                            else
+                            {
+                                // No file, calling allows for default value or to get from registry.
+                                WRAPPER_GETPRIVATEPROFILESTRUCT(cohorts.WsRequested, debug);
+                            }
+                           break;
+                        case mfr::mfr_redirect_flags::prefer_redirection_none:
+                        case mfr::mfr_redirect_flags::disabled:
+                        default:
+                            // just fall through to unguarded code
+                            break;
+                           }
                         }
-                        else if (PathExists(testWsPackage.c_str()))
-                        {
-                            WRAPPER_GETPRIVATEPROFILESTRUCT(testWsPackage, debug);
-                        }
-                        else
-                        {
-                            // No file, calling allows for default value or to get from registry.
-                            WRAPPER_GETPRIVATEPROFILESTRUCT(testWsRequested, debug);
-                        }
-                    }
-                    map = mfr::Find_TraditionalRedirMapping_FromPackagePath_ForwardSearch(file_mfr.Request_NormalizedPath.c_str());
-                    if (map.Valid_mapping)
-                    {
-                        // try the redirected path, then package, then native, then default
-                        testWsPackage = testWsRequested;
-                        testWsRedirected = ReplacePathPart(testWsRequested.c_str(), map.PackagePathBase, map.RedirectedPathBase);
-                        testWsNative = ReplacePathPart(testWsRequested.c_str(), map.PackagePathBase, map.NativePathBase);
-                        if (PathExists(testWsRedirected.c_str()))
-                        {
-                            WRAPPER_GETPRIVATEPROFILESTRUCT(testWsRedirected, debug);
-                        }
-                        else if (PathExists(testWsPackage.c_str()))
-                        {
-                            WRAPPER_GETPRIVATEPROFILESTRUCT(testWsPackage, debug);
-                        }
-                        else if (PathExists(testWsNative.c_str()))
-                        {
-                            WRAPPER_GETPRIVATEPROFILESTRUCT(testWsNative, debug);
-                        }
-                        else
-                        {
-                            // No file, calling allows for default value or to get from registry.
-                            WRAPPER_GETPRIVATEPROFILESTRUCT(testWsRequested, debug);
-                        }
-                    }
                     break;
                 case mfr::mfr_path_types::in_redirection_area_writablepackageroot:
-#if MOREDEBUG
-                    Log(L"[%d] GetPrivateProfileStructFixup    in_redirection_area_writablepackageroot", DllInstance);
-#endif
-                    map = mfr::Find_TraditionalRedirMapping_FromRedirectedPath_ForwardSearch(file_mfr.Request_NormalizedPath.c_str());
-                    if (map.Valid_mapping)
+                    if (cohorts.map.Valid_mapping)
                     {
-                        // try the redirected path, then package, then possibly native, then default.
-                        testWsRedirected = testWsRequested;
-                        testWsPackage = ReplacePathPart(testWsRequested.c_str(), map.RedirectedPathBase, map.PackagePathBase);
-                        testWsNative = ReplacePathPart(testWsRequested.c_str(), map.RedirectedPathBase, map.NativePathBase);
-                        if (PathExists(testWsRedirected.c_str()))
+                        switch (cohorts.map.RedirectionFlags)
                         {
-                            WRAPPER_GETPRIVATEPROFILESTRUCT(testWsRedirected, debug);
-                        }
-                        else if (PathExists(testWsPackage.c_str()))
-                        {
-                            WRAPPER_GETPRIVATEPROFILESTRUCT(testWsPackage, debug);
-                        }
-                        else if (testWsPackage.find(L"\\VFS\\") != std::wstring::npos &&
-                                 PathExists(testWsNative.c_str()))
-                        {
-                            WRAPPER_GETPRIVATEPROFILESTRUCT(testWsNative, debug);
-                        }
-                        else
-                        {
-                            // No file, calling allows for default value or to get from registry.
-                            WRAPPER_GETPRIVATEPROFILESTRUCT(testWsRequested, debug);
+                        case mfr::mfr_redirect_flags::prefer_redirection_local:
+                            // not possible
+                            break;
+                        case mfr::mfr_redirect_flags::prefer_redirection_containerized:
+                        case mfr::mfr_redirect_flags::prefer_redirection_if_package_vfs:
+                            // try the redirected path, then package, then possibly native, then default.
+                            if (PathExists(cohorts.WsRedirected.c_str()))
+                            {
+                                WRAPPER_GETPRIVATEPROFILESTRUCT(cohorts.WsRedirected, debug);
+                            }
+                            else if (PathExists(cohorts.WsPackage.c_str()))
+                            {
+                                WRAPPER_GETPRIVATEPROFILESTRUCT(cohorts.WsPackage, debug);
+                            }
+                            else if (cohorts.UsingNative &&
+                                     PathExists(cohorts.WsNative.c_str()))
+                            {
+                                WRAPPER_GETPRIVATEPROFILESTRUCT(cohorts.WsNative, debug);
+                            }
+                            else
+                            {
+                                // No file, calling allows for default value or to get from registry.
+                                WRAPPER_GETPRIVATEPROFILESTRUCT(cohorts.WsRequested, debug);
+                            }
+                            break;
+                        case mfr::mfr_redirect_flags::prefer_redirection_none:
+                        case mfr::mfr_redirect_flags::disabled:
+                        default:
+                            // just fall through to unguarded code
+                            break;
                         }
                     }
                     break;
                 case mfr::mfr_path_types::in_redirection_area_other:
-#if MOREDEBUG
-                    Log(L"[%d] GetPrivateProfileStructFixup    in_redirection_area_other", DllInstance);
-#endif
                     break;
                 case mfr::mfr_path_types::in_other_drive_area:
                 case mfr::mfr_path_types::is_protocol_path:
@@ -244,24 +262,24 @@ BOOL __stdcall GetPrivateProfileStructFixup(
             }
             else
             {
-                Log(L"[%d]GetPrivateProfileStructFixup: null fileName, don't redirect", DllInstance);
+                Log(L"[%d]GetPrivateProfileStructFixup: null fileName, don't redirect", dllInstance);
             }
         }
     }
 #if _DEBUG
     // Fall back to assuming no redirection is necessary if exception
-    LOGGED_CATCHHANDLER(DllInstance, L"GetPrivateProfileStruct")
+    LOGGED_CATCHHANDLER(dllInstance, L"GetPrivateProfileStruct")
 #else
     catch (...)
     {
-        Log(L"[%d] GetPrivateProfileStructFixup Exception=0x%x", DllInstance, GetLastError());
+        Log(L"[%d] GetPrivateProfileStructFixup Exception=0x%x", dllInstance, GetLastError());
     }
 #endif 
 
 
     retfinal =  impl::GetPrivateProfileStruct(sectionName, key, structArea, uSizeStruct, fileName);
 #if MOREDEBUG
-    Log(L"[%d] GetPrivateProfileStructFixup Returned %d from unfixed call.", DllInstance, retfinal);
+    Log(L"[%d] GetPrivateProfileStructFixup Returned %d from unfixed call.", dllInstance, retfinal);
 #endif
     return retfinal;
 }

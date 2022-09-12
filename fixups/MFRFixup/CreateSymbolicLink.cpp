@@ -34,10 +34,7 @@
 
 #include "ManagedPathTypes.h"
 #include "PathUtilities.h"
-
-
-#include "FunctionImplementations.h"
-#include <psf_logging.h>
+#include "DetermineCohorts.h"
 
 
 template <typename CharT>
@@ -47,6 +44,15 @@ BOOLEAN __stdcall CreateSymbolicLinkFixup(
     _In_ DWORD flags) noexcept
 {
     DWORD dllInstance = ++g_InterceptInstance;
+    [[maybe_unused]] bool debug = false;
+#if _DEBUG
+    debug = true;
+#endif
+    [[maybe_unused]] bool moredebug = false;
+#if MOREDEBUG
+    moredebug = true;
+#endif    
+    
     BOOLEAN retfinal;
     auto guard = g_reentrancyGuard.enter();
     try
@@ -62,121 +68,37 @@ BOOLEAN __stdcall CreateSymbolicLinkFixup(
             std::wstring wSymlinkFileName = widen(symlinkFileName);
             std::wstring wTargetFileName = widen(targetFileName);
 
-            mfr::mfr_path targetfile_mfr = mfr::create_mfr_path(wTargetFileName);
-            mfr::mfr_folder_mapping targetFileMap;
-            std::wstring targetFileWsRequested = targetfile_mfr.Request_NormalizedPath.c_str();
-            std::wstring targetFileWsNative;
-            std::wstring targetFileWsPackage;
-            std::wstring targetFileWsRedirected;
+            Cohorts cohortsSymlink;
+            DetermineCohorts(wSymlinkFileName, &cohortsSymlink, moredebug, dllInstance, L"CreateSymbolicLinkFixup");
 
-            mfr::mfr_path symlinkfile_mfr = mfr::create_mfr_path(wSymlinkFileName);
-            mfr::mfr_folder_mapping symlinkFileMap;
-            std::wstring symlinkFileWsRequested = symlinkfile_mfr.Request_NormalizedPath.c_str();
-            std::wstring symlinkFileWsNative;
-            std::wstring symlinkFileWsPackage;
-            std::wstring symlinkFileWsRedirected;
+            Cohorts cohortsTarget;
+            DetermineCohorts(wTargetFileName, &cohortsTarget, moredebug, dllInstance, L"CreateSymbolicLinkFixup");
 
-            // Determine if path of target file.
-            switch (targetfile_mfr.Request_MfrPathType)
-            {
-            case mfr::mfr_path_types::in_native_area:
-                targetFileMap = mfr::Find_LocalRedirMapping_FromNativePath_ForwardSearch(targetfile_mfr.Request_NormalizedPath.c_str());
-                if (targetFileMap.Valid_mapping)
-                {
-                    targetFileWsNative = targetFileWsRequested;
-                    targetFileWsPackage = ReplacePathPart(targetFileWsRequested.c_str(), targetFileMap.NativePathBase, targetFileMap.PackagePathBase);
-                    targetFileWsRedirected = targetFileWsRequested;
-                    break;
-                }
-                targetFileMap = mfr::Find_TraditionalRedirMapping_FromNativePath_ForwardSearch(targetfile_mfr.Request_NormalizedPath.c_str());
-                if (targetFileMap.Valid_mapping)
-                {
-                    targetFileWsNative = targetFileWsRequested;
-                    targetFileWsPackage = ReplacePathPart(targetFileWsRequested.c_str(), targetFileMap.NativePathBase, targetFileMap.PackagePathBase);
-                    targetFileWsRedirected = ReplacePathPart(targetFileWsRequested.c_str(), targetFileMap.NativePathBase, targetFileMap.RedirectedPathBase);
-                    break;
-                }
-                break;
-            case mfr::mfr_path_types::in_package_pvad_area:
-                targetFileMap = mfr::Find_TraditionalRedirMapping_FromPackagePath_ForwardSearch(targetfile_mfr.Request_NormalizedPath.c_str());
-                if (targetFileMap.Valid_mapping)
-                {
-                    targetFileWsNative = targetFileWsRequested;
-                    targetFileWsPackage = targetFileWsRequested;
-                    targetFileWsRedirected = ReplacePathPart(targetFileWsRequested.c_str(), targetFileMap.PackagePathBase, targetFileMap.RedirectedPathBase);
-                    break;
-                }
-                break;
-            case mfr::mfr_path_types::in_package_vfs_area:
-                targetFileMap = mfr::Find_LocalRedirMapping_FromPackagePath_ForwardSearch(targetfile_mfr.Request_NormalizedPath.c_str());
-                if (targetFileMap.Valid_mapping)
-                {
-                    targetFileWsNative = ReplacePathPart(targetFileWsRequested.c_str(), targetFileMap.PackagePathBase, targetFileMap.NativePathBase);;
-                    targetFileWsPackage = targetFileWsRequested;
-                    targetFileWsRedirected = ReplacePathPart(targetFileWsRequested.c_str(), targetFileMap.PackagePathBase, targetFileMap.RedirectedPathBase);;
-                    break;
-                }
-                targetFileMap = mfr::Find_TraditionalRedirMapping_FromPackagePath_ForwardSearch(targetfile_mfr.Request_NormalizedPath.c_str());
-                if (targetFileMap.Valid_mapping)
-                {
-                    targetFileWsNative = ReplacePathPart(targetFileWsRequested.c_str(), targetFileMap.PackagePathBase, targetFileMap.NativePathBase);
-                    targetFileWsPackage = targetFileWsRequested;
-                    targetFileWsRedirected = ReplacePathPart(targetFileWsRequested.c_str(), targetFileMap.PackagePathBase, targetFileMap.RedirectedPathBase);
-                    break;
-                }
-                break;
-            case mfr::mfr_path_types::in_redirection_area_writablepackageroot:
-                targetFileMap = mfr::Find_TraditionalRedirMapping_FromRedirectedPath_ForwardSearch(targetfile_mfr.Request_NormalizedPath.c_str());
-                if (targetFileMap.Valid_mapping)
-                {
-                    targetFileWsNative = ReplacePathPart(targetFileWsRequested.c_str(), targetFileMap.RedirectedPathBase, targetFileMap.NativePathBase);
-                    targetFileWsPackage = ReplacePathPart(targetFileWsRequested.c_str(), targetFileMap.RedirectedPathBase, targetFileMap.PackagePathBase);
-                    targetFileWsRedirected = targetFileWsRequested;
-                    break;
-                }
-                break;
-            case mfr::mfr_path_types::in_redirection_area_other:
-                targetFileMap = mfr::MakeInvalidMapping();
-                targetFileWsNative = targetFileWsRequested;
-                targetFileWsPackage = targetFileWsRequested;
-                targetFileWsRedirected = targetFileWsRequested;
-                break;
-            case mfr::mfr_path_types::in_other_drive_area:
-            case mfr::mfr_path_types::is_protocol_path:
-            case mfr::mfr_path_types::is_UNC_path:
-            case mfr::mfr_path_types::unsupported_for_intercepts:
-            case mfr::mfr_path_types::unknown:
-            default:
-                targetFileMap = mfr::MakeInvalidMapping();
-                targetFileWsNative = targetFileWsRequested;
-                targetFileWsPackage = targetFileWsRequested;
-                targetFileWsRedirected = targetFileWsRequested;
-                break;
-            }
+
 
             // If file case, make a copy if needed so that all changes happen there
             if (flags == 0)
             {
-                if (!PathExists(targetFileWsRedirected.c_str()))
+                if (!PathExists(cohortsTarget.WsRedirected.c_str()))
                 {
-                    if (PathExists(targetFileWsPackage.c_str()))
+                    if (PathExists(cohortsTarget.WsPackage.c_str()))
                     {
 #if _DEBUG
                         Log(L"[%d] CreateSymbolicLinkFixup:  Copy target package file to redirection area.", dllInstance);
 #endif
-                        if (!Cow(targetFileWsPackage, targetFileWsRedirected, dllInstance, L"CreateSymbolicLinkFixup"))
+                        if (!Cow(cohortsTarget.WsPackage, cohortsTarget.WsRedirected, dllInstance, L"CreateSymbolicLinkFixup"))
                         {
 #if _DEBUG
                             Log(L"[%d] CreateSymbolicLinkFixup:  Cow failure?", dllInstance);
 #endif
                         }
                     }
-                    else
+                    else if (cohortsTarget.UsingNative)
                     {
 #if _DEBUG
                         Log(L"[%d] CreateSymbolicLinkFixup:  Copy target native file to redirection area.", dllInstance);
 #endif
-                        if (!Cow(targetFileWsNative, targetFileWsRedirected, dllInstance, L"CreateSymbolicLinkFixup"))
+                        if (!Cow(cohortsTarget.WsNative, cohortsTarget.WsRedirected, dllInstance, L"CreateSymbolicLinkFixup"))
                         {
 #if _DEBUG
                             Log(L"[%d] CreateSymbolicLinkFixup:  Cow failure?", dllInstance);
@@ -191,88 +113,11 @@ BOOLEAN __stdcall CreateSymbolicLinkFixup(
                 // Ignoring SYMBOLIC_LINK_FLAG_ALLOW_UNPRIVILEGED_CREATE as it isn't a call a production app would make.
             }
 
-            // Determine if path of symlink file.
-            switch (symlinkfile_mfr.Request_MfrPathType)
+ 
+            if (cohortsTarget.map.Valid_mapping && cohortsSymlink.map.Valid_mapping)
             {
-            case mfr::mfr_path_types::in_native_area:
-                symlinkFileMap = mfr::Find_LocalRedirMapping_FromNativePath_ForwardSearch(symlinkfile_mfr.Request_NormalizedPath.c_str());
-                if (symlinkFileMap.Valid_mapping)
-                {
-                    symlinkFileWsNative = symlinkFileWsRequested;
-                    symlinkFileWsPackage = ReplacePathPart(symlinkFileWsRequested.c_str(), symlinkFileMap.NativePathBase, symlinkFileMap.PackagePathBase);
-                    symlinkFileWsRedirected = symlinkFileWsRequested;
-                    break;
-                }
-                symlinkFileMap = mfr::Find_TraditionalRedirMapping_FromNativePath_ForwardSearch(symlinkfile_mfr.Request_NormalizedPath.c_str());
-                if (symlinkFileMap.Valid_mapping)
-                {
-                    symlinkFileWsNative = symlinkFileWsRequested;
-                    symlinkFileWsPackage = ReplacePathPart(symlinkFileWsRequested.c_str(), symlinkFileMap.NativePathBase, symlinkFileMap.PackagePathBase);
-                    symlinkFileWsRedirected = ReplacePathPart(symlinkFileWsRequested.c_str(), symlinkFileMap.NativePathBase, symlinkFileMap.RedirectedPathBase);
-                    break;
-                }
-                break;
-            case mfr::mfr_path_types::in_package_pvad_area:
-                symlinkFileMap = mfr::Find_TraditionalRedirMapping_FromPackagePath_ForwardSearch(symlinkfile_mfr.Request_NormalizedPath.c_str());
-                if (symlinkFileMap.Valid_mapping)
-                {
-                    symlinkFileWsNative = symlinkFileWsRequested;
-                    symlinkFileWsPackage = symlinkFileWsRequested;
-                    symlinkFileWsRedirected = ReplacePathPart(symlinkFileWsRequested.c_str(), symlinkFileMap.PackagePathBase, symlinkFileMap.RedirectedPathBase);
-                    break;
-                }
-                break;
-            case mfr::mfr_path_types::in_package_vfs_area:
-                symlinkFileMap = mfr::Find_LocalRedirMapping_FromPackagePath_ForwardSearch(symlinkfile_mfr.Request_NormalizedPath.c_str());
-                if (symlinkFileMap.Valid_mapping)
-                {
-                    symlinkFileWsNative = ReplacePathPart(symlinkFileWsRequested.c_str(), symlinkFileMap.PackagePathBase, symlinkFileMap.NativePathBase);;
-                    symlinkFileWsPackage = symlinkFileWsRequested;
-                    symlinkFileWsRedirected = ReplacePathPart(symlinkFileWsRequested.c_str(), symlinkFileMap.PackagePathBase, symlinkFileMap.RedirectedPathBase);;
-                    break;
-                }
-                symlinkFileMap = mfr::Find_TraditionalRedirMapping_FromPackagePath_ForwardSearch(symlinkfile_mfr.Request_NormalizedPath.c_str());
-                if (symlinkFileMap.Valid_mapping)
-                {
-                    symlinkFileWsNative = ReplacePathPart(symlinkFileWsRequested.c_str(), symlinkFileMap.PackagePathBase, symlinkFileMap.NativePathBase);
-                    symlinkFileWsPackage = symlinkFileWsRequested;
-                    symlinkFileWsRedirected = ReplacePathPart(symlinkFileWsRequested.c_str(), symlinkFileMap.PackagePathBase, symlinkFileMap.RedirectedPathBase);
-                    break;
-                }
-                break;
-            case mfr::mfr_path_types::in_redirection_area_writablepackageroot:
-                symlinkFileMap = mfr::Find_TraditionalRedirMapping_FromRedirectedPath_ForwardSearch(symlinkfile_mfr.Request_NormalizedPath.c_str());
-                if (symlinkFileMap.Valid_mapping)
-                {
-                    symlinkFileWsNative = ReplacePathPart(symlinkFileWsRequested.c_str(), symlinkFileMap.RedirectedPathBase, symlinkFileMap.NativePathBase);
-                    symlinkFileWsPackage = ReplacePathPart(symlinkFileWsRequested.c_str(), symlinkFileMap.RedirectedPathBase, symlinkFileMap.PackagePathBase);
-                    symlinkFileWsRedirected = symlinkFileWsRequested;
-                    break;
-                }
-                break;
-            case mfr::mfr_path_types::in_redirection_area_other:
-                symlinkFileMap = mfr::MakeInvalidMapping();
-                symlinkFileWsNative = symlinkFileWsRequested;
-                symlinkFileWsPackage = symlinkFileWsRequested;
-                symlinkFileWsRedirected = symlinkFileWsRequested;
-                break;
-            case mfr::mfr_path_types::in_other_drive_area:
-            case mfr::mfr_path_types::is_protocol_path:
-            case mfr::mfr_path_types::is_UNC_path:
-            case mfr::mfr_path_types::unsupported_for_intercepts:
-            case mfr::mfr_path_types::unknown:
-            default:
-                symlinkFileMap = mfr::MakeInvalidMapping();
-                symlinkFileWsNative = symlinkFileWsRequested;
-                symlinkFileWsPackage = symlinkFileWsRequested;
-                symlinkFileWsRedirected = symlinkFileWsRequested;
-                break;
-            }
-
-            if (targetFileMap.Valid_mapping && symlinkFileMap.Valid_mapping)
-            {
-                std::wstring rldSymlinkFileNameRedirected = MakeLongPath(symlinkFileWsRedirected);
-                std::wstring rldTargetFileNameRedirected = MakeLongPath(targetFileWsRedirected);
+                std::wstring rldSymlinkFileNameRedirected = MakeLongPath(cohortsSymlink.WsRedirected);
+                std::wstring rldTargetFileNameRedirected = MakeLongPath(cohortsTarget.WsRedirected);
                 PreCreateFolders(rldSymlinkFileNameRedirected, dllInstance, L"CreateSymbolicLinkFixup");
 #if MOREDEBUG
                 Log(L"[%d] CreateSymbolicLinkFixup: link is to   %s", dllInstance, rldSymlinkFileNameRedirected.c_str());
@@ -298,10 +143,17 @@ BOOLEAN __stdcall CreateSymbolicLinkFixup(
     }
 #endif
 
-
-    std::wstring rldFileName = MakeLongPath(widen(symlinkFileName));
-    std::wstring rldTargetFileName = MakeLongPath(widen(targetFileName));
-    retfinal = impl::CreateSymbolicLink(rldFileName.c_str(), rldTargetFileName.c_str(), flags | SYMBOLIC_LINK_FLAG_ALLOW_UNPRIVILEGED_CREATE);
+    if (symlinkFileName != nullptr && targetFileName != nullptr)
+    {
+        std::wstring rldFileName = MakeLongPath(widen(symlinkFileName));
+        std::wstring rldTargetFileName = MakeLongPath(widen(targetFileName));
+        retfinal = impl::CreateSymbolicLink(rldFileName.c_str(), rldTargetFileName.c_str(), flags | SYMBOLIC_LINK_FLAG_ALLOW_UNPRIVILEGED_CREATE);
+    }
+    else
+    {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        retfinal = 0; //impl::CreateSymbolicLink(symlinkFileName, targetFileName, flags | SYMBOLIC_LINK_FLAG_ALLOW_UNPRIVILEGED_CREATE);
+    }
 #if _DEBUG
     Log(L"[%d] CreateSymbolicLinkFixup (default) returns %d", dllInstance, retfinal);
 #endif

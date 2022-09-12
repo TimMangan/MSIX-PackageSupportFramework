@@ -22,10 +22,7 @@
 
 #include "ManagedPathTypes.h"
 #include "PathUtilities.h"
-
-
-#include "FunctionImplementations.h"
-#include <psf_logging.h>
+#include "DetermineCohorts.h"
 
 
 template <typename CharT>
@@ -38,6 +35,14 @@ BOOL __stdcall ReplaceFileFixup(
     _Reserved_ LPVOID reserved) noexcept
 {
     DWORD dllInstance = ++g_InterceptInstance;
+    [[maybe_unused]] bool debug = false;
+#if _DEBUG
+    debug = true;
+#endif
+    [[maybe_unused]] bool moredebug = false;
+#if MOREDEBUG
+    moredebug = true;
+#endif
     BOOL retfinal;
     auto guard = g_reentrancyGuard.enter();
     try
@@ -76,94 +81,59 @@ BOOL __stdcall ReplaceFileFixup(
             std::wstring wReplacedFileName = widen(replacedFileName);
             std::wstring wReplacementFileName = widen(replacementFileName);
 
-            mfr::mfr_path Replaced_mfr = mfr::create_mfr_path(wReplacedFileName);
-            mfr::mfr_folder_mapping ReplacedMap;
-            std::wstring ReplacedWsRequested = Replaced_mfr.Request_NormalizedPath.c_str();
-            std::wstring ReplacedWsNative;
-            std::wstring ReplacedWsPackage;
-            std::wstring ReplacedWsRedirected;
+            Cohorts cohortsReplaced;
+            DetermineCohorts(wReplacedFileName, &cohortsReplaced, moredebug, dllInstance, L"ReplaceFileFixup");
 
-            mfr::mfr_path Replacement_mfr = mfr::create_mfr_path(wReplacementFileName);
-            mfr::mfr_folder_mapping ReplacementMap;
-            std::wstring ReplacementWsRequested = Replacement_mfr.Request_NormalizedPath.c_str();
-            std::wstring ReplacementWsNative;
-            std::wstring ReplacementWsPackage;
-            std::wstring ReplacementWsRedirected;
+            Cohorts cohortsReplacement;
+            DetermineCohorts(wReplacementFileName, &cohortsReplacement, moredebug, dllInstance, L"ReplaceFileFixup");
 
 
             // Determine if path of file to be replaced and use redirection area.
             std::wstring UseReplacedFile;
-            switch (Replaced_mfr.Request_MfrPathType)
+            switch (cohortsReplaced.file_mfr.Request_MfrPathType)
             {
             case mfr::mfr_path_types::in_native_area:
-                ReplacedMap = mfr::Find_LocalRedirMapping_FromNativePath_ForwardSearch(Replaced_mfr.Request_NormalizedPath.c_str());
-                if (ReplacedMap.Valid_mapping)
+                if (cohortsReplaced.map.Valid_mapping)
                 {
-                    ReplacedWsNative = ReplacedWsRequested;
-                    ReplacedWsPackage = ReplacePathPart(ReplacedWsRequested.c_str(), ReplacedMap.NativePathBase, ReplacedMap.PackagePathBase);
-                    ReplacedWsRedirected = ReplacedWsRequested;
-                    UseReplacedFile = ReplacedWsRedirected;
-                    break;
+                    UseReplacedFile = cohortsReplaced.WsRedirected;
                 }
-                ReplacedMap = mfr::Find_TraditionalRedirMapping_FromNativePath_ForwardSearch(Replaced_mfr.Request_NormalizedPath.c_str());
-                if (ReplacedMap.Valid_mapping)
+                else
                 {
-                    ReplacedWsNative = ReplacedWsRequested;
-                    ReplacedWsPackage = ReplacePathPart(ReplacedWsRequested.c_str(), ReplacedMap.NativePathBase, ReplacedMap.PackagePathBase);
-                    ReplacedWsRedirected = ReplacePathPart(ReplacedWsRequested.c_str(), ReplacedMap.NativePathBase, ReplacedMap.RedirectedPathBase);
-                    UseReplacedFile = ReplacedWsRedirected;
-                    break;
+                    UseReplacedFile = wReplacedFileName;
                 }
                 break;
             case mfr::mfr_path_types::in_package_pvad_area:
-                ReplacedMap = mfr::Find_TraditionalRedirMapping_FromPackagePath_ForwardSearch(Replaced_mfr.Request_NormalizedPath.c_str());
-                if (ReplacedMap.Valid_mapping)
+                if (cohortsReplaced.map.Valid_mapping)
                 {
-                    ReplacedWsNative = ReplacedWsRequested;
-                    ReplacedWsPackage = ReplacedWsRequested;
-                    ReplacedWsRedirected = ReplacePathPart(ReplacedWsRequested.c_str(), ReplacedMap.PackagePathBase, ReplacedMap.RedirectedPathBase);
-                    UseReplacedFile = ReplacedWsRedirected;
-                    break;
+                    UseReplacedFile = cohortsReplaced.WsRedirected;
+                }
+                else
+                {
+                    UseReplacedFile = wReplacedFileName;
                 }
                 break;
             case mfr::mfr_path_types::in_package_vfs_area:
-                ReplacedMap = mfr::Find_LocalRedirMapping_FromPackagePath_ForwardSearch(Replaced_mfr.Request_NormalizedPath.c_str());
-                if (ReplacedMap.Valid_mapping)
+                if (cohortsReplaced.map.Valid_mapping)
                 {
-                    ReplacedWsNative = ReplacePathPart(ReplacedWsRequested.c_str(), ReplacedMap.PackagePathBase, ReplacedMap.NativePathBase);
-                    ReplacedWsPackage = ReplacedWsRequested;
-                    ReplacedWsRedirected = ReplacePathPart(ReplacedWsRequested.c_str(), ReplacedMap.PackagePathBase, ReplacedMap.RedirectedPathBase);
-                    UseReplacedFile = ReplacedWsRedirected;
-                    break;
+                    UseReplacedFile = cohortsReplaced.WsRedirected;
                 }
-                ReplacedMap = mfr::Find_TraditionalRedirMapping_FromPackagePath_ForwardSearch(Replaced_mfr.Request_NormalizedPath.c_str());
-                if (ReplacedMap.Valid_mapping)
+                else
                 {
-                    ReplacedWsNative = ReplacePathPart(ReplacedWsRequested.c_str(), ReplacedMap.PackagePathBase, ReplacedMap.NativePathBase);
-                    ReplacedWsPackage = ReplacedWsRequested;
-                    ReplacedWsRedirected = ReplacePathPart(ReplacedWsRequested.c_str(), ReplacedMap.PackagePathBase, ReplacedMap.RedirectedPathBase);
-                    UseReplacedFile = ReplacedWsRedirected;
-                    UseReplacedFile = ReplacedWsPackage;
-                    break;
+                    UseReplacedFile = wReplacedFileName;
                 }
                 break;
             case mfr::mfr_path_types::in_redirection_area_writablepackageroot:
-                ReplacedMap = mfr::Find_TraditionalRedirMapping_FromRedirectedPath_ForwardSearch(Replaced_mfr.Request_NormalizedPath.c_str());
-                if (ReplacedMap.Valid_mapping)
+                if (cohortsReplaced.map.Valid_mapping)
                 {
-                    ReplacedWsNative = ReplacePathPart(ReplacedWsRequested.c_str(), ReplacedMap.RedirectedPathBase, ReplacedMap.NativePathBase);
-                    ReplacedWsPackage = ReplacePathPart(ReplacedWsRequested.c_str(), ReplacedMap.RedirectedPathBase, ReplacedMap.PackagePathBase);
-                    ReplacedWsRedirected = ReplacedWsRequested;
-                    UseReplacedFile = ReplacedWsRedirected;
-                    break;
+                    UseReplacedFile = cohortsReplaced.WsRequested;
+                }
+                else
+                {
+                    UseReplacedFile = wReplacedFileName;
                 }
                 break;
             case mfr::mfr_path_types::in_redirection_area_other:
-                ReplacedMap = mfr::MakeInvalidMapping();
-                ReplacedWsNative = ReplacedWsRequested;
-                ReplacedWsPackage = ReplacedWsRequested;
-                ReplacedWsRedirected = ReplacedWsRequested;
-                UseReplacedFile = ReplacedWsRequested;
+                UseReplacedFile = wReplacedFileName;
                 break;
             case mfr::mfr_path_types::in_other_drive_area:
             case mfr::mfr_path_types::is_protocol_path:
@@ -171,158 +141,190 @@ BOOL __stdcall ReplaceFileFixup(
             case mfr::mfr_path_types::unsupported_for_intercepts:
             case mfr::mfr_path_types::unknown:
             default:
-                ReplacedMap = mfr::MakeInvalidMapping();
-                ReplacedWsNative = ReplacedWsRequested;
-                ReplacedWsPackage = ReplacedWsRequested;
-                ReplacedWsRedirected = ReplacedWsRequested;
-                UseReplacedFile = ReplacedWsRequested;
+                UseReplacedFile = wReplacedFileName;
                 break;
             }
 
 
             std::wstring UseReplacementFile;
-            // Determing the actual source to use
-            switch (Replacement_mfr.Request_MfrPathType)
+            // Determine the actual source to use
+            switch (cohortsReplacement.file_mfr.Request_MfrPathType)
             {
             case mfr::mfr_path_types::in_native_area:
-                ReplacementMap = mfr::Find_LocalRedirMapping_FromNativePath_ForwardSearch(Replacement_mfr.Request_NormalizedPath.c_str());
-                if (ReplacementMap.Valid_mapping)
+                if (cohortsReplacement.map.Valid_mapping)
                 {
-                    ReplacementWsNative = ReplacementWsRequested;
-                    ReplacementWsPackage = ReplacePathPart(ReplacementWsRequested.c_str(), ReplacementMap.NativePathBase, ReplacementMap.PackagePathBase);
-                    ReplacementWsRedirected = ReplacementWsRequested;
-                    if (PathExists(ReplacementWsNative.c_str()))
+                    switch (cohortsReplacement.map.RedirectionFlags)
                     {
-                        UseReplacementFile = ReplacementWsNative;
+                    case mfr::mfr_redirect_flags::prefer_redirection_local:
+                        if (PathExists(cohortsReplacement.WsNative.c_str()))
+                        {
+                            UseReplacementFile = cohortsReplacement.WsNative;
+                        }
+                        else if (PathExists(cohortsReplacement.WsPackage.c_str()))
+                        {
+                            UseReplacementFile = cohortsReplacement.WsPackage;
+                        }
+                        else
+                        {
+                            UseReplacementFile = cohortsReplacement.WsRequested;
+                        }
+                        break;
+                    case mfr::mfr_redirect_flags::prefer_redirection_containerized:
+                    case mfr::mfr_redirect_flags::prefer_redirection_if_package_vfs:
+                        if (PathExists(cohortsReplacement.WsRedirected.c_str()))
+                        {
+                            UseReplacementFile = cohortsReplacement.WsRedirected;
+                        }
+                        else if (PathExists(cohortsReplacement.WsPackage.c_str()))
+                        {
+                            UseReplacementFile = cohortsReplacement.WsPackage;
+                        }
+                        else if (cohortsReplacement.UsingNative &&
+                                 PathExists(cohortsReplacement.WsNative.c_str()))
+                        {
+                            UseReplacementFile = cohortsReplacement.WsNative;
+                        }
+                        else
+                        {
+                            UseReplacementFile = cohortsReplacement.WsRequested;
+                        }
+                        break;
+                    case mfr::mfr_redirect_flags::prefer_redirection_none:
+                    case mfr::mfr_redirect_flags::disabled:
+                    default:
+                        // just fall through to unguarded code
+                        break;
                     }
-                    else if (PathExists(ReplacementWsPackage.c_str()))
-                    {
-                        UseReplacementFile = ReplacementWsPackage;
-                    }
-                    else
-                    {
-                        UseReplacementFile = ReplacementWsRequested;
-                    }
-                    break;
                 }
-                ReplacementMap = mfr::Find_TraditionalRedirMapping_FromNativePath_ForwardSearch(Replacement_mfr.Request_NormalizedPath.c_str());
-                if (ReplacementMap.Valid_mapping)
+                else
                 {
-                    ReplacementWsNative = ReplacementWsRequested;
-                    ReplacementWsPackage = ReplacePathPart(ReplacementWsRequested.c_str(), ReplacementMap.NativePathBase, ReplacementMap.PackagePathBase);
-                    ReplacementWsRedirected = ReplacePathPart(ReplacementWsRequested.c_str(), ReplacementMap.NativePathBase, ReplacementMap.RedirectedPathBase);
-                    if (PathExists(ReplacementWsRedirected.c_str()))
-                    {
-                        UseReplacementFile = ReplacementWsRedirected;
-                    }
-                    else if (PathExists(ReplacementWsPackage.c_str()))
-                    {
-                        UseReplacementFile = ReplacementWsPackage;
-                    }
-                    else if (PathExists(ReplacementWsNative.c_str()))
-                    {
-                        UseReplacementFile = ReplacementWsNative;
-                    }
-                    else
-                    {
-                        UseReplacementFile = ReplacementWsRequested;
-                    }
-                    break;
+                    UseReplacementFile = wReplacementFileName;
                 }
                 break;
             case mfr::mfr_path_types::in_package_pvad_area:
-                ReplacementMap = mfr::Find_TraditionalRedirMapping_FromPackagePath_ForwardSearch(Replacement_mfr.Request_NormalizedPath.c_str());
-                if (ReplacementMap.Valid_mapping)
+                if (cohortsReplacement.map.Valid_mapping)
                 {
-                    ReplacementWsNative = ReplacementWsRequested;
-                    ReplacementWsPackage = ReplacementWsRequested;
-                    ReplacementWsRedirected = ReplacePathPart(ReplacementWsRequested.c_str(), ReplacementMap.PackagePathBase, ReplacementMap.RedirectedPathBase);
-                    if (PathExists(ReplacementWsRedirected.c_str()))
+                    switch (cohortsReplacement.map.RedirectionFlags)
                     {
-                        UseReplacementFile = ReplacementWsRedirected;
+                    case mfr::mfr_redirect_flags::prefer_redirection_local:
+                        // not possible, fall through
+                        break;
+                    case mfr::mfr_redirect_flags::prefer_redirection_containerized:
+                    case mfr::mfr_redirect_flags::prefer_redirection_if_package_vfs:
+                        if (PathExists(cohortsReplacement.WsRedirected.c_str()))
+                        {
+                            UseReplacementFile = cohortsReplacement.WsRedirected;
+                        }
+                        else
+                        {
+                            UseReplacementFile = cohortsReplacement.WsRequested;
+                        }
+                        break;
+                    case mfr::mfr_redirect_flags::prefer_redirection_none:
+                    case mfr::mfr_redirect_flags::disabled:
+                    default:
+                        // just fall through to unguarded code
+                        break;
                     }
-                    else
-                    {
-                        UseReplacementFile = ReplacementWsRequested;
-                    }
-                    break;
+                }
+                else
+                {
+                    UseReplacementFile = wReplacementFileName;
                 }
                 break;
             case mfr::mfr_path_types::in_package_vfs_area:
-                ReplacementMap = mfr::Find_LocalRedirMapping_FromPackagePath_ForwardSearch(Replacement_mfr.Request_NormalizedPath.c_str());
-                if (ReplacementMap.Valid_mapping)
+                if (cohortsReplacement.map.Valid_mapping)
                 {
-                    ReplacementWsNative = ReplacePathPart(ReplacementWsRequested.c_str(), ReplacementMap.PackagePathBase, ReplacementMap.NativePathBase);
-                    ReplacementWsPackage = ReplacementWsRequested;
-                    ReplacementWsRedirected = ReplacePathPart(ReplacementWsRequested.c_str(), ReplacementMap.PackagePathBase, ReplacementMap.RedirectedPathBase);
-                    if (PathExists(ReplacementWsRedirected.c_str()))
+                    switch (cohortsReplacement.map.RedirectionFlags)
                     {
-                        UseReplacementFile = ReplacementWsRedirected;
+                    case mfr::mfr_redirect_flags::prefer_redirection_local:
+                        if (PathExists(cohortsReplacement.WsRedirected.c_str()))
+                        {
+                            UseReplacementFile = cohortsReplacement.WsRedirected;
+                        }
+                        else if (PathExists(cohortsReplacement.WsPackage.c_str()))
+                        {
+                            UseReplacementFile = cohortsReplacement.WsPackage;
+                        }
+                        else
+                        {
+                            UseReplacementFile = cohortsReplacement.WsRequested;
+                        }
+                        break;
+                    case mfr::mfr_redirect_flags::prefer_redirection_containerized:
+                    case mfr::mfr_redirect_flags::prefer_redirection_if_package_vfs:
+                        if (PathExists(cohortsReplacement.WsRedirected.c_str()))
+                        {
+                            UseReplacementFile = cohortsReplacement.WsRedirected;
+                        }
+                        else if (PathExists(cohortsReplacement.WsPackage.c_str()))
+                        {
+                            UseReplacementFile = cohortsReplacement.WsPackage;
+                        }
+                        else if (cohortsReplacement.UsingNative &&
+                                 PathExists(cohortsReplacement.WsNative.c_str()))
+                        {
+                            UseReplacementFile = cohortsReplacement.WsNative;
+                        }
+                        else
+                        {
+                            UseReplacementFile = cohortsReplacement.WsRequested;
+                        }
+                        break;
+                    case mfr::mfr_redirect_flags::prefer_redirection_none:
+                    case mfr::mfr_redirect_flags::disabled:
+                    default:
+                        // just fall through to unguarded code
+                        break;
                     }
-                    else if (PathExists(ReplacementWsPackage.c_str()))
-                    {
-                        UseReplacementFile = ReplacementWsPackage;
-                    }
-                    else
-                    {
-                        UseReplacementFile = ReplacementWsRequested;
-                    }
-                    break;
                 }
-                ReplacementMap = mfr::Find_TraditionalRedirMapping_FromPackagePath_ForwardSearch(Replacement_mfr.Request_NormalizedPath.c_str());
-                if (ReplacementMap.Valid_mapping)
+                else
                 {
-                    ReplacementWsNative = ReplacePathPart(ReplacementWsRequested.c_str(), ReplacementMap.PackagePathBase, ReplacementMap.NativePathBase);
-                    ReplacementWsPackage = ReplacementWsRequested;
-                    ReplacementWsRedirected = ReplacePathPart(ReplacementWsRequested.c_str(), ReplacementMap.PackagePathBase, ReplacementMap.RedirectedPathBase);
-                    if (PathExists(ReplacementWsRedirected.c_str()))
-                    {
-                        UseReplacementFile = ReplacementWsRedirected;
-                    }
-                    else if (PathExists(ReplacementWsPackage.c_str()))
-                    {
-                        UseReplacementFile = ReplacementWsPackage;
-                    }
-                    else if (PathExists(ReplacementWsNative.c_str()))
-                    {
-                        UseReplacementFile = ReplacementWsNative;
-                    }
-                    else
-                    {
-                        UseReplacementFile = ReplacementWsRequested;
-                    }
-                    break;
+                    UseReplacementFile = wReplacementFileName;
                 }
                 break;
             case mfr::mfr_path_types::in_redirection_area_writablepackageroot:
-                ReplacementMap = mfr::Find_TraditionalRedirMapping_FromRedirectedPath_ForwardSearch(Replacement_mfr.Request_NormalizedPath.c_str());
-                if (ReplacementMap.Valid_mapping)
+                if (cohortsReplacement.map.Valid_mapping)
                 {
-                    ReplacementWsNative = ReplacePathPart(ReplacementWsRequested.c_str(), ReplacementMap.RedirectedPathBase, ReplacementMap.NativePathBase);
-                    ReplacementWsPackage = ReplacePathPart(ReplacementWsRequested.c_str(), ReplacementMap.RedirectedPathBase, ReplacementMap.PackagePathBase);
-                    ReplacementWsRedirected = ReplacementWsRequested;
-                    if (PathExists(ReplacementWsRedirected.c_str()))
+                    switch (cohortsReplacement.map.RedirectionFlags)
                     {
-                        UseReplacementFile = ReplacementWsRedirected;
+                    case mfr::mfr_redirect_flags::prefer_redirection_local:
+                        // not possible
+                        break;
+                    case mfr::mfr_redirect_flags::prefer_redirection_containerized:
+                    case mfr::mfr_redirect_flags::prefer_redirection_if_package_vfs:
+                        if (PathExists(cohortsReplacement.WsRedirected.c_str()))
+                        {
+                            UseReplacementFile = cohortsReplacement.WsRedirected;
+                        }
+                        else if (PathExists(cohortsReplacement.WsPackage.c_str()))
+                        {
+                            UseReplacementFile = cohortsReplacement.WsPackage;
+                        }
+                        else if (cohortsReplacement.UsingNative &&
+                                 PathExists(cohortsReplacement.WsNative.c_str()))
+                        {
+                            UseReplacementFile = cohortsReplacement.WsNative;
+                        }
+                        else
+                        {
+                            UseReplacementFile = cohortsReplacement.WsRequested;
+                        }
+                        break;
+                    case mfr::mfr_redirect_flags::prefer_redirection_none:
+                    case mfr::mfr_redirect_flags::disabled:
+                    default:
+                        // just fall through to unguarded code
+                        break;
                     }
-                    else if (PathExists(ReplacementWsPackage.c_str()))
-                    {
-                        UseReplacementFile = ReplacementWsPackage;
-                    }
-                    else if (PathExists(ReplacementWsNative.c_str()))
-                    {
-                        UseReplacementFile = ReplacementWsNative;
-                    }
-                    else
-                    {
-                        UseReplacementFile = ReplacementWsRequested;
-                    }
-                    break;
+                }
+                else
+                {
+                    UseReplacementFile = wReplacementFileName;
                 }
                 break;
             case mfr::mfr_path_types::in_redirection_area_other:
-                ReplacementMap = mfr::MakeInvalidMapping();
-                UseReplacementFile = ReplacementWsRequested;
+                UseReplacementFile = wReplacementFileName;
                 break;
             case mfr::mfr_path_types::in_other_drive_area:
             case mfr::mfr_path_types::is_protocol_path:
@@ -330,75 +332,95 @@ BOOL __stdcall ReplaceFileFixup(
             case mfr::mfr_path_types::unsupported_for_intercepts:
             case mfr::mfr_path_types::unknown:
             default:
-                ReplacementMap = mfr::MakeInvalidMapping();
-                UseReplacementFile = ReplacementWsRequested;
+                UseReplacementFile = wReplacementFileName;
                 break;
             }
 
 
-            // Work on the backup first
+            // Work on the making the backup first, if requested (as the backup must end up in the redirected area too
             if (DoBackup)
             {
                 std::wstring wBackupFileName;
                 wBackupFileName = widen(backupFileName);
-                mfr::mfr_path Backup_mfr = mfr::create_mfr_path(wBackupFileName);
-                mfr::mfr_folder_mapping BackupMap;
-                std::wstring BackupWsRequested = Backup_mfr.Request_NormalizedPath.c_str();
-                std::wstring BackupWsNative;
-                std::wstring BackupWsPackage;
-                std::wstring BackupWsRedirected;
+                Cohorts cohortsBackup;
+                DetermineCohorts(wBackupFileName, &cohortsBackup, moredebug, dllInstance, L"ReplaceFileFixup");
 
                 std::wstring UseBackupFile;
                 // Determing the backup destination in redirection area
-                switch (Backup_mfr.Request_MfrPathType)
+                switch (cohortsBackup.file_mfr.Request_MfrPathType)
                 {
                 case mfr::mfr_path_types::in_native_area:
-                    BackupMap = mfr::Find_LocalRedirMapping_FromNativePath_ForwardSearch(Backup_mfr.Request_NormalizedPath.c_str());
-                    if (BackupMap.Valid_mapping)
+                    if (cohortsBackup.map.Valid_mapping)
                     {
-                        UseBackupFile = BackupWsRequested;
-                        break;
+                        switch (cohortsBackup.map.RedirectionFlags)
+                        {
+                        case mfr::mfr_redirect_flags::prefer_redirection_local:
+                            UseBackupFile = cohortsBackup.WsRequested;
+                            break;
+                        case mfr::mfr_redirect_flags::prefer_redirection_containerized:
+                        case mfr::mfr_redirect_flags::prefer_redirection_if_package_vfs:
+                            UseBackupFile = cohortsBackup.WsRedirected;
+                            break;
+                        case mfr::mfr_redirect_flags::prefer_redirection_none:
+                        case mfr::mfr_redirect_flags::disabled:
+                        default:
+                            UseBackupFile = wBackupFileName;
+                            break;
+                        }
                     }
-                    BackupMap = mfr::Find_TraditionalRedirMapping_FromNativePath_ForwardSearch(Backup_mfr.Request_NormalizedPath.c_str());
-                    if (BackupMap.Valid_mapping)
+                    else
                     {
-                        UseBackupFile = ReplacePathPart(BackupWsRequested.c_str(), BackupMap.NativePathBase, BackupMap.RedirectedPathBase);
-                        break;
+                        UseBackupFile = wBackupFileName;
                     }
                     break;
                 case mfr::mfr_path_types::in_package_pvad_area:
-                    BackupMap = mfr::Find_TraditionalRedirMapping_FromPackagePath_ForwardSearch(Backup_mfr.Request_NormalizedPath.c_str());
-                    if (BackupMap.Valid_mapping)
+                    if (cohortsBackup.map.Valid_mapping)
                     {
-                        UseBackupFile = ReplacePathPart(BackupWsRequested.c_str(), BackupMap.PackagePathBase, BackupMap.RedirectedPathBase);
+                        UseBackupFile = cohortsBackup.WsRedirected;
                         break;
+                    }
+                    else
+                    {
+                        UseBackupFile = wBackupFileName;
                     }
                     break;
                 case mfr::mfr_path_types::in_package_vfs_area:
-                    BackupMap = mfr::Find_LocalRedirMapping_FromPackagePath_ForwardSearch(Backup_mfr.Request_NormalizedPath.c_str());
-                    if (BackupMap.Valid_mapping)
+                    if (cohortsBackup.map.Valid_mapping)
                     {
-                        UseBackupFile = ReplacePathPart(BackupWsRequested.c_str(), BackupMap.PackagePathBase, BackupMap.RedirectedPathBase);;
-                        break;
+                        switch (cohortsBackup.map.RedirectionFlags)
+                        {
+                        case mfr::mfr_redirect_flags::prefer_redirection_local:
+                            UseBackupFile = cohortsBackup.WsRequested;
+                            break;
+                        case mfr::mfr_redirect_flags::prefer_redirection_containerized:
+                        case mfr::mfr_redirect_flags::prefer_redirection_if_package_vfs:
+                            UseBackupFile = cohortsBackup.WsRedirected;
+                            break;
+                        case mfr::mfr_redirect_flags::prefer_redirection_none:
+                        case mfr::mfr_redirect_flags::disabled:
+                        default:
+                            UseBackupFile = wBackupFileName;
+                            break;
+                        }
                     }
-                    BackupMap = mfr::Find_TraditionalRedirMapping_FromPackagePath_ForwardSearch(Backup_mfr.Request_NormalizedPath.c_str());
-                    if (BackupMap.Valid_mapping)
+                    else
                     {
-                        UseBackupFile = ReplacePathPart(BackupWsRequested.c_str(), BackupMap.PackagePathBase, BackupMap.RedirectedPathBase);
-                        break;
+                        UseBackupFile = wBackupFileName;
                     }
                     break;
                 case mfr::mfr_path_types::in_redirection_area_writablepackageroot:
-                    BackupMap = mfr::Find_TraditionalRedirMapping_FromRedirectedPath_ForwardSearch(Backup_mfr.Request_NormalizedPath.c_str());
-                    if (BackupMap.Valid_mapping)
+                    if (cohortsBackup.map.Valid_mapping)
                     {
-                        UseBackupFile = BackupWsRequested;
+                        UseBackupFile = cohortsBackup.WsRedirected;
                         break;
+                    }
+                    else
+                    {
+                        UseBackupFile = wBackupFileName;
                     }
                     break;
                 case mfr::mfr_path_types::in_redirection_area_other:
-                    BackupMap = mfr::MakeInvalidMapping();
-                    UseBackupFile = BackupWsRequested;
+                    UseBackupFile = wBackupFileName;
                     break;
                 case mfr::mfr_path_types::in_other_drive_area:
                 case mfr::mfr_path_types::is_protocol_path:
@@ -406,29 +428,30 @@ BOOL __stdcall ReplaceFileFixup(
                 case mfr::mfr_path_types::unsupported_for_intercepts:
                 case mfr::mfr_path_types::unknown:
                 default:
-                    BackupMap = mfr::MakeInvalidMapping();
-                    UseBackupFile = BackupWsRequested;
+                    UseBackupFile = wBackupFileName;
                     break;
                 }
 #if MOREDEBUG
                 LogString(dllInstance, L"ReplaceFileFixup: Backup to", UseBackupFile.c_str());
 #endif
+
                 std::wstring rldUseReplacedFile;
-                if (PathExists(ReplacedWsRedirected.c_str()))
+                if (PathExists(cohortsReplaced.WsRedirected.c_str()))
                 {
-                    rldUseReplacedFile = MakeLongPath(ReplacedWsRedirected);
+                    rldUseReplacedFile = MakeLongPath(cohortsReplaced.WsRedirected);
                 }
-                else if (PathExists(ReplacedWsPackage.c_str()))
+                else if (PathExists(cohortsReplaced.WsPackage.c_str()))
                 {
-                    rldUseReplacedFile = MakeLongPath(ReplacedWsPackage);
+                    rldUseReplacedFile = MakeLongPath(cohortsReplaced.WsPackage);
                 }
-                else if (PathExists(ReplacedWsNative.c_str()))
+                else if (cohortsReplaced.UsingNative &&
+                         PathExists(cohortsReplaced.WsNative.c_str()))
                 {
-                    rldUseReplacedFile = MakeLongPath(ReplacedWsNative);
+                    rldUseReplacedFile = MakeLongPath(cohortsReplaced.WsNative);
                 }
                 else
                 {
-                    rldUseReplacedFile = MakeLongPath(ReplacedWsRequested);
+                    rldUseReplacedFile = MakeLongPath(cohortsReplaced.WsRequested);
                 }
 
                 std::wstring rldUseBackupFile = MakeLongPath(UseBackupFile);
@@ -444,25 +467,21 @@ BOOL __stdcall ReplaceFileFixup(
             }
 
             // Make redirected copies as needed
-#if MOREDEBUG
-            LogString(dllInstance, L"ReplaceFileFixup: replaced file in redirected area.",  ReplacedWsRedirected.c_str());
-            LogString(dllInstance, L"ReplaceFileFixup: replaced file in package area.",  ReplacedWsPackage.c_str());
-            LogString(dllInstance, L"ReplaceFileFixup: replaced file in native area.",  ReplacedWsNative.c_str());
-#endif
-            if (!PathExists(ReplacedWsRedirected.c_str()))
+            if (!PathExists(cohortsReplaced.WsRedirected.c_str()))
             {
                 // Cannot use ReplaceFile when there isn't a file in the redirected area to replace.
                 // While std::filesystem::copy is a possible substitution, we can try to avoid side effects
                 // by doing a Cow and then replacing.
-                if (PathExists(ReplacedWsPackage.c_str()))
+                if (PathExists(cohortsReplaced.WsPackage.c_str()))
                 {
-                    Cow(ReplacedWsPackage, ReplacedWsRedirected, dllInstance, L"ReplaceFileFixup");
-                    UseReplacedFile = ReplacedWsRedirected;
+                    Cow(cohortsReplaced.WsPackage, cohortsReplaced.WsRedirected, dllInstance, L"ReplaceFileFixup");
+                    UseReplacedFile = cohortsReplaced.WsRedirected;
                 }
-                else if (PathExists(ReplacedWsNative.c_str()))
+                else if (cohortsReplaced.UsingNative &&
+                         PathExists(cohortsReplaced.WsNative.c_str()))
                 {
-                    Cow(ReplacedWsNative, ReplacedWsRedirected, dllInstance, L"ReplaceFileFixup");
-                    UseReplacedFile = ReplacedWsRedirected;
+                    Cow(cohortsReplaced.WsNative, cohortsReplaced.WsRedirected, dllInstance, L"ReplaceFileFixup");
+                    UseReplacedFile = cohortsReplaced.WsRedirected;
                 }
                 else
                 {
@@ -474,30 +493,25 @@ BOOL __stdcall ReplaceFileFixup(
                 }
             }
 
-#if MOREDEBUG
-            LogString(dllInstance, L"ReplaceFileFixup: replacement file in redirected area.", ReplacementWsRedirected.c_str());
-            LogString(dllInstance, L"ReplaceFileFixup: replacement file in package area.", ReplacementWsPackage.c_str());
-            LogString(dllInstance, L"ReplaceFileFixup: replacement file in native area.", ReplacementWsNative.c_str());
-#endif
-
-            if (!PathExists(ReplacementWsRedirected.c_str()))
+            if (!PathExists(cohortsReplacement.WsRedirected.c_str()))
             {
-                if (PathExists(ReplacementWsPackage.c_str()))
+                if (PathExists(cohortsReplacement.WsPackage.c_str()))
                 {
                     // Replace needs delete access so we can't use the source file copy inside the package.
-                    Cow(ReplacementWsPackage, ReplacementWsRedirected, dllInstance, L"ReplaceFileFixup");
-                    UseReplacementFile = ReplacementWsRedirected;
+                    Cow(cohortsReplacement.WsPackage, cohortsReplacement.WsRedirected, dllInstance, L"ReplaceFileFixup");
+                    UseReplacementFile = cohortsReplacement.WsRedirected;
                 }
-                else if (PathExists(ReplacementWsNative.c_str()))
+                else if (cohortsReplacement.UsingNative &&
+                         PathExists(cohortsReplacement.WsNative.c_str()))
                 {
                     // The function might fail with the source in the native area, but if so it never would have worked natively, 
                     // so skip the copy.
-                    UseReplacementFile = ReplacementWsNative;
+                    UseReplacementFile = cohortsReplacement.WsNative;
                 }
                 else
                 {
 #if _DEBUG
-                    Log(L"[%d] ReplaceFileFixup: Return 0 as Replace mentfile not found.", dllInstance);
+                    Log(L"[%d] ReplaceFileFixup: Return 0 as Replacementfile not found.", dllInstance);
 #endif
                     SetLastError(ERROR_FILE_NOT_FOUND);
                     return 0;
@@ -509,65 +523,24 @@ BOOL __stdcall ReplaceFileFixup(
             Log(L"[%d] ReplaceFileFixup: Destination to be is %s", dllInstance, UseReplacedFile.c_str());
 #endif
 
-            if (true)
-            {
-                // Can try Replace
-                std::wstring rldUseReplacedFile = MakeLongPath(UseReplacedFile);
-                std::wstring rldUseReplacementFile = MakeLongPath(UseReplacementFile);
-                PreCreateFolders(rldUseReplacedFile, dllInstance, L"ReplaceFileFixup");
+            // Can try Replace
+            std::wstring rldUseReplacedFile = MakeLongPath(UseReplacedFile);
+            std::wstring rldUseReplacementFile = MakeLongPath(UseReplacementFile);
+            PreCreateFolders(rldUseReplacedFile, dllInstance, L"ReplaceFileFixup");
 #if MOREDEBUG
-                Log(L"[%d] ReplaceFileFixup: from is %s", dllInstance, rldUseReplacementFile.c_str());
-                Log(L"[%d] ReplaceFileFixup:   to is %s", dllInstance, rldUseReplacedFile.c_str());
+            Log(L"[%d] ReplaceFileFixup: from is %s", dllInstance, rldUseReplacementFile.c_str());
+            Log(L"[%d] ReplaceFileFixup:   to is %s", dllInstance, rldUseReplacedFile.c_str());
 #endif
-                DWORD Replace_replaceFlags = replaceFlags;
-                if (replaceFlags == 0)
-                {
-                    Replace_replaceFlags = REPLACEFILE_IGNORE_MERGE_ERRORS | REPLACEFILE_IGNORE_ACL_ERRORS;  // needed as destination might not exist yet due to redirection.
-                }
-                retfinal = impl::ReplaceFile(rldUseReplacedFile.c_str(), rldUseReplacementFile.c_str(), nullptr, Replace_replaceFlags, exclude, reserved);
-#if _DEBUG
-                Log(L"[%d] ReplaceFileFixup returns %d", dllInstance, retfinal);
-#endif
-                return retfinal;
-            }
-            else
+            DWORD Replace_replaceFlags = replaceFlags;
+            if (replaceFlags == 0)
             {
-                // Replace move with copy since can't move due to package protections (or file doesn't exist anyway)
-                std::wstring rldUseReplacedFile = MakeLongPath(UseReplacedFile);
-                std::wstring rldUseReplacementFile = MakeLongPath(UseReplacementFile);
-                PreCreateFolders(rldUseReplacementFile, dllInstance, L"ReplaceFileFixup");
-
-
-#if MOREDEBUG
-                Log(L"[%d] ReplaceFileFixup: Implemeting stdcopy from is %s", dllInstance, UseReplacementFile.c_str());
-                Log(L"[%d] ReplaceFileFixup: Implemeting stdcopy   to is %s", dllInstance, UseReplacedFile.c_str());
-#endif
-                // std::filesystem::copy has some edge cases that might throw us for a loop requiring detection of edge
-                // cases that need to be handled differently.  
-                // Limiting use of this as a substitution to only when necessary.
-                // This also ignores the flag options, but since the new file is being wriiten to the redirection area,
-                // it should be OK.
-                const std::filesystem::copy_options copyOptions = std::filesystem::copy_options::overwrite_existing;
-                std::error_code eCode;
-                std::filesystem::copy(UseReplacementFile.c_str(),   // Not sure if std supports long path syntax
-                    UseReplacedFile.c_str(),
-                    copyOptions, eCode);
-                if (eCode.value() != 0)
-                {
-                    retfinal = 0; // error
-                }
-                else
-                {
-                    retfinal = 1; // success
-                }
-                SetLastError(eCode.value()); // Make this match since copy may not set it.
-#if _DEBUG
-                Log(L"[%d] ReplaceFileFixup returns %d", dllInstance, retfinal);
-#endif
-                return retfinal;
+                Replace_replaceFlags = REPLACEFILE_IGNORE_MERGE_ERRORS | REPLACEFILE_IGNORE_ACL_ERRORS;  // needed as destination might not exist yet due to redirection.
             }
-
-
+            retfinal = impl::ReplaceFile(rldUseReplacedFile.c_str(), rldUseReplacementFile.c_str(), nullptr, Replace_replaceFlags, exclude, reserved);
+#if _DEBUG
+            Log(L"[%d] ReplaceFileFixup returns %d", dllInstance, retfinal);
+#endif
+            return retfinal;
 
         }
         else
@@ -594,7 +567,7 @@ BOOL __stdcall ReplaceFileFixup(
 
     retfinal = impl::ReplaceFile(replacedFileName, replacementFileName, backupFileName, replaceFlags, exclude, reserved);
 #if _DEBUG
-    Log(L"[%d] ReplaceFile returns 0x%x", dllInstance, retfinal);
+    Log(L"[%d] ReplaceFileFixup returns 0x%x", dllInstance, retfinal);
 #endif
     return retfinal;
 }

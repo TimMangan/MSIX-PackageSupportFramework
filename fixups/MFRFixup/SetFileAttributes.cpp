@@ -30,7 +30,7 @@
         retfinal = impl::SetFileAttributesW(LongDestinationFilename.c_str(),fileAttributes); \
         if (debug) \
         { \
-            Log(L"[%d] SetFileAttributes returns file '%s' and result 0x%x", DllInstance, LongDestinationFilename.c_str(), retfinal); \
+            Log(L"[%d] SetFileAttributes returns file '%s' and result 0x%x", dllInstance, LongDestinationFilename.c_str(), retfinal); \
         } \
         return retfinal; \
     }
@@ -41,7 +41,7 @@ template <typename CharT>
 BOOL __stdcall SetFileAttributesFixup(_In_ const CharT* fileName, _In_ DWORD fileAttributes) noexcept
 {
     auto guard = g_reentrancyGuard.enter();
-    DWORD DllInstance = ++g_InterceptInstance;
+    DWORD dllInstance = ++g_InterceptInstance;
     bool debug = false;
     bool moreDebug = false;
 #if _DEBUG
@@ -57,12 +57,12 @@ BOOL __stdcall SetFileAttributesFixup(_In_ const CharT* fileName, _In_ DWORD fil
         {
             std::wstring wfileName = widen(fileName);
 #if _DEBUG
-            LogString(DllInstance, L"SetFileAttributesFixup for fileName", wfileName.c_str());
+            LogString(dllInstance, L"SetFileAttributesFixup for fileName", wfileName.c_str());
 #endif
             // This get is inheirently a write operation in all cases.
             // We may need to copy the file first.
             Cohorts cohorts;
-            DetermineCohorts(wfileName, &cohorts, moreDebug, DllInstance, L"SetFileAttributesFixup");
+            DetermineCohorts(wfileName, &cohorts, moreDebug, dllInstance, L"SetFileAttributesFixup");
 
             switch (cohorts.file_mfr.Request_MfrPathType)
             {
@@ -79,7 +79,7 @@ BOOL __stdcall SetFileAttributesFixup(_In_ const CharT* fileName, _In_ DWORD fil
                         }
                         else if (PathExists(cohorts.WsPackage.c_str()))
                         {
-                            if (Cow(cohorts.WsPackage, cohorts.WsRedirected, DllInstance, L"SetFileAttributes"))
+                            if (Cow(cohorts.WsPackage, cohorts.WsRedirected, dllInstance, L"SetFileAttributes"))
                             {
                                 WRAPPER_SETFILEATTRIBUTES(cohorts.WsRedirected, debug); // always returns
                             }
@@ -90,13 +90,13 @@ BOOL __stdcall SetFileAttributesFixup(_In_ const CharT* fileName, _In_ DWORD fil
                         }
                         else if (PathParentExists(cohorts.WsPackage.c_str()))
                         {
-                            PreCreateFolders(cohorts.WsRedirected.c_str(), DllInstance, L"SetFileAttributes");
+                            PreCreateFolders(cohorts.WsRedirected.c_str(), dllInstance, L"SetFileAttributes");
                             WRAPPER_SETFILEATTRIBUTES(cohorts.WsRedirected, debug) // always returns
                         }
                         else
                         {
                             // There isn't such a file anywhere.  We want to create the redirection parent folder and let this call against the redirected file to create there.
-                            PreCreateFolders(cohorts.WsRequested.c_str(), DllInstance, L"SetFileAttributes");
+                            PreCreateFolders(cohorts.WsRequested.c_str(), dllInstance, L"SetFileAttributes");
                             WRAPPER_SETFILEATTRIBUTES(cohorts.WsRedirected, debug); // always returns
                         }
                         break;
@@ -110,7 +110,7 @@ BOOL __stdcall SetFileAttributesFixup(_In_ const CharT* fileName, _In_ DWORD fil
                         }
                         else if (PathExists(cohorts.WsPackage.c_str()))
                         {
-                            if (Cow(cohorts.WsPackage, cohorts.WsRedirected, DllInstance, L"SetFileAttributes"))
+                            if (Cow(cohorts.WsPackage, cohorts.WsRedirected, dllInstance, L"SetFileAttributes"))
                             {
                                 WRAPPER_SETFILEATTRIBUTES(cohorts.WsRedirected, debug);
                             }
@@ -126,7 +126,7 @@ BOOL __stdcall SetFileAttributesFixup(_In_ const CharT* fileName, _In_ DWORD fil
                             //       Setting attributes on an external file subject to traditional redirection seems an unlikely scenario that we need COW, but it might make an old app work.
                             if (cohorts.map.DoesRuntimeMapNativeToVFS)
                             {
-                                if (Cow(cohorts.WsNative, cohorts.WsRedirected, DllInstance, L"SetFileAttributes"))
+                                if (Cow(cohorts.WsNative, cohorts.WsRedirected, dllInstance, L"SetFileAttributes"))
                                 {
                                     WRAPPER_SETFILEATTRIBUTES(cohorts.WsRedirected, debug);
                                 }
@@ -143,7 +143,7 @@ BOOL __stdcall SetFileAttributesFixup(_In_ const CharT* fileName, _In_ DWORD fil
                         else
                         {
                             // There isn't such a file anywhere.  We want to create the redirection parent folder and let this call against the redirected file to create there.
-                            PreCreateFolders(cohorts.WsRequested.c_str(), DllInstance, L"SetFileAttributes");
+                            PreCreateFolders(cohorts.WsRequested.c_str(), dllInstance, L"SetFileAttributes");
                             WRAPPER_SETFILEATTRIBUTES(cohorts.WsRequested, debug);
                         }
                         break;
@@ -172,7 +172,7 @@ BOOL __stdcall SetFileAttributesFixup(_In_ const CharT* fileName, _In_ DWORD fil
                         }
                         else if (PathExists(cohorts.WsPackage.c_str()))
                         {
-                            if (Cow(cohorts.WsPackage, cohorts.WsRedirected, DllInstance, L"SetFileAttributes"))
+                            if (Cow(cohorts.WsPackage, cohorts.WsRedirected, dllInstance, L"SetFileAttributes"))
                             {
                                 WRAPPER_SETFILEATTRIBUTES(cohorts.WsRedirected, debug);
                             }
@@ -184,7 +184,7 @@ BOOL __stdcall SetFileAttributesFixup(_In_ const CharT* fileName, _In_ DWORD fil
                         else
                         {
                             // There isn't such a file anywhere.  We want to create the redirection parent folder and let this call against the redirected file to create there.
-                            PreCreateFolders(cohorts.WsRedirected.c_str(), DllInstance, L"SetFileAttributes");
+                            PreCreateFolders(cohorts.WsRedirected.c_str(), dllInstance, L"SetFileAttributes");
                             WRAPPER_SETFILEATTRIBUTES(cohorts.WsRedirected, debug);
                         }
                         break;
@@ -208,7 +208,7 @@ BOOL __stdcall SetFileAttributesFixup(_In_ const CharT* fileName, _In_ DWORD fil
                         }
                         else if (PathExists(cohorts.WsPackage.c_str()))
                         {
-                            if (Cow(cohorts.WsPackage, cohorts.WsRedirected, DllInstance, L"SetFileAttributes"))
+                            if (Cow(cohorts.WsPackage, cohorts.WsRedirected, dllInstance, L"SetFileAttributes"))
                             {
                                 WRAPPER_SETFILEATTRIBUTES(cohorts.WsRedirected, debug);
                             }
@@ -220,7 +220,7 @@ BOOL __stdcall SetFileAttributesFixup(_In_ const CharT* fileName, _In_ DWORD fil
                         else
                         {
                             // There isn't such a file anywhere.  We want to create the redirection parent folder and let this call against the redirected file to create there.
-                            PreCreateFolders(cohorts.WsRedirected.c_str(), DllInstance, L"SetFileAttributes");
+                            PreCreateFolders(cohorts.WsRedirected.c_str(), dllInstance, L"SetFileAttributes");
                             WRAPPER_SETFILEATTRIBUTES(cohorts.WsRedirected, debug);
                         }
                         break;
@@ -233,7 +233,7 @@ BOOL __stdcall SetFileAttributesFixup(_In_ const CharT* fileName, _In_ DWORD fil
                         }
                         else if (PathExists(cohorts.WsPackage.c_str()))
                         {
-                            if (Cow(cohorts.WsPackage, cohorts.WsRedirected, DllInstance, L"SetFileAttributes"))
+                            if (Cow(cohorts.WsPackage, cohorts.WsRedirected, dllInstance, L"SetFileAttributes"))
                             {
                                 WRAPPER_SETFILEATTRIBUTES(cohorts.WsRedirected, debug);
                             }
@@ -249,7 +249,7 @@ BOOL __stdcall SetFileAttributesFixup(_In_ const CharT* fileName, _In_ DWORD fil
                             //       Setting attributes on an external file subject to traditional redirection seems an unlikely scenario that we need COW, but it might make an old app work.
                             if (cohorts.map.DoesRuntimeMapNativeToVFS)
                             {
-                                if (Cow(cohorts.WsNative, cohorts.WsRedirected, DllInstance, L"SetFileAttributes"))
+                                if (Cow(cohorts.WsNative, cohorts.WsRedirected, dllInstance, L"SetFileAttributes"))
                                 {
                                     WRAPPER_SETFILEATTRIBUTES(cohorts.WsRedirected, debug);
                                 }
@@ -261,14 +261,14 @@ BOOL __stdcall SetFileAttributesFixup(_In_ const CharT* fileName, _In_ DWORD fil
                             else
                             {
                                 // There isn't such a file anywhere.  We want to create the redirection parent folder and let this call against the redirected file to create there or update registry.
-                                PreCreateFolders(cohorts.WsRedirected.c_str(), DllInstance, L"SetFileAttributes");
+                                PreCreateFolders(cohorts.WsRedirected.c_str(), dllInstance, L"SetFileAttributes");
                                 WRAPPER_SETFILEATTRIBUTES(cohorts.WsRedirected, debug);
                             }
                         }
                         else
                         {
                             // There isn't such a file anywhere.  We want to create the redirection parent folder and let this call against the redirected file to create there.
-                            PreCreateFolders(cohorts.WsRedirected.c_str(), DllInstance, L"SetFileAttributes");
+                            PreCreateFolders(cohorts.WsRedirected.c_str(), dllInstance, L"SetFileAttributes");
                             WRAPPER_SETFILEATTRIBUTES(cohorts.WsRedirected, debug);
                         }
                         break;
@@ -290,7 +290,7 @@ BOOL __stdcall SetFileAttributesFixup(_In_ const CharT* fileName, _In_ DWORD fil
                     }
                     else if (PathExists(cohorts.WsPackage.c_str()))
                     {
-                        if (Cow(cohorts.WsPackage, cohorts.WsRedirected, DllInstance, L"SetFileAttributes"))
+                        if (Cow(cohorts.WsPackage, cohorts.WsRedirected, dllInstance, L"SetFileAttributes"))
                         {
                             WRAPPER_SETFILEATTRIBUTES(cohorts.WsRedirected, debug);
                         }
@@ -308,7 +308,7 @@ BOOL __stdcall SetFileAttributesFixup(_In_ const CharT* fileName, _In_ DWORD fil
                             //       Setting attributes on an external file subject to traditional redirection seems an unlikely scenario that we need COW, but it might make an old app work.
                             if (cohorts.map.DoesRuntimeMapNativeToVFS)
                             {
-                                if (Cow(cohorts.WsNative, cohorts.WsRedirected, DllInstance, L"SetFileAttributes"))
+                                if (Cow(cohorts.WsNative, cohorts.WsRedirected, dllInstance, L"SetFileAttributes"))
                                 {
                                     WRAPPER_SETFILEATTRIBUTES(cohorts.WsRedirected, debug);
                                 }
@@ -325,14 +325,14 @@ BOOL __stdcall SetFileAttributesFixup(_In_ const CharT* fileName, _In_ DWORD fil
                         else
                         {
                             // There isn't such a file anywhere.  We want to create the redirection parent folder and let this call against the redirected file to create there or update registry.
-                            PreCreateFolders(cohorts.WsRedirected.c_str(), DllInstance, L"SetFileAttributes");
+                            PreCreateFolders(cohorts.WsRedirected.c_str(), dllInstance, L"SetFileAttributes");
                             WRAPPER_SETFILEATTRIBUTES(cohorts.WsRedirected, debug);
                         }
                     }
                     else
                     {
                         // There isn't such a file anywhere.  We want to create the redirection parent folder and let this call against the redirected file to create there or update registry.
-                        PreCreateFolders(cohorts.WsRedirected.c_str(), DllInstance, L"SetFileAttributes");
+                        PreCreateFolders(cohorts.WsRedirected.c_str(), dllInstance, L"SetFileAttributes");
                         WRAPPER_SETFILEATTRIBUTES(cohorts.WsRedirected, debug);
                     }
                 }
@@ -351,20 +351,28 @@ BOOL __stdcall SetFileAttributesFixup(_In_ const CharT* fileName, _In_ DWORD fil
     }
 #if _DEBUG
     // Fall back to assuming no redirection is necessary if exception
-    LOGGED_CATCHHANDLER(DllInstance, L"SetFileAttributes")
+    LOGGED_CATCHHANDLER(dllInstance, L"SetFileAttributes")
 #else
     catch (...)
     {
-        Log(L"[%d] SetFileAttributes Exception=0x%x", DllInstance, GetLastError());
+        Log(L"[%d] SetFileAttributes Exception=0x%x", dllInstance, GetLastError());
     }
 #endif
-    std::wstring LongFileName = MakeLongPath(widen(fileName));
-    retfinal = impl::SetFileAttributes(LongFileName.c_str(), fileAttributes);
+    if (fileName != nullptr)
+    {
+        std::wstring LongFileName = MakeLongPath(widen(fileName));
+        retfinal = impl::SetFileAttributes(LongFileName.c_str(), fileAttributes);
+    }
+    else
+    {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        retfinal = 0; //impl::SetFileAttributes(fileName, fileAttributes);
+    }
 #if _DEBUG
-    Log(L"[%d] SetFileAttributes: returns retfinal=%d", DllInstance, retfinal);
+    Log(L"[%d] SetFileAttributes: returns retfinal=%d", dllInstance, retfinal);
     if (retfinal == 0)
     {
-        Log(L"[%d] SetFileAttributes: returns GetLastError=0x%x", DllInstance, GetLastError());
+        Log(L"[%d] SetFileAttributes: returns GetLastError=0x%x", dllInstance, GetLastError());
     }
 #endif
     return retfinal;

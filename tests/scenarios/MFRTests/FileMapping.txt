@@ -22,6 +22,7 @@
 "file.txt" "VFS\AppVPackageDrive\PackageDriveFile.txt"
 "file.txt" "PvadFile1.txt"
 "file.txt" "PvadFolder\PvadFile2.txt"
+"file.txt" "VFS\Common AppData\folder\file.txt"
 
 "file.ini" "TestIniFilePVAD.ini"
 "file.ini" "VFS\ProgramFilesX64\PlaceholderTest\TestIniFileVfsPF.ini"

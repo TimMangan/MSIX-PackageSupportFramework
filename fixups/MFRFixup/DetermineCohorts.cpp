@@ -22,7 +22,7 @@ using namespace std::literals;
 /// This information is returned in the cohorts structure, which has all three possible file paths, as well as mapping
 /// information that will be useful to the caller in deciding which paths to use and what to do with them.
 /// 
-void DetermineCohorts(std::wstring requestedPath, Cohorts *cohorts, bool UseMoreDebug, DWORD DllInstance, const wchar_t * FixupName)
+void DetermineCohorts(std::wstring requestedPath, Cohorts *cohorts, bool UseMoreDebug, DWORD dllInstance, const wchar_t * FixupName)
 {
 
     cohorts->file_mfr = mfr::create_mfr_path(requestedPath);
@@ -33,14 +33,14 @@ void DetermineCohorts(std::wstring requestedPath, Cohorts *cohorts, bool UseMore
     case mfr::mfr_path_types::in_native_area:
         if (UseMoreDebug)
         {
-            Log(L"[%d] %s:  Request is in_native_area.", DllInstance, FixupName);
+            Log(L"[%d] %s:  Request is in_native_area.", dllInstance, FixupName);
         }
         cohorts->map = mfr::Find_LocalRedirMapping_FromNativePath_ForwardSearch(cohorts->file_mfr.Request_NormalizedPath.c_str());
         if (cohorts->map.Valid_mapping)
         {
             if (UseMoreDebug)
             {
-                Log(L"[%d] %s:    match on LocalRedirMapping", DllInstance, FixupName);
+                Log(L"[%d] %s:    match on LocalRedirMapping", dllInstance, FixupName);
             }
             cohorts->WsRedirected = cohorts->WsRequested;
             cohorts->WsPackage = ReplacePathPart(cohorts->WsRequested.c_str(), cohorts->map.RedirectedPathBase, cohorts->map.PackagePathBase);
@@ -53,7 +53,7 @@ void DetermineCohorts(std::wstring requestedPath, Cohorts *cohorts, bool UseMore
         {
             if (UseMoreDebug)
             {
-                Log(L"[%d] %s:    match on TraditionalRedirMapping", DllInstance, FixupName);
+                Log(L"[%d] %s:    match on TraditionalRedirMapping", dllInstance, FixupName);
             }
             cohorts->WsRedirected = ReplacePathPart(cohorts->WsRequested.c_str(), cohorts->map.NativePathBase, cohorts->map.RedirectedPathBase);
             cohorts->WsPackage = ReplacePathPart(cohorts->WsRequested.c_str(), cohorts->map.NativePathBase, cohorts->map.PackagePathBase);
@@ -63,7 +63,7 @@ void DetermineCohorts(std::wstring requestedPath, Cohorts *cohorts, bool UseMore
     case mfr::mfr_path_types::in_package_pvad_area:
         if (UseMoreDebug)
         {
-            Log(L"[%d] %s:  Request is in_package_pvad_area.", DllInstance, FixupName);
+            Log(L"[%d] %s:  Request is in_package_pvad_area.", dllInstance, FixupName);
         }
         cohorts->map = mfr::Find_TraditionalRedirMapping_FromPackagePath_ForwardSearch(cohorts->file_mfr.Request_NormalizedPath.c_str());
         if (cohorts->map.Valid_mapping)
@@ -77,7 +77,7 @@ void DetermineCohorts(std::wstring requestedPath, Cohorts *cohorts, bool UseMore
     case mfr::mfr_path_types::in_package_vfs_area:
         if (UseMoreDebug)
         {
-            Log(L"[%d] %s:  Request is in_package_vfs_area.", DllInstance, FixupName);
+            Log(L"[%d] %s:  Request is in_package_vfs_area.", dllInstance, FixupName);
         }
         cohorts->map = mfr::Find_LocalRedirMapping_FromPackagePath_ForwardSearch(cohorts->file_mfr.Request_NormalizedPath.c_str());
         if (cohorts->map.Valid_mapping)
@@ -99,7 +99,7 @@ void DetermineCohorts(std::wstring requestedPath, Cohorts *cohorts, bool UseMore
     case mfr::mfr_path_types::in_redirection_area_writablepackageroot:
         if (UseMoreDebug)
         {
-            Log(L"[%d] %s:  Request is in_redirection_area_writablepackageroot.", DllInstance, FixupName);
+            Log(L"[%d] %s:  Request is in_redirection_area_writablepackageroot.", dllInstance, FixupName);
         }
         cohorts->map = mfr::Find_TraditionalRedirMapping_FromRedirectedPath_ForwardSearch(cohorts->file_mfr.Request_NormalizedPath.c_str());
         if (cohorts->map.Valid_mapping)
@@ -119,7 +119,7 @@ void DetermineCohorts(std::wstring requestedPath, Cohorts *cohorts, bool UseMore
     case mfr::mfr_path_types::in_redirection_area_other:
         if (UseMoreDebug)
         {
-            Log(L"[%d] %s:  Request is in_redirection_area_other.", DllInstance, FixupName);
+            Log(L"[%d] %s:  Request is in_redirection_area_other.", dllInstance, FixupName);
         }
         cohorts->UsingNative = false;
         break;
@@ -131,7 +131,7 @@ void DetermineCohorts(std::wstring requestedPath, Cohorts *cohorts, bool UseMore
     default:
         if (UseMoreDebug)
         {
-            Log(L"[%d] %s:  Request is in_non_redirectable_areas.", DllInstance, FixupName);
+            Log(L"[%d] %s:  Request is in_non_redirectable_areas.", dllInstance, FixupName);
         }
         cohorts->UsingNative = false;
         break;

@@ -75,6 +75,7 @@ BOOL __stdcall MoveFileExFixup(
 {
     DWORD MoveFileExInstance = ++g_FileIntceptInstance;
     auto guard = g_reentrancyGuard.enter();
+    BOOL retfinal;
     try
     {
         if (guard)
@@ -121,19 +122,28 @@ BOOL __stdcall MoveFileExFixup(
     }
 #endif
 
-
-    if constexpr (psf::is_ansi<CharT>)
+    if (existingFileName != nullptr && newFileName != nullptr)
     {
-        std::string rldExistingFileName = TurnPathIntoRootLocalDevice(existingFileName);
-        std::string rldNewFileName = TurnPathIntoRootLocalDevice(newFileName);
-        return impl::MoveFileEx(rldExistingFileName.c_str(), rldNewFileName.c_str(), flags);
+        if constexpr (psf::is_ansi<CharT>)
+        {
+            std::string rldExistingFileName = TurnPathIntoRootLocalDevice(existingFileName);
+            std::string rldNewFileName = TurnPathIntoRootLocalDevice(newFileName);
+            retfinal = impl::MoveFileEx(rldExistingFileName.c_str(), rldNewFileName.c_str(), flags);
+        }
+        else
+        {
+            std::wstring rldExistingFileName = TurnPathIntoRootLocalDevice(existingFileName);
+            std::wstring rldNewDirectory = TurnPathIntoRootLocalDevice(newFileName);
+            retfinal = impl::MoveFileEx(rldExistingFileName.c_str(), rldNewDirectory.c_str(), flags);
+        }
     }
     else
     {
-        std::wstring rldExistingFileName = TurnPathIntoRootLocalDevice(existingFileName);
-        std::wstring rldNewDirectory = TurnPathIntoRootLocalDevice(newFileName);
-        return impl::MoveFileEx(rldExistingFileName.c_str(), rldNewDirectory.c_str(), flags);
+        retfinal = impl::MoveFileEx(existingFileName, newFileName, flags);
     }
-    ///return impl::MoveFileEx(existingFileName, newFileName, flags);
+#if _DEBUG
+    Log(L"[%d] MoveFileFixup returns 0x%x", MoveFileExInstance, retfinal);
+#endif
+    return retfinal;
 }
 DECLARE_STRING_FIXUP(impl::MoveFileEx, MoveFileExFixup);

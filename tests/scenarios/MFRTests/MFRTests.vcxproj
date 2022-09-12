@@ -188,6 +188,7 @@
     <ClCompile Include="MfrReplaceFileTests.cpp" />
     <ClCompile Include="MFRTests.cpp" />
     <ClCompile Include="MfrWriteProfileTests.cpp" />
+    <ClCompile Include="OddDirectoryTests.cpp" />
     <ClCompile Include="PlaceholderTest.cpp" />
   </ItemGroup>
   <ItemGroup>

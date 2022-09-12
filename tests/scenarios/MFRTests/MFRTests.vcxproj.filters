@@ -60,6 +60,9 @@
     <ClCompile Include="MfrFindFileTests.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="OddDirectoryTests.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Xml Include="AppXManifest.xml">

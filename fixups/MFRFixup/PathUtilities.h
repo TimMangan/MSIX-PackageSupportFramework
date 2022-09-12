@@ -40,9 +40,9 @@ extern std::wstring MakeNotLongPath(std::wstring path);
 extern bool PathExists(const wchar_t* path);
 extern bool PathParentExists(const wchar_t* path);
 
-extern void PreCreateFolders(std::wstring filepath, DWORD DllInstance, std::wstring DebugMessage);
+extern void PreCreateFolders(std::wstring filepath, DWORD dllInstance, std::wstring DebugMessage);
 
-extern BOOL Cow(std::wstring from, std::wstring to, int DllInstance, std::wstring DebugString);
+extern BOOL Cow(std::wstring from, std::wstring to, int dllInstance, std::wstring DebugString);
 
 #if NEEDED
 inline std::wstring widen(std::string_view str, UINT codePage = CP_UTF8)
