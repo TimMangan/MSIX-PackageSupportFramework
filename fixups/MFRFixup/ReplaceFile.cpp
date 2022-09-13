@@ -474,14 +474,26 @@ BOOL __stdcall ReplaceFileFixup(
                 // by doing a Cow and then replacing.
                 if (PathExists(cohortsReplaced.WsPackage.c_str()))
                 {
-                    Cow(cohortsReplaced.WsPackage, cohortsReplaced.WsRedirected, dllInstance, L"ReplaceFileFixup");
-                    UseReplacedFile = cohortsReplaced.WsRedirected;
+                    if (Cow(cohortsReplaced.WsPackage, cohortsReplaced.WsRedirected, dllInstance, L"ReplaceFileFixup"))
+                    {
+                        UseReplacedFile = cohortsReplaced.WsRedirected;
+                    }
+                    else
+                    {
+                        UseReplacedFile = cohortsReplaced.WsPackage;
+                    }
                 }
                 else if (cohortsReplaced.UsingNative &&
                          PathExists(cohortsReplaced.WsNative.c_str()))
                 {
-                    Cow(cohortsReplaced.WsNative, cohortsReplaced.WsRedirected, dllInstance, L"ReplaceFileFixup");
-                    UseReplacedFile = cohortsReplaced.WsRedirected;
+                    if (Cow(cohortsReplaced.WsNative, cohortsReplaced.WsRedirected, dllInstance, L"ReplaceFileFixup"))
+                    {
+                        UseReplacedFile = cohortsReplaced.WsRedirected;
+                    }
+                    else
+                    {
+                        UseReplacedFile = cohortsReplaced.WsNative;
+                    }
                 }
                 else
                 {
@@ -498,8 +510,14 @@ BOOL __stdcall ReplaceFileFixup(
                 if (PathExists(cohortsReplacement.WsPackage.c_str()))
                 {
                     // Replace needs delete access so we can't use the source file copy inside the package.
-                    Cow(cohortsReplacement.WsPackage, cohortsReplacement.WsRedirected, dllInstance, L"ReplaceFileFixup");
-                    UseReplacementFile = cohortsReplacement.WsRedirected;
+                    if (Cow(cohortsReplacement.WsPackage, cohortsReplacement.WsRedirected, dllInstance, L"ReplaceFileFixup"))
+                    {
+                        UseReplacementFile = cohortsReplacement.WsRedirected;
+                    }
+                    else
+                    {
+                        UseReplacementFile = cohortsReplacement.WsPackage;
+                    }
                 }
                 else if (cohortsReplacement.UsingNative &&
                          PathExists(cohortsReplacement.WsNative.c_str()))

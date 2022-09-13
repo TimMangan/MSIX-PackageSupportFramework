@@ -96,6 +96,11 @@ HANDLE __stdcall CreateFile2Fixup(
                             retfinal = WRAPPER_CREATEFILE2(cohorts.WsRedirected, desiredAccess, shareMode, creationDisposition, createExParams, dllInstance, debug);
                             return retfinal;
                         }
+                        else
+                        {
+                            retfinal = WRAPPER_CREATEFILE2(cohorts.WsPackage, desiredAccess, shareMode, creationDisposition, createExParams, dllInstance, debug);
+                            return retfinal;
+                        }
                     }
                     // There isn't such a file anywhere.  We want to create the redirection parent folder and let this call against the redirected file to create there.
                     PreCreateFolders(cohorts.WsRedirected.c_str(), dllInstance, L"CreateFile2Fixup");
@@ -121,6 +126,11 @@ HANDLE __stdcall CreateFile2Fixup(
                             retfinal = WRAPPER_CREATEFILE2(cohorts.WsRedirected, desiredAccess, shareMode, creationDisposition, createExParams, dllInstance, debug);
                             return retfinal;
                         }
+                        else
+                        {
+                            retfinal = WRAPPER_CREATEFILE2(cohorts.WsPackage, desiredAccess, shareMode, creationDisposition, createExParams, dllInstance, debug);
+                            return retfinal;
+                        }
                     }
                     if (cohorts.UsingNative &&
                         PathExists(cohorts.WsNative.c_str()))
@@ -129,6 +139,11 @@ HANDLE __stdcall CreateFile2Fixup(
                         {
                             ///PreCreateFolders(testWsRedirected.c_str(), dllInstance, L"CreateFileFixup");
                             retfinal = WRAPPER_CREATEFILE2(cohorts.WsRedirected, desiredAccess, shareMode, creationDisposition, createExParams, dllInstance, debug);
+                            return retfinal;
+                        }
+                        else
+                        {
+                            retfinal = WRAPPER_CREATEFILE2(cohorts.WsNative, desiredAccess, shareMode, creationDisposition, createExParams, dllInstance, debug);
                             return retfinal;
                         }
                     }
@@ -156,6 +171,11 @@ HANDLE __stdcall CreateFile2Fixup(
                             retfinal = WRAPPER_CREATEFILE2(cohorts.WsRedirected, desiredAccess, shareMode, creationDisposition, createExParams, dllInstance, debug);
                             return retfinal;
                         }
+                        else
+                        {
+                            retfinal = WRAPPER_CREATEFILE2(cohorts.WsPackage, desiredAccess, shareMode, creationDisposition, createExParams, dllInstance, debug);
+                            return retfinal;
+                        }
                     }
                     // There isn't such a file anywhere.  We want to create the redirection parent folder and let this call against the redirected file to create there.
                     PreCreateFolders(cohorts.WsRedirected.c_str(), dllInstance, L"CreateFile2Fixup");
@@ -179,6 +199,11 @@ HANDLE __stdcall CreateFile2Fixup(
                         if (Cow(cohorts.WsPackage, cohorts.WsRedirected, dllInstance, L"CreateFile2Fixup"))
                         {
                             retfinal = WRAPPER_CREATEFILE2(cohorts.WsRedirected, desiredAccess, shareMode, creationDisposition, createExParams, dllInstance, debug);
+                            return retfinal;
+                        }
+                        else
+                        {
+                            retfinal = WRAPPER_CREATEFILE2(cohorts.WsPackage, desiredAccess, shareMode, creationDisposition, createExParams, dllInstance, debug);
                             return retfinal;
                         }
                     }
@@ -205,6 +230,11 @@ HANDLE __stdcall CreateFile2Fixup(
                             retfinal = WRAPPER_CREATEFILE2(cohorts.WsRedirected, desiredAccess, shareMode, creationDisposition, createExParams, dllInstance, debug);
                             return retfinal;
                         }
+                        else
+                        {
+                            retfinal = WRAPPER_CREATEFILE2(cohorts.WsPackage, desiredAccess, shareMode, creationDisposition, createExParams, dllInstance, debug);
+                            return retfinal;
+                        }
                     }
                     if (cohorts.UsingNative &&
                              PathExists(cohorts.WsNative.c_str()))
@@ -213,6 +243,11 @@ HANDLE __stdcall CreateFile2Fixup(
                         if (Cow(cohorts.WsNative, cohorts.WsRedirected, dllInstance, L"CreateFile2Fixup"))
                         {
                             retfinal = WRAPPER_CREATEFILE2(cohorts.WsRedirected, desiredAccess, shareMode, creationDisposition, createExParams, dllInstance, debug);
+                            return retfinal;
+                        }
+                        else
+                        {
+                            retfinal = WRAPPER_CREATEFILE2(cohorts.WsNative, desiredAccess, shareMode, creationDisposition, createExParams, dllInstance, debug);
                             return retfinal;
                         }
                     }
@@ -237,6 +272,11 @@ HANDLE __stdcall CreateFile2Fixup(
                         if (Cow(cohorts.WsPackage, cohorts.WsRedirected, dllInstance, L"CreateFile2Fixup"))
                         {
                             retfinal = WRAPPER_CREATEFILE2(cohorts.WsRedirected, desiredAccess, shareMode, creationDisposition, createExParams, dllInstance, debug);
+                            return retfinal;
+                        }
+                        else
+                        {
+                            retfinal = WRAPPER_CREATEFILE2(cohorts.WsPackage, desiredAccess, shareMode, creationDisposition, createExParams, dllInstance, debug);
                             return retfinal;
                         }
                     }

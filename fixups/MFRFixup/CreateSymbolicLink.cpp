@@ -75,7 +75,7 @@ BOOLEAN __stdcall CreateSymbolicLinkFixup(
             DetermineCohorts(wTargetFileName, &cohortsTarget, moredebug, dllInstance, L"CreateSymbolicLinkFixup");
 
 
-
+            std::wstring UseTarget = cohortsTarget.WsRedirected;
             // If file case, make a copy if needed so that all changes happen there
             if (flags == 0)
             {
@@ -88,6 +88,7 @@ BOOLEAN __stdcall CreateSymbolicLinkFixup(
 #endif
                         if (!Cow(cohortsTarget.WsPackage, cohortsTarget.WsRedirected, dllInstance, L"CreateSymbolicLinkFixup"))
                         {
+                            UseTarget = cohortsTarget.WsPackage;
 #if _DEBUG
                             Log(L"[%d] CreateSymbolicLinkFixup:  Cow failure?", dllInstance);
 #endif
@@ -100,6 +101,7 @@ BOOLEAN __stdcall CreateSymbolicLinkFixup(
 #endif
                         if (!Cow(cohortsTarget.WsNative, cohortsTarget.WsRedirected, dllInstance, L"CreateSymbolicLinkFixup"))
                         {
+                            UseTarget = cohortsTarget.WsNative;
 #if _DEBUG
                             Log(L"[%d] CreateSymbolicLinkFixup:  Cow failure?", dllInstance);
 #endif
@@ -117,7 +119,7 @@ BOOLEAN __stdcall CreateSymbolicLinkFixup(
             if (cohortsTarget.map.Valid_mapping && cohortsSymlink.map.Valid_mapping)
             {
                 std::wstring rldSymlinkFileNameRedirected = MakeLongPath(cohortsSymlink.WsRedirected);
-                std::wstring rldTargetFileNameRedirected = MakeLongPath(cohortsTarget.WsRedirected);
+                std::wstring rldTargetFileNameRedirected = MakeLongPath(UseTarget);
                 PreCreateFolders(rldSymlinkFileNameRedirected, dllInstance, L"CreateSymbolicLinkFixup");
 #if MOREDEBUG
                 Log(L"[%d] CreateSymbolicLinkFixup: link is to   %s", dllInstance, rldSymlinkFileNameRedirected.c_str());

@@ -63,7 +63,7 @@ BOOL __stdcall CreateHardLinkFixup(
             DetermineCohorts(wExistingFileName, &cohortsExisting, moredebug, dllInstance, L"CreateHardLinkFixup");
 
 
-
+            std::wstring UseExisting = cohortsExisting.WsRedirected;
             // Make a copy of existing into redirection area (if needed) so that all changes happen there
             if (!PathExists(cohortsExisting.WsRedirected.c_str()))
             {
@@ -74,6 +74,7 @@ BOOL __stdcall CreateHardLinkFixup(
 #endif
                     if (!Cow(cohortsExisting.WsPackage, cohortsExisting.WsRedirected, dllInstance, L"CreateHardLinkFixup"))
                     {
+                        UseExisting = cohortsExisting.WsPackage;
 #if _DEBUG
                         Log(L"[%d] CreateHardLinkFixup:  Cow failure?", dllInstance);
 #endif
@@ -86,6 +87,7 @@ BOOL __stdcall CreateHardLinkFixup(
 #endif
                     if (!Cow(cohortsExisting.WsNative, cohortsExisting.WsRedirected, dllInstance, L"CreateHardLinkFixup"))
                     {
+                        UseExisting = cohortsExisting.WsNative;
 #if _DEBUG
                         Log(L"[%d] CreateHardLinkFixup:  Cow failure?", dllInstance);
 #endif
@@ -98,7 +100,7 @@ BOOL __stdcall CreateHardLinkFixup(
             if (cohortsExisting.map.Valid_mapping && cohortsNew.map.Valid_mapping)
             {
                 std::wstring rldNewFileNameRedirected = MakeLongPath(cohortsNew.WsRedirected);
-                std::wstring rldExistingFileNameRedirected = MakeLongPath(cohortsExisting.WsRedirected);
+                std::wstring rldExistingFileNameRedirected = MakeLongPath(UseExisting);
                 PreCreateFolders(rldNewFileNameRedirected, dllInstance, L"CreateHardLinkFixup");
 #if MOREDEBUG
                 Log(L"[%d] CreateHardLinkFixup: link is to   %s", dllInstance, rldNewFileNameRedirected.c_str());
@@ -110,7 +112,6 @@ BOOL __stdcall CreateHardLinkFixup(
 #endif
                 return retfinal;
             }
-
         }
     }
 #if _DEBUG

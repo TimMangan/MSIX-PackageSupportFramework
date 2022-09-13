@@ -103,6 +103,11 @@ HANDLE __stdcall CreateFileFixup(_In_ const CharT* pathName,
                             retfinal = WRAPPER_CREATEFILE(cohorts.WsRedirected, desiredAccess, shareMode, securityAttributes, creationDisposition, flagsAndAttributes, templateFile, dllInstance, debug);
                             return retfinal;
                         }
+                        else
+                        {
+                            retfinal = WRAPPER_CREATEFILE(cohorts.WsPackage, desiredAccess, shareMode, securityAttributes, creationDisposition, flagsAndAttributes, templateFile, dllInstance, debug);
+                            return retfinal;
+                        }
                     }
                     // There isn't such a file anywhere.  We want to create the redirection parent folder and let this call against the redirected file to create there.
                     PreCreateFolders(cohorts.WsRedirected.c_str(), dllInstance, L"CreateFileFixup");
@@ -119,13 +124,19 @@ HANDLE __stdcall CreateFileFixup(_In_ const CharT* pathName,
                         retfinal = WRAPPER_CREATEFILE(cohorts.WsRedirected, desiredAccess, shareMode, securityAttributes, creationDisposition, flagsAndAttributes, templateFile, dllInstance, debug);
                         return retfinal;
                     }
-                    if (PathExists(cohorts.WsPackage.c_str()))
+                    if (cohorts.UsingNative &&
+                        PathExists(cohorts.WsPackage.c_str()))
                     {
                         // COW is applicable first.
                         if (Cow(cohorts.WsPackage, cohorts.WsRedirected, dllInstance, L"CreateFileFixup"))
                         {
                             //PreCreateFolders(testWsRedirected.c_str(), dllInstance, L"CreateFileFixup");
                             retfinal = WRAPPER_CREATEFILE(cohorts.WsRedirected, desiredAccess, shareMode, securityAttributes, creationDisposition, flagsAndAttributes, templateFile, dllInstance, debug);
+                            return retfinal;
+                        }
+                        else
+                        {
+                            retfinal = WRAPPER_CREATEFILE(cohorts.WsPackage, desiredAccess, shareMode, securityAttributes, creationDisposition, flagsAndAttributes, templateFile, dllInstance, debug);
                             return retfinal;
                         }
                     }
@@ -136,6 +147,11 @@ HANDLE __stdcall CreateFileFixup(_In_ const CharT* pathName,
                         {
                             ///PreCreateFolders(testWsRedirected.c_str(), dllInstance, L"CreateFileFixup");
                             retfinal = WRAPPER_CREATEFILE(cohorts.WsRedirected, desiredAccess, shareMode, securityAttributes, creationDisposition, flagsAndAttributes, templateFile, dllInstance, debug);
+                            return retfinal;
+                        }
+                        else
+                        {
+                            retfinal = WRAPPER_CREATEFILE(cohorts.WsNative, desiredAccess, shareMode, securityAttributes, creationDisposition, flagsAndAttributes, templateFile, dllInstance, debug);
                             return retfinal;
                         }
                     }
@@ -163,6 +179,11 @@ HANDLE __stdcall CreateFileFixup(_In_ const CharT* pathName,
                             retfinal = WRAPPER_CREATEFILE(cohorts.WsRedirected, desiredAccess, shareMode, securityAttributes, creationDisposition, flagsAndAttributes, templateFile, dllInstance, debug);
                             return retfinal;
                         }
+                        else
+                        {
+                            retfinal = WRAPPER_CREATEFILE(cohorts.WsPackage, desiredAccess, shareMode, securityAttributes, creationDisposition, flagsAndAttributes, templateFile, dllInstance, debug);
+                            return retfinal;
+                        }
                     }
                     // There isn't such a file anywhere.  We want to create the redirection parent folder and let this call against the redirected file to create there.
                     PreCreateFolders(cohorts.WsRedirected.c_str(), dllInstance, L"CreateFileFixup");
@@ -186,7 +207,12 @@ HANDLE __stdcall CreateFileFixup(_In_ const CharT* pathName,
                         if (Cow(cohorts.WsPackage, cohorts.WsRedirected, dllInstance, L"CreateFileFixup"))
                         {
                             retfinal = WRAPPER_CREATEFILE(cohorts.WsRedirected, desiredAccess, shareMode, securityAttributes, creationDisposition, flagsAndAttributes, templateFile, dllInstance, debug);
-                          return retfinal;
+                            return retfinal;
+                        }
+                        else
+                        {
+                            retfinal = WRAPPER_CREATEFILE(cohorts.WsPackage, desiredAccess, shareMode, securityAttributes, creationDisposition, flagsAndAttributes, templateFile, dllInstance, debug);
+                            return retfinal;
                         }
                     }
                     // There isn't such a file anywhere.  We want to create the redirection parent folder and let this call against the redirected file to create there.
@@ -209,8 +235,13 @@ HANDLE __stdcall CreateFileFixup(_In_ const CharT* pathName,
                         // COW is applicable first.
                         if (Cow(cohorts.WsPackage, cohorts.WsRedirected, dllInstance, L"CreateFileFixup"))
                         {
-                        retfinal = WRAPPER_CREATEFILE(cohorts.WsRedirected, desiredAccess, shareMode, securityAttributes, creationDisposition, flagsAndAttributes, templateFile, dllInstance, debug);
-                        return retfinal;
+                            retfinal = WRAPPER_CREATEFILE(cohorts.WsRedirected, desiredAccess, shareMode, securityAttributes, creationDisposition, flagsAndAttributes, templateFile, dllInstance, debug);
+                            return retfinal;
+                        }
+                        else
+                        {
+                            retfinal = WRAPPER_CREATEFILE(cohorts.WsPackage, desiredAccess, shareMode, securityAttributes, creationDisposition, flagsAndAttributes, templateFile, dllInstance, debug);
+                            return retfinal;
                         }
                     }
                     if (cohorts.UsingNative &&
@@ -219,8 +250,13 @@ HANDLE __stdcall CreateFileFixup(_In_ const CharT* pathName,
                         // COW is applicable first.
                         if (Cow(cohorts.WsNative, cohorts.WsRedirected, dllInstance, L"CreateFileFixup"))
                         {
-                        retfinal = WRAPPER_CREATEFILE(cohorts.WsRedirected, desiredAccess, shareMode, securityAttributes, creationDisposition, flagsAndAttributes, templateFile, dllInstance, debug);
-                        return retfinal;
+                            retfinal = WRAPPER_CREATEFILE(cohorts.WsRedirected, desiredAccess, shareMode, securityAttributes, creationDisposition, flagsAndAttributes, templateFile, dllInstance, debug);
+                            return retfinal;
+                        }
+                        else
+                        {
+                            retfinal = WRAPPER_CREATEFILE(cohorts.WsNative, desiredAccess, shareMode, securityAttributes, creationDisposition, flagsAndAttributes, templateFile, dllInstance, debug);
+                            return retfinal;
                         }
                     }
                     // There isn't such a file anywhere.  We want to create the redirection parent folder and let this call against the redirected file to create there.
@@ -243,17 +279,28 @@ HANDLE __stdcall CreateFileFixup(_In_ const CharT* pathName,
                         // COW is applicable first.
                         if (Cow(cohorts.WsPackage, cohorts.WsRedirected, dllInstance, L"CreateFileFixup"))
                         {
-                        retfinal = WRAPPER_CREATEFILE(cohorts.WsRedirected, desiredAccess, shareMode, securityAttributes, creationDisposition, flagsAndAttributes, templateFile, dllInstance, debug);
-                        return retfinal;
+                            retfinal = WRAPPER_CREATEFILE(cohorts.WsRedirected, desiredAccess, shareMode, securityAttributes, creationDisposition, flagsAndAttributes, templateFile, dllInstance, debug);
+                            return retfinal;
+                        }
+                        else
+                        {
+                            retfinal = WRAPPER_CREATEFILE(cohorts.WsPackage, desiredAccess, shareMode, securityAttributes, creationDisposition, flagsAndAttributes, templateFile, dllInstance, debug);
+                            return retfinal;
                         }
                     }
-                    if (PathExists(cohorts.WsNative.c_str()))
+                    if (cohorts.UsingNative &&
+                        PathExists(cohorts.WsNative.c_str()))
                     {
                         // COW is applicable first.
                         if (Cow(cohorts.WsNative, cohorts.WsRedirected, dllInstance, L"CreateFileFixup"))
                         {
-                        retfinal = WRAPPER_CREATEFILE(cohorts.WsRedirected, desiredAccess, shareMode, securityAttributes, creationDisposition, flagsAndAttributes, templateFile, dllInstance, debug);
-                        return retfinal;
+                            retfinal = WRAPPER_CREATEFILE(cohorts.WsRedirected, desiredAccess, shareMode, securityAttributes, creationDisposition, flagsAndAttributes, templateFile, dllInstance, debug);
+                            return retfinal;
+                        }
+                        else
+                        {
+                            retfinal = WRAPPER_CREATEFILE(cohorts.WsNative, desiredAccess, shareMode, securityAttributes, creationDisposition, flagsAndAttributes, templateFile, dllInstance, debug);
+                            return retfinal;
                         }
                     }
                     // There isn't such a file anywhere.  We want to create the redirection parent folder and let this call against the redirected file to create there.
