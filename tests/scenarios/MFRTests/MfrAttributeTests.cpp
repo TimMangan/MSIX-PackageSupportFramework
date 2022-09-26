@@ -19,10 +19,18 @@ int InitializeAttributeTests()
 {
     std::wstring temp;
 
+    // Short Name request to native file.  NOTE: AppInstaller will create shortnames for package folders,
+    //  but not files so ANY app shortenting the filename will fail.
+    temp = L"C:\\Progra~1\\Shorte~1\\Subdir\\DiffTestFileVfsPF3.ini";
+    MfrAttributeTest t_Native_Short1 = { "Native-shortnamefile VFS exists in package", true, true, true,
+                                    temp.c_str(), 0x20, ERROR_SUCCESS };
+    MfrAttributeFileTests.push_back(t_Native_Short1);
+
+
     // Requests to Native File Locations for GetFileAttributes via VFS
     temp = g_NativePF;
     temp.append(L"\\PlaceholderTest\\Placeholder.txt");
-    MfrAttributeTest t_Native_PF1 = { "Native-file VFS exists in package", true, true, true, 
+    MfrAttributeTest t_Native_PF1 = { "Native-file VFS exists in package", true, false, false, 
                                     temp.c_str(), 0x20, ERROR_SUCCESS };
     MfrAttributeFileTests.push_back(t_Native_PF1);
 

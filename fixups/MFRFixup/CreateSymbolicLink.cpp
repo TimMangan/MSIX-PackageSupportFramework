@@ -67,6 +67,8 @@ BOOLEAN __stdcall CreateSymbolicLinkFixup(
 
             std::wstring wSymlinkFileName = widen(symlinkFileName);
             std::wstring wTargetFileName = widen(targetFileName);
+            wSymlinkFileName = AdjustSlashes(wSymlinkFileName);
+            wTargetFileName = AdjustSlashes(wTargetFileName);
 
             Cohorts cohortsSymlink;
             DetermineCohorts(wSymlinkFileName, &cohortsSymlink, moredebug, dllInstance, L"CreateSymbolicLinkFixup");
@@ -118,7 +120,15 @@ BOOLEAN __stdcall CreateSymbolicLinkFixup(
  
             if (cohortsTarget.map.Valid_mapping && cohortsSymlink.map.Valid_mapping)
             {
-                std::wstring rldSymlinkFileNameRedirected = MakeLongPath(cohortsSymlink.WsRedirected);
+                std::wstring rldSymlinkFileNameRedirected;
+                if (!cohortsSymlink.map.IsAnExclusionToRedirect)
+                {
+                    rldSymlinkFileNameRedirected = MakeLongPath(cohortsSymlink.WsRedirected);
+                }
+                else
+                {
+                    rldSymlinkFileNameRedirected = MakeLongPath(cohortsSymlink.WsRequested);
+                }
                 std::wstring rldTargetFileNameRedirected = MakeLongPath(UseTarget);
                 PreCreateFolders(rldSymlinkFileNameRedirected, dllInstance, L"CreateSymbolicLinkFixup");
 #if MOREDEBUG

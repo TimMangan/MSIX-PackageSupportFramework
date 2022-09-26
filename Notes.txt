@@ -1,5 +1,6 @@
 v.next
  * Created new Managed File Redirection Fixup (MFRFixup) as a potential replacement for FileRedirectionFixup
+ * Fix issue in DynamicLibraryFixup with certain mixes of bitness.
 
 v.2022.08.05
 * Incorporate platform changes per Microsoft

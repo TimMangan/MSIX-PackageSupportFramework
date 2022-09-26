@@ -71,6 +71,9 @@ HRESULT __stdcall CopyFile2Fixup(
 #endif
             std::wstring wExistingFileName = widen(existingFileName);
             std::wstring wNewFileName = widen(newFileName);
+            wExistingFileName = AdjustSlashes(wExistingFileName);
+            wNewFileName = AdjustSlashes(wNewFileName);
+
 
             // This get is inheirently a write operation in all cases.
             // We will always want the redirected location for the new file name.
@@ -86,7 +89,7 @@ HRESULT __stdcall CopyFile2Fixup(
             switch (cohortsNew.file_mfr.Request_MfrPathType)
             {
             case mfr::mfr_path_types::in_native_area:
-                if (cohortsNew.map.Valid_mapping)
+                if (cohortsNew.map.Valid_mapping && !cohortsNew.map.IsAnExclusionToRedirect)
                 {
                     newFileWsRedirected = cohortsNew.WsRedirected;
                 }
@@ -96,7 +99,7 @@ HRESULT __stdcall CopyFile2Fixup(
                 }
                 break;
             case mfr::mfr_path_types::in_package_pvad_area:
-                if (cohortsNew.map.Valid_mapping)
+                if (cohortsNew.map.Valid_mapping && !cohortsNew.map.IsAnExclusionToRedirect)
                 {
                     newFileWsRedirected = cohortsNew.WsRedirected;
                 }
@@ -106,7 +109,7 @@ HRESULT __stdcall CopyFile2Fixup(
                 }
                 break;
             case mfr::mfr_path_types::in_package_vfs_area:
-                if (cohortsNew.map.Valid_mapping)
+                if (cohortsNew.map.Valid_mapping && !cohortsNew.map.IsAnExclusionToRedirect)
                 {
                     newFileWsRedirected = cohortsNew.WsRedirected;
                 }
@@ -116,7 +119,7 @@ HRESULT __stdcall CopyFile2Fixup(
                 }
                 break;
             case mfr::mfr_path_types::in_redirection_area_writablepackageroot:
-                if (cohortsNew.map.Valid_mapping)
+                if (cohortsNew.map.Valid_mapping & !cohortsNew.map.IsAnExclusionToRedirect)
                 {
                     newFileWsRedirected = cohortsNew.WsRedirected;
                 }
@@ -149,7 +152,7 @@ HRESULT __stdcall CopyFile2Fixup(
                     cohortsExisting.map.Valid_mapping)
                 {
                     // try the request path, which must be the local redirected version by definition, and then a package equivalent, or make original call to fail.
-                    if (PathExists(cohortsExisting.WsRedirected.c_str()))
+                    if (!cohortsExisting.map.IsAnExclusionToRedirect && PathExists(cohortsExisting.WsRedirected.c_str()))
                     {
                         PreCreateFolders(newFileWsRedirected.c_str(), dllInstance, L"CopyFile2Fixup");
                         WRAPPER_COPYFILE2(cohortsExisting.WsRedirected, newFileWsRedirected, extendedParameters, debug, moredebug);
@@ -170,7 +173,7 @@ HRESULT __stdcall CopyFile2Fixup(
                          cohortsExisting.map.Valid_mapping)
                 {
                     // try the redirected path, then package, then native, or let fail using original.
-                    if (PathExists(cohortsExisting.WsRedirected.c_str()))
+                    if (!cohortsExisting.map.IsAnExclusionToRedirect && PathExists(cohortsExisting.WsRedirected.c_str()))
                     {
                         PreCreateFolders(newFileWsRedirected.c_str(), dllInstance, L"CopyFile2Fixup");
                         WRAPPER_COPYFILE2(cohortsExisting.WsRedirected, newFileWsRedirected, extendedParameters, debug, moredebug);
@@ -197,7 +200,7 @@ HRESULT __stdcall CopyFile2Fixup(
                 if (cohortsExisting.map.Valid_mapping)
                 {
                     //// try the redirected path, then package (COW), then don't need native.
-                    if (PathExists(cohortsExisting.WsRedirected.c_str()))
+                    if (!cohortsExisting.map.IsAnExclusionToRedirect && PathExists(cohortsExisting.WsRedirected.c_str()))
                     {
                         PreCreateFolders(newFileWsRedirected.c_str(), dllInstance, L"CopyFile2Fixup");
                         WRAPPER_COPYFILE2(cohortsExisting.WsRedirected, newFileWsRedirected, extendedParameters, debug, moredebug);
@@ -219,7 +222,7 @@ HRESULT __stdcall CopyFile2Fixup(
                     cohortsExisting.map.Valid_mapping)
                 {
                     // try the redirection path, then the package (COW).
-                    if (PathExists(cohortsExisting.WsRedirected.c_str()))
+                    if (!cohortsExisting.map.IsAnExclusionToRedirect && PathExists(cohortsExisting.WsRedirected.c_str()))
                     {
                         PreCreateFolders(newFileWsRedirected.c_str(), dllInstance, L"CopyFile2Fixup");
                         WRAPPER_COPYFILE2(cohortsExisting.WsRedirected, newFileWsRedirected, extendedParameters, debug, moredebug);
@@ -240,7 +243,7 @@ HRESULT __stdcall CopyFile2Fixup(
                          cohortsExisting.map.Valid_mapping)
                 {
                     // try the redirection path, then the package (COW), then native (possibly COW)
-                   if (PathExists(cohortsExisting.WsRedirected.c_str()))
+                   if (!cohortsExisting.map.IsAnExclusionToRedirect && PathExists(cohortsExisting.WsRedirected.c_str()))
                     {
                         PreCreateFolders(newFileWsRedirected.c_str(), dllInstance, L"CopyFile2Fixup");
                         WRAPPER_COPYFILE2(cohortsExisting.WsRedirected, newFileWsRedirected, extendedParameters, debug, moredebug);
@@ -267,7 +270,7 @@ HRESULT __stdcall CopyFile2Fixup(
                 if (cohortsExisting.map.Valid_mapping)
                 {
                     // try the redirected path, then package (COW), then possibly native (Possibly COW).
-                    if (PathExists(cohortsExisting.WsRedirected.c_str()))
+                    if (!cohortsExisting.map.IsAnExclusionToRedirect && PathExists(cohortsExisting.WsRedirected.c_str()))
                     {
                         PreCreateFolders(newFileWsRedirected.c_str(), dllInstance, L"CopyFile2Fixup");
                         WRAPPER_COPYFILE2(cohortsExisting.WsRedirected, newFileWsRedirected, extendedParameters, debug, moredebug);

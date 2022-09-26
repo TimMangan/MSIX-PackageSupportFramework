@@ -56,6 +56,8 @@ BOOL __stdcall SetFileAttributesFixup(_In_ const CharT* fileName, _In_ DWORD fil
         if (guard)
         {
             std::wstring wfileName = widen(fileName);
+            wfileName = AdjustSlashes(wfileName);
+
 #if _DEBUG
             LogString(dllInstance, L"SetFileAttributesFixup for fileName", wfileName.c_str());
 #endif
@@ -73,7 +75,7 @@ BOOL __stdcall SetFileAttributesFixup(_In_ const CharT* fileName, _In_ DWORD fil
                     {
                     case mfr::mfr_redirect_flags::prefer_redirection_local:
                         // try the request path, which must be the local redirected version by definition, and then a package equivalent using COW
-                        if (PathExists(cohorts.WsRedirected.c_str()))
+                        if (!cohorts.map.IsAnExclusionToRedirect && PathExists(cohorts.WsRedirected.c_str()))
                         {
                             WRAPPER_SETFILEATTRIBUTES(cohorts.WsRedirected, debug);  // always returns
                         }
@@ -104,7 +106,7 @@ BOOL __stdcall SetFileAttributesFixup(_In_ const CharT* fileName, _In_ DWORD fil
                     case mfr::mfr_redirect_flags::prefer_redirection_if_package_vfs:
 
                         // try the redirected path, then package (via COW), then native (possibly via COW).
-                        if (PathExists(cohorts.WsRedirected.c_str()))
+                        if (!cohorts.map.IsAnExclusionToRedirect && PathExists(cohorts.WsRedirected.c_str()))
                         {
                             WRAPPER_SETFILEATTRIBUTES(cohorts.WsRedirected, debug);
                         }
@@ -166,7 +168,7 @@ BOOL __stdcall SetFileAttributesFixup(_In_ const CharT* fileName, _In_ DWORD fil
                     case mfr::mfr_redirect_flags::prefer_redirection_containerized:
                     case mfr::mfr_redirect_flags::prefer_redirection_if_package_vfs:
                         //// try the redirected path, then package (COW), then don't need native.
-                        if (PathExists(cohorts.WsRedirected.c_str()))
+                        if (!cohorts.map.IsAnExclusionToRedirect && PathExists(cohorts.WsRedirected.c_str()))
                         {
                             WRAPPER_SETFILEATTRIBUTES(cohorts.WsRedirected, debug);
                         }
@@ -202,7 +204,7 @@ BOOL __stdcall SetFileAttributesFixup(_In_ const CharT* fileName, _In_ DWORD fil
                     switch (cohorts.map.RedirectionFlags)
                     {
                     case mfr::mfr_redirect_flags::prefer_redirection_local:
-                        if (PathExists(cohorts.WsRedirected.c_str()))
+                        if (!cohorts.map.IsAnExclusionToRedirect && PathExists(cohorts.WsRedirected.c_str()))
                         {
                             WRAPPER_SETFILEATTRIBUTES(cohorts.WsRedirected, debug);
                         }
@@ -227,7 +229,7 @@ BOOL __stdcall SetFileAttributesFixup(_In_ const CharT* fileName, _In_ DWORD fil
                     case mfr::mfr_redirect_flags::prefer_redirection_containerized:
                     case mfr::mfr_redirect_flags::prefer_redirection_if_package_vfs:
                         // try the redirection path, then the package (COW), then native (possibly COW)
-                        if (PathExists(cohorts.WsRedirected.c_str()))
+                        if (!cohorts.map.IsAnExclusionToRedirect && PathExists(cohorts.WsRedirected.c_str()))
                         {
                             WRAPPER_SETFILEATTRIBUTES(cohorts.WsRedirected, debug);
                         }
@@ -284,7 +286,7 @@ BOOL __stdcall SetFileAttributesFixup(_In_ const CharT* fileName, _In_ DWORD fil
                 if (cohorts.map.Valid_mapping)
                 {
                     // try the redirected path, then package (COW), then possibly native (Possibly COW).
-                    if (PathExists(cohorts.WsRedirected.c_str()))
+                    if (!cohorts.map.IsAnExclusionToRedirect && PathExists(cohorts.WsRedirected.c_str()))
                     {
                         WRAPPER_SETFILEATTRIBUTES(cohorts.WsRedirected, debug);
                     }

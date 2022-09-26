@@ -47,18 +47,38 @@ namespace mfr
         {
             return mfr_path_types::in_redirection_area_writablepackageroot;
         }
+        if (pathString_isSubsetOf_Path(g_short_writablePackageRootPath.generic_wstring().c_str(), path))
+        {
+            return mfr_path_types::in_redirection_area_writablepackageroot;
+        }
+
         if (pathString_isSubsetOf_Path(g_redirectRootPath.generic_wstring().c_str(), path))
         {
             return mfr_path_types::in_redirection_area_other;
         }
-       if (pathString_isSubsetOf_Path(g_packageVfsRootPath.generic_wstring().c_str(), path))
+        if (pathString_isSubsetOf_Path(g_short_redirectRootPath.generic_wstring().c_str(), path))
+        {
+            return mfr_path_types::in_redirection_area_other;
+        }
+
+        if (pathString_isSubsetOf_Path(g_packageVfsRootPath.generic_wstring().c_str(), path))
         {
             return mfr_path_types::in_package_vfs_area;
         }
+        if (pathString_isSubsetOf_Path(g_short_packageVfsRootPath.generic_wstring().c_str(), path))
+        {
+            return mfr_path_types::in_package_vfs_area;
+        }
+
         if (pathString_isSubsetOf_Path(g_packageRootPath.generic_wstring().c_str(), path))
         {
             return mfr_path_types::in_package_pvad_area;
         }
+        if (pathString_isSubsetOf_Path(g_short_packageRootPath.generic_wstring().c_str(), path))
+        {
+            return mfr_path_types::in_package_pvad_area;
+        }
+
         //Log(L"FID_RootDrive  %s", FID_RootDrive.generic_wstring().c_str());
         if (!pathString_isSubsetOf_Path(FID_RootDrive.generic_wstring().c_str(), path))
         {
@@ -98,7 +118,29 @@ namespace mfr
                 outputPath.Request_MfrPathType = mfr::mfr_path_types::is_protocol_path;
             }
             else if (wInputPath.compare(L"CONOUT$") == 0 ||
-                     wInputPath.compare(L"CONIN$") == 0 )
+                     wInputPath.compare(L"CONIN$") == 0 ||
+                     wInputPath.compare(L"CON") == 0 || // see list in https://learn.microsoft.com/en-us/windows/win32/fileio/naming-a-file
+                     wInputPath.compare(L"PRN") == 0 ||
+                     wInputPath.compare(L"AUX") == 0 ||
+                     wInputPath.compare(L"NUL") == 0 ||
+                     wInputPath.compare(L"COM1") == 0 ||
+                     wInputPath.compare(L"COM2") == 0 ||
+                     wInputPath.compare(L"COM3") == 0 ||
+                     wInputPath.compare(L"COM4") == 0 ||
+                     wInputPath.compare(L"COM5") == 0 ||
+                     wInputPath.compare(L"COM6") == 0 ||
+                     wInputPath.compare(L"COM7") == 0 ||
+                     wInputPath.compare(L"COM8") == 0 ||
+                     wInputPath.compare(L"COM9") == 0 ||
+                     wInputPath.compare(L"LPT1") == 0 ||
+                     wInputPath.compare(L"LPT2") == 0 ||
+                     wInputPath.compare(L"LPT3") == 0 ||
+                     wInputPath.compare(L"LPT4") == 0 ||
+                     wInputPath.compare(L"LPT5") == 0 ||
+                     wInputPath.compare(L"LPT6") == 0 ||
+                     wInputPath.compare(L"LPT7") == 0 ||
+                     wInputPath.compare(L"LPT8") == 0 ||
+                     wInputPath.compare(L"LPT9") == 0)
             {
                 outputPath.Request_NormalizedPath = inputPath;
                 outputPath.Request_MfrPathType = mfr::mfr_path_types::unsupported_for_intercepts;

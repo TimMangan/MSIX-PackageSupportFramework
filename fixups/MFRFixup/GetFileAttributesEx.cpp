@@ -80,6 +80,8 @@ BOOL __stdcall GetFileAttributesExFixup(
         if (guard)
         {
             std::wstring wfileName = widen(fileName);
+            wfileName = AdjustSlashes(wfileName);
+
 #if _DEBUG
             Log(L"[%d] GetFileAttributesExFixup for fileName '%s' ", dllInstance, wfileName.c_str());
 #endif
@@ -94,8 +96,11 @@ BOOL __stdcall GetFileAttributesExFixup(
                     switch (cohorts.map.RedirectionFlags)
                     {
                     case mfr::mfr_redirect_flags::prefer_redirection_local:
-                        // try the request path, which must be the local redirected version by definition, and then a package equivalent = 
-                        WRAPPER_GETFILEATTRIBUTESEX(cohorts.WsRedirected, debug);   // returns if successful.
+                        if (!cohorts.map.IsAnExclusionToRedirect)
+                        {
+                            // try the request path, which must be the local redirected version by definition, and then a package equivalent = 
+                            WRAPPER_GETFILEATTRIBUTESEX(cohorts.WsRedirected, debug);   // returns if successful.
+                        }
 
                         WRAPPER_GETFILEATTRIBUTESEX(cohorts.WsPackage, debug);   // returns if successful.
                         // Both failed if here
@@ -105,8 +110,11 @@ BOOL __stdcall GetFileAttributesExFixup(
                         return retfinal;
                     case mfr::mfr_redirect_flags::prefer_redirection_containerized:
                     case mfr::mfr_redirect_flags::prefer_redirection_if_package_vfs:
-                        // try the redirected path, then package, then native.
-                        WRAPPER_GETFILEATTRIBUTESEX(cohorts.WsRedirected, debug);   // returns if successful.
+                        if (!cohorts.map.IsAnExclusionToRedirect)
+                        {
+                            // try the redirected path, then package, then native.
+                            WRAPPER_GETFILEATTRIBUTESEX(cohorts.WsRedirected, debug);   // returns if successful.
+                        }
 
                         WRAPPER_GETFILEATTRIBUTESEX(cohorts.WsPackage, debug);   // returns if successful.
 
@@ -134,8 +142,11 @@ BOOL __stdcall GetFileAttributesExFixup(
                         break;
                     case mfr::mfr_redirect_flags::prefer_redirection_containerized:
                     case mfr::mfr_redirect_flags::prefer_redirection_if_package_vfs:
-                        //// try the redirected path, then package, then don't need native.
-                        WRAPPER_GETFILEATTRIBUTESEX(cohorts.WsRedirected, debug);   // returns if successful.
+                        if (!cohorts.map.IsAnExclusionToRedirect)
+                        {
+                            //// try the redirected path, then package, then don't need native.
+                            WRAPPER_GETFILEATTRIBUTESEX(cohorts.WsRedirected, debug);   // returns if successful.
+                        }
 
                         WRAPPER_GETFILEATTRIBUTESEX(cohorts.WsPackage, debug);   // returns if successful.
                         // Both failed if here
@@ -157,8 +168,11 @@ BOOL __stdcall GetFileAttributesExFixup(
                     switch (cohorts.map.RedirectionFlags)
                     {
                     case mfr::mfr_redirect_flags::prefer_redirection_local:
-                        // try the request path, which must be the local redirected version by definition, and then a package equivalent.
-                        WRAPPER_GETFILEATTRIBUTESEX(cohorts.WsRedirected, debug);   // returns if successful.
+                        if (!cohorts.map.IsAnExclusionToRedirect)
+                        {
+                            // try the request path, which must be the local redirected version by definition, and then a package equivalent.
+                            WRAPPER_GETFILEATTRIBUTESEX(cohorts.WsRedirected, debug);   // returns if successful.
+                        }
 
                         WRAPPER_GETFILEATTRIBUTESEX(cohorts.WsPackage, debug);   // returns if successful.
                         // Both failed if here
@@ -168,8 +182,11 @@ BOOL __stdcall GetFileAttributesExFixup(
                         return retfinal;
                     case mfr::mfr_redirect_flags::prefer_redirection_containerized:
                     case mfr::mfr_redirect_flags::prefer_redirection_if_package_vfs:
-                        // try the redirected path, then package, then native.
-                        WRAPPER_GETFILEATTRIBUTESEX(cohorts.WsRedirected, debug);  // returns if successful.
+                        if (!cohorts.map.IsAnExclusionToRedirect)
+                        {
+                            // try the redirected path, then package, then native.
+                            WRAPPER_GETFILEATTRIBUTESEX(cohorts.WsRedirected, debug);  // returns if successful.
+                        }
 
                         WRAPPER_GETFILEATTRIBUTESEX(cohorts.WsPackage, debug);  // returns if successful.
 
@@ -190,8 +207,11 @@ BOOL __stdcall GetFileAttributesExFixup(
             case mfr::mfr_path_types::in_redirection_area_writablepackageroot:
                 if (cohorts.map.Valid_mapping)
                 {
-                    // try the redirected path, then package, then native if relevant.
-                    WRAPPER_GETFILEATTRIBUTESEX(cohorts.WsRedirected, debug);  // returns if successful.
+                    if (!cohorts.map.IsAnExclusionToRedirect)
+                    {
+                        // try the redirected path, then package, then native if relevant.
+                        WRAPPER_GETFILEATTRIBUTESEX(cohorts.WsRedirected, debug);  // returns if successful.
+                    }
 
                     WRAPPER_GETFILEATTRIBUTESEX(cohorts.WsPackage, debug);  // returns if successful.
 

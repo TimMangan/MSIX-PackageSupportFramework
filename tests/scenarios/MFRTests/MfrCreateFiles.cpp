@@ -875,6 +875,13 @@ int InitializeCreateFileTests6()
                                        true, ERROR_SUCCESS };
     MfrCreateFileTests6.push_back(t_Native_PFA3);
 
+    temp = L"C:\\Windows\\Microsoft.NET\\Framework64\\v4.0.30319\\clr.dll";
+
+    MfrCreateFileTest t_Native_PFD1 = { "Local Native-file DLL not in package", true, true, true,
+                                   temp.c_str(),
+                                   GENERIC_READ, FILE_SHARE_READ|FILE_SHARE_WRITE|FILE_SHARE_DELETE, nullptr, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL,
+                                   true, ERROR_SUCCESS };
+    MfrCreateFileTests6.push_back(t_Native_PFD1);
 
     int count = 0;
     for (MfrCreateFileTest t : MfrCreateFileTests6)      if (t.enabled) { count++; }

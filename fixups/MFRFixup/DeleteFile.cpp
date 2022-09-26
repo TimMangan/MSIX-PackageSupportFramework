@@ -51,10 +51,11 @@ BOOL __stdcall DeleteFileFixup(_In_ const CharT* pathName) noexcept
         if (guard)
         {
             std::wstring wPathName = widen(pathName);
+            wPathName = AdjustSlashes(wPathName);
+
 #if _DEBUG
             LogString(dllInstance, L"DeleteFileFixup for pathName", wPathName.c_str());
 #endif
-            std::replace(wPathName.begin(), wPathName.end(), L'/', L'\\');
 
             Cohorts cohorts;
             DetermineCohorts(wPathName, &cohorts, moredebug, dllInstance, L"DeleteFileFixup");
@@ -69,7 +70,7 @@ BOOL __stdcall DeleteFileFixup(_In_ const CharT* pathName) noexcept
                     cohorts.map.RedirectionFlags == mfr::mfr_redirect_flags::prefer_redirection_local)
                 {
                     // try the request path, which must be the local redirected version by definition, and then a package equivalent
-                    if (PathExists(cohorts.WsRedirected.c_str()))
+                    if (!cohorts.map.IsAnExclusionToRedirect && PathExists(cohorts.WsRedirected.c_str()))
                     {
                         // Still do this to set attributes
                         retfinal = WRAPPER_DELETEFILE(cohorts.WsRedirected, dllInstance, debug);
@@ -79,7 +80,7 @@ BOOL __stdcall DeleteFileFixup(_In_ const CharT* pathName) noexcept
                             retfinal = FALSE;
                             SetLastError(ERROR_ACCESS_DENIED);
 #if _DEBUG
-                            Log("[%d] DeleteFileFixup: Resetting return code to ERROR_ACCESS_DENIED.");
+                            Log("[%d] DeleteFileFixup: Resetting return code to ERROR_ACCESS_DENIED.", dllInstance);
 #endif
                         }
 #endif
@@ -90,7 +91,7 @@ BOOL __stdcall DeleteFileFixup(_In_ const CharT* pathName) noexcept
                         retfinal = FALSE;
                         SetLastError(ERROR_ACCESS_DENIED);
 #if _DEBUG
-                        Log("[%d] DeleteFileFixup: Setting return code to ERROR_ACCESS_DENIED.");
+                        Log("[%d] DeleteFileFixup: Setting return code to ERROR_ACCESS_DENIED.", dllInstance);
 #endif
                         return retfinal;
                     }
@@ -110,7 +111,7 @@ BOOL __stdcall DeleteFileFixup(_In_ const CharT* pathName) noexcept
                           cohorts.map.RedirectionFlags == mfr::mfr_redirect_flags::prefer_redirection_if_package_vfs))
                 {
                     // try the redirected path, then package (via COW), then native (possibly via COW).
-                    if (PathExists(cohorts.WsRedirected.c_str()))
+                    if (!cohorts.map.IsAnExclusionToRedirect && PathExists(cohorts.WsRedirected.c_str()))
                     {
                         retfinal = WRAPPER_DELETEFILE(cohorts.WsRedirected, dllInstance, debug);
                         return retfinal;
@@ -120,7 +121,7 @@ BOOL __stdcall DeleteFileFixup(_In_ const CharT* pathName) noexcept
                         retfinal = FALSE;
                         SetLastError(ERROR_ACCESS_DENIED);
 #if _DEBUG
-                        Log("[%d] DeleteFileFixup: Setting return code to ERROR_ACCESS_DENIED.");
+                        Log("[%d] DeleteFileFixup: Setting return code to ERROR_ACCESS_DENIED.", dllInstance);
 #endif
                         return retfinal;
                     }
@@ -141,7 +142,7 @@ BOOL __stdcall DeleteFileFixup(_In_ const CharT* pathName) noexcept
                 if (cohorts.map.Valid_mapping)
                 {
                     //// try the redirected path, then package (COW), then don't need native.
-                    if (PathExists(cohorts.WsRedirected.c_str()))
+                    if (!cohorts.map.IsAnExclusionToRedirect && PathExists(cohorts.WsRedirected.c_str()))
                     {
                         retfinal = WRAPPER_DELETEFILE(cohorts.WsRedirected, dllInstance, debug);
                         return retfinal;
@@ -151,7 +152,7 @@ BOOL __stdcall DeleteFileFixup(_In_ const CharT* pathName) noexcept
                         retfinal = FALSE;
                         SetLastError(ERROR_ACCESS_DENIED);
 #if _DEBUG
-                        Log("[%d] DeleteFileFixup: Ssetting return code to ERROR_ACCESS_DENIED.");
+                        Log("[%d] DeleteFileFixup: Ssetting return code to ERROR_ACCESS_DENIED.", dllInstance);
 #endif
                         return retfinal;
                     }
@@ -172,7 +173,7 @@ BOOL __stdcall DeleteFileFixup(_In_ const CharT* pathName) noexcept
                     cohorts.map.RedirectionFlags == mfr::mfr_redirect_flags::prefer_redirection_local)
                 {
                     // try the redirection path, then the package (COW).
-                    if (PathExists(cohorts.WsRedirected.c_str()))
+                    if (!cohorts.map.IsAnExclusionToRedirect && PathExists(cohorts.WsRedirected.c_str()))
                     {
                         retfinal = WRAPPER_DELETEFILE(cohorts.WsRedirected, dllInstance, debug);
                         return retfinal;
@@ -182,7 +183,7 @@ BOOL __stdcall DeleteFileFixup(_In_ const CharT* pathName) noexcept
                         retfinal = false;
                         SetLastError(ERROR_ACCESS_DENIED);
 #if _DEBUG
-                        Log("[%d] DeleteFileFixup: Setting return code to ERROR_ACCESS_DENIED.");
+                        Log("[%d] DeleteFileFixup: Setting return code to ERROR_ACCESS_DENIED.", dllInstance);
 #endif
                         return retfinal;
                     }
@@ -202,7 +203,7 @@ BOOL __stdcall DeleteFileFixup(_In_ const CharT* pathName) noexcept
                           cohorts.map.RedirectionFlags == mfr::mfr_redirect_flags::prefer_redirection_if_package_vfs))
                 {
                     // try the redirection path, then the package (COW), then native (possibly COW)
-                    if (PathExists(cohorts.WsRedirected.c_str()))
+                    if (!cohorts.map.IsAnExclusionToRedirect && PathExists(cohorts.WsRedirected.c_str()))
                     {
                         retfinal = WRAPPER_DELETEFILE(cohorts.WsRedirected, dllInstance, debug);
                         return retfinal;
@@ -212,7 +213,7 @@ BOOL __stdcall DeleteFileFixup(_In_ const CharT* pathName) noexcept
                         retfinal = FALSE;
                         SetLastError(ERROR_ACCESS_DENIED);
 #if _DEBUG
-                        Log("[%d] DeleteFileFixup: Setting return code to ERROR_ACCESS_DENIED.");
+                        Log("[%d] DeleteFileFixup: Setting return code to ERROR_ACCESS_DENIED.", dllInstance);
 #endif
                         return retfinal;
                     }
@@ -227,7 +228,7 @@ BOOL __stdcall DeleteFileFixup(_In_ const CharT* pathName) noexcept
                         retfinal = FALSE;
                         SetLastError(ERROR_FILE_NOT_FOUND);
 #if _DEBUG
-                        Log("[%d] DeleteFileFixup: Setting return code to ERROR_FILE_NOT_FOUND.");
+                        Log("[%d] DeleteFileFixup: Setting return code to ERROR_FILE_NOT_FOUND.", dllInstance);
 #endif
                         return retfinal;
                     }
@@ -237,7 +238,7 @@ BOOL __stdcall DeleteFileFixup(_In_ const CharT* pathName) noexcept
                 if (cohorts.map.Valid_mapping)
                 {
                     // try the redirected path, then package (COW), then possibly native (Possibly COW).
-                    if (PathExists(cohorts.WsRedirected.c_str()))
+                    if (!cohorts.map.IsAnExclusionToRedirect && PathExists(cohorts.WsRedirected.c_str()))
                     {
                         retfinal = WRAPPER_DELETEFILE(cohorts.WsRedirected, dllInstance, debug);
                         return retfinal;
@@ -247,7 +248,7 @@ BOOL __stdcall DeleteFileFixup(_In_ const CharT* pathName) noexcept
                         retfinal = FALSE;
                         SetLastError(ERROR_ACCESS_DENIED);
 #if _DEBUG
-                        Log("[%d] DeleteFileFixup: Setting return code to ERROR_ACCESS_DENIED.");
+                        Log("[%d] DeleteFileFixup: Setting return code to ERROR_ACCESS_DENIED.", dllInstance);
 #endif
                         return retfinal;
                     }
@@ -263,7 +264,7 @@ BOOL __stdcall DeleteFileFixup(_In_ const CharT* pathName) noexcept
                         retfinal = FALSE;
                         SetLastError(ERROR_FILE_NOT_FOUND);
 #if _DEBUG
-                        Log("[%d] DeleteFileFixup: Setting return code to ERROR_FILE_NOT_FOUND.");
+                        Log("[%d] DeleteFileFixup: Setting return code to ERROR_FILE_NOT_FOUND.", dllInstance);
 #endif
                         return retfinal;
                     }

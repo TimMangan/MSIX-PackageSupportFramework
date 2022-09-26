@@ -50,7 +50,6 @@
 #include "DetermineCohorts.h"
 
 
-
 template <typename CharT>
 HANDLE __stdcall FindFirstFileFixup(_In_ const CharT* fileName, _Out_ win32_find_data_t<CharT>* findFileData) noexcept try
 {
@@ -67,20 +66,23 @@ HANDLE __stdcall FindFirstFileFixup(_In_ const CharT* fileName, _Out_ win32_find
 
     if (guard)
     {
-        std::wstring wfileName = widen(fileName);
+        std::wstring wfileName = AdjustSlashes(widen(fileName));
+
         auto result = std::make_unique<FindData3>();
         result->RememberedInstance = dllInstance;
         result->requested_path = wfileName;
 
 #if _DEBUG
-        LogString(dllInstance, L"\tFindFirstFileFixup: for fileName", fileName);
+        LogString(dllInstance, L"FindFirstFileFixup: for fileName", fileName);
 #endif
+
         // Determine possible paths involved
         Cohorts cohorts; 
         DetermineCohorts(wfileName, &cohorts, moreDebug, dllInstance, L"FindFirstFileFixup");
 
 
 #if MOREDEBUG
+        Log(L"[%d] FindFirstFileFixup:  Adjusted Path=%s", dllInstance, wfileName.c_str());
         Log(L"[%d] FindFirstFileFixup:      RedirPath=%s", dllInstance, cohorts.WsRedirected.c_str());
         Log(L"[%d] FindFirstFileFixup:    PackagePath=%s", dllInstance, cohorts.WsPackage.c_str());
         if (cohorts.UsingNative)
@@ -208,7 +210,7 @@ HANDLE __stdcall FindFirstFileFixup(_In_ const CharT* fileName, _Out_ win32_find
                 if (GetLastError() == ERROR_FILE_NOT_FOUND)
                     initialFindError = ERROR_FILE_NOT_FOUND;
 #if _DEBUG
-                Log(L"[%d] FindFirstFileFixupV2[%d] (from native):   no results.", dllInstance, Result_Native);
+                Log(L"[%d] FindFirstFileFixup[%d] (from native):   no results.", dllInstance, Result_Native);
 #endif
             }
             if (!result->find_handles[Result_Redirected] &&

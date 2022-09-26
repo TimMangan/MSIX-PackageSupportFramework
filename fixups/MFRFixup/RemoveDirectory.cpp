@@ -51,10 +51,10 @@ BOOL __stdcall RemoveDirectoryFixup(_In_ const CharT* pathName) noexcept
         if (guard)
         {
             std::wstring wPathName = widen(pathName);
+            wPathName = AdjustSlashes(wPathName);
 #if _DEBUG
             LogString(dllInstance, L"RemoveDirectoryFixup for pathName", wPathName.c_str());
 #endif
-            std::replace(wPathName.begin(), wPathName.end(), L'/', L'\\');
 
             Cohorts cohorts;
             DetermineCohorts(wPathName, &cohorts, moredebug, dllInstance, L"RemoveDirectoryFixup");
@@ -69,7 +69,7 @@ BOOL __stdcall RemoveDirectoryFixup(_In_ const CharT* pathName) noexcept
                     cohorts.map.RedirectionFlags == mfr::mfr_redirect_flags::prefer_redirection_local)
                 {
                     // try the request path, which must be the local redirected version by definition, and then a package equivalent
-                    if (PathExists(cohorts.WsRedirected.c_str()))
+                    if (!cohorts.map.IsAnExclusionToRedirect && PathExists(cohorts.WsRedirected.c_str()))
                     {
                         // Still do this to set attributes
                         retfinal = WRAPPER_REMOVEDIRECTORY(cohorts.WsRedirected, dllInstance, debug);
@@ -110,7 +110,7 @@ BOOL __stdcall RemoveDirectoryFixup(_In_ const CharT* pathName) noexcept
                           cohorts.map.RedirectionFlags == mfr::mfr_redirect_flags::prefer_redirection_if_package_vfs))
                 {
                     // try the redirected path, then package (via COW), then native (possibly via COW).
-                    if (PathExists(cohorts.WsRedirected.c_str()))
+                    if (!cohorts.map.IsAnExclusionToRedirect && PathExists(cohorts.WsRedirected.c_str()))
                     {
                         retfinal = WRAPPER_REMOVEDIRECTORY(cohorts.WsRedirected, dllInstance, debug);
                         return retfinal;
@@ -141,7 +141,7 @@ BOOL __stdcall RemoveDirectoryFixup(_In_ const CharT* pathName) noexcept
                 if (cohorts.map.Valid_mapping)
                 {
                     //// try the redirected path, then package (COW), then don't need native.
-                    if (PathExists(cohorts.WsRedirected.c_str()))
+                    if (!cohorts.map.IsAnExclusionToRedirect && PathExists(cohorts.WsRedirected.c_str()))
                     {
                         retfinal = WRAPPER_REMOVEDIRECTORY(cohorts.WsRedirected, dllInstance, debug);
                         return retfinal;
@@ -172,7 +172,7 @@ BOOL __stdcall RemoveDirectoryFixup(_In_ const CharT* pathName) noexcept
                     cohorts.map.RedirectionFlags == mfr::mfr_redirect_flags::prefer_redirection_local)
                 {
                     // try the redirection path, then the package (COW).
-                    if (PathExists(cohorts.WsRedirected.c_str()))
+                    if (!cohorts.map.IsAnExclusionToRedirect && PathExists(cohorts.WsRedirected.c_str()))
                     {
                         retfinal = WRAPPER_REMOVEDIRECTORY(cohorts.WsRedirected, dllInstance, debug);
                         return retfinal;
@@ -202,7 +202,7 @@ BOOL __stdcall RemoveDirectoryFixup(_In_ const CharT* pathName) noexcept
                           cohorts.map.RedirectionFlags == mfr::mfr_redirect_flags::prefer_redirection_if_package_vfs))
                 {
                     // try the redirection path, then the package (COW), then native (possibly COW)
-                    if (PathExists(cohorts.WsRedirected.c_str()))
+                    if (!cohorts.map.IsAnExclusionToRedirect && PathExists(cohorts.WsRedirected.c_str()))
                     {
                         retfinal = WRAPPER_REMOVEDIRECTORY(cohorts.WsRedirected, dllInstance, debug);
                         return retfinal;
@@ -237,7 +237,7 @@ BOOL __stdcall RemoveDirectoryFixup(_In_ const CharT* pathName) noexcept
                 if (cohorts.map.Valid_mapping)
                 {
                     // try the redirected path, then package (COW), then possibly native (Possibly COW).
-                    if (PathExists(cohorts.WsRedirected.c_str()))
+                    if (!cohorts.map.IsAnExclusionToRedirect && PathExists(cohorts.WsRedirected.c_str()))
                     {
                         retfinal = WRAPPER_REMOVEDIRECTORY(cohorts.WsRedirected, dllInstance, debug);
                         return retfinal;

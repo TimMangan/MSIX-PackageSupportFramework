@@ -14,7 +14,7 @@ namespace mfr
     enum class mfr_path_types
     {
         unknown = 0x0000,   // Pre-initialized value           
-        unsupported_for_intercepts = 0x0001,  // includes special file paths like CONOUT$ and \\.\pipe and others that we should just pass through and let the FS deal with as is.
+        unsupported_for_intercepts = 0x0001,  // includes special file paths like CONOUT$ and NUL and \\.\pipe and others that we should just pass through and let the FS deal with as is.
         in_redirection_area_writablepackageroot = 0x0002,   // The path is in the container redirection area WritablePackageRoot
         in_redirection_area_other = 0x0003,   // The path is in the container redirection area that we don't manage 
         in_package_pvad_area = 0x0004,   // The path is in the package area (PVAD)

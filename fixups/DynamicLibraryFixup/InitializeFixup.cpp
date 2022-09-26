@@ -20,7 +20,7 @@
 #include "dll_location_spec.h"
 
 #if _DEBUG
-//#define MOREDEBUG 1
+#define MOREDEBUG 1
 #endif
 
 using namespace std::literals;
@@ -94,15 +94,15 @@ void InitializeConfiguration()
                         if (auto arch = specObject.try_get("architecture"))
                         {
                             wArch = arch->as_string().wstring();
-                            if (wArch.compare(L"x86"))
+                            if (wArch.compare(L"x86")==0)
                             {
                                 bitness = x86;
                             }
-                            else if (wArch.compare(L"x86"))
+                            else if (wArch.compare(L"x64")==0)
                             {
                                 bitness = x64;
                             }
-                            else if (wArch.compare(L"anyCPU"))
+                            else if (wArch.compare(L"anyCPU")==0)
                             {
                                 bitness = AnyCPU;
                             }
@@ -112,7 +112,7 @@ void InitializeConfiguration()
                         g_dynf_dllSpecs.back().filename = filename;
                         g_dynf_dllSpecs.back().architecture = bitness;
 #if MOREDEBUG
-                        Log(L"DynamicLibraryFixup: %s : (%s) : %s", filename.data(), wArch.c_str(), fullpath.c_str());
+                        Log(L"DynamicLibraryFixup: %s : (%s=%d) : %s", filename.data(), wArch.c_str(), bitness, fullpath.c_str());
 #endif
                         count++;
                     };
@@ -124,7 +124,7 @@ void InitializeConfiguration()
             else
             {
 #if _DEBUG
-                Log(L"DynamicLibraryFixup ForcePacageDllUse=false");
+                Log(L"DynamicLibraryFixup ForcePackageDllUse=false");
 #endif
             }
         }

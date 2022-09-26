@@ -87,6 +87,7 @@ DWORD __stdcall GetPrivateProfileSectionFixup(
                 // This get is inheirently a read-only operation in all cases.
                 // We prefer to use the redirecton case, if present.
                 std::wstring wfileName = widen(fileName);
+                wfileName = AdjustSlashes(wfileName);
 
                 Cohorts cohorts;
                 DetermineCohorts(wfileName, &cohorts, moredebug, dllInstance, L"GetPrivateProfileSectionFixup");
@@ -100,7 +101,7 @@ DWORD __stdcall GetPrivateProfileSectionFixup(
                         {
                         case mfr::mfr_redirect_flags::prefer_redirection_local:
                             // try the request path (which must be the local redirected version by definition), and then a package equivalent, then return 0 characters as the fail.
-                            if (PathExists(cohorts.WsRedirected.c_str()))
+                            if (!cohorts.map.IsAnExclusionToRedirect && PathExists(cohorts.WsRedirected.c_str()))
                             {
                                 WRAPPER_GETPRIVATEPROFILESECTION(cohorts.WsRedirected, debug, moredebug);
                             }
@@ -117,7 +118,7 @@ DWORD __stdcall GetPrivateProfileSectionFixup(
                         case mfr::mfr_redirect_flags::prefer_redirection_containerized:
                         case mfr::mfr_redirect_flags::prefer_redirection_if_package_vfs:
                             // try the redirected path, then package, then native,  then return 0 characters as the fail.
-                            if (PathExists(cohorts.WsRedirected.c_str()))
+                            if (!cohorts.map.IsAnExclusionToRedirect && PathExists(cohorts.WsRedirected.c_str()))
                             {
                                 WRAPPER_GETPRIVATEPROFILESECTION(cohorts.WsRedirected, debug, moredebug);
                             }
@@ -155,7 +156,7 @@ DWORD __stdcall GetPrivateProfileSectionFixup(
                         case mfr::mfr_redirect_flags::prefer_redirection_containerized:
                         case mfr::mfr_redirect_flags::prefer_redirection_if_package_vfs:
                             //// try the redirected path, then package, then don't need native and return 0 characters as the fail.
-                            if (PathExists(cohorts.WsRedirected.c_str()))
+                            if (!cohorts.map.IsAnExclusionToRedirect && PathExists(cohorts.WsRedirected.c_str()))
                             {
                                 WRAPPER_GETPRIVATEPROFILESECTION(cohorts.WsRedirected, debug, moredebug);
                             }
@@ -184,7 +185,7 @@ DWORD __stdcall GetPrivateProfileSectionFixup(
                         {
                         case mfr::mfr_redirect_flags::prefer_redirection_local:
                             // try the redirected path, then package path, then return 0 characters as the fail.
-                            if (PathExists(cohorts.WsRedirected.c_str()))
+                            if (!cohorts.map.IsAnExclusionToRedirect && PathExists(cohorts.WsRedirected.c_str()))
                             {
                                 WRAPPER_GETPRIVATEPROFILESECTION(cohorts.WsRedirected, debug, moredebug);
                             }
@@ -202,7 +203,7 @@ DWORD __stdcall GetPrivateProfileSectionFixup(
                         case mfr::mfr_redirect_flags::prefer_redirection_containerized:
                         case mfr::mfr_redirect_flags::prefer_redirection_if_package_vfs:
                             // try the redirected path, then package, then native, then return 0 characters as the fail.
-                            if (PathExists(cohorts.WsRedirected.c_str()))
+                            if (!cohorts.map.IsAnExclusionToRedirect && PathExists(cohorts.WsRedirected.c_str()))
                             {
                                 WRAPPER_GETPRIVATEPROFILESECTION(cohorts.WsRedirected, debug, moredebug);
                             }
@@ -240,7 +241,7 @@ DWORD __stdcall GetPrivateProfileSectionFixup(
                         case mfr::mfr_redirect_flags::prefer_redirection_containerized:
                         case mfr::mfr_redirect_flags::prefer_redirection_if_package_vfs:
                             // try the redirected path, then package, then possibly native, then return 0 characters as the fail.
-                            if (PathExists(cohorts.WsRedirected.c_str()))
+                            if (!cohorts.map.IsAnExclusionToRedirect && PathExists(cohorts.WsRedirected.c_str()))
                             {
                                 WRAPPER_GETPRIVATEPROFILESECTION(cohorts.WsRedirected, debug, moredebug);
                             }

@@ -79,11 +79,12 @@ BOOL __stdcall CreateDirectoryFixup(_In_ const CharT* pathName, _In_opt_ LPSECUR
         if (guard)
         {
             std::wstring wPathName = widen(pathName);
+            wPathName = AdjustSlashes(wPathName);
+
 #if _DEBUG
             LogString(dllInstance, L"CreateDirectoryFixup for path", pathName);
 #endif
-            std::replace(wPathName.begin(), wPathName.end(), L'/', L'\\');
-
+            
             // This get is inheirently a write operation in all cases.
             // There is no need to COW, just create the redirected folder, but may need to create parent folders first.
             Cohorts cohorts;
@@ -96,7 +97,7 @@ BOOL __stdcall CreateDirectoryFixup(_In_ const CharT* pathName, _In_opt_ LPSECUR
                     cohorts.map.RedirectionFlags == mfr::mfr_redirect_flags::prefer_redirection_local)
                 {
                     // try the request path, which must be the local redirected version by definition, and then a package equivalent
-                    if (PathExists(cohorts.WsRedirected.c_str()))
+                    if (!cohorts.map.IsAnExclusionToRedirect && PathExists(cohorts.WsRedirected.c_str()))
                     {
                         // Still do this to set attributes
                         retfinal = WRAPPER_CREATEDIRECTORY(cohorts.WsRedirected, securityAttributes, dllInstance, debug);
@@ -138,7 +139,7 @@ BOOL __stdcall CreateDirectoryFixup(_In_ const CharT* pathName, _In_opt_ LPSECUR
                           cohorts.map.RedirectionFlags == mfr::mfr_redirect_flags::prefer_redirection_if_package_vfs) )
                 {
                     // try the redirected path, then package (via COW), then native (possibly via COW).
-                    if (PathExists(cohorts.WsRedirected.c_str()))
+                    if (!cohorts.map.IsAnExclusionToRedirect && PathExists(cohorts.WsRedirected.c_str()))
                     {
                         retfinal = WRAPPER_CREATEDIRECTORY(cohorts.WsRedirected, securityAttributes, dllInstance, debug);
 #if IMPROVE_RETURN_ACCURACY
@@ -192,7 +193,7 @@ BOOL __stdcall CreateDirectoryFixup(_In_ const CharT* pathName, _In_opt_ LPSECUR
                 if (cohorts.map.Valid_mapping)
                 {
                     //// try the redirected path, then package (COW), then don't need native.
-                    if (PathExists(cohorts.WsRedirected.c_str()))
+                    if (!cohorts.map.IsAnExclusionToRedirect && PathExists(cohorts.WsRedirected.c_str()))
                     {
                         PreCreateFolders(cohorts.WsRedirected.c_str(), dllInstance, L"CreateDirectoryFixup");
                         retfinal = WRAPPER_CREATEDIRECTORY(cohorts.WsRedirected, securityAttributes, dllInstance, debug);
@@ -233,7 +234,7 @@ BOOL __stdcall CreateDirectoryFixup(_In_ const CharT* pathName, _In_opt_ LPSECUR
                     cohorts.map.RedirectionFlags == mfr::mfr_redirect_flags::prefer_redirection_local)
                 {
                     // try the redirection path, then the package (COW).
-                    if (PathExists(cohorts.WsRedirected.c_str()))
+                    if (!cohorts.map.IsAnExclusionToRedirect && PathExists(cohorts.WsRedirected.c_str()))
                     {
                         PreCreateFolders(cohorts.WsRedirected.c_str(), dllInstance, L"CreateDirectoryFixup");
                         retfinal = WRAPPER_CREATEDIRECTORY(cohorts.WsRedirected, securityAttributes, dllInstance, debug);
@@ -273,7 +274,7 @@ BOOL __stdcall CreateDirectoryFixup(_In_ const CharT* pathName, _In_opt_ LPSECUR
                           cohorts.map.RedirectionFlags == mfr::mfr_redirect_flags::prefer_redirection_if_package_vfs))
                 {
                     // try the redirection path, then the package (COW), then native (possibly COW)
-                    if (PathExists(cohorts.WsRedirected.c_str()))
+                    if (!cohorts.map.IsAnExclusionToRedirect && PathExists(cohorts.WsRedirected.c_str()))
                     {
                         PreCreateFolders(cohorts.WsRedirected.c_str(), dllInstance, L"CreateDirectoryFixup");
                         retfinal = WRAPPER_CREATEDIRECTORY(cohorts.WsRedirected, securityAttributes, dllInstance, debug);
@@ -328,7 +329,7 @@ BOOL __stdcall CreateDirectoryFixup(_In_ const CharT* pathName, _In_opt_ LPSECUR
                 if (cohorts.map.Valid_mapping)
                 {
                     // try the redirected path, then package (COW), then possibly native (Possibly COW).
-                    if (PathExists(cohorts.WsRedirected.c_str()))
+                    if (!cohorts.map.IsAnExclusionToRedirect && PathExists(cohorts.WsRedirected.c_str()))
                     {
                         PreCreateFolders(cohorts.WsRedirected.c_str(), dllInstance, L"CreateDirectoryFixup");
                         retfinal = WRAPPER_CREATEDIRECTORY(cohorts.WsRedirected, securityAttributes, dllInstance, debug);
@@ -415,7 +416,25 @@ BOOL __stdcall CreateDirectoryFixup(_In_ const CharT* pathName, _In_opt_ LPSECUR
         retfinal = 0; // impl::CreateDirectory(pathName, securityAttributes);
     }
 #if _DEBUG
-    Log(L"[%d] CreateDirectoryFixup returns 0x%x", dllInstance, retfinal);
+    LogString(dllInstance, L"CreateDirectoryFixup (unguarded) for path", pathName);
+#endif
+#if _DEBUG
+    if (retfinal == 0)
+    {
+        DWORD eCode = GetLastError();
+        if (eCode  == ERROR_ALREADY_EXISTS)
+        {
+            Log(L"[%d] CreateDirectoryFixup (unguarded) returns 0x%x (ERROR_ALREADY_EXISTS)", dllInstance, retfinal);
+        }
+        else
+        {
+            Log(L"[%d] CreateDirectoryFixup (unguarded) returns 0x%x with error=0x%x", dllInstance, retfinal, eCode);
+        }
+    }
+    else
+    {
+        Log(L"[%d] CreateDirectoryFixup (unguarded) returns 0x%x (ERROR_SUCCESS)", dllInstance, retfinal);
+    }
 #endif
     return retfinal;
 }

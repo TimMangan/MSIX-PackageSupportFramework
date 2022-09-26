@@ -67,6 +67,7 @@ BOOL __stdcall WritePrivateProfileSectionFixup(
                 // This get is inheirently a write operation in all cases.
                 // We prefer to use the redirecton case, if present.
                 std::wstring wfileName = widen(fileName);
+                wfileName = AdjustSlashes(wfileName);
 
                 Cohorts cohorts;
                 DetermineCohorts(wfileName, &cohorts, moredebug, dllInstance, L"WritePrivateProfileSectionFixup");
@@ -80,7 +81,7 @@ BOOL __stdcall WritePrivateProfileSectionFixup(
                         {
                         case mfr::mfr_redirect_flags::prefer_redirection_local:
                             // try the request path (which must be the local redirected version by definition), and then a package equivalent with COW if needed.
-                            if (PathExists(cohorts.WsRedirected.c_str()))
+                            if (!cohorts.map.IsAnExclusionToRedirect && PathExists(cohorts.WsRedirected.c_str()))
                             {
                                 // no special acction, just write to redirected area
                                 WRAPPER_WRITEPRIVATEPROFILESECTION(cohorts.WsRedirected, debug);
@@ -106,7 +107,7 @@ BOOL __stdcall WritePrivateProfileSectionFixup(
                         case mfr::mfr_redirect_flags::prefer_redirection_containerized:
                         case mfr::mfr_redirect_flags::prefer_redirection_if_package_vfs:
                             // try the redirected path, then package (COW), then native (possibly via COW).
-                            if (PathExists(cohorts.WsRedirected.c_str()))
+                            if (!cohorts.map.IsAnExclusionToRedirect && PathExists(cohorts.WsRedirected.c_str()))
                             {
                                 WRAPPER_WRITEPRIVATEPROFILESECTION(cohorts.WsRedirected, debug);
                             }
@@ -169,7 +170,7 @@ BOOL __stdcall WritePrivateProfileSectionFixup(
                         case mfr::mfr_redirect_flags::prefer_redirection_containerized:
                         case mfr::mfr_redirect_flags::prefer_redirection_if_package_vfs:
                             //// try the redirected path, then package with COW, then don't need native and create in redirected.
-                            if (PathExists(cohorts.WsRedirected.c_str()))
+                            if (!cohorts.map.IsAnExclusionToRedirect && PathExists(cohorts.WsRedirected.c_str()))
                             {
                                 WRAPPER_WRITEPRIVATEPROFILESECTION(cohorts.WsRedirected, debug);
                             }
@@ -218,7 +219,7 @@ BOOL __stdcall WritePrivateProfileSectionFixup(
                         {
                         case mfr::mfr_redirect_flags::prefer_redirection_local:
                             // try the redirected path, then package path (COW), then create redirected
-                            if (PathExists(cohorts.WsRedirected.c_str()))
+                            if (!cohorts.map.IsAnExclusionToRedirect && PathExists(cohorts.WsRedirected.c_str()))
                             {
                                 WRAPPER_WRITEPRIVATEPROFILESECTION(cohorts.WsRedirected, debug);
                             }
@@ -243,7 +244,7 @@ BOOL __stdcall WritePrivateProfileSectionFixup(
                         case mfr::mfr_redirect_flags::prefer_redirection_containerized:
                         case mfr::mfr_redirect_flags::prefer_redirection_if_package_vfs:
                             // try the redirected path, then package (COW), then native (COW), then just create new in redirected.
-                            if (PathExists(cohorts.WsRedirected.c_str()))
+                            if (!cohorts.map.IsAnExclusionToRedirect && PathExists(cohorts.WsRedirected.c_str()))
                             {
                                 WRAPPER_WRITEPRIVATEPROFILESECTION(cohorts.WsRedirected, debug);
                             }
@@ -296,7 +297,7 @@ BOOL __stdcall WritePrivateProfileSectionFixup(
                         case mfr::mfr_redirect_flags::prefer_redirection_containerized:
                         case mfr::mfr_redirect_flags::prefer_redirection_if_package_vfs:
                             // try the redirected path, then package (COW), then possibly native (COW), then create new in redirected.
-                           if (PathExists(cohorts.WsRedirected.c_str()))
+                           if (!cohorts.map.IsAnExclusionToRedirect && PathExists(cohorts.WsRedirected.c_str()))
                             {
                                 WRAPPER_WRITEPRIVATEPROFILESECTION(cohorts.WsRedirected, debug);
                             }

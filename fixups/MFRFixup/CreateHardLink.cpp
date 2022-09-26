@@ -55,6 +55,8 @@ BOOL __stdcall CreateHardLinkFixup(
 #endif
             std::wstring wNewFileName = widen(fileName);
             std::wstring wExistingFileName = widen(existingFileName);
+            wNewFileName = AdjustSlashes(wNewFileName);
+            wExistingFileName = AdjustSlashes(wExistingFileName);
 
             Cohorts cohortsNew;
             DetermineCohorts(wNewFileName, &cohortsNew, moredebug, dllInstance, L"CreateHardLinkFixup");
@@ -99,7 +101,15 @@ BOOL __stdcall CreateHardLinkFixup(
 
             if (cohortsExisting.map.Valid_mapping && cohortsNew.map.Valid_mapping)
             {
-                std::wstring rldNewFileNameRedirected = MakeLongPath(cohortsNew.WsRedirected);
+                std::wstring rldNewFileNameRedirected;
+                if (!cohortsNew.map.IsAnExclusionToRedirect)
+                {
+                    rldNewFileNameRedirected = MakeLongPath(cohortsNew.WsRedirected);
+                }
+                else
+                {
+                    rldNewFileNameRedirected = MakeLongPath(cohortsNew.WsRequested);
+                }
                 std::wstring rldExistingFileNameRedirected = MakeLongPath(UseExisting);
                 PreCreateFolders(rldNewFileNameRedirected, dllInstance, L"CreateHardLinkFixup");
 #if MOREDEBUG

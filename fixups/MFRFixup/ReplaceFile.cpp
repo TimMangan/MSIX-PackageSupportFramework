@@ -80,6 +80,8 @@ BOOL __stdcall ReplaceFileFixup(
 #endif
             std::wstring wReplacedFileName = widen(replacedFileName);
             std::wstring wReplacementFileName = widen(replacementFileName);
+            wReplacedFileName = AdjustSlashes(wReplacedFileName);
+            wReplacementFileName = AdjustSlashes(wReplacementFileName);
 
             Cohorts cohortsReplaced;
             DetermineCohorts(wReplacedFileName, &cohortsReplaced, moredebug, dllInstance, L"ReplaceFileFixup");
@@ -146,7 +148,7 @@ BOOL __stdcall ReplaceFileFixup(
             }
 
 
-            std::wstring UseReplacementFile;
+            std::wstring UseReplacementFile = cohortsReplacement.WsRequested;
             // Determine the actual source to use
             switch (cohortsReplacement.file_mfr.Request_MfrPathType)
             {
@@ -156,7 +158,7 @@ BOOL __stdcall ReplaceFileFixup(
                     switch (cohortsReplacement.map.RedirectionFlags)
                     {
                     case mfr::mfr_redirect_flags::prefer_redirection_local:
-                        if (PathExists(cohortsReplacement.WsNative.c_str()))
+                        if (!cohortsReplacement.map.IsAnExclusionToRedirect && PathExists(cohortsReplacement.WsNative.c_str()))
                         {
                             UseReplacementFile = cohortsReplacement.WsNative;
                         }
@@ -171,7 +173,7 @@ BOOL __stdcall ReplaceFileFixup(
                         break;
                     case mfr::mfr_redirect_flags::prefer_redirection_containerized:
                     case mfr::mfr_redirect_flags::prefer_redirection_if_package_vfs:
-                        if (PathExists(cohortsReplacement.WsRedirected.c_str()))
+                        if (!cohortsReplacement.map.IsAnExclusionToRedirect && PathExists(cohortsReplacement.WsRedirected.c_str()))
                         {
                             UseReplacementFile = cohortsReplacement.WsRedirected;
                         }
@@ -211,7 +213,7 @@ BOOL __stdcall ReplaceFileFixup(
                         break;
                     case mfr::mfr_redirect_flags::prefer_redirection_containerized:
                     case mfr::mfr_redirect_flags::prefer_redirection_if_package_vfs:
-                        if (PathExists(cohortsReplacement.WsRedirected.c_str()))
+                        if (!cohortsReplacement.map.IsAnExclusionToRedirect && PathExists(cohortsReplacement.WsRedirected.c_str()))
                         {
                             UseReplacementFile = cohortsReplacement.WsRedirected;
                         }
@@ -238,7 +240,7 @@ BOOL __stdcall ReplaceFileFixup(
                     switch (cohortsReplacement.map.RedirectionFlags)
                     {
                     case mfr::mfr_redirect_flags::prefer_redirection_local:
-                        if (PathExists(cohortsReplacement.WsRedirected.c_str()))
+                        if (!cohortsReplacement.map.IsAnExclusionToRedirect && PathExists(cohortsReplacement.WsRedirected.c_str()))
                         {
                             UseReplacementFile = cohortsReplacement.WsRedirected;
                         }
@@ -253,7 +255,7 @@ BOOL __stdcall ReplaceFileFixup(
                         break;
                     case mfr::mfr_redirect_flags::prefer_redirection_containerized:
                     case mfr::mfr_redirect_flags::prefer_redirection_if_package_vfs:
-                        if (PathExists(cohortsReplacement.WsRedirected.c_str()))
+                        if (!cohortsReplacement.map.IsAnExclusionToRedirect && PathExists(cohortsReplacement.WsRedirected.c_str()))
                         {
                             UseReplacementFile = cohortsReplacement.WsRedirected;
                         }
@@ -293,7 +295,7 @@ BOOL __stdcall ReplaceFileFixup(
                         break;
                     case mfr::mfr_redirect_flags::prefer_redirection_containerized:
                     case mfr::mfr_redirect_flags::prefer_redirection_if_package_vfs:
-                        if (PathExists(cohortsReplacement.WsRedirected.c_str()))
+                        if (!cohortsReplacement.map.IsAnExclusionToRedirect && PathExists(cohortsReplacement.WsRedirected.c_str()))
                         {
                             UseReplacementFile = cohortsReplacement.WsRedirected;
                         }
@@ -345,7 +347,7 @@ BOOL __stdcall ReplaceFileFixup(
                 Cohorts cohortsBackup;
                 DetermineCohorts(wBackupFileName, &cohortsBackup, moredebug, dllInstance, L"ReplaceFileFixup");
 
-                std::wstring UseBackupFile;
+                std::wstring UseBackupFile = cohortsBackup.WsRequested;
                 // Determing the backup destination in redirection area
                 switch (cohortsBackup.file_mfr.Request_MfrPathType)
                 {
@@ -359,7 +361,10 @@ BOOL __stdcall ReplaceFileFixup(
                             break;
                         case mfr::mfr_redirect_flags::prefer_redirection_containerized:
                         case mfr::mfr_redirect_flags::prefer_redirection_if_package_vfs:
-                            UseBackupFile = cohortsBackup.WsRedirected;
+                            if (!cohortsBackup.map.IsAnExclusionToRedirect)
+                            {
+                                UseBackupFile = cohortsBackup.WsRedirected;
+                            }
                             break;
                         case mfr::mfr_redirect_flags::prefer_redirection_none:
                         case mfr::mfr_redirect_flags::disabled:
@@ -374,10 +379,10 @@ BOOL __stdcall ReplaceFileFixup(
                     }
                     break;
                 case mfr::mfr_path_types::in_package_pvad_area:
-                    if (cohortsBackup.map.Valid_mapping)
+                    if (cohortsBackup.map.Valid_mapping && !cohortsBackup.map.IsAnExclusionToRedirect)
                     {
                         UseBackupFile = cohortsBackup.WsRedirected;
-                        break;
+                        break; 
                     }
                     else
                     {
@@ -390,11 +395,17 @@ BOOL __stdcall ReplaceFileFixup(
                         switch (cohortsBackup.map.RedirectionFlags)
                         {
                         case mfr::mfr_redirect_flags::prefer_redirection_local:
-                            UseBackupFile = cohortsBackup.WsRequested;
+                            if (!cohortsBackup.map.IsAnExclusionToRedirect)
+                            {
+                                UseBackupFile = cohortsBackup.WsRequested;
+                            }
                             break;
                         case mfr::mfr_redirect_flags::prefer_redirection_containerized:
                         case mfr::mfr_redirect_flags::prefer_redirection_if_package_vfs:
-                            UseBackupFile = cohortsBackup.WsRedirected;
+                            if (!cohortsBackup.map.IsAnExclusionToRedirect)
+                            {
+                                UseBackupFile = cohortsBackup.WsRedirected;
+                            }
                             break;
                         case mfr::mfr_redirect_flags::prefer_redirection_none:
                         case mfr::mfr_redirect_flags::disabled:
@@ -409,7 +420,7 @@ BOOL __stdcall ReplaceFileFixup(
                     }
                     break;
                 case mfr::mfr_path_types::in_redirection_area_writablepackageroot:
-                    if (cohortsBackup.map.Valid_mapping)
+                    if (cohortsBackup.map.Valid_mapping && !cohortsBackup.map.IsAnExclusionToRedirect)
                     {
                         UseBackupFile = cohortsBackup.WsRedirected;
                         break;

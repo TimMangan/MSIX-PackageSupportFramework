@@ -47,6 +47,7 @@ namespace mfr
     struct mfr_folder_mapping
     {
         bool                    Valid_mapping = false;  // used in place of a null mapping.
+        bool                    IsAnExclusionToRedirect = false;
         std::filesystem::path   NativePathBase;
         std::wstring            FolderId;
         std::wstring            VFSFolderName;

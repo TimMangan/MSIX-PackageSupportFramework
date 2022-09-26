@@ -38,3 +38,5 @@
 "file.ini" "VFS\ProgramFilesX64\PlaceholderTest3\Subdir\DiffTestFileVfsPF3.ini"
 "file.ini" "VFS\ProgramFilesX86\PlaceholderTest3\Subdir\DiffTestFileVfsPF3.ini"
 
+"file.ini" "VFS\ProgramFilesX64\ShortenTest\Subdir\DiffTestFileVfsPF3.ini"
+"file.ini" "VFS\ProgramFilesX86\ShortenTest\Subdir\DiffTestFileVfsPF3.ini"

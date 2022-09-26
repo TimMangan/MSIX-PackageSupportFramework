@@ -77,6 +77,8 @@ HANDLE __stdcall FindFirstFileExFixup(_In_ const CharT* fileName,
     if (guard)
     {
         std::wstring wfileName = widen(fileName);
+        wfileName = AdjustSlashes(wfileName);
+
         auto result = std::make_unique<FindData3>();
         result->RememberedInstance = dllInstance;
         result->requested_path = wfileName;
@@ -320,6 +322,46 @@ HANDLE __stdcall FindFirstFileExFixup(_In_ const CharT* fileName,
         }
         return reinterpret_cast<HANDLE>(result.release());
     }
+#ifdef MOREDEBUG
+    else
+    {
+
+    switch (infoLevelId)
+    {
+    case FindExInfoStandard:
+        Log(L"[%d]\tFindFirstFileExFixup: (unguarded) Level FindExInfoStandard", dllInstance);
+        break;
+    case FindExInfoBasic:
+        Log(L"[%d]\tFindFirstFileExFixup: (unguarded) Level FindExInfoBasic", dllInstance);
+        break;
+    case FindExInfoMaxInfoLevel:
+        Log(L"[%d]\tFindFirstFileExFixup: (unguarded) Level FindExInfoMaxInfoLevel", dllInstance);
+        break;
+    default:
+        Log(L"[%d]\tFindFirstFileExFixup: (unguarded) Level unknown", dllInstance);
+        break;
+    }
+    switch (searchOp)
+    {
+    case FindExSearchNameMatch:
+        Log(L"[%d]\tFindFirstFileExFixup: (unguarded) SearchOp FindExSearchNameMatch", dllInstance);
+        break;
+    case FindExSearchLimitToDirectories:
+        Log(L"[%d]\tFindFirstFileExFixup: (unguarded) SearchOp FindExSearchLimitToDirectories", dllInstance);
+        break;
+    case FindExSearchLimitToDevices:
+        Log(L"[%d]\tFindFirstFileExFixup: (unguarded) SearchOp FindExSearchLimitToDevices", dllInstance);
+        break;
+    case FindExSearchMaxSearchOp:
+        Log(L"[%d]\tFindFirstFileExFixup: (unguarded) SearchOp FindExSearchMaxSearchOp", dllInstance);
+        break;
+    default:
+        Log(L"[%d]\tFindFirstFileExFixup: (unguarded) SearchOp Unknown=0x%x", dllInstance, searchOp);
+        break;
+    }
+
+    }
+#endif
 
     // If still here, call original.
 #if _DEBUG

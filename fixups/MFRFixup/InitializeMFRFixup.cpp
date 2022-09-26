@@ -12,6 +12,7 @@
 #include <utilities.h>
 #include <psf_logging.h>
 #include "FID.h"
+#include "PathUtilities.h"
 
 #include "ManagedFileMappings.h"
 
@@ -23,6 +24,12 @@ std::filesystem::path g_packageVfsRootPath;
 std::filesystem::path g_redirectRootPath;
 std::filesystem::path g_writablePackageRootPath;
 std::filesystem::path g_finalPackageRootPath;
+
+std::filesystem::path g_short_packageRootPath;
+std::filesystem::path g_short_packageVfsRootPath;
+std::filesystem::path g_short_redirectRootPath;
+std::filesystem::path g_short_writablePackageRootPath;
+std::filesystem::path g_short_finalPackageRootPath;
 
 DWORD g_InterceptInstance = 60000;
 
@@ -53,6 +60,13 @@ void InitializeMFRFixup()
 
     g_writablePackageRootPath = psf::known_folder(FOLDERID_LocalAppData) / std::filesystem::path(L"Packages") / psf::current_package_family_name() / LR"(LocalCache\Local\Microsoft\WritablePackageRoot)";
     std::filesystem::create_directories(g_writablePackageRootPath);
+
+    g_short_packageRootPath = ConvertPathToShortPath(g_packageRootPath);
+    g_short_packageVfsRootPath = ConvertPathToShortPath(g_packageVfsRootPath);
+    g_short_redirectRootPath = ConvertPathToShortPath(g_redirectRootPath);
+    g_short_writablePackageRootPath = ConvertPathToShortPath(g_writablePackageRootPath);
+    g_short_finalPackageRootPath = ConvertPathToShortPath(g_finalPackageRootPath);
+    
 
     mfr::Initialize_MFR_Mappings();
 

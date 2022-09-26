@@ -163,6 +163,39 @@ std::filesystem::path drive_absolute_to_normal(std::filesystem::path nativeRelat
     return resultPath;
 }
 
+///
+/// Adjust a file path for common non-standard requests that might or might not work as is,
+/// but give our code fits.  Alter the path to look normal.
+std::wstring AdjustSlashes(std::wstring path)
+{
+    std::wstring wPathName = path;
+    
+    // Part 1:  Spin any backwards slashes around.
+    std::replace(wPathName.begin(), wPathName.end(), L'/', L'\\');
+    size_t start = 0;
+
+    // Part 2: Replace any double backslashes with a single, except for
+    //         Long path references (\\?\ and \\.\) and file share references.
+    if (wPathName.find(L"\\\\") != std::wstring::npos)
+    {
+        start = 2;
+    }
+    size_t found = wPathName.find(L"\\\\", start);
+    while (found != std::wstring::npos)
+    {
+#ifdef _DEBUG
+        Log(L"Adjusting for double backslash.");
+#endif
+        // We see calls made with extra backslashes which will fail in FindFirst
+        //wPathName.replace(found + start, 2, L"\\");
+        std::wstring temp = wPathName.substr(0, found);
+        temp.append(wPathName.substr(found + 1));
+        wPathName = temp;
+        found = wPathName.find(L"\\\\", start);
+    }
+    return wPathName;
+}
+
 
 /// <summary>
 /// Given a file path, return a path that in the long path form
@@ -246,12 +279,23 @@ void PreCreateFolders(std::wstring filepath, [[maybe_unused]] DWORD dllInstance,
         else
         {
             notlongfilepath = notlongfilepath.substr(0, position);
-            folderlist.push_back(notlongfilepath);
+            // Skip recreating the folders below WritablePackageRoot folder (must create WritablePackageRoot to be sure).
+            if (notlongfilepath.length() < g_writablePackageRootPath.wstring().length())
+            {
+                if (g_writablePackageRootPath.wstring().find(notlongfilepath) == std::wstring::npos)
+                {
+                    folderlist.push_back(notlongfilepath);
+                }
+            }
+            else
+            {
+                folderlist.push_back(notlongfilepath);
+            }
         }
     }
     BOOL bDebug;
     for (auto partial = folderlist.rbegin(); partial != folderlist.rend(); partial++)
-    {
+    {        
         bDebug = ::CreateDirectoryW(MakeLongPath(*partial).c_str(), NULL);
         // Note: Name Collision is expected to occur often here, it just means that it already existed
         if (bDebug != 0)
@@ -260,6 +304,7 @@ void PreCreateFolders(std::wstring filepath, [[maybe_unused]] DWORD dllInstance,
             Log(L"[%d] %s pre-create folder '%s'", dllInstance, DebugMessage.c_str(), (*partial).c_str());
 #endif
         }
+        
     }
 } // PreCreateFolders()
 
@@ -301,16 +346,114 @@ BOOL Cow(std::wstring from, std::wstring to, [[maybe_unused]] int dllInstance, [
     // We may need to pre-create mising directories for the destination in the redirection area
     PreCreateFolders(to, dllInstance, DebugString);
 
-#if _DEBUG
-    Log(L"[%d] %s COW file '%s' to '%s'", dllInstance, DebugString.c_str(), MakeLongPath(from).c_str(), MakeLongPath(to).c_str());
-#endif
-    BOOL bRet = ::CopyFileW(MakeLongPath(from).c_str(), MakeLongPath(to).c_str(),true);
-#if _DEBUG
-    if (bRet == 0)
+    std::wstring RdlTo = MakeLongPath(to);
+    std::wstring RdlFrom = MakeLongPath(from);
+    DWORD AFrom = ::GetFileAttributes(RdlFrom.c_str());
+    if (AFrom != INVALID_FILE_ATTRIBUTES)
     {
-        DWORD eCode = GetLastError();
-        Log(L"[%d] %s COW failed, error=0x%d", dllInstance, DebugString.c_str(), eCode);
-    }
+        if ((AFrom & FILE_ATTRIBUTE_DIRECTORY) != 0)
+        {
+#if _DEBUG
+            Log(L"[%d] %s COW folder '%s' just create '%s'", dllInstance, DebugString.c_str(), RdlFrom.c_str(), RdlTo.c_str());
 #endif
-    return bRet;
+            BOOL bRet = ::CreateDirectoryW(RdlTo.c_str(), NULL);
+#if _DEBUG
+            if (bRet == 0)
+            {
+                DWORD eCode = GetLastError();
+                Log(L"[%d] %s COW CreateDirectory failed, error=0x%d", dllInstance, DebugString.c_str(), eCode);
+            }
+#endif
+            return bRet;
+        }
+        else
+        {
+#if _DEBUG
+            Log(L"[%d] %s COW file '%s' to '%s'", dllInstance, DebugString.c_str(), RdlFrom.c_str(), RdlTo.c_str());
+#endif
+            BOOL bRet = ::CopyFileW(RdlFrom.c_str(), RdlTo.c_str(), true);
+#if _DEBUG
+            if (bRet == 0)
+            {
+                DWORD eCode = GetLastError();
+                Log(L"[%d] %s COW failed, error=0x%d", dllInstance, DebugString.c_str(), eCode);
+            }
+#endif
+            return bRet;
+        }
+    }
+    else
+    {
+#if _DEBUG
+        Log(L"[%d] %s COW missing '%s' to '%s'", dllInstance, DebugString.c_str(), RdlFrom.c_str(), RdlTo.c_str());
+#endif
+        BOOL bRet = ::CopyFileW(MakeLongPath(from).c_str(), MakeLongPath(to).c_str(), true);
+#if _DEBUG
+        if (bRet == 0)
+        {
+            DWORD eCode = GetLastError();
+            Log(L"[%d] %s COW failed, error=0x%d", dllInstance, DebugString.c_str(), eCode);
+        }
+#endif
+        return bRet;
+    }
+
+} // COW()
+
+
+// The CreateFile family of APIs can open files/folders in many ways for different purposes.
+// This function looks at the common arguments to those APIs to determine if the request could be making
+// a change in the file system based on this parameters.  This would potentially trigger a COW event.
+bool IsCreateForChange(DWORD desiredAccess, DWORD creationDisposition, DWORD flagsAndAttributes)
+{
+    if ((flagsAndAttributes & FILE_FLAG_BACKUP_SEMANTICS) != 0)
+    {
+        // This is used for opening a directory, but the app would have to use CreateDirectory to actually create one.
+        // So in spite of desiredAccess/creationDisposition settings, we will not trigger a COW.
+        return false;
+    }
+    // Check desiredAccess versus Generic Access Rights (ACCESS_MASK) values
+    if ((desiredAccess & (GENERIC_WRITE | GENERIC_ALL | MAXIMUM_ALLOWED | DELETE | WRITE_DAC | WRITE_OWNER)) != 0)
+    {
+        return true;
+    }
+    // Check desiredAccess versus File Security and Access Rights values
+    if ((desiredAccess & (FILE_GENERIC_WRITE)) != 0)
+    {
+        return true;
+    }
+    // Check desiredAccess versus File Access Rights values
+    if ((desiredAccess & (FILE_ADD_FILE | FILE_ADD_SUBDIRECTORY | FILE_ALL_ACCESS | FILE_APPEND_DATA | FILE_DELETE_CHILD | FILE_WRITE_ATTRIBUTES | FILE_WRITE_DATA | FILE_WRITE_EA | STANDARD_RIGHTS_WRITE)) != 0)
+    {
+        return true;
+    }
+    // Check creationdisposition on request
+    if ((creationDisposition & (CREATE_ALWAYS | CREATE_NEW | TRUNCATE_EXISTING)) != 0)
+    {
+        return true;
+    }
+    // Check dwFlagsAndAttributes
+    if ((flagsAndAttributes & (FILE_ATTRIBUTE_TEMPORARY | FILE_FLAG_DELETE_ON_CLOSE)) != 0)
+    {
+        return true;
+    }
+    return false;
+}
+
+
+std::filesystem::path ConvertPathToShortPath(std::filesystem::path inputPath)
+{
+    std::filesystem::path outputPath = inputPath;
+    DWORD dRet = GetShortPathNameW(inputPath.wstring().c_str(), NULL, 0);
+    if (dRet != 0)
+    {
+        wchar_t* buffer = new wchar_t[dRet];
+        dRet = GetShortPathNameW(inputPath.wstring().c_str(), buffer, dRet);
+        if (dRet != 0)
+        {
+            outputPath = buffer;
+        }
+        delete [] buffer;
+    }
+    return outputPath;
 }

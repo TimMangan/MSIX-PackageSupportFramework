@@ -155,6 +155,19 @@ int InitializeFindFileTests1()
     MfrFindFileTests1.push_back(t_Redirected_PFF4);
 
 
+    temp =  L"C:\\Windows\\Microsoft.NET\\Framework64\\v4.0.30319\\*.xsd";
+    MfrFindFileTest t_Redirected_NET1 = { "Native-folder present but not in package", true, false, false,
+                                       temp.c_str(),
+                                       true, 1,  ERROR_SUCCESS };
+    MfrFindFileTests1.push_back(t_Redirected_NET1);
+
+
+
+    temp = L"C:\\Windows\\Microsoft.NET\\Framework64\\v4.0.30319\\\\*.xsd";
+    MfrFindFileTest t_Redirected_NET2 = { "Native-folder present but not in package (with extra backslash)", true, false, false,
+                                       temp.c_str(),
+                                       true, 1,  ERROR_SUCCESS };
+    MfrFindFileTests1.push_back(t_Redirected_NET2);
 
     int count = 0;
     for (MfrFindFileTest t : MfrFindFileTests1)      if (t.enabled) { count++; }

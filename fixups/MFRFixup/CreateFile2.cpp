@@ -31,7 +31,7 @@ HANDLE  WRAPPER_CREATEFILE2(std::wstring theDestinationFile,
     HANDLE retfinal = impl::CreateFile2(LongDestinationFile.c_str(), desiredAccess, shareMode, creationDisposition, createExParams);
     if (debug)
     {
-        Log(L"[%d] CreateFile2 returns file '%s' and result 0x%x", dllInstance, LongDestinationFile.c_str(), retfinal);
+        Log(L"[%d] CreateFile2 returns handle 0x%x and file '%s'", dllInstance, retfinal, LongDestinationFile.c_str());
     }
     return retfinal;
 }
@@ -63,12 +63,23 @@ HANDLE __stdcall CreateFile2Fixup(
         if (guard)
         {
             std::wstring wPathName = fileName;
-
+            wPathName = AdjustSlashes(wPathName);
 #if _DEBUG
             LogString(dllInstance, L"CreateFile2Fixup for ", fileName);
             Log(L"[%d]        DesiredAccess 0x%x  ShareMode 0x%x", dllInstance, desiredAccess, shareMode);
 #endif
-            std::replace(wPathName.begin(), wPathName.end(), L'/', L'\\');
+            bool IsAWriteCase;
+            if (createExParams)
+            {
+                IsAWriteCase = IsCreateForChange(desiredAccess, creationDisposition, createExParams->dwFileAttributes);
+            }
+            else
+            {
+                IsAWriteCase = IsCreateForChange(desiredAccess, creationDisposition, 0);
+            }
+#if MOREDEBUG
+            Log(L"[%d] CreateFile2Fixup: Could be a write operation=%d", dllInstance, IsAWriteCase);
+#endif
 
             // This get is may or may not be a write operation.
             // There may be a need to COW, jand may need to create parent folders in redirection area first.
@@ -82,19 +93,27 @@ HANDLE __stdcall CreateFile2Fixup(
                     cohorts.map.RedirectionFlags == mfr::mfr_redirect_flags::prefer_redirection_local)
                 {
                     // try the request path, which must be the local redirected version by definition, and then a package equivalent
-                    if (PathExists(cohorts.WsRedirected.c_str()))
+                    if (!cohorts.map.IsAnExclusionToRedirect && PathExists(cohorts.WsRedirected.c_str()))
                     {
                         retfinal = WRAPPER_CREATEFILE2(cohorts.WsRedirected, desiredAccess, shareMode, creationDisposition, createExParams, dllInstance, debug);
                         return retfinal;
                     }
                     if (PathExists(cohorts.WsPackage.c_str()))
                     {
-                        // COW is applicable first.
-                        if (Cow(cohorts.WsPackage, cohorts.WsRedirected, dllInstance, L"CreateFile2Fixup"))
+                        if (IsAWriteCase)
                         {
-                            //PreCreateFolders(testWsRedirected.c_str(), dllInstance, L"CreateFileFixup");
-                            retfinal = WRAPPER_CREATEFILE2(cohorts.WsRedirected, desiredAccess, shareMode, creationDisposition, createExParams, dllInstance, debug);
-                            return retfinal;
+                            // COW is applicable first.
+                            if (Cow(cohorts.WsPackage, cohorts.WsRedirected, dllInstance, L"CreateFile2Fixup"))
+                            {
+                                //PreCreateFolders(testWsRedirected.c_str(), dllInstance, L"CreateFileFixup");
+                                retfinal = WRAPPER_CREATEFILE2(cohorts.WsRedirected, desiredAccess, shareMode, creationDisposition, createExParams, dllInstance, debug);
+                                return retfinal;
+                            }
+                            else
+                            {
+                                retfinal = WRAPPER_CREATEFILE2(cohorts.WsPackage, desiredAccess, shareMode, creationDisposition, createExParams, dllInstance, debug);
+                                return retfinal;
+                            }
                         }
                         else
                         {
@@ -112,19 +131,27 @@ HANDLE __stdcall CreateFile2Fixup(
                           cohorts.map.RedirectionFlags == mfr::mfr_redirect_flags::prefer_redirection_if_package_vfs))
                 {
                     // try the redirected path, then package (via COW), then native (possibly via COW).
-                    if (PathExists(cohorts.WsRedirected.c_str()))
+                    if (!cohorts.map.IsAnExclusionToRedirect && PathExists(cohorts.WsRedirected.c_str()))
                     {
                         retfinal = WRAPPER_CREATEFILE2(cohorts.WsRedirected, desiredAccess, shareMode, creationDisposition, createExParams, dllInstance, debug);
                         return retfinal;
                     }
                     if (PathExists(cohorts.WsPackage.c_str()))
                     {
-                        // COW is applicable first.
-                        if (Cow(cohorts.WsPackage, cohorts.WsRedirected, dllInstance, L"CreateFile2Fixup"))
+                        if (IsAWriteCase)
                         {
-                            //PreCreateFolders(testWsRedirected.c_str(), dllInstance, L"CreateFileFixup");
-                            retfinal = WRAPPER_CREATEFILE2(cohorts.WsRedirected, desiredAccess, shareMode, creationDisposition, createExParams, dllInstance, debug);
-                            return retfinal;
+                            // COW is applicable first.
+                            if (Cow(cohorts.WsPackage, cohorts.WsRedirected, dllInstance, L"CreateFile2Fixup"))
+                            {
+                                //PreCreateFolders(testWsRedirected.c_str(), dllInstance, L"CreateFileFixup");
+                                retfinal = WRAPPER_CREATEFILE2(cohorts.WsRedirected, desiredAccess, shareMode, creationDisposition, createExParams, dllInstance, debug);
+                                return retfinal;
+                            }
+                            else
+                            {
+                                retfinal = WRAPPER_CREATEFILE2(cohorts.WsPackage, desiredAccess, shareMode, creationDisposition, createExParams, dllInstance, debug);
+                                return retfinal;
+                            }
                         }
                         else
                         {
@@ -135,11 +162,19 @@ HANDLE __stdcall CreateFile2Fixup(
                     if (cohorts.UsingNative &&
                         PathExists(cohorts.WsNative.c_str()))
                     {
-                        if (Cow(cohorts.WsNative, cohorts.WsRedirected, dllInstance, L"CreateFile2Fixup"))
+                        if (IsAWriteCase)
                         {
-                            ///PreCreateFolders(testWsRedirected.c_str(), dllInstance, L"CreateFileFixup");
-                            retfinal = WRAPPER_CREATEFILE2(cohorts.WsRedirected, desiredAccess, shareMode, creationDisposition, createExParams, dllInstance, debug);
-                            return retfinal;
+                            if (Cow(cohorts.WsNative, cohorts.WsRedirected, dllInstance, L"CreateFile2Fixup"))
+                            {
+                                ///PreCreateFolders(testWsRedirected.c_str(), dllInstance, L"CreateFileFixup");
+                                retfinal = WRAPPER_CREATEFILE2(cohorts.WsRedirected, desiredAccess, shareMode, creationDisposition, createExParams, dllInstance, debug);
+                                return retfinal;
+                            }
+                            else
+                            {
+                                retfinal = WRAPPER_CREATEFILE2(cohorts.WsNative, desiredAccess, shareMode, creationDisposition, createExParams, dllInstance, debug);
+                                return retfinal;
+                            }
                         }
                         else
                         {
@@ -157,19 +192,27 @@ HANDLE __stdcall CreateFile2Fixup(
                 if (cohorts.map.Valid_mapping)
                 {
                     //// try the redirected path, then package (COW), then don't need native.
-                    if (PathExists(cohorts.WsRedirected.c_str()))
+                    if (!cohorts.map.IsAnExclusionToRedirect && PathExists(cohorts.WsRedirected.c_str()))
                     {
                         retfinal = WRAPPER_CREATEFILE2(cohorts.WsRedirected, desiredAccess, shareMode, creationDisposition, createExParams, dllInstance, debug);
                         return retfinal;
                     }
                     if (PathExists(cohorts.WsPackage.c_str()))
                     {
-                        // COW is applicable first.
-                        if (Cow(cohorts.WsPackage, cohorts.WsRedirected, dllInstance, L"CreateFile2Fixup"))
+                        if (IsAWriteCase)
                         {
-                            //PreCreateFolders(testWsRedirected.c_str(), dllInstance, L"CreateFileFixup");
-                            retfinal = WRAPPER_CREATEFILE2(cohorts.WsRedirected, desiredAccess, shareMode, creationDisposition, createExParams, dllInstance, debug);
-                            return retfinal;
+                            // COW is applicable first.
+                            if (Cow(cohorts.WsPackage, cohorts.WsRedirected, dllInstance, L"CreateFile2Fixup"))
+                            {
+                                //PreCreateFolders(testWsRedirected.c_str(), dllInstance, L"CreateFileFixup");
+                                retfinal = WRAPPER_CREATEFILE2(cohorts.WsRedirected, desiredAccess, shareMode, creationDisposition, createExParams, dllInstance, debug);
+                                return retfinal;
+                            }
+                            else
+                            {
+                                retfinal = WRAPPER_CREATEFILE2(cohorts.WsPackage, desiredAccess, shareMode, creationDisposition, createExParams, dllInstance, debug);
+                                return retfinal;
+                            }
                         }
                         else
                         {
@@ -188,18 +231,26 @@ HANDLE __stdcall CreateFile2Fixup(
                     cohorts.map.Valid_mapping)
                 {
                     // try the redirection path, then the package (COW).
-                    if (PathExists(cohorts.WsRedirected.c_str()))
+                    if (!cohorts.map.IsAnExclusionToRedirect && PathExists(cohorts.WsRedirected.c_str()))
                     {
                         retfinal = WRAPPER_CREATEFILE2(cohorts.WsRedirected, desiredAccess, shareMode, creationDisposition, createExParams, dllInstance, debug);
                         return retfinal;
                     }
                     if (PathExists(cohorts.WsPackage.c_str()))
                     {
-                        // COW is applicable first.
-                        if (Cow(cohorts.WsPackage, cohorts.WsRedirected, dllInstance, L"CreateFile2Fixup"))
+                        if (IsAWriteCase)
                         {
-                            retfinal = WRAPPER_CREATEFILE2(cohorts.WsRedirected, desiredAccess, shareMode, creationDisposition, createExParams, dllInstance, debug);
-                            return retfinal;
+                            // COW is applicable first.
+                            if (Cow(cohorts.WsPackage, cohorts.WsRedirected, dllInstance, L"CreateFile2Fixup"))
+                            {
+                                retfinal = WRAPPER_CREATEFILE2(cohorts.WsRedirected, desiredAccess, shareMode, creationDisposition, createExParams, dllInstance, debug);
+                                return retfinal;
+                            }
+                            else
+                            {
+                                retfinal = WRAPPER_CREATEFILE2(cohorts.WsPackage, desiredAccess, shareMode, creationDisposition, createExParams, dllInstance, debug);
+                                return retfinal;
+                            }
                         }
                         else
                         {
@@ -217,18 +268,26 @@ HANDLE __stdcall CreateFile2Fixup(
                           cohorts.map.RedirectionFlags == mfr::mfr_redirect_flags::prefer_redirection_if_package_vfs))
                 {
                     // try the redirection path, then the package (COW), then native (possibly COW)
-                    if (PathExists(cohorts.WsRedirected.c_str()))
+                    if (!cohorts.map.IsAnExclusionToRedirect && PathExists(cohorts.WsRedirected.c_str()))
                     {
                         retfinal = WRAPPER_CREATEFILE2(cohorts.WsRedirected, desiredAccess, shareMode, creationDisposition, createExParams, dllInstance, debug);
                         return retfinal;
                     }
                     if (PathExists(cohorts.WsPackage.c_str()))
                     {
-                        // COW is applicable first.
-                        if (Cow(cohorts.WsPackage, cohorts.WsRedirected, dllInstance, L"CreateFile2Fixup"))
+                        if (IsAWriteCase)
                         {
-                            retfinal = WRAPPER_CREATEFILE2(cohorts.WsRedirected, desiredAccess, shareMode, creationDisposition, createExParams, dllInstance, debug);
-                            return retfinal;
+                            // COW is applicable first.
+                            if (Cow(cohorts.WsPackage, cohorts.WsRedirected, dllInstance, L"CreateFile2Fixup"))
+                            {
+                                retfinal = WRAPPER_CREATEFILE2(cohorts.WsRedirected, desiredAccess, shareMode, creationDisposition, createExParams, dllInstance, debug);
+                                return retfinal;
+                            }
+                            else
+                            {
+                                retfinal = WRAPPER_CREATEFILE2(cohorts.WsPackage, desiredAccess, shareMode, creationDisposition, createExParams, dllInstance, debug);
+                                return retfinal;
+                            }
                         }
                         else
                         {
@@ -239,11 +298,19 @@ HANDLE __stdcall CreateFile2Fixup(
                     if (cohorts.UsingNative &&
                              PathExists(cohorts.WsNative.c_str()))
                     {
-                        // COW is applicable first.
-                        if (Cow(cohorts.WsNative, cohorts.WsRedirected, dllInstance, L"CreateFile2Fixup"))
+                        if (IsAWriteCase)
                         {
-                            retfinal = WRAPPER_CREATEFILE2(cohorts.WsRedirected, desiredAccess, shareMode, creationDisposition, createExParams, dllInstance, debug);
-                            return retfinal;
+                            // COW is applicable first.
+                            if (Cow(cohorts.WsNative, cohorts.WsRedirected, dllInstance, L"CreateFile2Fixup"))
+                            {
+                                retfinal = WRAPPER_CREATEFILE2(cohorts.WsRedirected, desiredAccess, shareMode, creationDisposition, createExParams, dllInstance, debug);
+                                return retfinal;
+                            }
+                            else
+                            {
+                                retfinal = WRAPPER_CREATEFILE2(cohorts.WsNative, desiredAccess, shareMode, creationDisposition, createExParams, dllInstance, debug);
+                                return retfinal;
+                            }
                         }
                         else
                         {
@@ -261,18 +328,26 @@ HANDLE __stdcall CreateFile2Fixup(
                 if (cohorts.map.Valid_mapping)
                 {
                     // try the redirected path, then package (COW), then possibly native (Possibly COW).
-                    if (PathExists(cohorts.WsRedirected.c_str()))
+                    if (!cohorts.map.IsAnExclusionToRedirect && PathExists(cohorts.WsRedirected.c_str()))
                     {
                         retfinal = WRAPPER_CREATEFILE2(cohorts.WsRedirected, desiredAccess, shareMode, creationDisposition, createExParams, dllInstance, debug);
                         return retfinal;
                     }
                     if (PathExists(cohorts.WsPackage.c_str()))
                     {
-                        // COW is applicable first.
-                        if (Cow(cohorts.WsPackage, cohorts.WsRedirected, dllInstance, L"CreateFile2Fixup"))
+                        if (IsAWriteCase)
                         {
-                            retfinal = WRAPPER_CREATEFILE2(cohorts.WsRedirected, desiredAccess, shareMode, creationDisposition, createExParams, dllInstance, debug);
-                            return retfinal;
+                            // COW is applicable first.
+                            if (Cow(cohorts.WsPackage, cohorts.WsRedirected, dllInstance, L"CreateFile2Fixup"))
+                            {
+                                retfinal = WRAPPER_CREATEFILE2(cohorts.WsRedirected, desiredAccess, shareMode, creationDisposition, createExParams, dllInstance, debug);
+                                return retfinal;
+                            }
+                            else
+                            {
+                                retfinal = WRAPPER_CREATEFILE2(cohorts.WsPackage, desiredAccess, shareMode, creationDisposition, createExParams, dllInstance, debug);
+                                return retfinal;
+                            }
                         }
                         else
                         {
@@ -283,10 +358,23 @@ HANDLE __stdcall CreateFile2Fixup(
                     if (cohorts.UsingNative &&
                         PathExists(cohorts.WsNative.c_str()))
                     {
-                        // COW is applicable first.
-                        if (Cow(cohorts.WsNative, cohorts.WsRedirected, dllInstance, L"CreateFile2Fixup"))
+                        if (IsAWriteCase)
                         {
-                            retfinal = WRAPPER_CREATEFILE2(cohorts.WsRedirected, desiredAccess, shareMode, creationDisposition, createExParams, dllInstance, debug);
+                            // COW is applicable first.
+                            if (Cow(cohorts.WsNative, cohorts.WsRedirected, dllInstance, L"CreateFile2Fixup"))
+                            {
+                                retfinal = WRAPPER_CREATEFILE2(cohorts.WsRedirected, desiredAccess, shareMode, creationDisposition, createExParams, dllInstance, debug);
+                                return retfinal;
+                            }
+                            else
+                            {
+                                retfinal = WRAPPER_CREATEFILE2(cohorts.WsNative, desiredAccess, shareMode, creationDisposition, createExParams, dllInstance, debug);
+                                return retfinal;
+                            }
+                        }
+                        else
+                        {
+                            retfinal = WRAPPER_CREATEFILE2(cohorts.WsNative, desiredAccess, shareMode, creationDisposition, createExParams, dllInstance, debug);
                             return retfinal;
                         }
                     }
@@ -329,7 +417,7 @@ HANDLE __stdcall CreateFile2Fixup(
         retfinal = INVALID_HANDLE_VALUE; //impl::CreateFile2(fileName, desiredAccess, shareMode, creationDisposition, createExParams);
     }
 #if _DEBUG
-    Log(L"[%d] CreateFile2Fixup returns 0x%x", dllInstance, retfinal);
+    Log(L"[%d] CreateFile2Fixup returns handle 0x%x", dllInstance, retfinal);
 #endif
     return retfinal;
 }

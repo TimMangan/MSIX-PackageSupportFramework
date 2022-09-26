@@ -19,6 +19,12 @@ extern std::filesystem::path g_redirectRootPath;
 extern std::filesystem::path g_writablePackageRootPath;
 extern std::filesystem::path g_finalPackageRootPath;
 
+extern std::filesystem::path g_short_packageRootPath;
+extern std::filesystem::path g_short_packageVfsRootPath;
+extern std::filesystem::path g_short_redirectRootPath;
+extern std::filesystem::path g_short_writablePackageRootPath;
+extern std::filesystem::path g_short_finalPackageRootPath;
+
 extern bool path_isSubsetOf_String(std::filesystem::path& basePath, const wchar_t* pathstring);
 extern bool path_isSubsetOf_String(std::filesystem::path& basePath, const char* pathstring);
 
@@ -34,6 +40,8 @@ extern std::filesystem::path root_local_relative_to_normal(std::filesystem::path
 
 extern std::filesystem::path drive_absolute_to_normal(std::filesystem::path nativeAbsolutePath);
 
+extern std::wstring AdjustSlashes(std::wstring path);
+
 extern std::wstring MakeLongPath(std::wstring path);
 extern std::wstring MakeNotLongPath(std::wstring path);
 
@@ -43,6 +51,10 @@ extern bool PathParentExists(const wchar_t* path);
 extern void PreCreateFolders(std::wstring filepath, DWORD dllInstance, std::wstring DebugMessage);
 
 extern BOOL Cow(std::wstring from, std::wstring to, int dllInstance, std::wstring DebugString);
+
+extern std::filesystem::path ConvertPathToShortPath(std::filesystem::path inputPath);
+
+extern bool IsCreateForChange(DWORD desiredAccess, DWORD creationDisposition, DWORD flagsAndAttributes);
 
 #if NEEDED
 inline std::wstring widen(std::string_view str, UINT codePage = CP_UTF8)

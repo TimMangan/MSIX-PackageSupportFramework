@@ -58,6 +58,8 @@ DWORD __stdcall GetFileAttributesFixup(_In_ const CharT* fileName) noexcept
         if (guard)
         {
             std::wstring wfileName = widen(fileName);
+            wfileName = AdjustSlashes(wfileName);
+
 #if _DEBUG
             if constexpr (psf::is_ansi<CharT>)
             {
@@ -88,9 +90,11 @@ DWORD __stdcall GetFileAttributesFixup(_In_ const CharT* fileName) noexcept
                     switch (cohorts.map.RedirectionFlags)
                     {
                     case mfr::mfr_redirect_flags::prefer_redirection_local:
-                        // try the request path, which must be the local redirected version by definition, and then a package equivalent = 
-                        WRAPPER_GETFILEATTRIBUTES(cohorts.WsRedirected, debug);  // returns if successful.
-
+                        if (!cohorts.map.IsAnExclusionToRedirect)
+                        {
+                            // try the request path, which must be the local redirected version by definition, and then a package equivalent = 
+                            WRAPPER_GETFILEATTRIBUTES(cohorts.WsRedirected, debug);  // returns if successful.
+                        }
                         WRAPPER_GETFILEATTRIBUTES(cohorts.WsPackage, debug);  // returns if successful.
                         // Both failed if here
 #if _DEBUG
@@ -99,8 +103,11 @@ DWORD __stdcall GetFileAttributesFixup(_In_ const CharT* fileName) noexcept
                         return retfinal;
                     case mfr::mfr_redirect_flags::prefer_redirection_containerized:
                     case mfr::mfr_redirect_flags::prefer_redirection_if_package_vfs:
-                        // try the redirected path, then package, then native.
-                        WRAPPER_GETFILEATTRIBUTES(cohorts.WsRedirected, debug);   // returns if successful.
+                        if (!cohorts.map.IsAnExclusionToRedirect)
+                        {
+                            // try the redirected path, then package, then native.
+                            WRAPPER_GETFILEATTRIBUTES(cohorts.WsRedirected, debug);   // returns if successful.
+                        }
 
                         WRAPPER_GETFILEATTRIBUTES(cohorts.WsPackage, debug);   // returns if successful.
 
@@ -128,8 +135,11 @@ DWORD __stdcall GetFileAttributesFixup(_In_ const CharT* fileName) noexcept
                         break;
                     case mfr::mfr_redirect_flags::prefer_redirection_containerized:
                     case mfr::mfr_redirect_flags::prefer_redirection_if_package_vfs:
-                        //// try the redirected path, then package, then don't need native.
-                        WRAPPER_GETFILEATTRIBUTES(cohorts.WsRedirected, debug);   // returns if successful.
+                        if (!cohorts.map.IsAnExclusionToRedirect)
+                        {
+                            //// try the redirected path, then package, then don't need native.
+                            WRAPPER_GETFILEATTRIBUTES(cohorts.WsRedirected, debug);   // returns if successful.
+                        }
 
                         WRAPPER_GETFILEATTRIBUTES(cohorts.WsPackage, debug);   // returns if successful.
                         // Both failed if here
@@ -151,8 +161,11 @@ DWORD __stdcall GetFileAttributesFixup(_In_ const CharT* fileName) noexcept
                     switch (cohorts.map.RedirectionFlags)
                     {
                     case mfr::mfr_redirect_flags::prefer_redirection_local:
-                        // try the request path, which must be the local redirected version by definition, and then a package equivalent.
-                        WRAPPER_GETFILEATTRIBUTES(cohorts.WsRedirected, debug);   // returns if successful.
+                        if (!cohorts.map.IsAnExclusionToRedirect)
+                        {
+                            // try the request path, which must be the local redirected version by definition, and then a package equivalent.
+                            WRAPPER_GETFILEATTRIBUTES(cohorts.WsRedirected, debug);   // returns if successful.
+                        }
 
                         WRAPPER_GETFILEATTRIBUTES(cohorts.WsPackage, debug);   // returns if successful.
                         // Both failed if here
@@ -162,8 +175,11 @@ DWORD __stdcall GetFileAttributesFixup(_In_ const CharT* fileName) noexcept
                         return retfinal;
                     case mfr::mfr_redirect_flags::prefer_redirection_containerized:
                     case mfr::mfr_redirect_flags::prefer_redirection_if_package_vfs:
-                        // try the redirected path, then package, then native.
-                        WRAPPER_GETFILEATTRIBUTES(cohorts.WsRedirected, debug);  // returns if successful.
+                        if (!cohorts.map.IsAnExclusionToRedirect)
+                        {
+                            // try the redirected path, then package, then native.
+                            WRAPPER_GETFILEATTRIBUTES(cohorts.WsRedirected, debug);  // returns if successful.
+                        }
 
                         WRAPPER_GETFILEATTRIBUTES(cohorts.WsPackage, debug);  // returns if successful.
 
@@ -191,8 +207,11 @@ DWORD __stdcall GetFileAttributesFixup(_In_ const CharT* fileName) noexcept
                         break;
                     case mfr::mfr_redirect_flags::prefer_redirection_containerized:
                     case mfr::mfr_redirect_flags::prefer_redirection_if_package_vfs:
-                        // try the redirected path, then package, then native if relevant.
-                        WRAPPER_GETFILEATTRIBUTES(cohorts.WsRedirected, debug);  // returns if successful.
+                        if (!cohorts.map.IsAnExclusionToRedirect)
+                        {
+                            // try the redirected path, then package, then native if relevant.
+                            WRAPPER_GETFILEATTRIBUTES(cohorts.WsRedirected, debug);  // returns if successful.
+                        }
 
                         WRAPPER_GETFILEATTRIBUTES(cohorts.WsPackage, debug);  // returns if successful.
 
