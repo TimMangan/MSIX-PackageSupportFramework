@@ -9,6 +9,8 @@
 #include "FunctionImplementations.h"
 #include <psf_logging.h>
 
+
+
 /// <summary>
 /// Utility functions to determine if a given file path is relative to a (w)char string, as in the path starts the same.
 /// Comparison is perfomed case insensitive.
@@ -76,19 +78,29 @@ std::wstring PurgeDotDotFolders(std::wstring inputWs)
     while (SlashDotsStartAt != std::wstring::npos)
     {
         size_t replaceStartsAt = SlashDotsStartAt -1; // before slash
-        while (replaceStartsAt > 0)
+        while (replaceStartsAt > 0)   
         {
-            if (outputWs.at(replaceStartsAt) == L'\\')
+            if (replaceStartsAt > 2)
             {
-                std::wstring temp = outputWs.substr(0, replaceStartsAt);
-                temp.append( outputWs.substr(SlashDotsStartAt + 3));
-                outputWs = temp;
-                replaceStartsAt = 0;  // terminate this while
-                SlashDotsStartAt = outputWs.find(L"\\..\\");  // look for another
+                if (outputWs.at(replaceStartsAt) == L'\\')
+                {
+                    std::wstring temp = outputWs.substr(0, replaceStartsAt);
+                    temp.append(outputWs.substr(SlashDotsStartAt + 3));
+                    outputWs = temp;
+                    replaceStartsAt = 0;  // terminate this while
+                    SlashDotsStartAt = outputWs.find(L"\\..\\");  // look for another
+                }
+                else
+                {
+                    replaceStartsAt--;
+                }
             }
             else
             {
-                replaceStartsAt--;
+                // have seen path C:\Windows\..\..\something so we must not loop forever.
+                outputWs = outputWs.substr(SlashDotsStartAt + 3);
+                replaceStartsAt = 0;  // terminate this while
+                SlashDotsStartAt = outputWs.find(L"\\..\\");  // look for another
             }
         }
     }
@@ -301,7 +313,7 @@ void PreCreateFolders(std::wstring filepath, [[maybe_unused]] DWORD dllInstance,
         if (bDebug != 0)
         {
 #if _DEBUG
-            Log(L"[%d] %s pre-create folder '%s'", dllInstance, DebugMessage.c_str(), (*partial).c_str());
+            Log(L"[%d] %s pre-created folder '%s'", dllInstance, DebugMessage.c_str(), (*partial).c_str());
 #endif
         }
         
@@ -427,8 +439,10 @@ bool IsCreateForChange(DWORD desiredAccess, DWORD creationDisposition, DWORD fla
     {
         return true;
     }
-    // Check creationdisposition on request
-    if ((creationDisposition & (CREATE_ALWAYS | CREATE_NEW | TRUNCATE_EXISTING)) != 0)
+    // Check creationdisposition on request  note: this isn't a bitmask!
+    if ( creationDisposition == CREATE_ALWAYS || 
+        creationDisposition == (CREATE_ALWAYS | TRUNCATE_EXISTING) ||
+         creationDisposition == CREATE_NEW )
     {
         return true;
     }
@@ -440,6 +454,13 @@ bool IsCreateForChange(DWORD desiredAccess, DWORD creationDisposition, DWORD fla
     return false;
 }
 
+bool IsCreateForDirectory(DWORD desiredAccess, [[maybe_unused]]DWORD creationDisposition, DWORD flagsAndAttributes)
+{
+    if ((flagsAndAttributes & FILE_FLAG_BACKUP_SEMANTICS) != 0 &&
+        (desiredAccess & FILE_LIST_DIRECTORY) != 0) 
+        return true;
+    return false;
+}
 
 std::filesystem::path ConvertPathToShortPath(std::filesystem::path inputPath)
 {
@@ -457,3 +478,135 @@ std::filesystem::path ConvertPathToShortPath(std::filesystem::path inputPath)
     }
     return outputPath;
 }
+
+std::wstring Log_DesiredAccess(DWORD desiredAccess)
+{
+    std::stringstream stream;
+    stream << "0x" << std::hex << desiredAccess;
+    std::string result = stream.str();
+    std::wstring sRet =widen(result) + L" [";
+    if ((desiredAccess & GENERIC_READ) != 0) { sRet.append(L" GENERIC_READ"); }
+    if ((desiredAccess & GENERIC_WRITE) != 0) { sRet.append(L" GENERIC_WRITE"); }
+    if ((desiredAccess & GENERIC_EXECUTE) != 0) { sRet.append(L" GENERIC_EXECUTE"); }
+    if ((desiredAccess & GENERIC_ALL) != 0) { sRet.append(L" GENERIC_ALL"); }
+    if ((desiredAccess & MAXIMUM_ALLOWED) != 0) { sRet.append(L" MAXIMUM_ALLOWED"); }
+    if ((desiredAccess & ACCESS_SYSTEM_SECURITY) != 0) { sRet.append(L" ACCESS_SYSTEM_SECURITY"); }
+    ////if ((desiredAccess & READ_CONTROL) != 0) { sRet.append(L" READ_CONTROL"); }  // may be STANDARD_RIGHTS_ READ, WRITE, or EXECUTE as all map to this value
+
+    if ((desiredAccess & STANDARD_RIGHTS_ALL) == STANDARD_RIGHTS_ALL) { sRet.append(L" STANDARD_RIGHTS_ALL"); }
+    else
+    {
+        if ((desiredAccess & SYNCHRONIZE) == SYNCHRONIZE) { sRet.append(L" SYNCHRONIZE"); }
+
+        if ((desiredAccess & STANDARD_RIGHTS_REQUIRED) == STANDARD_RIGHTS_REQUIRED) { sRet.append(L" STANDARD_RIGHTS_REQUIRED"); }
+        else
+        {
+            if ((desiredAccess & WRITE_OWNER) != 0) { sRet.append(L" WRITE_OWNER"); }
+            if ((desiredAccess & WRITE_DAC) != 0) { sRet.append(L" WRITE_DAC"); }
+            if ((desiredAccess & READ_CONTROL) != 0) { sRet.append(L" READ_CONTROL"); }
+            if ((desiredAccess & DELETE) != 0) { sRet.append(L" DELETE"); }
+        }
+    }
+    if ((desiredAccess & FILE_WRITE_EA) != 0) { sRet.append(L" FILE_WRITE_EA"); }
+    if ((desiredAccess & FILE_WRITE_DATA) != 0) { sRet.append(L" FILE_WRITE_DATA"); }
+    if ((desiredAccess & FILE_WRITE_ATTRIBUTES) != 0) { sRet.append(L" FILE_WRITE_ATTRIBUTES"); }
+    if ((desiredAccess & FILE_TRAVERSE) != 0) { sRet.append(L" FILE_TRAVERSE"); }
+    if ((desiredAccess & FILE_READ_EA) != 0) { sRet.append(L" FILE_READ_EA"); }
+    if ((desiredAccess & FILE_READ_DATA) != 0) { sRet.append(L" FILE_READ_DATA"); }
+    if ((desiredAccess & FILE_READ_ATTRIBUTES) != 0) { sRet.append(L" FILE_READ_ATTRIBUTES"); }
+    if ((desiredAccess & FILE_LIST_DIRECTORY) != 0) { sRet.append(L" FILE_LIST_DIRECTORY"); }
+    if ((desiredAccess & FILE_EXECUTE) != 0) { sRet.append(L" FILE_EXECUTE"); }
+    if ((desiredAccess & FILE_DELETE_CHILD) != 0) { sRet.append(L" FILE_DELETE_CHILD"); }
+    if ((desiredAccess & FILE_CREATE_PIPE_INSTANCE) != 0) { sRet.append(L" FILE_CREATE_PIPE_INSTANCE"); }
+    if ((desiredAccess & FILE_APPEND_DATA) != 0) { sRet.append(L" FILE_APPEND_DATA"); }
+    if ((desiredAccess & FILE_ALL_ACCESS) != 0) { sRet.append(L" FILE_ALL_ACCESS"); }
+    if ((desiredAccess & FILE_ADD_SUBDIRECTORY) != 0) { sRet.append(L" FILE_ADD_SUBDIRECTORY"); }
+    if ((desiredAccess & FILE_ADD_FILE) != 0) { sRet.append(L" FILE_ADD_FILE"); }
+
+    sRet.append(L"]");
+    return sRet;
+}   // Log_DesiredAccess()
+
+std::wstring Log_ShareMode(DWORD shareMode)
+{
+    std::stringstream stream;
+    stream << "0x" << std::hex << shareMode;
+    std::string result = stream.str();
+    std::wstring sRet = widen(result) + L" [";
+    if ((shareMode & FILE_SHARE_READ) != 0) { sRet.append(L" SHARE_READ"); }
+    if ((shareMode & FILE_SHARE_WRITE) != 0) { sRet.append(L" SHARE_WRITE"); }
+    if ((shareMode & FILE_SHARE_DELETE) != 0) { sRet.append(L" SHARE_DELETE"); }
+    if (shareMode == 0x0) { sRet.append(L" SHARE_NONE"); }
+    sRet.append(L"]");
+    return sRet;
+} // Log_ShareMode()
+
+std::wstring Log_CreationDisposition(DWORD creationDisposition)
+{
+    std::stringstream stream;
+    stream << "0x" << std::hex << creationDisposition;
+    std::string result = stream.str();
+    std::wstring sRet = widen(result) + L" [";
+    switch (creationDisposition)
+    {
+    case CREATE_NEW:
+        sRet.append(L" CREATE_NEW");
+        break;
+    case CREATE_ALWAYS:
+        sRet.append(L" CREATE_ALWAYS");
+        break;
+    case OPEN_EXISTING:
+        sRet.append(L"OPEN_EXISTING");
+        break;
+    case OPEN_ALWAYS:
+        sRet.append(L"OPEN_ALWAYS");
+        break;
+    default:
+        break;
+    }
+    sRet.append(L"]");
+    return sRet;
+}   // Log_CreationDisposition()
+
+std::wstring Log_FlagsAndAttributes(DWORD flagsAndAttributes)
+{
+    std::stringstream stream;
+    stream << "0x" << std::hex << flagsAndAttributes;
+    std::string result = stream.str();
+    std::wstring sRet = widen(result) + L" FLAGS[";
+    if ((flagsAndAttributes & FILE_FLAG_WRITE_THROUGH) != 0) { sRet.append(L" WRITE_THROUGH"); }
+    if ((flagsAndAttributes & FILE_FLAG_SEQUENTIAL_SCAN) != 0) { sRet.append(L" SEQUENTIAL_SCAN"); }
+    if ((flagsAndAttributes & FILE_FLAG_SESSION_AWARE) != 0) { sRet.append(L" SESSION_AWARE"); }
+    if ((flagsAndAttributes & FILE_FLAG_RANDOM_ACCESS) != 0) { sRet.append(L" RANDOM_ACCESS"); }
+    if ((flagsAndAttributes & FILE_FLAG_POSIX_SEMANTICS) != 0) { sRet.append(L" POSIX_SEMANTICS"); }
+    if ((flagsAndAttributes & FILE_FLAG_OPEN_REPARSE_POINT) != 0) { sRet.append(L" OPEN_REPARSE_POINT"); }
+    if ((flagsAndAttributes & FILE_FLAG_OPEN_NO_RECALL) != 0) { sRet.append(L" OPEN_NO_RECALL"); }
+    if ((flagsAndAttributes & FILE_FLAG_NO_BUFFERING) != 0) { sRet.append(L" NO_BUFFERING"); }
+    if ((flagsAndAttributes & FILE_FLAG_DELETE_ON_CLOSE) != 0) { sRet.append(L" DELETE_ON_CLOSE"); }
+    if ((flagsAndAttributes & FILE_FLAG_BACKUP_SEMANTICS) != 0) { sRet.append(L" BACKUP_SEMANTICS"); }
+    sRet.append(L"] ATTRIBUTES[");
+    if ((flagsAndAttributes & FILE_ATTRIBUTE_RECALL_ON_OPEN) != 0) { sRet.append(L" RECALL_ON_OPEN"); }
+    if ((flagsAndAttributes & FILE_ATTRIBUTE_UNPINNED) != 0) { sRet.append(L" UNPINNED"); }
+    if ((flagsAndAttributes & FILE_ATTRIBUTE_PINNED) != 0) { sRet.append(L" PINNED"); }
+    if ((flagsAndAttributes & FILE_ATTRIBUTE_EA) != 0) { sRet.append(L" EA"); }
+    if ((flagsAndAttributes & FILE_ATTRIBUTE_NO_SCRUB_DATA) != 0) { sRet.append(L" NO_SCRUB_DATA"); }
+    if ((flagsAndAttributes & FILE_ATTRIBUTE_VIRTUAL) != 0) { sRet.append(L" VIRTUAL"); }
+    if ((flagsAndAttributes & FILE_ATTRIBUTE_INTEGRITY_STREAM) != 0) { sRet.append(L" INTEGRITY_STREAM"); }
+    if ((flagsAndAttributes & FILE_ATTRIBUTE_ENCRYPTED) != 0) { sRet.append(L" ENCRYPTED"); }
+    if ((flagsAndAttributes & FILE_ATTRIBUTE_NOT_CONTENT_INDEXED) != 0) { sRet.append(L" NOT_CONTENT_INDEXED"); }
+    if ((flagsAndAttributes & FILE_ATTRIBUTE_OFFLINE) != 0) { sRet.append(L" OFFLINE"); }
+    if ((flagsAndAttributes & FILE_ATTRIBUTE_COMPRESSED) != 0) { sRet.append(L" COMPRESSED"); }
+    if ((flagsAndAttributes & FILE_ATTRIBUTE_REPARSE_POINT) != 0) { sRet.append(L" REPARSE_POINT"); }
+    if ((flagsAndAttributes & FILE_ATTRIBUTE_SPARSE_FILE) != 0) { sRet.append(L" SPARSE_FILE"); }
+    if ((flagsAndAttributes & FILE_ATTRIBUTE_TEMPORARY) != 0) { sRet.append(L" TEMPORARY"); }
+    if ((flagsAndAttributes & FILE_ATTRIBUTE_NORMAL) != 0) { sRet.append(L" NORMAL"); }
+    if ((flagsAndAttributes & FILE_ATTRIBUTE_DEVICE) != 0) { sRet.append(L" DEVICE"); }
+    if ((flagsAndAttributes & FILE_ATTRIBUTE_ARCHIVE) != 0) { sRet.append(L" ARCHIVE"); }
+    if ((flagsAndAttributes & FILE_ATTRIBUTE_DIRECTORY) != 0) { sRet.append(L" DIRECTORY"); }
+    if ((flagsAndAttributes & FILE_ATTRIBUTE_SYSTEM) != 0) { sRet.append(L" SYSTEM"); }
+    if ((flagsAndAttributes & FILE_ATTRIBUTE_HIDDEN) != 0) { sRet.append(L" HIDDEN"); }
+    if ((flagsAndAttributes & FILE_ATTRIBUTE_READONLY) != 0) { sRet.append(L" READONLY"); }
+
+    sRet.append(L"]");
+    return sRet;
+}   // Log_FlagsAndAttributes()

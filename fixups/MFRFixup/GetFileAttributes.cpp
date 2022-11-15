@@ -42,7 +42,7 @@
 template <typename CharT>
 DWORD __stdcall GetFileAttributesFixup(_In_ const CharT* fileName) noexcept
 {
-    DWORD dllInstance = ++g_InterceptInstance;
+    DWORD dllInstance = g_InterceptInstance;
     bool debug = false;
     bool moreDebug = false;
 #if _DEBUG
@@ -57,6 +57,7 @@ DWORD __stdcall GetFileAttributesFixup(_In_ const CharT* fileName) noexcept
     {
         if (guard)
         {
+            dllInstance = ++g_InterceptInstance;
             std::wstring wfileName = widen(fileName);
             wfileName = AdjustSlashes(wfileName);
 
@@ -232,8 +233,10 @@ DWORD __stdcall GetFileAttributesFixup(_In_ const CharT* fileName) noexcept
                 break;
             case mfr::mfr_path_types::in_redirection_area_other:
                 break;
+            case mfr::mfr_path_types::is_Protocol:
+            case mfr::mfr_path_types::is_DosSpecial:
+            case mfr::mfr_path_types::is_Shell:
             case mfr::mfr_path_types::in_other_drive_area:
-            case mfr::mfr_path_types::is_protocol_path:
             case mfr::mfr_path_types::is_UNC_path:
             case mfr::mfr_path_types::unsupported_for_intercepts:
             case mfr::mfr_path_types::unknown:

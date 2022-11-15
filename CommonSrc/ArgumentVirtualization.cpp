@@ -46,108 +46,235 @@ std::wstring CanReplaceWithVFS(const std::wstring input)
     std::filesystem::path testpath;
 
     const std::filesystem::path l_PackageRootPath = PSFQueryPackageRootPath();// PackageRootPath();
-    testpath = psf::known_folder(FOLDERID_Documents);
-    if (findStringIC(input, testpath))
+
+    // NOTE: Some of these don't exist on 32-bit OSs and that's OK
+    try
     {
-        LogString(L"PackageRootPath is ", l_PackageRootPath.c_str());
-        output = ((std::wstring)l_PackageRootPath.c_str()) + L"\\VFS\\Personal" + input.substr(testpath.wstring().length()).c_str();
-        LogString(L"Replacement is ", output.c_str());
-        return output;
+        testpath = psf::known_folder(FOLDERID_Documents);
+        if (findStringIC(input, testpath))
+        {
+            LogString(L"PackageRootPath is ", l_PackageRootPath.c_str());
+            output = ((std::wstring)l_PackageRootPath.c_str()) + L"\\VFS\\Personal" + input.substr(testpath.wstring().length()).c_str();
+            LogString(L"Replacement is ", output.c_str());
+            return output;
+        }
     }
-    testpath = psf::known_folder(FOLDERID_PublicDocuments);
-    if (findStringIC(input, testpath))
+    catch (...)
     {
-        LogString(L"PackageRootPath is ", l_PackageRootPath.c_str());
-        output = ((std::wstring)l_PackageRootPath.c_str()) + L"\\VFS\\Common Documents" + input.substr(testpath.wstring().length()).c_str();
-        LogString(L"Replacement is ", output.c_str());
-        return output;
-    }
-    testpath = psf::known_folder(FOLDERID_LocalAppData);
-    if (findStringIC(input, testpath))
-    {
-        output = ((std::wstring)l_PackageRootPath.c_str()) + L"\\VFS\\Local AppData" + input.substr(testpath.wstring().length()).c_str();
-        return output;
-    }
-    testpath = psf::known_folder(FOLDERID_RoamingAppData);
-    if (findStringIC(input, testpath))
-    {
-        output = ((std::wstring)l_PackageRootPath.c_str()) + L"\\VFS\\AppData" + input.substr(testpath.wstring().length()).c_str();
-        return output;
+        Log(L"Warning: unknown known folder FOLDERID_Documents");
     }
 
-    testpath = psf::known_folder(FOLDERID_ProgramFilesCommonX86);
-    if (findStringIC(input, testpath))
+    try
     {
-        output = ((std::wstring)l_PackageRootPath.c_str()) + L"\\VFS\\ProgramFilesCommonX86" + input.substr(testpath.wstring().length()).c_str();
-        return output;
+        testpath = psf::known_folder(FOLDERID_PublicDocuments);
+        if (findStringIC(input, testpath))
+        {
+            LogString(L"PackageRootPath is ", l_PackageRootPath.c_str());
+            output = ((std::wstring)l_PackageRootPath.c_str()) + L"\\VFS\\Common Documents" + input.substr(testpath.wstring().length()).c_str();
+            LogString(L"Replacement is ", output.c_str());
+            return output;
+        }
     }
-    testpath = psf::known_folder(FOLDERID_ProgramFilesX86);
-    if (findStringIC(input, testpath))
+    catch (...)
     {
-        output = ((std::wstring)l_PackageRootPath.c_str()) + L"\\VFS\\ProgramFilesX86" + input.substr(testpath.wstring().length()).c_str();
-        return output;
-    }
-    testpath = psf::known_folder(FOLDERID_ProgramFilesCommonX64);
-    if (findStringIC(input, testpath))
-    {
-        output = ((std::wstring)l_PackageRootPath.c_str()) + L"\\VFS\\ProgramFilesCommonX64" + input.substr(testpath.wstring().length()).c_str();
-        return output;
-    }
-    testpath = psf::known_folder(FOLDERID_ProgramFilesX64);
-    if (findStringIC(input, testpath))
-    {
-        output = ((std::wstring)l_PackageRootPath.c_str()) + L"\\VFS\\ProgramFilesX64" + input.substr(testpath.wstring().length()).c_str();
-        return output;
+        Log(L"Warning: unknown known folder FOLDERID_PublicDocuments");
     }
 
-    testpath = psf::known_folder(FOLDERID_System);
-    if (findStringIC(input, testpath))
+    try
     {
-        output = ((std::wstring)l_PackageRootPath.c_str()) + L"\\VFS\\SystemX64" + input.substr(testpath.wstring().length()).c_str();
-        return output;
+        testpath = psf::known_folder(FOLDERID_LocalAppData);
+        if (findStringIC(input, testpath))
+        {
+            output = ((std::wstring)l_PackageRootPath.c_str()) + L"\\VFS\\Local AppData" + input.substr(testpath.wstring().length()).c_str();
+            return output;
+        }
     }
-    testpath = psf::known_folder(FOLDERID_SystemX86);
-    if (findStringIC(input, testpath))
+    catch (...)
     {
-        output = ((std::wstring)l_PackageRootPath.c_str()) + L"\\VFS\\SystemX86" + input.substr(testpath.wstring().length()).c_str();
-        return output;
+        Log(L"Warning: unknown known folder FOLDERID_LocalAppData");
     }
-    testpath = psf::known_folder(FOLDERID_Fonts);
-    if (findStringIC(input, testpath))
+
+    try
     {
-        output = ((std::wstring)l_PackageRootPath.c_str()) + L"\\VFS\\Fonts" + input.substr(testpath.wstring().length()).c_str();
-        return output;
+        testpath = psf::known_folder(FOLDERID_RoamingAppData);
+        if (findStringIC(input, testpath))
+        {
+            output = ((std::wstring)l_PackageRootPath.c_str()) + L"\\VFS\\AppData" + input.substr(testpath.wstring().length()).c_str();
+            return output;
+        }
     }
-    testpath = psf::known_folder(FOLDERID_Windows);
-    if (findStringIC(input, testpath))
+    catch (...)
     {
-        output = ((std::wstring)l_PackageRootPath.c_str()) + L"\\VFS\\Windows" + input.substr(testpath.wstring().length()).c_str();
-        return output;
+        Log(L"Warning: unknown known folder FOLDERID_RoamingAppData");
     }
-    testpath = psf::known_folder(FOLDERID_ProgramData);
-    if (findStringIC(input, testpath))
+
+    try
     {
-        output = ((std::wstring)l_PackageRootPath.c_str()) + L"\\VFS\\Common AppData" + input.substr(testpath.wstring().length()).c_str();
-        return output;
+        testpath = psf::known_folder(FOLDERID_ProgramFilesCommonX86);
+        if (findStringIC(input, testpath))
+        {
+            output = ((std::wstring)l_PackageRootPath.c_str()) + L"\\VFS\\ProgramFilesCommonX86" + input.substr(testpath.wstring().length()).c_str();
+            return output;
+        }
     }
-    testpath = psf::known_folder(FOLDERID_PublicDesktop);
-    if (findStringIC(input, testpath))
+    catch (...)
     {
-        output = ((std::wstring)l_PackageRootPath.c_str()) + L"\\VFS\\Common Desktop" + input.substr(testpath.wstring().length()).c_str();
-        return output;
+        Log(L"Warning: unknown known folder FOLDERID_ProgramFilesCommonX86");
     }
-    testpath = psf::known_folder(FOLDERID_CommonPrograms);
-    if (findStringIC(input, testpath))
+
+    try
     {
-        output = ((std::wstring)l_PackageRootPath.c_str()) + L"\\VFS\\Common Programs" + input.substr(testpath.wstring().length()).c_str();
-        return output;
+        testpath = psf::known_folder(FOLDERID_ProgramFilesX86);
+        if (findStringIC(input, testpath))
+        {
+            output = ((std::wstring)l_PackageRootPath.c_str()) + L"\\VFS\\ProgramFilesX86" + input.substr(testpath.wstring().length()).c_str();
+            return output;
+        }
     }
-    testpath = psf::known_folder(FOLDERID_LocalAppDataLow);
-    if (findStringIC(input, testpath))
+    catch (...)
     {
-        output = ((std::wstring)l_PackageRootPath.c_str()) + L"\\VFS\\LOCALAPPDATALOW" + input.substr(testpath.wstring().length()).c_str();
-        return output;
+        Log(L"Warning: unknown known folder FOLDERID_ProgramFilesX86");
     }
+
+    try
+    {
+        testpath = psf::known_folder(FOLDERID_ProgramFilesCommonX64);
+        if (findStringIC(input, testpath))
+        {
+            output = ((std::wstring)l_PackageRootPath.c_str()) + L"\\VFS\\ProgramFilesCommonX64" + input.substr(testpath.wstring().length()).c_str();
+            return output;
+        }
+    }
+    catch (...)
+    {
+        Log(L"Warning: unknown known folder FOLDERID_ProgramFilesCommonX64");
+    }
+
+    try
+    {
+        testpath = psf::known_folder(FOLDERID_ProgramFilesX64);
+        if (findStringIC(input, testpath))
+        {
+            output = ((std::wstring)l_PackageRootPath.c_str()) + L"\\VFS\\ProgramFilesX64" + input.substr(testpath.wstring().length()).c_str();
+            return output;
+        }
+    }
+    catch (...)
+    {
+        Log(L"Warning: unknown known folder FOLDERID_ProgramFilesX64");
+    }
+
+    try
+    {
+        testpath = psf::known_folder(FOLDERID_System);
+        if (findStringIC(input, testpath))
+        {
+            output = ((std::wstring)l_PackageRootPath.c_str()) + L"\\VFS\\SystemX64" + input.substr(testpath.wstring().length()).c_str();
+            return output;
+        }
+    }
+    catch (...)
+    {
+        Log(L"Warning: unknown known folder FOLDERID_System");
+    }
+    try
+    {
+        testpath = psf::known_folder(FOLDERID_SystemX86);
+        if (findStringIC(input, testpath))
+        {
+            output = ((std::wstring)l_PackageRootPath.c_str()) + L"\\VFS\\SystemX86" + input.substr(testpath.wstring().length()).c_str();
+            return output;
+        }
+    }
+    catch (...)
+    {
+        Log(L"Warning: unknown known folder FOLDERID_SystemX86");
+    }
+
+    try
+    {
+        testpath = psf::known_folder(FOLDERID_Fonts);
+        if (findStringIC(input, testpath))
+        {
+            output = ((std::wstring)l_PackageRootPath.c_str()) + L"\\VFS\\Fonts" + input.substr(testpath.wstring().length()).c_str();
+            return output;
+        }
+    }
+    catch (...)
+    {
+        Log(L"Warning: unknown known folder FOLDERID_Fonts");
+    }
+
+    try
+    {
+        testpath = psf::known_folder(FOLDERID_Windows);
+        if (findStringIC(input, testpath))
+        {
+            output = ((std::wstring)l_PackageRootPath.c_str()) + L"\\VFS\\Windows" + input.substr(testpath.wstring().length()).c_str();
+            return output;
+        }
+    }
+    catch (...)
+    {
+        Log(L"Warning: unknown known folder FOLDERID_Windows");
+    }
+
+    try
+    {
+        testpath = psf::known_folder(FOLDERID_ProgramData);
+        if (findStringIC(input, testpath))
+        {
+            output = ((std::wstring)l_PackageRootPath.c_str()) + L"\\VFS\\Common AppData" + input.substr(testpath.wstring().length()).c_str();
+            return output;
+        }
+    }
+    catch (...)
+    {
+        Log(L"Warning: unknown known folder FOLDERID_ProgramData");
+    }
+
+    try
+    {
+        testpath = psf::known_folder(FOLDERID_PublicDesktop);
+        if (findStringIC(input, testpath))
+        {
+            output = ((std::wstring)l_PackageRootPath.c_str()) + L"\\VFS\\Common Desktop" + input.substr(testpath.wstring().length()).c_str();
+            return output;
+        }
+    }
+    catch (...)
+    {
+        Log(L"Warning: unknown known folder FOLDERID_PublicDesktop");
+    }
+
+    try
+    {
+        testpath = psf::known_folder(FOLDERID_CommonPrograms);
+        if (findStringIC(input, testpath))
+        {
+            output = ((std::wstring)l_PackageRootPath.c_str()) + L"\\VFS\\Common Programs" + input.substr(testpath.wstring().length()).c_str();
+            return output;
+        }
+    }
+    catch (...)
+    {
+        Log(L"Warning: unknown known folder FOLDERID_CommonProgram");
+    }
+
+    try
+    {
+        testpath = psf::known_folder(FOLDERID_LocalAppDataLow);
+        if (findStringIC(input, testpath))
+        {
+            output = ((std::wstring)l_PackageRootPath.c_str()) + L"\\VFS\\LOCALAPPDATALOW" + input.substr(testpath.wstring().length()).c_str();
+            return output;
+        }
+    }
+    catch (...)
+    {
+        Log(L"Warning: unknown known folder FOLDERID_LocalAppDataLow");
+    }
+
     return output;
 }
 

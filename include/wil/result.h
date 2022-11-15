@@ -270,35 +270,39 @@ namespace wil
 
             static HRESULT Acquire(PCSTR staticNameWithVersion, _Outptr_result_nullonfailure_ ProcessLocalStorageData<T>** data)
             {
-                *data = nullptr;
-
-                // NOTE: the '0' in SM0 below is intended as the VERSION number.  Changes to this class require
-                //       that this value be revised.
-
-                const DWORD size = static_cast<DWORD>(sizeof(ProcessLocalStorageData<T>));
-                wchar_t name[MAX_PATH];
-                WI_VERIFY(SUCCEEDED(StringCchPrintfW(name, ARRAYSIZE(name), L"Local\\SM0:%d:%d:%hs", ::GetCurrentProcessId(), size, staticNameWithVersion)));
-
-                unique_mutex_nothrow mutex;
-                mutex.reset(::CreateMutexExW(nullptr, name, 0, MUTEX_ALL_ACCESS));
-
-                // This will fail in some environments and will be fixed with deliverable 12394134
-                RETURN_LAST_ERROR_IF_EXPECTED(!mutex);
-                auto lock = mutex.acquire();
-
-                void* pointer = nullptr;
-                __WIL_PRIVATE_RETURN_IF_FAILED(SemaphoreValue::TryGetPointer(name, &pointer));
-                if (pointer)
+                if (data != nullptr)
                 {
-                    *data = reinterpret_cast<ProcessLocalStorageData<T>*>(pointer);
-                    (*data)->m_refCount++;
-                }
-                else
-                {
-                    __WIL_PRIVATE_RETURN_IF_FAILED(MakeAndInitialize(name, wistd::move(mutex), data));    // Assumes mutex handle ownership on success ('lock' will still be released)
-                }
+                    *data = nullptr;
 
-                return S_OK;
+                    // NOTE: the '0' in SM0 below is intended as the VERSION number.  Changes to this class require
+                    //       that this value be revised.
+
+                    const DWORD size = static_cast<DWORD>(sizeof(ProcessLocalStorageData<T>));
+                    wchar_t name[MAX_PATH];
+                    WI_VERIFY(SUCCEEDED(StringCchPrintfW(name, ARRAYSIZE(name), L"Local\\SM0:%d:%d:%hs", ::GetCurrentProcessId(), size, staticNameWithVersion)));
+
+                    unique_mutex_nothrow mutex;
+                    mutex.reset(::CreateMutexExW(nullptr, name, 0, MUTEX_ALL_ACCESS));
+
+                    // This will fail in some environments and will be fixed with deliverable 12394134
+                    RETURN_LAST_ERROR_IF_EXPECTED(!mutex);
+                    auto lock = mutex.acquire();
+
+                    void* pointer = nullptr;
+                    __WIL_PRIVATE_RETURN_IF_FAILED(SemaphoreValue::TryGetPointer(name, &pointer));
+                    if (pointer)
+                    {
+                        *data = reinterpret_cast<ProcessLocalStorageData<T>*>(pointer);
+                        (*data)->m_refCount++;
+                    }
+                    else
+                    {
+                        __WIL_PRIVATE_RETURN_IF_FAILED(MakeAndInitialize(name, wistd::move(mutex), data));    // Assumes mutex handle ownership on success ('lock' will still be released)
+                    }
+
+                    return S_OK;
+                }
+                return ERROR_INVALID_PARAMETER;
             }
 
         private:

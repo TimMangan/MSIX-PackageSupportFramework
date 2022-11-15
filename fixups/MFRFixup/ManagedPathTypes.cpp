@@ -28,8 +28,12 @@ namespace mfr
             return L"in_redirection_area_writablepackageroot";
         case mfr_path_types::in_redirection_area_other:
             return L"in_redirection_area_other";
-        case mfr_path_types::is_protocol_path:
-            return L"in_protocol_path";
+        case mfr_path_types::is_Protocol:
+            return L"is_Protocol";
+        case mfr_path_types::is_Shell:
+            return L"is_Shell";
+        case mfr_path_types::is_DosSpecial:
+            return L"is_DosSpecial";
         case mfr_path_types::is_UNC_path:
             return L"is_UNC_path";
         case mfr_path_types::unsupported_for_intercepts:
@@ -103,7 +107,8 @@ namespace mfr
             outputPath.Request_NormalizedPath = drive_absolute_to_normal(inputPath);
             outputPath.Request_MfrPathType = mfr::Get_ManagedPathTypeForDriveAbsolute(outputPath.Request_NormalizedPath);
             break;
-        case psf::dos_path_type::drive_relative:   // E.g. "C:path\to\file"
+        case psf::dos_path_type::drive_relative:   // E.g. "C:path\to\file"  or shell::{...}
+
             outputPath.Request_NormalizedPath = drive_relative_to_normal(inputPath);
             outputPath.Request_MfrPathType = mfr::Get_ManagedPathTypeForDriveAbsolute(outputPath.Request_NormalizedPath);
             break;
@@ -111,50 +116,9 @@ namespace mfr
             outputPath.Request_NormalizedPath = inputPath;
             outputPath.Request_MfrPathType = mfr::mfr_path_types::unsupported_for_intercepts;
             break;
-        case psf::dos_path_type::relative:  // E.g. like "file:\\something" or "CONOUT$" or like "LPT2:" or "path\to\file"  
-            if (wInputPath.find(L":\\\\") != std::wstring::npos) // look for protocols, like file:\\ or mailto:
-            {
-                outputPath.Request_NormalizedPath = inputPath;
-                outputPath.Request_MfrPathType = mfr::mfr_path_types::is_protocol_path;
-            }
-            else if (wInputPath.compare(L"CONOUT$") == 0 ||
-                     wInputPath.compare(L"CONIN$") == 0 ||
-                     wInputPath.compare(L"CON") == 0 || // see list in https://learn.microsoft.com/en-us/windows/win32/fileio/naming-a-file
-                     wInputPath.compare(L"PRN") == 0 ||
-                     wInputPath.compare(L"AUX") == 0 ||
-                     wInputPath.compare(L"NUL") == 0 ||
-                     wInputPath.compare(L"COM1") == 0 ||
-                     wInputPath.compare(L"COM2") == 0 ||
-                     wInputPath.compare(L"COM3") == 0 ||
-                     wInputPath.compare(L"COM4") == 0 ||
-                     wInputPath.compare(L"COM5") == 0 ||
-                     wInputPath.compare(L"COM6") == 0 ||
-                     wInputPath.compare(L"COM7") == 0 ||
-                     wInputPath.compare(L"COM8") == 0 ||
-                     wInputPath.compare(L"COM9") == 0 ||
-                     wInputPath.compare(L"LPT1") == 0 ||
-                     wInputPath.compare(L"LPT2") == 0 ||
-                     wInputPath.compare(L"LPT3") == 0 ||
-                     wInputPath.compare(L"LPT4") == 0 ||
-                     wInputPath.compare(L"LPT5") == 0 ||
-                     wInputPath.compare(L"LPT6") == 0 ||
-                     wInputPath.compare(L"LPT7") == 0 ||
-                     wInputPath.compare(L"LPT8") == 0 ||
-                     wInputPath.compare(L"LPT9") == 0)
-            {
-                outputPath.Request_NormalizedPath = inputPath;
-                outputPath.Request_MfrPathType = mfr::mfr_path_types::unsupported_for_intercepts;
-            }
-            else if (wInputPath.find(L":", 4) != std::wstring::npos)
-            {
-                outputPath.Request_NormalizedPath = inputPath;
-                outputPath.Request_MfrPathType = mfr::mfr_path_types::unsupported_for_intercepts;
-            }
-            else
-            {
-                outputPath.Request_NormalizedPath = cwd_relative_to_normal(inputPath);
-                outputPath.Request_MfrPathType = mfr::Get_ManagedPathTypeForDriveAbsolute(outputPath.Request_NormalizedPath);
-            }
+        case psf::dos_path_type::relative:  // E.g. like  "path\to\file"  
+            outputPath.Request_NormalizedPath = cwd_relative_to_normal(inputPath);
+            outputPath.Request_MfrPathType = mfr::Get_ManagedPathTypeForDriveAbsolute(outputPath.Request_NormalizedPath);
             break;
         case psf::dos_path_type::rooted: // E.g. "\path\to\file"
             outputPath.Request_NormalizedPath = rooted_relative_to_normal(inputPath);
@@ -167,6 +131,18 @@ namespace mfr
         case psf::dos_path_type::unc_absolute:   // E.g. "\\servername\share\path\to\file"
             outputPath.Request_NormalizedPath = inputPath;
             outputPath.Request_MfrPathType = mfr::mfr_path_types::is_UNC_path;
+            break;
+        case psf::dos_path_type::protocol:      // e.g: "ftp:\\..."
+            outputPath.Request_NormalizedPath = inputPath;
+            outputPath.Request_MfrPathType = mfr::mfr_path_types::is_Protocol;
+            break;
+        case psf::dos_path_type::shell:
+            outputPath.Request_NormalizedPath = inputPath;
+            outputPath.Request_MfrPathType = mfr::mfr_path_types::is_Shell;
+            break;
+        case psf::dos_path_type::DosSpecial:
+            outputPath.Request_NormalizedPath = inputPath;
+            outputPath.Request_MfrPathType = mfr::mfr_path_types::is_DosSpecial;
             break;
         case psf::dos_path_type::unknown:
         default:

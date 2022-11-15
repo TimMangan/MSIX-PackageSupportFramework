@@ -44,7 +44,7 @@ HANDLE __stdcall CreateFile2Fixup(
     _In_ DWORD creationDisposition,
     _In_opt_ LPCREATEFILE2_EXTENDED_PARAMETERS createExParams) noexcept
 {
-    DWORD dllInstance = ++g_InterceptInstance;
+    DWORD dllInstance = g_InterceptInstance;
     bool debug = false;
 #if _DEBUG
     debug = true;
@@ -62,16 +62,26 @@ HANDLE __stdcall CreateFile2Fixup(
     {
         if (guard)
         {
+            dllInstance = ++g_InterceptInstance;
             std::wstring wPathName = fileName;
             wPathName = AdjustSlashes(wPathName);
 #if _DEBUG
             LogString(dllInstance, L"CreateFile2Fixup for ", fileName);
-            Log(L"[%d]        DesiredAccess 0x%x  ShareMode 0x%x", dllInstance, desiredAccess, shareMode);
+#if MOREDEBUG
+            Log(L"[%d]        DesiredAccess %s", dllInstance, Log_DesiredAccess(desiredAccess).c_str());
+            Log(L"[%d]        ShareMode %s", dllInstance, Log_ShareMode(shareMode).c_str());
+            Log(L"[%d]        creationDisposition %s", dllInstance, Log_CreationDisposition(creationDisposition).c_str());
+            if (createExParams)
+            {
+                Log(L"[%d]        flags %s", dllInstance, Log_FlagsAndAttributes(createExParams->dwFileFlags).c_str());
+                Log(L"[%d]        Attributes %s", dllInstance, Log_FlagsAndAttributes(createExParams->dwFileAttributes).c_str());
+            }
+#endif
 #endif
             bool IsAWriteCase;
             if (createExParams)
             {
-                IsAWriteCase = IsCreateForChange(desiredAccess, creationDisposition, createExParams->dwFileAttributes);
+                IsAWriteCase = IsCreateForChange(desiredAccess, creationDisposition, createExParams->dwFileFlags);
             }
             else
             {
@@ -386,8 +396,10 @@ HANDLE __stdcall CreateFile2Fixup(
                 break;
             case mfr::mfr_path_types::in_redirection_area_other:
                 break;
+            case mfr::mfr_path_types::is_Protocol:
+            case mfr::mfr_path_types::is_DosSpecial:
+            case mfr::mfr_path_types::is_Shell:
             case mfr::mfr_path_types::in_other_drive_area:
-            case mfr::mfr_path_types::is_protocol_path:
             case mfr::mfr_path_types::is_UNC_path:
             case mfr::mfr_path_types::unsupported_for_intercepts:
             case mfr::mfr_path_types::unknown:

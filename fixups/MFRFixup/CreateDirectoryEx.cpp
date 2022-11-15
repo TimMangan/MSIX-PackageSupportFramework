@@ -45,7 +45,7 @@ BOOL __stdcall CreateDirectoryExFixup(
     _In_ const CharT* newDirectory,
     _In_opt_ LPSECURITY_ATTRIBUTES securityAttributes) noexcept
 {
-    DWORD dllInstance = ++g_InterceptInstance;
+    DWORD dllInstance = g_InterceptInstance;
     bool debug = false;
 #if _DEBUG
     debug = true;
@@ -61,7 +61,7 @@ BOOL __stdcall CreateDirectoryExFixup(
         if (guard)
         {
             // This function is very much like CopyFile, except that we have a folder instead.
-
+            dllInstance = ++g_InterceptInstance;
 #if _DEBUG
             LogString(dllInstance, L"CreateDirectoryExFixup using template", templateDirectory);
             LogString(dllInstance, L"CreateDirectoryExFixup to", newDirectory);
@@ -126,8 +126,10 @@ BOOL __stdcall CreateDirectoryExFixup(
             case mfr::mfr_path_types::in_redirection_area_other:
                 newDirectoryWsRedirected = cohortsNew.WsRequested;
                 break;
+            case mfr::mfr_path_types::is_Protocol:
+            case mfr::mfr_path_types::is_DosSpecial:
+            case mfr::mfr_path_types::is_Shell:
             case mfr::mfr_path_types::in_other_drive_area:
-            case mfr::mfr_path_types::is_protocol_path:
             case mfr::mfr_path_types::is_UNC_path:
             case mfr::mfr_path_types::unsupported_for_intercepts:
             case mfr::mfr_path_types::unknown:
@@ -290,8 +292,10 @@ BOOL __stdcall CreateDirectoryExFixup(
                 break;
             case mfr::mfr_path_types::in_redirection_area_other:
                 break;
+            case mfr::mfr_path_types::is_Protocol:
+            case mfr::mfr_path_types::is_DosSpecial:
+            case mfr::mfr_path_types::is_Shell:
             case mfr::mfr_path_types::in_other_drive_area:
-            case mfr::mfr_path_types::is_protocol_path:
             case mfr::mfr_path_types::is_UNC_path:
             case mfr::mfr_path_types::unsupported_for_intercepts:
             case mfr::mfr_path_types::unknown:

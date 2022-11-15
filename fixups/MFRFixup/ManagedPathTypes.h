@@ -21,8 +21,10 @@ namespace mfr
         in_package_vfs_area = 0x0005,   // The path is in the package area (VFS)
         in_native_area = 0x0006,   // In package drive but not in package.
         in_other_drive_area = 0x0007,   // On a different drive letter.
-        is_protocol_path = 0x0008,   // The path starts with a protocol (like file:\\)
-        is_UNC_path = 0x0009,   // The path is a a network share (like \\server\share\path)
+        is_UNC_path = 0x0008,   // The path is a a network share (like \\server\share\path)
+        is_Shell = 0x0009,  // The path is a special shell::{guid} that should not be redirected.
+        is_Protocol = 0x000A,   // the path is a protocol like "ftp:\\" 
+        is_DosSpecial = 0x000B,  // like "COM1:"
     };
     DEFINE_ENUM_FLAG_OPERATORS(mfr_path_types);
 

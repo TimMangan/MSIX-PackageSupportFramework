@@ -215,14 +215,20 @@ void DebugPathTesting(DWORD dllInstance)
                     Log(L"[%d] DEBUGPATHTESTING:    ERROR NO MAPPING.", dllInstance);
                 }
                 break;
+            case mfr::mfr_path_types::is_Protocol:
+                Log("[%d]  DEBUGPATHTESTING:   protocol; unspupported for redirection.", dllInstance);
+                break;
+            case mfr::mfr_path_types::is_DosSpecial:
+                Log("[%d]  DEBUGPATHTESTING:   DOS Special path; unspupported for redirection.", dllInstance);
+                break;
+            case mfr::mfr_path_types::is_Shell:
+                Log("[%d]  DEBUGPATHTESTING:   shell; unspupported for redirection.", dllInstance);
+                break;
             case mfr::mfr_path_types::in_redirection_area_other:
                 Log("[%d]  DEBUGPATHTESTING:   in microsoft-runtime redirection area; unspupported for redirection by us.", dllInstance);
                 break;
             case mfr::mfr_path_types::in_other_drive_area:
                 Log("[%d]  DEBUGPATHTESTING:   on a different drive letter; unspupported for redirection.", dllInstance);
-                break;
-            case mfr::mfr_path_types::is_protocol_path:
-                Log("[%d]  DEBUGPATHTESTING:   protocol path; unspupported for redirection.", dllInstance);
                 break;
             case mfr::mfr_path_types::is_UNC_path:
                 Log("[%d]  DEBUGPATHTESTING:   unc path; unspupported for redirection.", dllInstance);

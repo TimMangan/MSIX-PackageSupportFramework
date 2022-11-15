@@ -158,7 +158,7 @@ HANDLE __stdcall FindFirstFileFixup(_In_ const CharT* fileName, _Out_ win32_find
         }
         else
         {
-            if (GetLastError() == ERROR_FILE_NOT_FOUND)
+            if (initialFindError != ERROR_SUCCESS && GetLastError() == ERROR_FILE_NOT_FOUND)
                 initialFindError = ERROR_FILE_NOT_FOUND;
             ///result->package_vfs_path.clear();
 #if _DEBUG
@@ -207,7 +207,7 @@ HANDLE __stdcall FindFirstFileFixup(_In_ const CharT* fileName, _Out_ win32_find
             }
             else
             {
-                if (GetLastError() == ERROR_FILE_NOT_FOUND)
+                if (initialFindError != ERROR_SUCCESS && GetLastError() == ERROR_FILE_NOT_FOUND)
                     initialFindError = ERROR_FILE_NOT_FOUND;
 #if _DEBUG
                 Log(L"[%d] FindFirstFileFixup[%d] (from native):   no results.", dllInstance, Result_Native);

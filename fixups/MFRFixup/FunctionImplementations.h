@@ -12,6 +12,8 @@
 
 #include <reentrancy_guard.h>
 #include <psf_framework.h>
+#include <shellapi.h>
+
 
 extern DWORD g_InterceptInstance;
 
@@ -68,6 +70,13 @@ namespace impl
     inline auto WritePrivateProfileStruct = psf::detoured_string_function(&::WritePrivateProfileStructA, &::WritePrivateProfileStructW);
 
     inline auto SearchPath = psf::detoured_string_function(&::SearchPathA, &::SearchPathW);
+
+    //inline auto ShellExecute = psf::detoured_string_function(&::ShellExecuteA, &::ShellExecuteW);
+    //inline auto ShellExecuteEx = psf::detoured_string_function(&::ShellExecuteExA, &::ShellExecuteExW);
+    inline auto ShellExecuteA = &::ShellExecuteA;
+    inline auto ShellExecuteW = &::ShellExecuteW;
+    inline auto ShellExecuteExA = &::ShellExecuteExA;
+    inline auto ShellExecuteExW = &::ShellExecuteExW;
 
 #if FIXUP_UCRT
     // ucrtbased.dll functions

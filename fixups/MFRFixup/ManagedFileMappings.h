@@ -46,13 +46,13 @@ namespace mfr
     // Defines a mapping between Native, Package, and Redirected locations
     struct mfr_folder_mapping
     {
-        bool                    Valid_mapping = false;  // used in place of a null mapping.
-        bool                    IsAnExclusionToRedirect = false;
+        bool                    Valid_mapping; // = false;  // used in place of a null mapping.
+        bool                    IsAnExclusionToRedirect; // = false;
         std::filesystem::path   NativePathBase;
         std::wstring            FolderId;
         std::wstring            VFSFolderName;
         std::filesystem::path   PackagePathBase;
-        bool                    DoesRuntimeMapNativeToVFS = false;   // Indicates that this is a path that is handled by MSIX runtime for redirection to the package.
+        bool                    DoesRuntimeMapNativeToVFS; // = false;   // Indicates that this is a path that is handled by MSIX runtime for redirection to the package.
         std::filesystem::path   RedirectedPathBase;
 
         mfr_redirect_flags      RedirectionFlags = mfr_redirect_flags::disabled;

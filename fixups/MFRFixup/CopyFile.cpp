@@ -133,8 +133,11 @@ BOOL __stdcall CopyFileFixup(_In_ const CharT* existingFileName, _In_ const Char
             case mfr::mfr_path_types::in_redirection_area_other:
                 newFileWsRedirected = cohortsNew.WsRequested;
                 break;
+
+            case mfr::mfr_path_types::is_Protocol:
+            case mfr::mfr_path_types::is_DosSpecial:
+            case mfr::mfr_path_types::is_Shell:
             case mfr::mfr_path_types::in_other_drive_area:
-            case mfr::mfr_path_types::is_protocol_path:
             case mfr::mfr_path_types::is_UNC_path:
             case mfr::mfr_path_types::unsupported_for_intercepts:
             case mfr::mfr_path_types::unknown:
@@ -297,8 +300,10 @@ BOOL __stdcall CopyFileFixup(_In_ const CharT* existingFileName, _In_ const Char
                 break;
             case mfr::mfr_path_types::in_redirection_area_other:
                 break;
+            case mfr::mfr_path_types::is_Protocol:
+            case mfr::mfr_path_types::is_DosSpecial:
+            case mfr::mfr_path_types::is_Shell:
             case mfr::mfr_path_types::in_other_drive_area:
-            case mfr::mfr_path_types::is_protocol_path:
             case mfr::mfr_path_types::is_UNC_path:
             case mfr::mfr_path_types::unsupported_for_intercepts:
             case mfr::mfr_path_types::unknown:

@@ -41,7 +41,7 @@ template <typename CharT>
 BOOL __stdcall SetFileAttributesFixup(_In_ const CharT* fileName, _In_ DWORD fileAttributes) noexcept
 {
     auto guard = g_reentrancyGuard.enter();
-    DWORD dllInstance = ++g_InterceptInstance;
+    DWORD dllInstance = g_InterceptInstance;
     bool debug = false;
     bool moreDebug = false;
 #if _DEBUG
@@ -55,6 +55,7 @@ BOOL __stdcall SetFileAttributesFixup(_In_ const CharT* fileName, _In_ DWORD fil
     {
         if (guard)
         {
+            dllInstance = ++g_InterceptInstance;
             std::wstring wfileName = widen(fileName);
             wfileName = AdjustSlashes(wfileName);
 
@@ -341,8 +342,10 @@ BOOL __stdcall SetFileAttributesFixup(_In_ const CharT* fileName, _In_ DWORD fil
                 break;
             case mfr::mfr_path_types::in_redirection_area_other:
                 break;
+            case mfr::mfr_path_types::is_Protocol:
+            case mfr::mfr_path_types::is_DosSpecial:
+            case mfr::mfr_path_types::is_Shell:
             case mfr::mfr_path_types::in_other_drive_area:
-            case mfr::mfr_path_types::is_protocol_path:
             case mfr::mfr_path_types::is_UNC_path:
             case mfr::mfr_path_types::unsupported_for_intercepts:
             case mfr::mfr_path_types::unknown:

@@ -26,17 +26,17 @@ namespace mfr
         //       The package has long names for all files, and we sill redirect using long names as well.  We just need
         //       to recognize it to match up.
 
-        FID_Initialize();
+        FID_Initialize(); 
 
 
-        g_MfrFolderMappings.push_back(mfr::mfr_folder_mapping{ true, false, 
-                                                                FID_System32 / LR"(catroot2)"sv,      
-                                                                L"FOLDERID_System\\Catroot2",       
-                                                                L"AppVSystem32Catroot2",    
-                                                                g_packageVfsRootPath / L"AppVSystem32Catroot2"sv,    
-                                                                true,  
-                                                                g_writablePackageRootPath / L"VFS"sv / L"AppVSystem32Catroot2"sv,    
-                                                                mfr::mfr_redirect_flags::prefer_redirection_containerized });
+        g_MfrFolderMappings.push_back(mfr::mfr_folder_mapping {  /*Valid_mapping =*/ true, /*IsAnExclusionToRedirect =*/ false,
+                                                                /*NativePathBase =*/ FID_System32 / LR"(catroot2)"sv,
+                                                                /*FolderId =*/ L"FOLDERID_System\\Catroot2",
+                                                                /*VFSFolderName =*/ L"AppVSystem32Catroot2",
+                                                                /*PackagePathBase =*/ g_packageVfsRootPath / L"AppVSystem32Catroot2"sv,
+                                                                /*DoesRuntimeMapNativeToVFS =*/ true,
+                                                                /*RedirectedPathBase =*/g_writablePackageRootPath / L"VFS"sv / L"AppVSystem32Catroot2"sv,
+                                                                /*RedirectionFlags =*/ mfr::mfr_redirect_flags::prefer_redirection_containerized });
 
         g_MfrFolderMappings.push_back(mfr::mfr_folder_mapping{ true, false, 
                                                                 FID_System32 / LR"(catroot)"sv,       

@@ -55,7 +55,7 @@
     <ClCompile Include="RemoveDirectoryFixup.cpp" />
     <ClCompile Include="ReplaceFileFixup.cpp" />
     <ClCompile Include="SearchPath.cpp" />
-    <ClCompile Include="SetWorkingDirectory.cpp" />
+    <ClCompile Include="SetDllWorkingDirectory.cpp" />
     <ClCompile Include="PathRedirectionV2.cpp" />
     <ClCompile Include="UCRTBasedPosixFunctions.cpp" />
     <ClCompile Include="WritePrivateProfileSectionFixup.cpp" />

@@ -103,6 +103,8 @@ normalized_pathV2 NormalizePathV2Impl(const wchar_t* path, [[maybe_unused]] DWOR
     case psf::dos_path_type::root_local_device:   // E.g. "\\?\C:\path\to\file"
         result.drive_absolute_path = result.full_path.substr(4);
         break;
+    case psf::dos_path_type::protocol:
+    case psf::dos_path_type::shell:
     case psf::dos_path_type::unknown:
     default:
         result.drive_absolute_path = result.full_path.data();

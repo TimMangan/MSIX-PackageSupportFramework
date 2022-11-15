@@ -43,6 +43,7 @@ void GetAndLaunchMonitor(const psf::json_object& monitor, std::filesystem::path 
 void LaunchMonitorInBackground(std::filesystem::path packageRoot, const wchar_t executable[], const wchar_t arguments[], bool wait, bool asAdmin, int cmdShow, LPCWSTR dirStr);
 void LaunchInBackgroundAsAdmin(const wchar_t executable[], const wchar_t arguments[], bool wait, int cmdShow, LPCWSTR dirStr);
 bool IsCurrentOSRS2OrGreater();
+std::wstring ReplaceMisleadingSlashVFS(std::wstring inputString);
 std::wstring ReplaceVariablesInString(std::wstring inputString, bool ReplaceEnvironmentVars, bool ReplacePseudoVars);
 std::wstring ArgumentVirtualization(const std::wstring input);
 
@@ -97,6 +98,7 @@ int launcher_main(PCWSTR args, int cmdShow) noexcept try
     // At least for now, configured launch paths are relative to the package root
     std::filesystem::path packageRoot = PSFQueryPackageRootPath();
     std::wstring dirWstr = dirStr;
+    dirWstr = ReplaceMisleadingSlashVFS(dirWstr);
     dirWstr = ReplaceVariablesInString(dirWstr, true, true);
     std::filesystem::path currentDirectory;
 
@@ -133,6 +135,7 @@ int launcher_main(PCWSTR args, int cmdShow) noexcept try
     // Launch underlying application.
     auto exeName = appConfig->get("executable").as_string().wide();
     std::wstring exeWName = exeName;
+    exeWName = ReplaceMisleadingSlashVFS(exeName);
     exeWName = ReplaceVariablesInString(exeWName, true, true);
     std::filesystem::path exePath;
     bool isHttp = false;
@@ -567,6 +570,18 @@ void LaunchInBackgroundAsAdmin( const wchar_t executable[], const wchar_t argume
  
 }
 
+
+// Drop the mistaken first slash in \VFS.
+// Sometimes people assume they need to reference the relative path starting with a forward slash,
+// If they do it with a VFS folder, the mistake is obvious and we can adjust it for them.
+std::wstring ReplaceMisleadingSlashVFS(std::wstring inputString)
+{
+    if (inputString._Starts_with(L"\\VFS"))
+    {
+        return inputString.substr(1);
+    }
+    return inputString;
+}
 
 // Replace all occurrences of requested environment and/or pseudo-environment variables in a string.
 std::wstring ReplaceVariablesInString(std::wstring inputString, bool ReplaceEnvironmentVars, bool ReplacePseudoVars)

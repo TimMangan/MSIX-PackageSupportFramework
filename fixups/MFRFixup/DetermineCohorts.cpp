@@ -39,6 +39,10 @@ void DetermineCohorts(std::wstring requestedPath, Cohorts *cohorts, bool UseMore
                 Log(L"[%d] %s:  Maps to a redirection exclusion path.", dllInstance, FixupName);
             }
         }
+        else
+        {
+            Log(L"[%d] No mapping is valid.", dllInstance);
+        }
     }
 
     switch (cohorts->file_mfr.Request_MfrPathType)
@@ -136,8 +140,10 @@ void DetermineCohorts(std::wstring requestedPath, Cohorts *cohorts, bool UseMore
         }
         cohorts->UsingNative = false;
         break;
+    case mfr::mfr_path_types::is_Protocol:
+    case mfr::mfr_path_types::is_DosSpecial:
+    case mfr::mfr_path_types::is_Shell:
     case mfr::mfr_path_types::in_other_drive_area:
-    case mfr::mfr_path_types::is_protocol_path:
     case mfr::mfr_path_types::is_UNC_path:
     case mfr::mfr_path_types::unsupported_for_intercepts:
     case mfr::mfr_path_types::unknown:

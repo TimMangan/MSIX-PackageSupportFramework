@@ -61,7 +61,7 @@ BOOL  WRAPPER_CREATEDIRECTORY(std::wstring theDestinationDirectory, LPSECURITY_A
 template <typename CharT>
 BOOL __stdcall CreateDirectoryFixup(_In_ const CharT* pathName, _In_opt_ LPSECURITY_ATTRIBUTES securityAttributes) noexcept
 {
-    DWORD dllInstance = ++g_InterceptInstance;
+    DWORD dllInstance = g_InterceptInstance;
     bool debug = false;
 #if _DEBUG
     debug = true;
@@ -78,6 +78,7 @@ BOOL __stdcall CreateDirectoryFixup(_In_ const CharT* pathName, _In_opt_ LPSECUR
     {
         if (guard)
         {
+            dllInstance = ++g_InterceptInstance;
             std::wstring wPathName = widen(pathName);
             wPathName = AdjustSlashes(wPathName);
 
@@ -385,8 +386,10 @@ BOOL __stdcall CreateDirectoryFixup(_In_ const CharT* pathName, _In_opt_ LPSECUR
                 PreCreateFolders(cohorts.WsRequested.c_str(), dllInstance, L"CreateDirectoryFixup");
                 return WRAPPER_CREATEDIRECTORY(cohorts.WsRequested, securityAttributes, dllInstance, debug);
                 break;
+            case mfr::mfr_path_types::is_Protocol:
+            case mfr::mfr_path_types::is_DosSpecial:
+            case mfr::mfr_path_types::is_Shell:
             case mfr::mfr_path_types::in_other_drive_area:
-            case mfr::mfr_path_types::is_protocol_path:
             case mfr::mfr_path_types::is_UNC_path:
             case mfr::mfr_path_types::unsupported_for_intercepts:
             case mfr::mfr_path_types::unknown:

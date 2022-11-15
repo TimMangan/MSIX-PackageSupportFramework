@@ -6,7 +6,7 @@
 
 
 #if _DEBUG
-//#define MOREDEBUG 1
+#define MOREDEBUG 1
 #endif
 
 #include <errno.h>
@@ -64,7 +64,7 @@ BOOL __stdcall GetFileAttributesExFixup(
     _In_ GET_FILEEX_INFO_LEVELS infoLevelId,
     _Out_writes_bytes_(sizeof(WIN32_FILE_ATTRIBUTE_DATA)) LPVOID fileInformation) noexcept
 {
-    DWORD dllInstance = ++g_InterceptInstance;
+    DWORD dllInstance = g_InterceptInstance;
     bool debug = false;
     bool moreDebug = false;
 #if _DEBUG
@@ -79,6 +79,7 @@ BOOL __stdcall GetFileAttributesExFixup(
     {
         if (guard)
         {
+            dllInstance = ++g_InterceptInstance;
             std::wstring wfileName = widen(fileName);
             wfileName = AdjustSlashes(wfileName);
 
@@ -227,12 +228,17 @@ BOOL __stdcall GetFileAttributesExFixup(
                 break;
             case mfr::mfr_path_types::in_redirection_area_other:
                 break;
+            case mfr::mfr_path_types::is_Protocol:
+            case mfr::mfr_path_types::is_DosSpecial:
+            case mfr::mfr_path_types::is_Shell:
             case mfr::mfr_path_types::in_other_drive_area:
-            case mfr::mfr_path_types::is_protocol_path:
             case mfr::mfr_path_types::is_UNC_path:
             case mfr::mfr_path_types::unsupported_for_intercepts:
             case mfr::mfr_path_types::unknown:
             default:
+#if _DEBUG
+                Log(L"[%d] GetFileAttributesEx has mfr_path_type 0x%x", dllInstance, cohorts.file_mfr.Request_MfrPathType);
+#endif
                 break;
             }
         }
@@ -251,6 +257,9 @@ BOOL __stdcall GetFileAttributesExFixup(
     if (fileName != nullptr)
     {
         std::wstring LongFileName = MakeLongPath(widen(fileName));
+#if MOREDEBUG
+        Log(L"[%d] GetFileAttributesEx: unfixed versus %s", dllInstance, LongFileName.c_str());
+#endif
         retfinal = impl::GetFileAttributesEx(LongFileName.c_str(), infoLevelId, fileInformation);
     }
     else
@@ -263,12 +272,17 @@ BOOL __stdcall GetFileAttributesExFixup(
     if (retfinal == 0)
     {
         Log(L"[%d] GetFileAttributesEx: returns GetLastError=0x%x", dllInstance, GetLastError());
+        if (GetLastError() == 2)
+        {
+            retfinal = impl::GetFileAttributesEx(fileName, infoLevelId, fileInformation);
+            Log(L"[%d] GetFileAttributesEx: returns retry retfinal=%d", dllInstance, retfinal);
+        }
     }
     else
     {
         if (fileInformation != NULL)
         {
-            Log(L"[%d] GetFileAttributesEx         Attributes 0x%x", dllInstance, ((LPWIN32_FILE_ATTRIBUTE_DATA)fileInformation)->dwFileAttributes);
+            Log(L"[%d] GetFileAttributesEx         Attributes %s", dllInstance, Log_FlagsAndAttributes(((LPWIN32_FILE_ATTRIBUTE_DATA)fileInformation)->dwFileAttributes).c_str());
             Log(L"[%d] GetFileAttributesEx         Creation 0x%x 0x%x", dllInstance, ((LPWIN32_FILE_ATTRIBUTE_DATA)fileInformation)->ftCreationTime.dwHighDateTime,
                 ((LPWIN32_FILE_ATTRIBUTE_DATA)fileInformation)->ftCreationTime.dwLowDateTime);
             Log(L"[%d] GetFileAttributesEx         Access   0x%x 0x%x", dllInstance, ((LPWIN32_FILE_ATTRIBUTE_DATA)fileInformation)->ftLastAccessTime.dwHighDateTime,

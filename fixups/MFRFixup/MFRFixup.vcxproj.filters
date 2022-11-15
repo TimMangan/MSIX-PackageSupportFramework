@@ -9,10 +9,6 @@
       <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
       <Extensions>h;hh;hpp;hxx;h++;hm;inl;inc;ipp;xsd</Extensions>
     </Filter>
-    <Filter Include="Resource Files">
-      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
-      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
-    </Filter>
     <Filter Include="Common Source">
       <UniqueIdentifier>{d09c4d8e-8e46-48cb-80be-05ef2ee04f64}</UniqueIdentifier>
     </Filter>
@@ -48,6 +44,9 @@
     </Filter>
     <Filter Include="Source Files\Intercepts\WorkingDirectories">
       <UniqueIdentifier>{5f9d1f78-fefd-45c4-8c26-86ad814159ba}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Intercepts\ShellExecutes">
+      <UniqueIdentifier>{b8137ed3-aa4d-4208-a194-9144fcce302b}</UniqueIdentifier>
     </Filter>
     <Filter Include="Source Files\Intercepts\FindsAndSearches">
       <UniqueIdentifier>{a7870d12-0486-40da-add7-29f0358262e8}</UniqueIdentifier>
@@ -211,6 +210,12 @@
     </ClCompile>
     <ClCompile Include="DetermineCohorts.cpp">
       <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="ShellExecuteEx.cpp">
+      <Filter>Source Files\Intercepts\ShellExecutes</Filter>
+    </ClCompile>
+    <ClCompile Include="ShellExecute.cpp">
+      <Filter>Source Files\Intercepts\ShellExecutes</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

@@ -72,7 +72,7 @@
     <ClCompile Include="GetPrivateProfileSectionNamesFixup.cpp" />
     <ClCompile Include="WritePrivateProfileSectionFixup.cpp" />
     <ClCompile Include="WritePrivateProfileStructFixup.cpp" />
-    <ClCompile Include="SetWorkingDirectory.cpp" />
+    <ClCompile Include="SetDllWorkingDirectory.cpp" />
     <ClCompile Include="FindFirstFileFixupV2.cpp">
       <Filter>src</Filter>
     </ClCompile>

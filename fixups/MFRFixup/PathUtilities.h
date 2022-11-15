@@ -55,6 +55,13 @@ extern BOOL Cow(std::wstring from, std::wstring to, int dllInstance, std::wstrin
 extern std::filesystem::path ConvertPathToShortPath(std::filesystem::path inputPath);
 
 extern bool IsCreateForChange(DWORD desiredAccess, DWORD creationDisposition, DWORD flagsAndAttributes);
+extern bool IsCreateForDirectory(DWORD desiredAccess, DWORD creationDisposition, DWORD flagsAndAttributes);
+
+extern std::wstring Log_DesiredAccess(DWORD desiredAccess);
+extern std::wstring Log_ShareMode(DWORD shareMode);
+extern std::wstring Log_CreationDisposition(DWORD creationDisposition);
+extern std::wstring Log_FlagsAndAttributes(DWORD flagsAndAttributes);
+
 
 #if NEEDED
 inline std::wstring widen(std::string_view str, UINT codePage = CP_UTF8)
