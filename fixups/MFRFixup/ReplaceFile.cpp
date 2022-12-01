@@ -84,10 +84,10 @@ BOOL __stdcall ReplaceFileFixup(
             wReplacementFileName = AdjustSlashes(wReplacementFileName);
 
             Cohorts cohortsReplaced;
-            DetermineCohorts(wReplacedFileName, &cohortsReplaced, moredebug, dllInstance, L"ReplaceFileFixup");
+            DetermineCohorts(wReplacedFileName, &cohortsReplaced, moredebug, dllInstance, L"ReplaceFileFixup (replacedFile)");
 
             Cohorts cohortsReplacement;
-            DetermineCohorts(wReplacementFileName, &cohortsReplacement, moredebug, dllInstance, L"ReplaceFileFixup");
+            DetermineCohorts(wReplacementFileName, &cohortsReplacement, moredebug, dllInstance, L"ReplaceFileFixup (replacementFile)");
 
 
             // Determine if path of file to be replaced and use redirection area.
@@ -184,7 +184,7 @@ BOOL __stdcall ReplaceFileFixup(
                             UseReplacementFile = cohortsReplacement.WsPackage;
                         }
                         else if (cohortsReplacement.UsingNative &&
-                                 PathExists(cohortsReplacement.WsNative.c_str()))
+                            PathExists(cohortsReplacement.WsNative.c_str()))
                         {
                             UseReplacementFile = cohortsReplacement.WsNative;
                         }
@@ -266,7 +266,7 @@ BOOL __stdcall ReplaceFileFixup(
                             UseReplacementFile = cohortsReplacement.WsPackage;
                         }
                         else if (cohortsReplacement.UsingNative &&
-                                 PathExists(cohortsReplacement.WsNative.c_str()))
+                            PathExists(cohortsReplacement.WsNative.c_str()))
                         {
                             UseReplacementFile = cohortsReplacement.WsNative;
                         }
@@ -306,7 +306,7 @@ BOOL __stdcall ReplaceFileFixup(
                             UseReplacementFile = cohortsReplacement.WsPackage;
                         }
                         else if (cohortsReplacement.UsingNative &&
-                                 PathExists(cohortsReplacement.WsNative.c_str()))
+                            PathExists(cohortsReplacement.WsNative.c_str()))
                         {
                             UseReplacementFile = cohortsReplacement.WsNative;
                         }
@@ -349,7 +349,7 @@ BOOL __stdcall ReplaceFileFixup(
                 std::wstring wBackupFileName;
                 wBackupFileName = widen(backupFileName);
                 Cohorts cohortsBackup;
-                DetermineCohorts(wBackupFileName, &cohortsBackup, moredebug, dllInstance, L"ReplaceFileFixup");
+                DetermineCohorts(wBackupFileName, &cohortsBackup, moredebug, dllInstance, L"ReplaceFileFixup (backup)");
 
                 std::wstring UseBackupFile = cohortsBackup.WsRequested;
                 // Determing the backup destination in redirection area
@@ -386,7 +386,7 @@ BOOL __stdcall ReplaceFileFixup(
                     if (cohortsBackup.map.Valid_mapping && !cohortsBackup.map.IsAnExclusionToRedirect)
                     {
                         UseBackupFile = cohortsBackup.WsRedirected;
-                        break; 
+                        break;
                     }
                     else
                     {
@@ -462,7 +462,7 @@ BOOL __stdcall ReplaceFileFixup(
                     rldUseReplacedFile = MakeLongPath(cohortsReplaced.WsPackage);
                 }
                 else if (cohortsReplaced.UsingNative &&
-                         PathExists(cohortsReplaced.WsNative.c_str()))
+                    PathExists(cohortsReplaced.WsNative.c_str()))
                 {
                     rldUseReplacedFile = MakeLongPath(cohortsReplaced.WsNative);
                 }
@@ -479,7 +479,14 @@ BOOL __stdcall ReplaceFileFixup(
 #endif               
                 retfinal = impl::CopyFile(rldUseReplacedFile.c_str(), rldUseBackupFile.c_str(), false);
 #if MOREDEBUG
-                Log(L"[%d] ReplaceFileFixup backup copy return is %d", dllInstance, retfinal);
+                if (retfinal != 0)
+                {
+                    Log(L"[%d] ReplaceFileFixup backup copy return is FAILURE 0x%x", dllInstance, GetLastError());
+                }
+                else
+                {
+                    Log(L"[%d] ReplaceFileFixup backup copy return is SUCCESS 0x%x", dllInstance, retfinal);
+                }
 #endif
             }
 
@@ -501,7 +508,7 @@ BOOL __stdcall ReplaceFileFixup(
                     }
                 }
                 else if (cohortsReplaced.UsingNative &&
-                         PathExists(cohortsReplaced.WsNative.c_str()))
+                    PathExists(cohortsReplaced.WsNative.c_str()))
                 {
                     if (Cow(cohortsReplaced.WsNative, cohortsReplaced.WsRedirected, dllInstance, L"ReplaceFileFixup"))
                     {
@@ -515,7 +522,7 @@ BOOL __stdcall ReplaceFileFixup(
                 else
                 {
 #if _DEBUG
-                    Log(L"[%d] ReplaceFileFixup: Return 0 as Replaced file not found.", dllInstance);
+                    Log(L"[%d] ReplaceFileFixup: Return FAILURE 0 as Replaced file not found.", dllInstance);
 #endif
                     SetLastError(ERROR_FILE_NOT_FOUND);
                     return 0;
@@ -537,7 +544,7 @@ BOOL __stdcall ReplaceFileFixup(
                     }
                 }
                 else if (cohortsReplacement.UsingNative &&
-                         PathExists(cohortsReplacement.WsNative.c_str()))
+                    PathExists(cohortsReplacement.WsNative.c_str()))
                 {
                     // The function might fail with the source in the native area, but if so it never would have worked natively, 
                     // so skip the copy.
@@ -546,7 +553,7 @@ BOOL __stdcall ReplaceFileFixup(
                 else
                 {
 #if _DEBUG
-                    Log(L"[%d] ReplaceFileFixup: Return 0 as Replacementfile not found.", dllInstance);
+                    Log(L"[%d] ReplaceFileFixup: Return FAILURE as Replacementfile not found.", dllInstance);
 #endif
                     SetLastError(ERROR_FILE_NOT_FOUND);
                     return 0;
@@ -573,7 +580,14 @@ BOOL __stdcall ReplaceFileFixup(
             }
             retfinal = impl::ReplaceFile(rldUseReplacedFile.c_str(), rldUseReplacementFile.c_str(), nullptr, Replace_replaceFlags, exclude, reserved);
 #if _DEBUG
-            Log(L"[%d] ReplaceFileFixup returns %d", dllInstance, retfinal);
+            if (retfinal == 0)
+            {
+                Log(L"[%d] ReplaceFileFixup returnsFAILURE 0x%x", dllInstance, GetLastError());
+            }
+            else
+            {
+                Log(L"[%d] ReplaceFileFixup returns SUCCESS 0x%x", dllInstance, retfinal);
+            }
 #endif
             return retfinal;
 

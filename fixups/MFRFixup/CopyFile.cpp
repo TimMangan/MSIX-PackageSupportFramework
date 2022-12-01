@@ -37,7 +37,7 @@
             } \
             else \
             { \
-                Log(L"[%d] CopyFileFixup: return FAIL err=0x%x", dllInstance, GetLastError()); \
+                Log(L"[%d] CopyFileFixup: return FAILURE err=0x%x", dllInstance, GetLastError()); \
             } \
         } \
         return retfinal; \
@@ -76,10 +76,10 @@ BOOL __stdcall CopyFileFixup(_In_ const CharT* existingFileName, _In_ const Char
             // This get is inheirently a write operation in all cases.
             // We will always want the redirected location for the new file name.
             Cohorts cohortsExisting;
-            DetermineCohorts(wExistingFileName, &cohortsExisting, moredebug, dllInstance, L"CopyFileFixup");
+            DetermineCohorts(wExistingFileName, &cohortsExisting, moredebug, dllInstance, L"CopyFileFixup (existing)");
 
             Cohorts cohortsNew;
-            DetermineCohorts(wNewFileName, &cohortsNew, moredebug, dllInstance, L"CopyFileFixup");
+            DetermineCohorts(wNewFileName, &cohortsNew, moredebug, dllInstance, L"CopyFileFixup (new)");
             std::wstring newFileWsRedirected;
             
 

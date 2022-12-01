@@ -53,10 +53,10 @@ BOOL __stdcall MoveFileFixup(_In_ const CharT* existingFileName, _In_ const Char
             wExistingFileName = AdjustSlashes(wExistingFileName);
 
             Cohorts cohortsNew;
-            DetermineCohorts(wNewFileName, &cohortsNew, moredebug, dllInstance, L"MoveFileFixup");
+            DetermineCohorts(wNewFileName, &cohortsNew, moredebug, dllInstance, L"MoveFileFixup (newFile)");
 
             Cohorts cohortsExisting;
-            DetermineCohorts(wExistingFileName, &cohortsExisting, moredebug, dllInstance, L"MoveFileFixup");
+            DetermineCohorts(wExistingFileName, &cohortsExisting, moredebug, dllInstance, L"MoveFileFixup (existingFile)");
 
 
             // Determine if path of existing file and if in package.
@@ -282,7 +282,14 @@ BOOL __stdcall MoveFileFixup(_In_ const CharT* existingFileName, _In_ const Char
 #endif
                 retfinal = impl::MoveFile(rldUseExistingFile.c_str(), rldUseNewFile.c_str());
 #if _DEBUG
-                Log(L"[%d] MoveFileFixup returns %d", dllInstance, retfinal);
+                if (retfinal == 0)
+                {
+                    Log(L"[%d] MoveFileFixup returns FAILURE 0x%x", dllInstance, GetLastError());
+                }
+                else
+                {
+                    Log(L"[%d] MoveFileFixup returns SUCCESS 0x%x", dllInstance, retfinal);
+                }
 #endif
                 return retfinal;
             }
@@ -305,11 +312,11 @@ BOOL __stdcall MoveFileFixup(_In_ const CharT* existingFileName, _In_ const Char
                     // std::filesystem::copy has some edge cases that might throw us for a loop requiring detection of edge
                     // cases that need to be handled differently.  
                     // Limiting use of this as a substitution to the directory scenario *should* keep that from happening.
-                    const std::filesystem::copy_options copyOptions =  std::filesystem::copy_options::recursive;
+                    const std::filesystem::copy_options copyOptions = std::filesystem::copy_options::recursive;
                     std::error_code eCode;
                     std::filesystem::copy(UseExistingFile.c_str(),   // Not sure if std supports long path syntax
-                                          UseNewFile.c_str(),
-                                          copyOptions, eCode); 
+                        UseNewFile.c_str(),
+                        copyOptions, eCode);
                     if (eCode)
                     {
                         retfinal = 0; // error
@@ -319,7 +326,15 @@ BOOL __stdcall MoveFileFixup(_In_ const CharT* existingFileName, _In_ const Char
                         retfinal = 1; // success
                     }
 #if _DEBUG
-                        Log(L"[%d] MoveFileFixup returns %d", dllInstance, retfinal);
+                    if (retfinal == 0)
+                    {
+                        Log(L"[%d] MoveFileFixup via copy(file) returns FAILURE 0x%x GetLastError 0x%x", dllInstance, eCode, GetLastError());
+                    }
+                    else
+                    {
+                        Log(L"[%d] MoveFileFixup via copy(file) returns SUCCESS 0x%x", dllInstance, retfinal);
+                    }
+                    // TODO: remove old??
 #endif
                     return retfinal;
                 }
@@ -343,7 +358,15 @@ BOOL __stdcall MoveFileFixup(_In_ const CharT* existingFileName, _In_ const Char
                         retfinal = 1; // success
                     }
 #if _DEBUG
-                    Log(L"[%d] MoveFileFixup returns %d", dllInstance, retfinal);
+                    if (retfinal == 0)
+                    {
+                        Log(L"[%d] MoveFileFixup via copy(dir) returns FAILURE 0x%x GetLastError 0x%x", dllInstance, eCode, GetLastError());
+                    }
+                    else
+                    {
+                        Log(L"[%d] MoveFileFixup via copy(dir) returns SUCCESS 0x%x", dllInstance, retfinal);
+                    }
+                    // TODO: remove old???
 #endif
                     return retfinal;
                 }

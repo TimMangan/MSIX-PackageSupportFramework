@@ -138,7 +138,14 @@ BOOLEAN __stdcall CreateSymbolicLinkFixup(
                 //retfinal = impl::CreateSymbolicLink(rldSymlinkFileNameRedirected.c_str(), rldTargetFileNameRedirected.c_str(), flags);
                 retfinal = impl::CreateSymbolicLink(rldSymlinkFileNameRedirected.c_str(), rldTargetFileNameRedirected.c_str(), flags | SYMBOLIC_LINK_FLAG_ALLOW_UNPRIVILEGED_CREATE);
 #if _DEBUG
-                Log(L"[%d] CreateSymbolicLinkFixup returns %d", dllInstance, retfinal);
+                if (retfinal == 0)
+                {
+                    Log(L"[%d] CreateSymbolicLinkFixup returns FAILURE 0x%x", dllInstance, GetLastError());
+                }
+                else
+                {
+                    Log(L"[%d] CreateSymbolicLinkFixup returns SUCCESS 0x%x", dllInstance, retfinal);
+                }
 #endif
                 return retfinal;
 

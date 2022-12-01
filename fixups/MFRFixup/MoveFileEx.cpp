@@ -59,10 +59,10 @@ BOOL __stdcall MoveFileExFixup(
 
 
             Cohorts cohortsNew;
-            DetermineCohorts(wNewFileName, &cohortsNew, moredebug, dllInstance, L"MoveFileExFixup");
+            DetermineCohorts(wNewFileName, &cohortsNew, moredebug, dllInstance, L"MoveFileExFixup (newFileName)");
 
             Cohorts cohortsExisting;
-            DetermineCohorts(wExistingFileName, &cohortsExisting, moredebug, dllInstance, L"MoveFileExFixup");
+            DetermineCohorts(wExistingFileName, &cohortsExisting, moredebug, dllInstance, L"MoveFileExFixup (existingFileName)");
 
             // Determine if path of existing file and if in package.
             std::wstring UseExistingFile = cohortsExisting.WsRequested;
@@ -289,7 +289,14 @@ BOOL __stdcall MoveFileExFixup(
 #endif
                 retfinal = impl::MoveFileEx(rldUseExistingFile.c_str(), rldUseNewFile.c_str(),flags);
 #if _DEBUG
-                Log(L"[%d] MoveFileExFixup returns %d", dllInstance, retfinal);
+                if (retfinal == 0)
+                {
+                    Log(L"[%d] MoveFileExFixup returns FAILURE 0x%x", dllInstance, GetLastError());
+                }
+                else
+                {
+                    Log(L"[%d] MoveFileExFixup returns SUCCESS 0x%x", dllInstance, retfinal);
+                }
 #endif
                 return retfinal;
             }
@@ -326,7 +333,15 @@ BOOL __stdcall MoveFileExFixup(
                         retfinal = 1; // success
                     }
 #if _DEBUG
-                    Log(L"[%d] MoveFileExFixup returns %d", dllInstance, retfinal);
+                    if (retfinal == 0)
+                    {
+                        Log(L"[%d] MoveFileExFixup via copy(file) returns FAILURE 0x%x GetLastError 0x%x", dllInstance, eCode, GetLastError());
+                    }
+                    else
+                    {
+                        Log(L"[%d] MoveFileExFixup via copy(file) returns SUCCESS 0x%x", dllInstance, retfinal);
+                    }
+                    // TODO: remove old???
 #endif
                     return retfinal;
                 }
@@ -350,7 +365,15 @@ BOOL __stdcall MoveFileExFixup(
                         retfinal = 1; // success
                     }
 #if _DEBUG
-                    Log(L"[%d] MoveFileExFixup returns %d", dllInstance, retfinal);
+                    if (retfinal == 0)
+                    {
+                        Log(L"[%d] MoveFileExFixup via copy(dir) returns FAILURE 0x%x GetLastError 0x%x", dllInstance, eCode, GetLastError());
+                    }
+                    else
+                    {
+                        Log(L"[%d] MoveFileExFixup via copy(dir) returns SUCCESS 0x%x", dllInstance, retfinal);
+                    }
+                    // TODO: Remove old???
 #endif
                     return retfinal;
                 }

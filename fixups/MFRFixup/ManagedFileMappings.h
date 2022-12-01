@@ -23,7 +23,7 @@ namespace mfr
     };
     DEFINE_ENUM_FLAG_OPERATORS(mfr_redirect_flags);
 
-#if _DEBUG
+
     inline const wchar_t* RedirectFlagsName(mfr_redirect_flags flag)
     {
         switch (flag)
@@ -41,7 +41,7 @@ namespace mfr
             return L"disabled";
         }
     }
-#endif
+
 
     // Defines a mapping between Native, Package, and Redirected locations
     struct mfr_folder_mapping
@@ -58,6 +58,7 @@ namespace mfr
         mfr_redirect_flags      RedirectionFlags = mfr_redirect_flags::disabled;
 
     };
+    extern mfr_folder_mapping CloneFolderMapping(mfr_folder_mapping);
 
     extern std::vector<mfr_folder_mapping> g_MfrFolderMappings;
 

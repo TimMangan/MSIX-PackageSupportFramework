@@ -33,7 +33,14 @@ HANDLE  WRAPPER_CREATEFILE(std::wstring theDestinationFile,
     HANDLE retfinal = impl::CreateFileW(LongDestinationFile.c_str(), desiredAccess, shareMode, securityAttributes, creationDisposition, flagsAndAttributes, templateFile);
     if (debug)
     {
-        Log(L"[%d] CreateFile returns handle 0x%x on file '%s'", dllInstance, retfinal, LongDestinationFile.c_str() );
+        if (retfinal == INVALID_HANDLE_VALUE)
+        {
+            Log(L"[%d] CreateFile returns FAILURE 0x%x on file '%s'", dllInstance, GetLastError(), LongDestinationFile.c_str());
+        }
+        else
+        {
+            Log(L"[%d] CreateFile returns handle 0x%x on file '%s'", dllInstance, retfinal, LongDestinationFile.c_str());
+        }
     }
     return retfinal;
 }
@@ -81,6 +88,19 @@ HANDLE __stdcall CreateFileFixup(_In_ const CharT* pathName,
             bool IsAWriteCase = IsCreateForChange(desiredAccess, creationDisposition, flagsAndAttributes);
             bool IsADirectoryCase = IsCreateForDirectory(desiredAccess, creationDisposition, flagsAndAttributes);
 
+#if NOTOBSOLETE
+            if (!IsAWriteCase && !IsADirectoryCase)
+            {
+                // Windows Forms apps can use System.Configuration to store settings in their exe.Config file.  The Save method ends up making calls to
+                // System.Security.AccessControl.FileSecurity to change the file attributes and if this is a package file it will cause an exception.
+                // An example of this is the application mRemoteNG.  We can avoid this by detecting the file at opening and make it do a copy to start with.
+                if (IsSpecialCaseforChange(wPathName))
+                {
+                    IsAWriteCase = true;
+                }
+            }
+#endif
+
 #if MOREDEBUG
             Log(L"[%d] CreateFileFixup: Could be a write operation=%d", dllInstance, IsAWriteCase);
             Log(L"[%d] CreateFileFixup: Is a directory operation=%d", dllInstance, IsADirectoryCase);
@@ -91,11 +111,12 @@ HANDLE __stdcall CreateFileFixup(_In_ const CharT* pathName,
             Cohorts cohorts;
             DetermineCohorts(wPathName, &cohorts, moredebug, dllInstance, L"CreateFileFixup");
 #if MOREDEBUG
-            LogString(dllInstance, L"CreateFileFixup: Cohort redirection", cohorts.WsRedirected.c_str());
-            LogString(dllInstance, L"CreateFileFixup: Cohort package", cohorts.WsPackage.c_str());
-            LogString(dllInstance, L"CreateFileFixup: Cohort native", cohorts.WsNative.c_str());
-            Log(L"[%d] CreateFileFixup: MfrPathType=ox%x", dllInstance, cohorts.file_mfr.Request_MfrPathType);
+            //LogString(dllInstance, L"CreateFileFixup: Cohort redirection", cohorts.WsRedirected.c_str());
+            //LogString(dllInstance, L"CreateFileFixup: Cohort package", cohorts.WsPackage.c_str());
+            //LogString(dllInstance, L"CreateFileFixup: Cohort native", cohorts.WsNative.c_str());
+            Log(L"[%d] CreateFileFixup: MfrPathType=%s", dllInstance, MfrFlagTypesString(cohorts.file_mfr.Request_MfrPathType));
 #endif
+
             switch (cohorts.file_mfr.Request_MfrPathType)
             {
             case mfr::mfr_path_types::in_native_area:

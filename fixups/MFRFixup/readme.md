@@ -10,7 +10,9 @@ The goals of this alternative are:
 
 | NOTICE |
 | --------------------------------------------------------------------------------------- |
-| ** PLEASE DO NOT USE THIS FIXUP AT THIS TIME.  IT IS A WORK IN PROGRESS. WHILE ALL KNOWN NECESSARY INTERCEPTS HAVE BEEN COMPLETED AND UNIT TESTED, TESTING AGAINST A SUITE OF KNOWN APPLICATIONS IS STILL UNDER WAY.  A LIST OF API INTERCEPTS USED BY THIS FIXUP AND THEIR STATUS IS GIVEN IN A TABLE AT THE BOTTOM OF THIS README. |
+| ** THIS IS A WORK IN PROGRESS AND MAY NOT BE PRODUCTION QUALITY. ** |
+| At this time you should try the FileRedirectionFixup first.  But if stuck, you can give this a try instead. |
+| CURRENT STATUS: All necessary known intercepts have been completed and unit tested. Testing against a suite of known applications is still underway. A list of API intercepts used by this fixup and their staus is given in a table at the bottom of this readme. |
 
 ## Features
 When injected into a process, the MFRFixup supports the ability to:
@@ -24,6 +26,7 @@ When injected into a process, the MFRFixup supports the ability to:
 > * Once the redirection location is determined the behavior is usually:
 > > * In the case of a file, Copy-on-write (COW) is performed. If the file is not present in the redirection area and the call is requesting permisissions to make a modification, then it is copied from the existing location to the redirection location (creating folder structures as needed), and from then on the redirected copy is used.  This is different from the File Redirection Fixup that performs Copy-on-Access (COA).
 > > * In the case of a folder the redirected folder is created (including folder structures) as needed and the redirected folder is used.
+> * Detects .Net based "Winforms" apps that might crash when saving settings and forces them to use COW on the config file, even when they don't ask.
 
 ## Detecting the need for this fixup
 A static analysis of the files in the package is often all that is needed:
@@ -270,9 +273,11 @@ The following APIs are expected to be targeted.  The current status for this wor
 | SearchPath | not started, may not be needed |
 | SetCurrentDirectory | not started, may not be needed |
 | SetFileAttributes | Complete |
+| ShellExecute | Intercept for logging only at this time |
+| ShellExecuteEx | Intercept for logging only at this time |
 | WritePrivateProfileSection | Complete |
 | WritePrivateProfileString | Complete |
 | WritePrivateProfileStruct | Complete |
 
 Additionally, there are numberous "Transacted" API calls that are generally not used and are ignored.  
-Calls that use open file handles, such as ReadFile, WriteFile, and CloseHandle, are also ignored.
+Calls that use open file handles, such as ReadFile, WriteFile, and CloseHandle, are also ignored as there is no need to intercept those.

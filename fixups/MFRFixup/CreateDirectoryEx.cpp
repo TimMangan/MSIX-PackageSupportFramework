@@ -8,7 +8,7 @@
 
 
 #if _DEBUG
-//#define MOREDEBUG 1
+#define MOREDEBUG 1
 #endif
 
 #include <errno.h>
@@ -32,7 +32,14 @@
         } \
         if (debug) \
         { \
-            Log(L"[%d] CreateDirectoryEx returns directory '%s' and result 0x%x", dllInstance, LongDestinationDirectory.c_str(), retfinal); \
+            if (retfinal == 0) \
+            { \
+                Log(L"[%d] CreateDirectoryEx returns FAILURE 0x%x and directory '%s'", dllInstance, retfinal, LongDestinationDirectory.c_str()); \
+            } \
+            else \
+            { \
+                Log(L"[%d] CreateDirectoryEx returns SUCCESS 0x%x and directory '%s'", dllInstance, retfinal, LongDestinationDirectory.c_str()); \
+            } \
         } \
         return retfinal; \
     }
@@ -74,10 +81,10 @@ BOOL __stdcall CreateDirectoryExFixup(
             // This get is inheirently a write operation in all cases.
             // We will always want the redirected location for the new directory.
             Cohorts cohortsTemplate;
-            DetermineCohorts(WtemplateDirectory, &cohortsTemplate, moredebug, dllInstance, L"CreateDirectoryExFixup");
+            DetermineCohorts(WtemplateDirectory, &cohortsTemplate, moredebug, dllInstance, L"CreateDirectoryExFixup (template)");
 
             Cohorts cohortsNew;
-            DetermineCohorts(WnewDirectory, &cohortsNew, moredebug, dllInstance, L"CreateDirectoryExFixup");
+            DetermineCohorts(WnewDirectory, &cohortsNew, moredebug, dllInstance, L"CreateDirectoryExFixup (directory)");
             std::wstring newDirectoryWsRedirected;
 
 

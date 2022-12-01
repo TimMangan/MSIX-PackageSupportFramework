@@ -494,8 +494,24 @@ namespace mfr
     }  // Find_TraditionalRedirMapping_FromRedirPath_BackwardSearch() 
 #endif
 
-   
-    mfr_folder_mapping  Find_TraditionalRedirMapping_FromPackagePath_ForwardSearch(std::wstring WsPath)
+    mfr_folder_mapping CloneFolderMapping(mfr_folder_mapping inputMap)
+    {
+        mfr_folder_mapping newMap;
+        newMap.DoesRuntimeMapNativeToVFS = inputMap.DoesRuntimeMapNativeToVFS;
+        newMap.FolderId = inputMap.FolderId;
+        newMap.IsAnExclusionToRedirect = inputMap.IsAnExclusionToRedirect;
+        newMap.NativePathBase = inputMap.NativePathBase;
+        newMap.PackagePathBase = inputMap.PackagePathBase;
+        newMap.RedirectedPathBase = inputMap.RedirectedPathBase;
+        newMap.RedirectionFlags = inputMap.RedirectionFlags;
+        newMap.Valid_mapping = inputMap.Valid_mapping;
+        newMap.VFSFolderName = inputMap.VFSFolderName;
+        return newMap;
+    }
+
+
+
+    mfr_folder_mapping Find_TraditionalRedirMapping_FromPackagePath_ForwardSearch(std::wstring WsPath)
     {
         mfr::mfr_folder_mapping packagemap;
         //{ true, FID_ProgramFilesX64, L"ProgramFilesX64", L"ProgramFilesX64", g_packageVfsRootPath / L"ProgramFilesX64"sv, true, g_writablePackageRootPath / L"VFS\\ProgramFilesX64"sv, mfr::mfr_redirect_flags::prefer_redirection_containerized });

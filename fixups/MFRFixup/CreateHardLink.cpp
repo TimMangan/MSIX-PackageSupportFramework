@@ -118,7 +118,14 @@ BOOL __stdcall CreateHardLinkFixup(
 #endif
                 retfinal = impl::CreateHardLink(rldNewFileNameRedirected.c_str(), rldExistingFileNameRedirected.c_str(), securityAttributes);
 #if _DEBUG
-                Log(L"[%d] CreateHardLinkFixup returns %d", dllInstance, retfinal);
+                if (retfinal == 0)
+                {
+                    Log(L"[%d] CreateHardLinkFixup returns Failure 0x%x", dllInstance, GetLastError());
+                }
+                else
+                {
+                    Log(L"[%d] CreateHardLinkFixup returns SUCCESS 0x%x", dllInstance, retfinal);
+                }
 #endif
                 return retfinal;
             }

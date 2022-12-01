@@ -34,7 +34,7 @@ void LogAttributesEx(DWORD dllInstance, LPVOID fileInformation)
             ((LPWIN32_FILE_ATTRIBUTE_DATA)fileInformation)->ftLastAccessTime.dwLowDateTime);
         Log(L"[%d] GetFileAttributesEx         Write    0x%x 0x%x", dllInstance, ((LPWIN32_FILE_ATTRIBUTE_DATA)fileInformation)->ftLastWriteTime.dwHighDateTime,
             ((LPWIN32_FILE_ATTRIBUTE_DATA)fileInformation)->ftLastWriteTime.dwLowDateTime);
-        Log(L"[%d] GetFileAttributesEx         Size     0x%I64x 0x%I64x", dllInstance, ((LPWIN32_FILE_ATTRIBUTE_DATA)fileInformation)->nFileSizeHigh,
+        Log(L"[%d] GetFileAttributesEx         Size     0x%x 0x%x", dllInstance, ((LPWIN32_FILE_ATTRIBUTE_DATA)fileInformation)->nFileSizeHigh,
             ((LPWIN32_FILE_ATTRIBUTE_DATA)fileInformation)->nFileSizeLow);
     }
 }
@@ -42,18 +42,31 @@ void LogAttributesEx(DWORD dllInstance, LPVOID fileInformation)
 
 
 
-#define WRAPPER_GETFILEATTRIBUTESEX(theDestinationFilename, debug) \
+#define WRAPPER_GETFILEATTRIBUTESEX(theDestinationFilename, debug, moredebug, wsWhich) \
     { \
         std::wstring LongDestinationFilename = MakeLongPath(theDestinationFilename); \
         retfinal = impl::GetFileAttributesEx(LongDestinationFilename.c_str(), infoLevelId, fileInformation); \
+        DWORD error = GetLastError(); \
         if (retfinal != 0) \
         { \
             if (debug) \
             { \
-                Log(L"[%d] GetFileAttributesEx returns file '%s' and result 0x%x", dllInstance, LongDestinationFilename.c_str(), retfinal); \
+                Log(L"[%d] GetFileAttributesEx returns result SUCCESS and file '%s'", dllInstance, LongDestinationFilename.c_str()); \
                 LogAttributesEx(dllInstance, fileInformation); \
             } \
             return retfinal; \
+        } \
+        if (error == ERROR_FILE_NOT_FOUND) \
+        { \
+            anyFileNotFound = true; \
+        } \
+        else if (error == ERROR_PATH_NOT_FOUND) \
+        { \
+            anyPathNotFound = true; \
+        } \
+        if (moredebug) \
+        { \
+           Log(L"[%d] GetFileAttributesExFixup FAILED 0x%x for %s.", dllInstance, error, wsWhich); \
         } \
     }
 
@@ -84,10 +97,12 @@ BOOL __stdcall GetFileAttributesExFixup(
             wfileName = AdjustSlashes(wfileName);
 
 #if _DEBUG
-            Log(L"[%d] GetFileAttributesExFixup for fileName '%s' ", dllInstance, wfileName.c_str());
+            Log(L"[%d] GetFileAttributesExFixup level 0x%x for fileName '%s' ", dllInstance, infoLevelId, wfileName.c_str());
 #endif
             Cohorts cohorts;
             DetermineCohorts(wfileName, &cohorts, moreDebug, dllInstance, L"GetFileAttributesExFixup");
+            bool anyFileNotFound = false;
+            bool anyPathNotFound = false;
 
             switch (cohorts.file_mfr.Request_MfrPathType)
             {
@@ -99,12 +114,21 @@ BOOL __stdcall GetFileAttributesExFixup(
                     case mfr::mfr_redirect_flags::prefer_redirection_local:
                         if (!cohorts.map.IsAnExclusionToRedirect)
                         {
-                            // try the request path, which must be the local redirected version by definition, and then a package equivalent = 
-                            WRAPPER_GETFILEATTRIBUTESEX(cohorts.WsRedirected, debug);   // returns if successful.
+                            // try the request path, which must be the local redirected version by definition, and then a package equivalent  
+                            WRAPPER_GETFILEATTRIBUTESEX(cohorts.WsRedirected, debug, moreDebug, L"WsRedirected");   // returns if successful.
                         }
 
-                        WRAPPER_GETFILEATTRIBUTESEX(cohorts.WsPackage, debug);   // returns if successful.
+                        WRAPPER_GETFILEATTRIBUTESEX(cohorts.WsPackage, debug, moreDebug, L"WsPackage");   // returns if successful.
+
                         // Both failed if here
+                        if (anyFileNotFound)
+                        {
+                            SetLastError(ERROR_FILE_NOT_FOUND);
+                        }
+                        else if (anyPathNotFound)
+                        {
+                            SetLastError(ERROR_PATH_NOT_FOUND);
+                        }
 #if _DEBUG
                         Log(L"[%d] GetFileAttributesEx returns with result 0x%x and error =0x%x", dllInstance, retfinal, GetLastError());
 #endif
@@ -114,13 +138,22 @@ BOOL __stdcall GetFileAttributesExFixup(
                         if (!cohorts.map.IsAnExclusionToRedirect)
                         {
                             // try the redirected path, then package, then native.
-                            WRAPPER_GETFILEATTRIBUTESEX(cohorts.WsRedirected, debug);   // returns if successful.
+                            WRAPPER_GETFILEATTRIBUTESEX(cohorts.WsRedirected, debug, moreDebug, L"WsRedirected");   // returns if successful.
                         }
 
-                        WRAPPER_GETFILEATTRIBUTESEX(cohorts.WsPackage, debug);   // returns if successful.
+                        WRAPPER_GETFILEATTRIBUTESEX(cohorts.WsPackage, debug, moreDebug, L"WsPackage");   // returns if successful.
 
-                        WRAPPER_GETFILEATTRIBUTESEX(cohorts.WsNative, debug);   // returns if successful.
+                        WRAPPER_GETFILEATTRIBUTESEX(cohorts.WsNative, debug, moreDebug, L"WsNative");   // returns if successful.
+
                         // All failed if here
+                        if (anyFileNotFound)
+                        {
+                            SetLastError(ERROR_FILE_NOT_FOUND);
+                        }
+                        else if (anyPathNotFound)
+                        {
+                            SetLastError(ERROR_PATH_NOT_FOUND);
+                        }
 #if _DEBUG
                         Log(L"[%d] GetFileAttributesEx returns with result 0x%x and error =0x%x", dllInstance, retfinal, GetLastError());
 #endif
@@ -146,11 +179,20 @@ BOOL __stdcall GetFileAttributesExFixup(
                         if (!cohorts.map.IsAnExclusionToRedirect)
                         {
                             //// try the redirected path, then package, then don't need native.
-                            WRAPPER_GETFILEATTRIBUTESEX(cohorts.WsRedirected, debug);   // returns if successful.
+                            WRAPPER_GETFILEATTRIBUTESEX(cohorts.WsRedirected, debug, moreDebug, L"WsRedirected");   // returns if successful.
                         }
 
-                        WRAPPER_GETFILEATTRIBUTESEX(cohorts.WsPackage, debug);   // returns if successful.
+                        WRAPPER_GETFILEATTRIBUTESEX(cohorts.WsPackage, debug, moreDebug, "WsPackage");   // returns if successful.
+
                         // Both failed if here
+                        if (anyFileNotFound)
+                        {
+                            SetLastError(ERROR_FILE_NOT_FOUND);
+                        }
+                        else if (anyPathNotFound)
+                        {
+                            SetLastError(ERROR_PATH_NOT_FOUND);
+                        }
 #if _DEBUG
                         Log(L"[%d] GetFileAttributesEx returns with result 0x%x and error =0x%x", dllInstance, retfinal, GetLastError());
 #endif
@@ -172,11 +214,20 @@ BOOL __stdcall GetFileAttributesExFixup(
                         if (!cohorts.map.IsAnExclusionToRedirect)
                         {
                             // try the request path, which must be the local redirected version by definition, and then a package equivalent.
-                            WRAPPER_GETFILEATTRIBUTESEX(cohorts.WsRedirected, debug);   // returns if successful.
+                            WRAPPER_GETFILEATTRIBUTESEX(cohorts.WsRedirected, debug, moreDebug, L"WsRedirected");   // returns if successful.
                         }
 
-                        WRAPPER_GETFILEATTRIBUTESEX(cohorts.WsPackage, debug);   // returns if successful.
+                        WRAPPER_GETFILEATTRIBUTESEX(cohorts.WsPackage, debug, moreDebug, L"WsPackage");   // returns if successful.
+
                         // Both failed if here
+                        if (anyFileNotFound)
+                        {
+                            SetLastError(ERROR_FILE_NOT_FOUND);
+                        }
+                        else if (anyPathNotFound)
+                        {
+                            SetLastError(ERROR_PATH_NOT_FOUND);
+                        }
 #if _DEBUG
                         Log(L"[%d] GetFileAttributesEx returns with result 0x%x and error =0x%x", dllInstance, retfinal, GetLastError());
 #endif
@@ -186,13 +237,22 @@ BOOL __stdcall GetFileAttributesExFixup(
                         if (!cohorts.map.IsAnExclusionToRedirect)
                         {
                             // try the redirected path, then package, then native.
-                            WRAPPER_GETFILEATTRIBUTESEX(cohorts.WsRedirected, debug);  // returns if successful.
+                            WRAPPER_GETFILEATTRIBUTESEX(cohorts.WsRedirected, debug, moreDebug, L"WsRedirected");  // returns if successful.
                         }
 
-                        WRAPPER_GETFILEATTRIBUTESEX(cohorts.WsPackage, debug);  // returns if successful.
+                        WRAPPER_GETFILEATTRIBUTESEX(cohorts.WsPackage, debug, moreDebug, L"WsPackage");  // returns if successful.
 
-                        WRAPPER_GETFILEATTRIBUTESEX(cohorts.WsNative, debug);  // returns if successful.
+                        WRAPPER_GETFILEATTRIBUTESEX(cohorts.WsNative, debug, moreDebug, L"WsNative");  // returns if successful.
+
                         // All failed if here
+                        if (anyFileNotFound)
+                        {
+                            SetLastError(ERROR_FILE_NOT_FOUND);
+                        }
+                        else if (anyPathNotFound)
+                        {
+                            SetLastError(ERROR_PATH_NOT_FOUND);
+                        }
 #if _DEBUG
                         Log(L"[%d] GetFileAttributesEx returns with result 0x%x and error =0x%x", dllInstance, retfinal, GetLastError());
 #endif
@@ -211,14 +271,23 @@ BOOL __stdcall GetFileAttributesExFixup(
                     if (!cohorts.map.IsAnExclusionToRedirect)
                     {
                         // try the redirected path, then package, then native if relevant.
-                        WRAPPER_GETFILEATTRIBUTESEX(cohorts.WsRedirected, debug);  // returns if successful.
+                        WRAPPER_GETFILEATTRIBUTESEX(cohorts.WsRedirected, debug, moreDebug, L"WsRedirected");  // returns if successful.
                     }
 
-                    WRAPPER_GETFILEATTRIBUTESEX(cohorts.WsPackage, debug);  // returns if successful.
+                    WRAPPER_GETFILEATTRIBUTESEX(cohorts.WsPackage, debug, moreDebug, L"WsPackage");  // returns if successful.
 
                     if (cohorts.UsingNative)
                     {
-                        WRAPPER_GETFILEATTRIBUTESEX(cohorts.WsNative, debug);  // returns if successful.
+                        WRAPPER_GETFILEATTRIBUTESEX(cohorts.WsNative, debug, moreDebug, L"WsNative");  // returns if successful.
+                    }
+
+                    if (anyFileNotFound)
+                    {
+                        SetLastError(ERROR_FILE_NOT_FOUND);
+                    }
+                    else if (anyPathNotFound)
+                    {
+                        SetLastError(ERROR_PATH_NOT_FOUND);
                     }
 #if _DEBUG
                     Log(L"[%d] GetFileAttributesEx returns with result 0x%x and error =0x%x", dllInstance, retfinal, GetLastError());

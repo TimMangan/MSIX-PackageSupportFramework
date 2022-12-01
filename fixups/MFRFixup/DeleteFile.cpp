@@ -25,7 +25,14 @@ BOOL  WRAPPER_DELETEFILE(std::wstring theDeletingFile, DWORD dllInstance, bool d
     BOOL retfinal = impl::DeleteFileW(LongDeletingFile.c_str());
     if (debug)
     {
-        Log(L"[%d] DeleteFile returns on file '%s' and result 0x%x", dllInstance, LongDeletingFile.c_str(), retfinal);
+        if (retfinal == 0)
+        {
+            Log(L"[%d] DeleteFile returns result FAILURE 0x%x on file '%s'", dllInstance, GetLastError(), LongDeletingFile.c_str());
+        }
+        else
+        {
+            Log(L"[%d] DeleteFile returns result SUCCESS 0x%x on file '%s'", dllInstance, retfinal, LongDeletingFile.c_str());
+        }
     }
     return retfinal;
 }

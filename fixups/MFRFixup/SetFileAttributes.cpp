@@ -4,6 +4,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 //-------------------------------------------------------------------------------------------------------
 
+// Microsoft documentation for this API: https://learn.microsoft.com/en-us/windows/win32/api/fileapi/nf-fileapi-setfileattributesa
 
 #if _DEBUG
 #define MOREDEBUG 1
@@ -30,7 +31,14 @@
         retfinal = impl::SetFileAttributesW(LongDestinationFilename.c_str(),fileAttributes); \
         if (debug) \
         { \
-            Log(L"[%d] SetFileAttributes returns file '%s' and result 0x%x", dllInstance, LongDestinationFilename.c_str(), retfinal); \
+            if (retfinal == 0) \
+            { \
+                Log(L"[%d] SetFileAttributes returns FAILURE 0x%x and file '%s'", dllInstance, retfinal, LongDestinationFilename.c_str()); \
+            } \
+            else \
+            { \
+                Log(L"[%d] SetFileAttributes returns SUCCESS 0x%x and file '%s'", dllInstance, retfinal, LongDestinationFilename.c_str()); \
+            } \
         } \
         return retfinal; \
     }

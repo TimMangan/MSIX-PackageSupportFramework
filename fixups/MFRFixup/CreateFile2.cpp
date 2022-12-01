@@ -31,7 +31,14 @@ HANDLE  WRAPPER_CREATEFILE2(std::wstring theDestinationFile,
     HANDLE retfinal = impl::CreateFile2(LongDestinationFile.c_str(), desiredAccess, shareMode, creationDisposition, createExParams);
     if (debug)
     {
-        Log(L"[%d] CreateFile2 returns handle 0x%x and file '%s'", dllInstance, retfinal, LongDestinationFile.c_str());
+        if (retfinal == INVALID_HANDLE_VALUE)
+        {
+            Log(L"[%d] CreateFile2 returns FAILURE 0x%x on file '%s'", dllInstance, GetLastError(), LongDestinationFile.c_str());
+        }
+        else
+        {
+            Log(L"[%d] CreateFile2 returns handle 0x%x and file '%s'", dllInstance, retfinal, LongDestinationFile.c_str());
+        }       
     }
     return retfinal;
 }
@@ -87,6 +94,20 @@ HANDLE __stdcall CreateFile2Fixup(
             {
                 IsAWriteCase = IsCreateForChange(desiredAccess, creationDisposition, 0);
             }
+
+#if NOTOBSOLETE
+            if (!IsAWriteCase)
+            {
+                // Windows Forms apps can use System.Configuration to store settings in their exe.Config file.  The Save method ends up making calls to
+                // System.Security.AccessControl.FileSecurity to change the file attributes and if this is a package file it will cause an exception.
+                // An example of this is the application mRemoteNG.  We can avoid this by detecting the file at opening and make it do a copy to start with.
+                if (IsSpecialCaseforChange(wPathName))
+                {
+                    IsAWriteCase = true;
+                }
+            }
+#endif
+
 #if MOREDEBUG
             Log(L"[%d] CreateFile2Fixup: Could be a write operation=%d", dllInstance, IsAWriteCase);
 #endif
@@ -95,6 +116,12 @@ HANDLE __stdcall CreateFile2Fixup(
             // There may be a need to COW, jand may need to create parent folders in redirection area first.
             Cohorts cohorts;
             DetermineCohorts(wPathName, &cohorts, moredebug, dllInstance, L"CreateFile2Fixup");
+#if MOREDEBUG
+            //LogString(dllInstance, L"CreateFileFixup: Cohort redirection", cohorts.WsRedirected.c_str());
+            //LogString(dllInstance, L"CreateFileFixup: Cohort package", cohorts.WsPackage.c_str());
+            //LogString(dllInstance, L"CreateFileFixup: Cohort native", cohorts.WsNative.c_str());
+            Log(L"[%d] CreateFile2Fixup: MfrPathType=%s", dllInstance, MfrFlagTypesString(cohorts.file_mfr.Request_MfrPathType).c_str());
+#endif
 
             switch (cohorts.file_mfr.Request_MfrPathType)
             {

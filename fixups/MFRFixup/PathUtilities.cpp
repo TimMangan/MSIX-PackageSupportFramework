@@ -454,6 +454,24 @@ bool IsCreateForChange(DWORD desiredAccess, DWORD creationDisposition, DWORD fla
     return false;
 }
 
+#if NOTOBSOLETE
+// Windows Forms apps can use System.Configuration to store settings in their exe.Config file.  The Save method ends up making calls to
+// System.Security.AccessControl.FileSecurity to change the file attributes and if this is a package file it will cause an exception.
+// An example of this is the application mRemoteNG.  We can avoid this by detecting the file at opening and make it do a copy to start with.
+bool IsSpecialCaseforChange(std::wstring filepath)
+{
+    if (filepath.length() > 11)
+    {
+        std::wstring ext = filepath.substr(filepath.length() - 11);
+        if (std::equal(ext.begin(), ext.end(), L".exe.Config", psf::path_compare{}))
+        {
+            return true;
+        }
+    }
+    return false;
+}
+#endif
+
 bool IsCreateForDirectory(DWORD desiredAccess, [[maybe_unused]]DWORD creationDisposition, DWORD flagsAndAttributes)
 {
     if ((flagsAndAttributes & FILE_FLAG_BACKUP_SEMANTICS) != 0 &&
@@ -461,6 +479,7 @@ bool IsCreateForDirectory(DWORD desiredAccess, [[maybe_unused]]DWORD creationDis
         return true;
     return false;
 }
+
 
 std::filesystem::path ConvertPathToShortPath(std::filesystem::path inputPath)
 {

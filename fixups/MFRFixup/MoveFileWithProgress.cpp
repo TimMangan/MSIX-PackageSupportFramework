@@ -62,10 +62,10 @@ BOOL __stdcall MoveFileWithProgressFixup(
 
 
             Cohorts cohortsNew;
-            DetermineCohorts(wNewFileName, &cohortsNew, moredebug, dllInstance, L"MoveFileWithProgressFixup");
+            DetermineCohorts(wNewFileName, &cohortsNew, moredebug, dllInstance, L"MoveFileWithProgressFixup (newFile)");
 
             Cohorts cohortsExisting;
-            DetermineCohorts(wExistingFileName, &cohortsExisting, moredebug, dllInstance, L"MoveFileWithProgressFixup");
+            DetermineCohorts(wExistingFileName, &cohortsExisting, moredebug, dllInstance, L"MoveFileWithProgressFixup (existingFile)");
 
             // Determine if path of existing file and if in package.
             std::wstring UseExistingFile = cohortsExisting.WsRequested;
@@ -292,7 +292,14 @@ BOOL __stdcall MoveFileWithProgressFixup(
 #endif
                 retfinal = impl::MoveFileWithProgress(rldUseExistingFile.c_str(), rldUseNewFile.c_str(), lpProgressRoutine, lpData, flags);
 #if _DEBUG
-                Log(L"[%d] MoveFileWithProgressFixup returns %d", dllInstance, retfinal);
+                if (retfinal == 0)
+                {
+                    Log(L"[%d] MoveFileWithProgressFixup returns FAILURE 0x%x", dllInstance, GetLastError());
+                }
+                else
+                {
+                    Log(L"[%d] MoveFileWithProgressFixup returns SUCCESS 0x%x", dllInstance, retfinal);
+                }
 #endif
                 return retfinal;
             }
@@ -332,7 +339,15 @@ BOOL __stdcall MoveFileWithProgressFixup(
                         retfinal = 1; // success
                     }
 #if _DEBUG
-                    Log(L"[%d] MoveFileWithProgressFixup returns %d", dllInstance, retfinal);
+                    if (retfinal == 0)
+                    {
+                        Log(L"[%d] MoveFileWithProgressFixup via copy(file) returns FAILURE 0x%x", dllInstance, GetLastError());
+                    }
+                    else
+                    {
+                        Log(L"[%d] MoveFileFixup via copy(file) returns SUCCESS 0x%x", dllInstance, retfinal);
+                    }
+                    // TODO: remove old???
 #endif
                     return retfinal;
                 }
@@ -357,6 +372,15 @@ BOOL __stdcall MoveFileWithProgressFixup(
                     }
 #if _DEBUG
                     Log(L"[%d] MoveFileWithProgressFixup returns %d", dllInstance, retfinal);
+                    if (retfinal == 0)
+                    {
+                        Log(L"[%d] MoveFileWithProgressFixup via copy(dir) returns FAILURE 0x%x", dllInstance, GetLastError());
+                    }
+                    else
+                    {
+                        Log(L"[%d] MoveFileFixup via copy(dir) returns SUCCESS 0x%x", dllInstance, retfinal);
+                    }
+                    // TODO: remove old???
 #endif
                     return retfinal;
                 }

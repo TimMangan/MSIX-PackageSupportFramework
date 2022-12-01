@@ -29,6 +29,38 @@ namespace mfr
     DEFINE_ENUM_FLAG_OPERATORS(mfr_path_types);
 
 
+    inline const wchar_t* MfrFlagTypesString(mfr_path_types type)
+    {
+        switch (type)
+        {
+        case mfr_path_types::unsupported_for_intercepts:
+            return L"unsupported_for_intercepts";
+        case mfr_path_types::in_redirection_area_writablepackageroot:
+            return L"in_redirection_area_writablepackageroot";
+        case mfr_path_types::in_redirection_area_other:
+            return L"in_redirection_area_other";
+        case mfr_path_types::in_package_pvad_area:
+            return L"in_package_pvad_area";
+        case mfr_path_types::in_package_vfs_area:
+            return L"in_package_vfs_area";
+        case mfr_path_types::in_native_area:
+            return L"in_native_area";
+        case mfr_path_types::in_other_drive_area:
+            return L"in_other_drive_area";
+        case mfr_path_types::is_UNC_path:
+            return L"is_UNC_path";
+        case mfr_path_types::is_Shell:
+            return L"is_Shell";
+        case mfr_path_types::is_Protocol:
+            return L"is_Protocol";
+        case mfr_path_types::is_DosSpecial:
+            return L"is_DosSpecial";
+        case mfr_path_types::unknown:
+        default:
+            return L"unknown";
+        }
+    }
+
     typedef struct mfr_path
     {
         std::filesystem::path Request_OriginalPath;

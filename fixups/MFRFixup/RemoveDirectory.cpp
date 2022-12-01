@@ -25,7 +25,14 @@ BOOL  WRAPPER_REMOVEDIRECTORY(std::wstring theRemovingDirectory,  DWORD dllInsta
     BOOL retfinal = impl::RemoveDirectoryW(LongRemovingDirectory.c_str());
     if (debug)
     {
-        Log(L"[%d] RemoveDirectory returns on file '%s' and result 0x%x", dllInstance, LongRemovingDirectory.c_str(), retfinal);
+        if (retfinal == 0)
+        {
+            Log(L"[%d] RemoveDirectory returns result FAILURE 0x%x on file '%s'", dllInstance, GetLastError(), LongRemovingDirectory.c_str());
+        }
+        else
+        {
+            Log(L"[%d] RemoveDirectory returns result SUCCESS 0x%x on file '%s'", dllInstance, retfinal, LongRemovingDirectory.c_str());
+        }
     }
     return retfinal;
 }

@@ -7,7 +7,7 @@
 // Microsoft Documentation on this API: https://docs.microsoft.com/en-us/windows/win32/api/winbase/nf-winbase-createdirectory
 
 #if _DEBUG
-//#define MOREDEBUG 1
+#define MOREDEBUG 1
 #endif
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -51,9 +51,16 @@ BOOL  WRAPPER_CREATEDIRECTORY(std::wstring theDestinationDirectory, LPSECURITY_A
     BOOL retfinal = impl::CreateDirectoryW(LongDestinationDirectory.c_str(), securityAttributes);
     if (debug)
     {
-        Log(L"[%d] CreateDirectory returns file '%s' and result 0x%x", dllInstance, LongDestinationDirectory.c_str(), retfinal);
+        if (retfinal == 0)
+        {
+            Log(L"[%d] CreateDirectory returns FAILURE 0x%x and file '%s'", dllInstance, retfinal, LongDestinationDirectory.c_str());
+        }
+        else
+        {
+            Log(L"[%d] CreateDirectory returns SUCCESS 0x%x and file '%s'", dllInstance, retfinal, LongDestinationDirectory.c_str());
+        }
     }
-    return retfinal;
+    return retfinal; 
 }
 
 
