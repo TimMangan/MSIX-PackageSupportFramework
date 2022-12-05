@@ -1,4 +1,20 @@
-v.next2022,08.05
+ideas:
+ * Consider hidden/system file marker in redirection for deletion, similar to what ILV does.
+ * Consider an ILV-Aware mode for MFR. Could simplify some things.
+
+v.next
+ * Created new Managed File Redirection Fixup (MFRFixup) as a potential replacement for FileRedirectionFixup
+ * Fix issue in DynamicLibraryFixup with certain mixes of bitness.
+ * Fixup a mistake commonly made for the exe and working directory of the application record in the config.json; "\\VFS\\..." means they really wanted "VFS\\..."
+ * Support by ignoring the shell file references in FRF/MFR, i.e. shell::{guid} or just ::{guid} used in older file picker dialogs.
+ * Support by ignoring for the old-style DOS special objects in FRF/MFR, e.g COM4: or LPT2: or CONOUT$
+ * Alter attempts to open a native directory to list files to open the native directory.  Not an ideal solution, but better than going to the redirection area.
+ * Add intercepts of ShellExecute and ShellExecuteEx for debugging purposes without changes.
+ * Fix argument virtualization for 32-bit launcher.
+ * [Post 11.10] Fix MFR overrides.
+ * MFR: Treat .exe.Config as a COW even if it isn't. (mRemoteNG/Winforms issue).  Then removed.
+
+v.2022.08.05
 * Incorporate platform changes per Microsoft
 * PathRedirectonV2 fix for DeVFS calculation.
 * Renumber debug instance startin numbers.  FRF=0, DynLib=30k Env=40k RegLeg=50k

@@ -872,7 +872,7 @@ std::wstring RedirectedPath(const normalized_path& deVirtualizedPath, bool ensur
     std::wstring relativePath;
 
     bool shouldredirectToPackageRoot = false;
-    auto deVirtualizedFullPath = deVirtualizedPath.full_path;
+    std::wstring deVirtualizedFullPath = deVirtualizedPath.full_path;
     if (deVirtualizedPath.drive_absolute_path)
     {
         deVirtualizedFullPath = deVirtualizedPath.drive_absolute_path;

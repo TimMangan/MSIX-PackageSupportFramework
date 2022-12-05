@@ -1,0 +1,3 @@
+C:\Users\Tim\source\repos\MSIX-PackageSupportFramework\tests\scenarios\MFRTests\MFRTests\MFRTests.vcxproj.MdMergeInputs.cache
+C:\Users\Tim\source\repos\MSIX-PackageSupportFramework\tests\scenarios\MFRTests\MFRTests\MFRTests.vcxproj.cppwinrt_plat.cache
+C:\Users\Tim\source\repos\MSIX-PackageSupportFramework\tests\scenarios\MFRTests\MFRTests\MFRTests.vcxproj.cppwinrt_comp.cache

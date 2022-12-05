@@ -76,7 +76,7 @@ function RunTest($Arch, $Config)
 
         # Uninstall all packages on exit. Ideally Add-AppxPackage would give us back something that we could use here,
         # but alas we must hard-code it
-        $packagesToUninstall = @("ArchitectureTest", "CompositionTest", "FileSystemTest", "LongPathsTest", "PackageDriveTest", "WorkingDirectoryTest", "PowershellScriptTest", "DynamicLibraryTest", "RegLegacyTest", "EnvVarsATest", "EnvVarsWTest")
+        $packagesToUninstall = @("ArchitectureTest", "CompositionTest", "MFRTests", "FileSystemTest", "LongPathsTest", "PackageDriveTest", "WorkingDirectoryTest", "PowershellScriptTest", "DynamicLibraryTest", "RegLegacyTest", "EnvVarsATest", "EnvVarsWTest")
         ####$packagesToUninstall = @("FileSystemTest")
         foreach ($pkg in $packagesToUninstall)
         {
@@ -140,7 +140,7 @@ if(!(Test-Path "$PSScriptRoot\scenarios\Appx"))
 
 RunTest "x64" "Debug"
 #RunTest "x64" "Release"
-#RunTest "x86" "Debug"
+RunTest "x86" "Debug"
 #RunTest "x86" "Release"
 
 

@@ -1,0 +1,224 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;c++;cppm;ixx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hh;hpp;hxx;h++;hm;inl;inc;ipp;xsd</Extensions>
+    </Filter>
+    <Filter Include="Common Source">
+      <UniqueIdentifier>{d09c4d8e-8e46-48cb-80be-05ef2ee04f64}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Intercepts">
+      <UniqueIdentifier>{85872544-1829-4cb9-8cd0-f68f5cf2e30c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Intercepts\Attributes">
+      <UniqueIdentifier>{1de71a74-ff9b-48aa-9e96-8327a095d315}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Intercepts\CopyFiles">
+      <UniqueIdentifier>{8901a70a-4e66-47a1-9f76-c53de640783c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Intercepts\PrivateProfiles">
+      <UniqueIdentifier>{586b9f50-c89c-4463-89bb-ed4e408e5b01}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Intercepts\CreateFiles">
+      <UniqueIdentifier>{bd0bc684-7434-4361-a079-0d29b6c81f48}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Intercepts\CreateDirectories">
+      <UniqueIdentifier>{6cd5e48b-765a-4888-bb4f-cbb0c1bde5c2}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Intercepts\CreateOthers">
+      <UniqueIdentifier>{9e25afc7-c7f3-466a-a980-a23ad6ee62c9}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Intercepts\Moves">
+      <UniqueIdentifier>{a9014d6d-de55-46b2-8646-d3bd6f60263a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Intercepts\DeletesAndRemoves">
+      <UniqueIdentifier>{4a0e2dd8-ccdf-409f-8d7e-94a26deab22c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Intercepts\Replaces">
+      <UniqueIdentifier>{a765c4b0-de13-4d51-a854-e90bad6187bb}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Intercepts\WorkingDirectories">
+      <UniqueIdentifier>{5f9d1f78-fefd-45c4-8c26-86ad814159ba}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Intercepts\ShellExecutes">
+      <UniqueIdentifier>{b8137ed3-aa4d-4208-a194-9144fcce302b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Intercepts\FindsAndSearches">
+      <UniqueIdentifier>{a7870d12-0486-40da-add7-29f0358262e8}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="framework.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ManagedFileMappings.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="FID.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ManagedPathTypes.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="FunctionImplementations.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="PathUtilities.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="DebugPathTesting.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="MFRConfiguration.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="FindData3.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="FindFirstHelpers.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="DetermineCohorts.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="dllmain.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="InitializeMFRFixup.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\CommonSrc\psf_logging.cpp">
+      <Filter>Common Source</Filter>
+    </ClCompile>
+    <ClCompile Include="InitializeConfiguration.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="FID.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="ManagedPathTypes.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="PathUtilities.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="DebugPathTesting.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="ManagedFileMappings.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="GetPrivateProfileInt.cpp">
+      <Filter>Source Files\Intercepts\PrivateProfiles</Filter>
+    </ClCompile>
+    <ClCompile Include="GetPrivateProfileSection.cpp">
+      <Filter>Source Files\Intercepts\PrivateProfiles</Filter>
+    </ClCompile>
+    <ClCompile Include="GetPrivateProfileString.cpp">
+      <Filter>Source Files\Intercepts\PrivateProfiles</Filter>
+    </ClCompile>
+    <ClCompile Include="GetPrivateProfileSectionNames.cpp">
+      <Filter>Source Files\Intercepts\PrivateProfiles</Filter>
+    </ClCompile>
+    <ClCompile Include="GetPrivateProfileStruct.cpp">
+      <Filter>Source Files\Intercepts\PrivateProfiles</Filter>
+    </ClCompile>
+    <ClCompile Include="WritePrivateProfileSection.cpp">
+      <Filter>Source Files\Intercepts\PrivateProfiles</Filter>
+    </ClCompile>
+    <ClCompile Include="WritePrivateProfileString.cpp">
+      <Filter>Source Files\Intercepts\PrivateProfiles</Filter>
+    </ClCompile>
+    <ClCompile Include="WritePrivateProfileStruct.cpp">
+      <Filter>Source Files\Intercepts\PrivateProfiles</Filter>
+    </ClCompile>
+    <ClCompile Include="GetFileAttributes.cpp">
+      <Filter>Source Files\Intercepts\Attributes</Filter>
+    </ClCompile>
+    <ClCompile Include="GetFileAttributesEx.cpp">
+      <Filter>Source Files\Intercepts\Attributes</Filter>
+    </ClCompile>
+    <ClCompile Include="SetFileAttributes.cpp">
+      <Filter>Source Files\Intercepts\Attributes</Filter>
+    </ClCompile>
+    <ClCompile Include="CopyFile.cpp">
+      <Filter>Source Files\Intercepts\CopyFiles</Filter>
+    </ClCompile>
+    <ClCompile Include="CopyFile2.cpp">
+      <Filter>Source Files\Intercepts\CopyFiles</Filter>
+    </ClCompile>
+    <ClCompile Include="CopyFileEx.cpp">
+      <Filter>Source Files\Intercepts\CopyFiles</Filter>
+    </ClCompile>
+    <ClCompile Include="CreateDirectory.cpp">
+      <Filter>Source Files\Intercepts\CreateDirectories</Filter>
+    </ClCompile>
+    <ClCompile Include="CreateDirectoryEx.cpp">
+      <Filter>Source Files\Intercepts\CreateDirectories</Filter>
+    </ClCompile>
+    <ClCompile Include="RemoveDirectory.cpp">
+      <Filter>Source Files\Intercepts\DeletesAndRemoves</Filter>
+    </ClCompile>
+    <ClCompile Include="DeleteFile.cpp">
+      <Filter>Source Files\Intercepts\DeletesAndRemoves</Filter>
+    </ClCompile>
+    <ClCompile Include="CreateFile.cpp">
+      <Filter>Source Files\Intercepts\CreateFiles</Filter>
+    </ClCompile>
+    <ClCompile Include="CreateFile2.cpp">
+      <Filter>Source Files\Intercepts\CreateFiles</Filter>
+    </ClCompile>
+    <ClCompile Include="CreateHardLink.cpp">
+      <Filter>Source Files\Intercepts\CreateOthers</Filter>
+    </ClCompile>
+    <ClCompile Include="CreateSymbolicLink.cpp">
+      <Filter>Source Files\Intercepts\CreateOthers</Filter>
+    </ClCompile>
+    <ClCompile Include="MoveFile.cpp">
+      <Filter>Source Files\Intercepts\Moves</Filter>
+    </ClCompile>
+    <ClCompile Include="MoveFileEx.cpp">
+      <Filter>Source Files\Intercepts\Moves</Filter>
+    </ClCompile>
+    <ClCompile Include="MoveFileWithProgress.cpp">
+      <Filter>Source Files\Intercepts\Moves</Filter>
+    </ClCompile>
+    <ClCompile Include="ReplaceFile.cpp">
+      <Filter>Source Files\Intercepts\Replaces</Filter>
+    </ClCompile>
+    <ClCompile Include="FindClose.cpp">
+      <Filter>Source Files\Intercepts\FindsAndSearches</Filter>
+    </ClCompile>
+    <ClCompile Include="FindFirstFile.cpp">
+      <Filter>Source Files\Intercepts\FindsAndSearches</Filter>
+    </ClCompile>
+    <ClCompile Include="FindNextFile.cpp">
+      <Filter>Source Files\Intercepts\FindsAndSearches</Filter>
+    </ClCompile>
+    <ClCompile Include="FindFirstFileEx.cpp">
+      <Filter>Source Files\Intercepts\FindsAndSearches</Filter>
+    </ClCompile>
+    <ClCompile Include="FindFirstHelpers.cpp">
+      <Filter>Source Files\Intercepts\FindsAndSearches</Filter>
+    </ClCompile>
+    <ClCompile Include="DetermineCohorts.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="ShellExecuteEx.cpp">
+      <Filter>Source Files\Intercepts\ShellExecutes</Filter>
+    </ClCompile>
+    <ClCompile Include="ShellExecute.cpp">
+      <Filter>Source Files\Intercepts\ShellExecutes</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="readme.md" />
+  </ItemGroup>
+</Project>

@@ -1,0 +1,42 @@
+[Files]
+"AppxManifest.xml" "AppxManifest.xml"
+"config.json" "config.json"
+
+"..\Assets\Logo44x44.png" "Assets\Logo44x44.png"
+"..\Assets\Logo150x150.png" "Assets\Logo150x150.png"
+
+"..\..\Win32\Release\MFRTests.exe" "MFRTests.exe"
+"..\..\..\Win32\Release\PsfLauncher32.exe" "PsfLauncher.exe"
+"..\..\..\Win32\Release\PsfRuntime32.dll" "PsfRuntime32.dll"
+"..\..\..\Win32\Release\MFRFixup32.dll" "MFRFixup32.dll"
+"..\..\..\Win32\Release\WaitForDebuggerFixup32.dll" "WaitForDebuggerFixup32.dll"
+
+"file.txt" "VFS\ProgramFilesX64\PlaceholderTest\Placeholder.txt"
+"file.txt" "VFS\ProgramFilesX86\PlaceholderTest\Placeholder.txt"
+"file.txt" "VFS\SystemX86\SystemX86Fïlè.txt"
+"file.txt" "VFS\SystemX64\SystemX64Fïlè.txt"
+"file.txt" "VFS\AppData\AppDataFile.txt"
+"file.txt" "VFS\LocalAppData\LocalAppDataFile.txt"
+"file.txt" "VFS\ProgramFilesX64\ProgramFilesX64.txt"
+"file.txt" "VFS\Personal\MFRTestDocs\PresonalFile.txt"
+"file.txt" "VFS\AppVPackageDrive\PackageDriveFile.txt"
+"file.txt" "PvadFile1.txt"
+"file.txt" "PvadFolder\PvadFile2.txt"
+"file.txt" "VFS\Common AppData\folder\file.txt"
+
+"file.ini" "TestIniFilePVAD.ini"
+"file.ini" "VFS\ProgramFilesX64\PlaceholderTest\TestIniFileVfsPF.ini"
+"file.ini" "VFS\ProgramFilesX86\PlaceholderTest\TestIniFileVfsPF.ini"
+
+"file.ini" "VFS\ProgramFilesX64\PlaceholderTest2\TestFileVfsPF1.ini"
+"file.ini" "VFS\ProgramFilesX86\PlaceholderTest2\TestFileVfsPF1.ini"
+"file.ini" "VFS\ProgramFilesX64\PlaceholderTest2\TestFileVfsPF2.ini"
+"file.ini" "VFS\ProgramFilesX86\PlaceholderTest2\TestFileVfsPF2.ini"
+"file.ini" "VFS\ProgramFilesX64\PlaceholderTest2\DiffTestFileVfsPF3.ini"
+"file.ini" "VFS\ProgramFilesX86\PlaceholderTest2\DiffTestFileVfsPF3.ini"
+
+"file.ini" "VFS\ProgramFilesX64\PlaceholderTest3\Subdir\DiffTestFileVfsPF3.ini"
+"file.ini" "VFS\ProgramFilesX86\PlaceholderTest3\Subdir\DiffTestFileVfsPF3.ini"
+
+"file.ini" "VFS\ProgramFilesX64\ShortenTest\Subdir\DiffTestFileVfsPF3.ini"
+"file.ini" "VFS\ProgramFilesX86\ShortenTest\Subdir\DiffTestFileVfsPF3.ini"

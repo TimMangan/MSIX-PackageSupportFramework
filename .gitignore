@@ -316,3 +316,5 @@ ZipRelease/DebugPsf.zip
 ZipRelease/ReleasePsf.zip
 /tests/scenarios/Appx/PackageDriveTest.appx.makeappx.txt
 /tests/scenarios/Appx/PackageDriveTest.appx.signtool.txt
+/ZipRelease-v2022.08.05
+tests/scenarios/Appx/MFRTests.appx.makeappx.txt

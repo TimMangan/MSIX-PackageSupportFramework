@@ -15,6 +15,7 @@ BOOL __stdcall CreateHardLinkFixup(
 {
     DWORD CreateHardLinkInstance = ++g_FileIntceptInstance;
     auto guard = g_reentrancyGuard.enter();
+    BOOL retfinal;
     try
     {
         if (guard)
@@ -50,20 +51,29 @@ BOOL __stdcall CreateHardLinkFixup(
     }
 #endif
 
-
-    // Improve app compat by allowing long paths always
-    if constexpr (psf::is_ansi<CharT>)
+    if (fileName != nullptr && existingFileName != nullptr)
     {
-        std::string rldFileName = TurnPathIntoRootLocalDevice(fileName);
-        std::string rldExistingFileName = TurnPathIntoRootLocalDevice(existingFileName);
-        return impl::CreateHardLink(rldFileName.c_str(), rldExistingFileName.c_str(), securityAttributes);
+        // Improve app compat by allowing long paths always
+        if constexpr (psf::is_ansi<CharT>)
+        {
+            std::string rldFileName = TurnPathIntoRootLocalDevice(fileName);
+            std::string rldExistingFileName = TurnPathIntoRootLocalDevice(existingFileName);
+            retfinal = impl::CreateHardLink(rldFileName.c_str(), rldExistingFileName.c_str(), securityAttributes);
+        }
+        else
+        {
+            std::wstring rldFileName = TurnPathIntoRootLocalDevice(fileName);
+            std::wstring rldExistingFileName = TurnPathIntoRootLocalDevice(existingFileName);
+            retfinal = impl::CreateHardLink(rldFileName.c_str(), rldExistingFileName.c_str(), securityAttributes);
+        }
     }
     else
     {
-        std::wstring rldFileName = TurnPathIntoRootLocalDevice(fileName);
-        std::wstring rldExistingFileName = TurnPathIntoRootLocalDevice(existingFileName);
-        return impl::CreateHardLink(rldFileName.c_str(), rldExistingFileName.c_str(), securityAttributes);
+        retfinal = impl::CreateHardLink(fileName, existingFileName, securityAttributes);
     }
-    
+#if _DEBUG
+    Log(L"[%d] CreateHardLinkFixup returns 0x%x", CreateHardLinkInstance, retfinal);
+#endif
+    return retfinal;
 }
 DECLARE_STRING_FIXUP(impl::CreateHardLink, CreateHardLinkFixup);

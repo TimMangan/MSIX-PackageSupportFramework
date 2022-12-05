@@ -1,0 +1,56 @@
+{
+  "applications": [
+    {
+      "id": "Fixed",
+      "executable": "MFRTests.exe",
+      "workingDirectory": ""
+    }
+  ],
+  "processes": [
+    {
+      "executable": "^PsfLauncher.*"
+    },
+    {
+      "executable": "^[Pp]ower[Ss]hell.*"
+    },
+    {
+      "executable": "^[Cc][Mm][Dd].*"
+    },
+    {
+      "executable": ".*",
+      "fixups": [
+        {
+          "dll": "WaitForDebuggerFixup.dll",
+          "config": {
+            "enabled": false
+          }
+        },
+        {
+          "dll": "MFRFixup.dll",
+          "config": {
+            "overrideCOW": "default",
+            "overrideLocalRedirections": [
+              {
+                "name": "ThisPCDesktopFolder",
+                "mode": "disabled"
+              },
+              {
+                "name": "Personal",
+                "mode": "default"
+              },
+              {
+                "name": "Common Desktop",
+                "mode": "disabled"
+              },
+              {
+                "name": "Common Documents",
+                "mode": "traditional"
+              }
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}
+

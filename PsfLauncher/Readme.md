@@ -18,8 +18,19 @@ This information will provide the details about all of the actions that the laun
 
 For performance reasons, the "fixup" modules generally do not log to the debug console port in release builds.
 If you need debugging of the fixup modules, you may include the Debug builds of those modules which output verbosely to the debug console port.
-This debug output is more useful in debugging the fixup itself rather than debugging the app.
+This debug output is more useful in debugging the fixup itself rather than debugging the app.  
+The PSF modules use a project predefine of _DEBUG to make this happen.  
+Many of the cpp files also contain an optional MOREDEBUG definition that is commented out near the top of the file.
+This allows a developer to enable additional debugging in the Debug build specific to that file.
+
+The exception to this is that PsfLauncher and PsfRuntime will log with the Release build, as this simplifies the job of debugging simple launch issues.
+
 If you are not interested in fixing the PSF, you would be better served to include the PsfTraceFixup for debugging instead.
+
+The other option in debugging, for developers, is to use one of the waitForDebugger options:
+
+* To cause a breakpoint at the beginning of PsfLauncher, add the waitForDebugger: true option to PsfLauncher Application config in the config.json file. You **do not** need to add the WaitForDebuggerXxx.dll module to the package.
+* To cause a breakpoint at the beginning of the target application, add the WaitForDebugger fixup to the process configuration of the desired process. In this case you **do** need to add the WaitForDebuggerXxx.dll module to the package. The breakpoint will occur when the WaitForDebuggerXxx.dll file is being initialized during it's injection.  When multiple fixups are defined for the process, the WaitForDebugger.dll will be injected as the first of the "fixup" dlls, no matter which order they are listed in the json.
 
 ## About PsfLauncher and Processes needing elevation
 There is an inherent conflict that exists when an un-elevated launcher process 
@@ -30,10 +41,10 @@ Previously, this caused the target application to launch with the elevation but 
 
 The internal manifest file has now been removed from PsfLauncher. 
 This change, by itself, will have no impact on any packages.
-However, this change allows someone adding the PSF into a package 
-to detect situationw where the internal manifest file settings of 
-the target executable to be started by the launcher, and to then add an additional external
-manifest file to the PsfLauncher copy inside the package.  
+However, this change allows someone that is adding the PSF into a package 
+to determine situations where child process elevation is going to be needed, and to 
+allow for this by adding an external manifest file for PsfLauncher in the package such that PsfLauncher will
+immedietly elevate first.   
 
 This external manifest file would use the same name 
 as that used for the PsfLauncher copy in the package 
@@ -54,6 +65,12 @@ Here is an example external manifest file:
 </assembly>
 ```
 
+When PsfLauncher has a manifest for elevation, it is no longer required to specify the `allowElevation` capability in the AppXManifest.xml file. 
+Prior to the 20H1 OS it was needed; including it now causes no harm but is not required.
+
+If a child process in the container requires elevation (or self-elevation when the user selects a special feature) 
+and that process does not use any fixups, it is possible to achieve this without elevating PsfLaucher, however,
+in that case the `allowElevation` capability will need to be added to the AppXManifest.xml file.
 
 ## Configuration
 PSF Launcher uses a config.json file to configure the behavior.

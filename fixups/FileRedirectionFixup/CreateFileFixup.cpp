@@ -492,22 +492,29 @@ HANDLE __stdcall CreateFile2Fixup(
     }
 #endif
 
-
-    // In the spirit of app compatability, make the path long formed just in case.
-    std::wstring wFileName = TurnPathIntoRootLocalDevice(WFileNameString.c_str());
-    /////return impl::CreateFile2(fileName, desiredAccess, shareMode, creationDisposition, createExParams);
-    HANDLE hRet2= impl::CreateFile2(wFileName.c_str(), desiredAccess, shareMode, creationDisposition, createExParams);
+    HANDLE hRet2;
+    if (fileName != nullptr)
+    {
+        // In the spirit of app compatability, make the path long formed just in case.
+        std::wstring wFileName = TurnPathIntoRootLocalDevice(WFileNameString.c_str());
+        /////return impl::CreateFile2(fileName, desiredAccess, shareMode, creationDisposition, createExParams);
+        hRet2 = impl::CreateFile2(wFileName.c_str(), desiredAccess, shareMode, creationDisposition, createExParams);
+    }
+    else
+    {
+        hRet2 = impl::CreateFile2(fileName, desiredAccess, shareMode, creationDisposition, createExParams);
+    }
     if (hRet2 == INVALID_HANDLE_VALUE)
     {
 #if _DEBUG
-        LogString(CreateFile2Instance, L"CreateFile2 fallthrough FAILURE.",  wFileName.c_str());
+        LogString(CreateFile2Instance, L"CreateFile2 fallthrough FAILURE.", fileName);
 #endif
         // Fall back to original request
     }
     else
     {
 #if _DEBUG
-        LogString(CreateFile2Instance, L"CreateFile2 fallthrough SUCCESS.",  wFileName.c_str());
+        LogString(CreateFile2Instance, L"CreateFile2 fallthrough SUCCESS.", fileName);
 #endif
     }
     return hRet2;

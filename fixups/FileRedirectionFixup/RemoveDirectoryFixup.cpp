@@ -12,6 +12,7 @@ BOOL __stdcall RemoveDirectoryFixup(_In_ const CharT* pathName) noexcept
 {
     DWORD RemoveDirectoryInstance = ++g_FileIntceptInstance;
     auto guard = g_reentrancyGuard.enter();
+    BOOL retfinal;
     try
     {
         if (guard)
@@ -81,8 +82,18 @@ BOOL __stdcall RemoveDirectoryFixup(_In_ const CharT* pathName) noexcept
     }
 #endif
 
-
-    std::wstring rldPathName = TurnPathIntoRootLocalDevice(widen_argument(pathName).c_str());
-    return impl::RemoveDirectory(rldPathName.c_str());
+    if (pathName != nullptr)
+    {
+        std::wstring rldPathName = TurnPathIntoRootLocalDevice(widen_argument(pathName).c_str());
+        retfinal = impl::RemoveDirectory(rldPathName.c_str());
+    }
+    else
+    {
+        retfinal = impl::RemoveDirectory(pathName);
+    }
+#if _DEBUG
+    Log(L"[%d] RemoveDirectoryFixup returns 0x%x", RemoveDirectoryInstance, retfinal);
+#endif
+    return retfinal;
 }
 DECLARE_STRING_FIXUP(impl::RemoveDirectory, RemoveDirectoryFixup);
