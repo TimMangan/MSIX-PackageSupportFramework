@@ -10,9 +10,9 @@ The goals of this alternative are:
 
 | NOTICE |
 | --------------------------------------------------------------------------------------- |
-| ** THIS IS A WORK IN PROGRESS AND MAY NOT BE PRODUCTION QUALITY. ** |
-| At this time you should try the FileRedirectionFixup first.  But if stuck, you can give this a try instead. |
-| CURRENT STATUS: All necessary known intercepts have been completed and unit tested. Testing against a suite of known applications is still underway. A list of API intercepts used by this fixup and their staus is given in a table at the bottom of this readme. |
+| ** THIS IS A NEW FIXUP WITH LIMITED FIELD EXPERIENCE. ** |
+| You should anticipate that there may be early-life issues with this fixup on some applications. If you experience this, you should try the FileRedirectionFixup instead.  Otherwise, using the debug build may help you determine a file based override that can be applied to fix some of the issues that might occur. |
+| CURRENT STATUS: All necessary known intercepts have been completed and unit tested, and testing against an initial suite of known applications is complete. A list of API intercepts used by this fixup and their staus is given in a table at the bottom of this readme. |
 
 ## Features
 When injected into a process, the MFRFixup supports the ability to:
