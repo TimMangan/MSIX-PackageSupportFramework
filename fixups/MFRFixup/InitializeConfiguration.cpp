@@ -53,6 +53,18 @@ void InitializeConfiguration()
         traceDataStream << " config:\n";
         try
         {
+            if (auto ilv = rootObject.try_get("ilvAware"))
+            {
+                auto ilvAsBoolean = ilv->as_boolean().get();
+                if (ilvAsBoolean)
+                {
+                    MFRConfiguration.Ilv_Aware = true;
+#if MOREDEBUG
+                    Log(L"\t\tMFR CONFIG: Has ilv-aware enabled");
+#endif 
+                }
+            }
+
             if (auto overrideCOWValue = rootObject.try_get("overrideCOW"))
             {
                 ///o& overrideCOWObject = overrideCOWValue->as_object();

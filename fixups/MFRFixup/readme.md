@@ -90,9 +90,16 @@ This `config` element contains an array with possible override elements named be
 
 | PropertyName | Description |
 | ------------ | ----------- |
+| `ilv-aware` | Configures MFR to be avoid changes incompatible with InstallLocationVirtualization. |
 | `overrideCOW` | Overrides the overall behaviour os Copy-on-Write. |
 | `overrideLocalRedirections` | An array. See below. |
 | `overrideTraditionalRedirections` | An array. See below. |
+
+### ilvAware
+By default this value is set to `false`. Set to `true` to enable. The MFR and ILV solve some of the same issues for applications, but there are things that each do that are unique.  
+Generally, you can use both, but this setting exists so that you can inform the MFR that ILV is present.  
+When set to `true`, the MFR will avoid known conflicts and try to avoid duplication of effort.
+
 
 ### overrideCOW
 By default, this fixup will perform copy-on-write operations to file/folder API requests that involve write permissions to locations covered by the active local or traditional redirections.
@@ -103,10 +110,18 @@ The value of `overrideCOW` may be one of the following:
 | ----- | ----------- |
 | `disableAll` | Disables all COW support in this fixup. |
 | `enablePe` | Enables COW for all file types. |
-| `default` | The default behavior of COW on all files except for files that are well known WinPE filetypes (such as exe, dll, com, tlb, and ocx). |
+| `default` | The default behavior of COW on all files except for files that are well known WinPE filetypes (exe, dll, com, tlb, and ocx). |
 
-### overridelocalRedirections
-The `overrideLocalRedirections` element contains array of elements where each element contains a `name` and `mode`. 
+When `ilvAware` is enabled, the `default` setting will cause MFR to block writing to the WinPE filetypes in the package and returning AccessDenied to the application.  
+Similarly, if ilv-aware is enabled along with `disableAll` for the `overrideCOW`, then the MFR will return AccessDenied to the application whenever the file is part of the package.
+
+Without `ilvAware` setting, the MFR will use Copy-on-write and succeed for files specified in this setting.
+
+### overrideLocalRedirections
+The MFR is preconfigured with a set of folders (such as the User's documents folder) for which redirection to the redirection area is prefered.
+The `overrideLocalRedirections` element allows you to specify override this behavior on a folder by folder basis.
+
+When specified, the `overrideLocalRedirections` element contains array of elements where each element contains a `name` and `mode`. 
 
 The value of the `name` is to match a well-known FolderId shown in the table below. This name is to be written as standard strings without wildcards (not regex). The supported list of well-known FolderIds for `overrideLocalRedirections` are:
 
@@ -126,6 +141,9 @@ The `mode` is from the following table:
 | `traditional` | Changes the direction of the redirection of this entry to the traditional style. |
 
 ### overrideTraditionalRedirections
+The MFR is preconfigured with a set of folders (such as the program folder) for which redirection to the native path is prefered.
+The `overrideTraditionalRedirections` element allows you to specify override this behavior on a folder by folder basis.
+
 The `overrideTraditionalRedirections` element contains array of elements where each element contains a `name` and `mode`. 
 
 The value of the `name` is to match a well-known FolderId shown in the table below. This name is to be written as standard strings without wildcards (not regex). The supported list of well-known FolderIds for  `overrideTraditionalRedirections` are:
@@ -279,5 +297,9 @@ The following APIs are expected to be targeted.  The current status for this wor
 | WritePrivateProfileString | Complete |
 | WritePrivateProfileStruct | Complete |
 
-Additionally, there are numberous "Transacted" API calls that are generally not used and are ignored.  
+Additionally, there are numberous "Transacted" API calls that are generally not used and are ignored.
+Also currently ignored is FindFirstFileName/Next as it deals only with hard links and probably has little usage.
+Ditto FindFirstStream/Next.
+Ditto PrivCopyFileEx, which is undocumented but used by robocopy apparently.
+OpenFile may need to be considerd (possibly implementation ends up in CreateFile so we don't need to).
 Calls that use open file handles, such as ReadFile, WriteFile, and CloseHandle, are also ignored as there is no need to intercept those.

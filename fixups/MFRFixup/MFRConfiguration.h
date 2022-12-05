@@ -20,8 +20,8 @@ namespace mfr
 
     struct mfr_configuration
     {
+        bool Ilv_Aware = false;
         DWORD COW = 0;
-
     };
 
 }
