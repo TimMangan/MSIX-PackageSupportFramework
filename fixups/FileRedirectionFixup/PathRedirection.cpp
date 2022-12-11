@@ -23,7 +23,7 @@
 
 
 #if _DEBUG
-#define MOREDEBUG 1
+//#define MOREDEBUG 1
 //#define _ManualDebug 1
 //#include <thread>
 #endif

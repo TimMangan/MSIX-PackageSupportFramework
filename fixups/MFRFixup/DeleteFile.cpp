@@ -18,6 +18,7 @@
 #include "PathUtilities.h"
 #include "DetermineCohorts.h"
 
+// TODO: ILV aware changes are probably needed here
 
 BOOL  WRAPPER_DELETEFILE(std::wstring theDeletingFile, DWORD dllInstance, bool debug)
 {
@@ -241,7 +242,6 @@ BOOL __stdcall DeleteFileFixup(_In_ const CharT* pathName) noexcept
                     }
                 }
                 break;
-            case mfr::mfr_path_types::in_redirection_area_writablepackageroot:
                 if (cohorts.map.Valid_mapping)
                 {
                     // try the redirected path, then package (COW), then possibly native (Possibly COW).

@@ -217,6 +217,9 @@
     <ClCompile Include="ShellExecute.cpp">
       <Filter>Source Files\Intercepts\ShellExecutes</Filter>
     </ClCompile>
+    <ClCompile Include="SetCurrentDirectory.cpp">
+      <Filter>Source Files\Intercepts\WorkingDirectories</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="readme.md" />

@@ -36,7 +36,7 @@
 
 
 #if _DEBUG
-#define MOREDEBUG 1
+//#define MOREDEBUG 1
 #endif
 
 #include <errno.h>

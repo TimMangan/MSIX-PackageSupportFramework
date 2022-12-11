@@ -21,7 +21,17 @@ Use of the Debug build will enable you to see the intercepts and what the fixup 
 That output is easily seen using the Sysinternals "DebugView" tool.
 
 ### Dependencies for RegLegacyFixups
-Specific dependencies for this fixup have been removed.
+When using this fixup, you must also supply the following dependencies.  It is recommended that these be
+placed in the VFS\SystemX64 and VFS\SystemX86 folders of the package, such that if the
+application uses a different version of these dlls, the app specific version will be found.
+
+| Release Build | Debug Build |
+| --- | --- |
+| msvcp140.dll | msvcp140d.dll |
+| vcruntime140.dll | vcruntime140d.dll |
+| | ucrtbased.dll |
+
+A copy of these may be found in the OBSOLETE folder of the PSF release.
 
 
 # General Configuration

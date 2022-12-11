@@ -280,6 +280,7 @@
     <ClCompile Include="ManagedFileMappings.cpp" />
     <ClCompile Include="ManagedPathTypes.cpp" />
     <ClCompile Include="PathUtilities.cpp" />
+    <ClCompile Include="SetCurrentDirectory.cpp" />
     <ClCompile Include="ShellExecute.cpp" />
     <ClCompile Include="ShellExecuteEx.cpp" />
     <ClCompile Include="WritePrivateProfileSection.cpp" />

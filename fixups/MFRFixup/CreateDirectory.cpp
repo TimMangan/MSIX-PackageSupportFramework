@@ -7,7 +7,7 @@
 // Microsoft Documentation on this API: https://docs.microsoft.com/en-us/windows/win32/api/winbase/nf-winbase-createdirectory
 
 #if _DEBUG
-#define MOREDEBUG 1
+//#define MOREDEBUG 1
 #endif
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

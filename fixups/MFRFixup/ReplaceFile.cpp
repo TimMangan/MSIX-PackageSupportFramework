@@ -13,7 +13,7 @@
 // This has the possibility of causing a problem later on, but if so there isn't anything that is likly to make the app work.
 
 #if _DEBUG
-#define MOREDEBUG 1
+//#define MOREDEBUG 1
 #endif
 
 #include <errno.h>

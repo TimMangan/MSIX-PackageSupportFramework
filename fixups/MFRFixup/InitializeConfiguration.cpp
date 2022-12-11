@@ -19,7 +19,7 @@
 
 using namespace std::literals;
 
-#define MOREDEBUG 1
+//#define MOREDEBUG 1
 
 TRACELOGGING_DECLARE_PROVIDER(g_Log_ETW_ComponentProvider);
 TRACELOGGING_DEFINE_PROVIDER(
@@ -55,13 +55,28 @@ void InitializeConfiguration()
         {
             if (auto ilv = rootObject.try_get("ilvAware"))
             {
-                auto ilvAsBoolean = ilv->as_boolean().get();
-                if (ilvAsBoolean)
+                if (ilv->type() == psf::json_type::string)
                 {
-                    MFRConfiguration.Ilv_Aware = true;
+                    auto ilvAsWStringView = ilv->as_string().wstring();
+                    std::wstring ilvAsWstring = ilvAsWStringView.data();
+                    if (ilvAsWstring.compare(L"true") == 0)
+                    {
+                        MFRConfiguration.Ilv_Aware = true;
 #if MOREDEBUG
-                    Log(L"\t\tMFR CONFIG: Has ilv-aware enabled");
+                        Log(L"\t\tMFR CONFIG: Has ilv-aware enabled");
 #endif 
+                    }
+                }
+                else if (ilv->type() == psf::json_type::boolean)
+                {
+                    auto ilvAsBoolean = ilv->as_boolean().get();
+                    if (ilvAsBoolean)
+                    {
+                        MFRConfiguration.Ilv_Aware = true;
+#if MOREDEBUG
+                        Log(L"\t\tMFR CONFIG: Has ilv-aware enabled");
+#endif 
+                    }
                 }
             }
 
@@ -94,7 +109,7 @@ void InitializeConfiguration()
         }
         catch (...)
         {
-            Log(L"ERROR Reading config.json:  MFRTest in overrideCOW.");
+            Log(L"ERROR Reading config.json:  MFRTest in std options.");
         }
 
         try

@@ -25,7 +25,7 @@
 ///     So we will automatically add the flag to all calls in the spirit of app-compat.
 
 #if _DEBUG
-#define MOREDEBUG 1
+//#define MOREDEBUG 1
 #endif
 
 #include <errno.h>

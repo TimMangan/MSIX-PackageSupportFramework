@@ -24,8 +24,8 @@
 
 #define DODEVIRT 1
 #if _DEBUG
-#define MOREDEBUG 1
-#define RULEDEBUG 1
+//#define MOREDEBUG 1
+//#define RULEDEBUG 1
 //#define MOREDRULEDEBUGEBUG 1
 #endif
 

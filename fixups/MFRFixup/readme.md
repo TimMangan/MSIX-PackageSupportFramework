@@ -289,7 +289,7 @@ The following APIs are expected to be targeted.  The current status for this wor
 | RemoveDirectory | Complete |
 | ReplaceFile | Complete |
 | SearchPath | not started, may not be needed |
-| SetCurrentDirectory | not started, may not be needed |
+| SetCurrentDirectory | started, afects only IlvAware |
 | SetFileAttributes | Complete |
 | ShellExecute | Intercept for logging only at this time |
 | ShellExecuteEx | Intercept for logging only at this time |
