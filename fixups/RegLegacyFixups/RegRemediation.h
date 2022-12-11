@@ -4,7 +4,9 @@
 //-------------------------------------------------------------------------------------------------------
 
 #pragma once
-#define MOREDEBUG
+#ifdef _DEBUG
+//#define MOREDEBUG
+#endif
 
 std::string ReplaceAppRegistrySyntax(std::string regPath);
 

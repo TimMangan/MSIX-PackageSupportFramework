@@ -2,7 +2,9 @@
 // Copyright (C) Tim Mangan. All rights reserved
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 //-------------------------------------------------------------------------------------------------------
-#define MOREDEBUG
+#ifdef _DEBUG
+//#define MOREDEBUG
+#endif
 
 #include <psf_framework.h>
 #include <psf_logging.h>
@@ -36,11 +38,11 @@ LSTATUS __stdcall RegCreateKeyExFixup(
 #if _DEBUG
     if constexpr (psf::is_ansi<CharT>)
     {
-        Log(L"[%d] RegCreateKeyEx: key=0x%x subkey=%S", RegLocalInstance, (ULONG)(ULONG_PTR)key, subKey);
+        Log(L"[%d] RegCreateKeyEx: key=0x%x subkey=%S Options=0x%x SamDesired=0x%x", RegLocalInstance, (ULONG)(ULONG_PTR)key, subKey, options, samDesired);
     }
     else
     {
-        Log(L"[%d] RegCreateKeyEx: key=0x%x subKey=%ls", RegLocalInstance, (ULONG)(ULONG_PTR)key, subKey);
+        Log(L"[%d] RegCreateKeyEx: key=0x%x subKey=%ls Options=0x%x SamDesired=0x%x", RegLocalInstance, (ULONG)(ULONG_PTR)key, subKey, options, samDesired);
     }
 #endif
 
@@ -90,9 +92,18 @@ LSTATUS __stdcall RegCreateKeyExFixup(
     if (!hasRedirection)
     {
         result = RegCreateKeyExImpl(key, subKey, reserved, classType, options, samModified, securityAttributes, resultKey, disposition);
+        if (result != ERROR_SUCCESS)
+        {
 #ifdef _DEBUG
-        Log("[%d] RegCreateKeyEx result=%d", RegLocalInstance, result);
+            Log("[%d] RegCreateKeyEx result=0x%x", RegLocalInstance,result);
+#endif   
+        }
+        else
+        {
+#ifdef _DEBUG
+            Log("[%d] RegCreateKeyEx result=SUCCESS", RegLocalInstance);
 #endif
+        }
     }
 
 
@@ -128,6 +139,7 @@ LSTATUS __stdcall RegCreateKeyExFixup(
                     LogRegKeyDisposition(*disposition);
                 }
                 LogCallingModule();
+                Log("[%d] This error often indicates that the key must be added to the original package.", RegLocalInstance);
             }
             catch (...)
             {

@@ -13,7 +13,7 @@
 ///     We could let these fail, but instead we will use a copy technique when the source ends up to be a package file and leave
 ///     the old file in place.
 
-#define MOREDEBUG 1
+//#define MOREDEBUG 1
 #endif
 
 #include <errno.h>

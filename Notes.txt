@@ -1,8 +1,21 @@
 ideas:
  * Consider hidden/system file marker in redirection for deletion, similar to what ILV does.
- * Consider an ILV-Aware mode for MFR. Could simplify some things.
+ 
+ 
+ v.2022.12.11
+ * MFR: Add an ILV-Aware mode for MFR. Could simplify some things.
+ * MFR: Add support for SetCurrentDirectory ILV-Aware mode to force path to be a
+        package path when appropriate. When an app uses this API to change the current directory,
+		this will map the request to use the equivalent package path if that folder exists in the package.
+ * RegLeg: Add _Debug Preprocessor to debug builds.
+ * RegLeg: Adjust Full2MaxAllowed to a better fixup than MAXIMUM_ALLOWED so that
+ *         apps can create subkeys.
+ * RegLeg: Update documentation to clarify dependencies on release build also.
+ * Debug Builds: Turned off the second level of debugging (MOREDEBUG) in debug builds. That
+			extra level of debugging is only needed for debugging the PSF itself, not for
+			debugging app issues that IT Pros can use.
 
-v.next
+v.2022.12.05
  * Created new Managed File Redirection Fixup (MFRFixup) as a potential replacement for FileRedirectionFixup
  * Fix issue in DynamicLibraryFixup with certain mixes of bitness.
  * Fixup a mistake commonly made for the exe and working directory of the application record in the config.json; "\\VFS\\..." means they really wanted "VFS\\..."

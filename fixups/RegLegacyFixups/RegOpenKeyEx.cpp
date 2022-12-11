@@ -113,6 +113,7 @@ LSTATUS __stdcall RegOpenKeyExFixup(
                     LogWin32Error(result);
                 }
                 LogCallingModule();
+                Log("[%d] This error often indicates that the key must be added to the original package.", RegLocalInstance);
             }
             catch (...)
             {

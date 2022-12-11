@@ -11,7 +11,7 @@
 #include <algorithm>
 
 #if _DEBUG
-#define MOREDEBUG 1
+//#define MOREDEBUG 1
 //#define MOREDEBUG2 2
 #endif
 
