@@ -22,7 +22,7 @@ This `config` element contains a an array called "EnvVars".  Each Envar contains
 
 | PropertyName | Description |
 | ------------ | ----------- |
-| `name` | Regex pattern for the name(s) of the environment variable being defined.|
+| `name` | Regex pattern for the name(s) of the environment variable being defined. Normally one should just specify a single name and not take advantage of regex syntax.|
 | `value`| If the value is to be defined in the json, the value is entered here. Otherwise this may be specified as an empty string.|
 | `useregistry`| A boolean, when set to true it instructs that the environment variable should be extracted from the package registry for Environment variables, first checking HKCU and then HKLM. When specified, the intercept will first look in the HKCU registry, then HKLM, and finally the `value` field in the JSON entry. |
 
@@ -32,7 +32,7 @@ To make things simpler to understand, here is a potential example configuration 
 
 ```json
 "config": {
-    "EnvVars": [
+    "envVars": [
         {
             "name" : "Var1Name",
             "value" : "SpecifiedValue1",
@@ -45,7 +45,7 @@ To make things simpler to understand, here is a potential example configuration 
         }
         ,
         {
-            "name" : "MyName.\*",
+            "name" : "MyName.*",
             "value" : "",
             "useregistry": "true"
         }
