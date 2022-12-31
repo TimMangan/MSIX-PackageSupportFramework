@@ -219,13 +219,17 @@ std::wstring MakeLongPath(std::wstring path)
     // Only add to full paths on a drive letter
     if (path.length() > 0)
     {
-        psf::dos_path_type dosType = psf::path_type(path.c_str());
-        if (dosType == psf::dos_path_type::drive_absolute)
+        // Only add if getting near the limit
+        if (path.length() > 230)
         {
-            if (path.length() > 3)   // Don't extend C:\ as it messes up FindFirstFile(Ex)
+            psf::dos_path_type dosType = psf::path_type(path.c_str());
+            if (dosType == psf::dos_path_type::drive_absolute)
             {
-                std::wstring outPath = L"\\\\?\\";
-                return outPath.append(path);
+                if (path.length() > 3)   // Don't extend C:\ as it messes up FindFirstFile(Ex)
+                {
+                    std::wstring outPath = L"\\\\?\\";
+                    return outPath.append(path);
+                }
             }
         }
     }
@@ -418,12 +422,6 @@ BOOL Cow(std::wstring from, std::wstring to, [[maybe_unused]] int dllInstance, [
 // a change in the file system based on this parameters.  This would potentially trigger a COW event.
 bool IsCreateForChange(DWORD desiredAccess, DWORD creationDisposition, DWORD flagsAndAttributes)
 {
-    if ((flagsAndAttributes & FILE_FLAG_BACKUP_SEMANTICS) != 0)
-    {
-        // This is used for opening a directory, but the app would have to use CreateDirectory to actually create one.
-        // So in spite of desiredAccess/creationDisposition settings, we will not trigger a COW.
-        return false;
-    }
     // Check desiredAccess versus Generic Access Rights (ACCESS_MASK) values
     if ((desiredAccess & (GENERIC_WRITE | GENERIC_ALL | MAXIMUM_ALLOWED | DELETE | WRITE_DAC | WRITE_OWNER)) != 0)
     {
@@ -450,6 +448,12 @@ bool IsCreateForChange(DWORD desiredAccess, DWORD creationDisposition, DWORD fla
     if ((flagsAndAttributes & (FILE_ATTRIBUTE_TEMPORARY | FILE_FLAG_DELETE_ON_CLOSE)) != 0)
     {
         return true;
+    }
+    if ((flagsAndAttributes & FILE_FLAG_BACKUP_SEMANTICS) != 0)
+    {
+        // This is used for opening a directory, but the app would have to use CreateDirectory to actually create one.
+        // So in spite of desiredAccess/creationDisposition settings, we will not trigger a COW.
+        return false;
     }
     return false;
 }

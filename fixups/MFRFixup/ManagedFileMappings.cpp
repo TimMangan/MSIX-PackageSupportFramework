@@ -299,6 +299,14 @@ namespace mfr
                                                                 false,
                                                                 g_writablePackageRootPath / L"VFS"sv / L"AppData"sv,
                                                                 mfr::mfr_redirect_flags::prefer_redirection_containerized });
+        g_MfrFolderMappings.push_back(mfr::mfr_folder_mapping{ true, false,
+                                                                FID_UserProgramFiles,
+                                                                L"UserProgramFiles",
+                                                                L"UserProgramFiles",
+                                                                g_packageVfsRootPath / L"UserProgramFiles"sv,
+                                                                false,
+                                                                g_writablePackageRootPath / L"VFS"sv / L"UserProgramFiles"sv,
+                                                                mfr::mfr_redirect_flags::prefer_redirection_containerized });
 
         g_MfrFolderMappings.push_back(mfr::mfr_folder_mapping{ true, false,
                                                                 FID_CommonPrograms,

@@ -1,6 +1,12 @@
 ideas:
  * Consider hidden/system file marker in redirection for deletion, similar to what ILV does.
  
+ v.Next
+ * MFR: Add UserProgramFiles to the VFS Traditional mappings.
+ * MFR: Fix IsCreateForChange to consider FILE_ALL_ACCESS before BACKUP_SEMANTICS (unsure I want to do this).
+ * MFR: Potential fix for CreateFile,CreateFile2 only - and only on redir case, to try package directly. (Spyder).
+ * Launcher: Add UserProgramFiles to ArgumentVirtualization List
+ * MFR: Add intercept to kerbase.dll version of MoveFileExW as the kernel32.dll version may be bypassed (Audacity).
  
  v.2022.12.11
  * MFR: Add an ILV-Aware mode for MFR. Could simplify some things.

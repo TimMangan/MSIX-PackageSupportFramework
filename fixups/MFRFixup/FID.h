@@ -20,6 +20,7 @@ extern std::filesystem::path FID_ProgramFilesX86;
 extern std::filesystem::path FID_ProgramFilesCommonX64;
 extern std::filesystem::path FID_ProgramFilesX64;
 #endif
+extern std::filesystem::path FID_UserProgramFiles;
 extern std::filesystem::path FID_Fonts;
 extern std::filesystem::path FID_ProgramData;
 extern std::filesystem::path FID_LocalAppDataLow;

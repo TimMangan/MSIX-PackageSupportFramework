@@ -19,7 +19,8 @@
 
 using namespace std::literals;
 
-//#define MOREDEBUG 1
+#define MOREDEBUG 1
+//#define EVENMOREDEBUG 1
 
 TRACELOGGING_DECLARE_PROVIDER(g_Log_ETW_ComponentProvider);
 TRACELOGGING_DEFINE_PROVIDER(
@@ -238,7 +239,7 @@ void InitializeConfiguration()
             Log(L"ERROR Reading config.json:  MFRTest in overrideTraditionalRedirections.");
         }
 
-#if MOREDEBUG
+#if EVENMOREDEBUG
         Log(L"============== Dump ====================");
         for (mfr::mfr_folder_mapping map : mfr::g_MfrFolderMappings)
         {

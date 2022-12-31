@@ -14,6 +14,7 @@ std::filesystem::path FID_ProgramFilesX86;
 std::filesystem::path FID_ProgramFilesCommonX64;
 std::filesystem::path FID_ProgramFilesX64;
 #endif
+std::filesystem::path FID_UserProgramFiles;
 std::filesystem::path FID_Fonts;
 std::filesystem::path FID_ProgramData;
 std::filesystem::path FID_LocalAppDataLow;
@@ -42,6 +43,14 @@ void FID_Initialize()
     FID_ProgramFilesCommonX64 = psf::known_folder(FOLDERID_ProgramFilesCommonX64);
     FID_ProgramFilesX64 =       psf::known_folder(FOLDERID_ProgramFilesX64);
 #endif
+    try
+    {
+        FID_UserProgramFiles = psf::known_folder(FOLDERID_UserProgramFiles);
+    }
+    catch (...)
+    {
+        FID_UserProgramFiles = psf::known_folder(FOLDERID_LocalAppData) / L"Programs";
+    }
     FID_Fonts =                 psf::known_folder(FOLDERID_ProgramFilesX86);
     FID_ProgramData =           psf::known_folder(FOLDERID_ProgramData);
     FID_LocalAppDataLow =       psf::known_folder(FOLDERID_LocalAppDataLow);

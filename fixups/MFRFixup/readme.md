@@ -161,7 +161,8 @@ The value of the `name` is to match a well-known FolderId shown in the table bel
 | `FOLDERID_ProgramFilesX86`| This is the known folder ID for the entry for the 'Program Files (x86)' folder on an x64 system, or without the (x86) on a 32bit system. |
 | `SystemX64`| This is the known folder ID for the entry for the user's Desktop Windows\System32 folder on x64 systems. |
 | `ProgramFilesCommonX64`| This is the known folder ID for the entry for the 'Program Files\Common Files' folder on x64 systems. |
-| `ProgramFilesX64`| This is the known folder ID for the entry for the 'Program Files' folder on x64 systems. |
+| `ProgramFilesX64`| This is the known folder ID for the entry for the  'Program Files' folder on x64 systems. |
+| `FOLDERID_UserProgramFiles`| This is the known folder ID for the entry for the user's appdata 'Programs' folder. |
 | `System`| This is the known folder ID for the entry for the 'Windows\System' folder. |
 | `Fonts`| This is the known folder ID for the entry for the 'Windows\Fonts' folder. |
 | `Windows`| This is the known folder ID for the entry for the 'Windows' folder. |

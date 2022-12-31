@@ -66,7 +66,6 @@ void InitializeMFRFixup()
     g_short_redirectRootPath = ConvertPathToShortPath(g_redirectRootPath);
     g_short_writablePackageRootPath = ConvertPathToShortPath(g_writablePackageRootPath);
     g_short_finalPackageRootPath = ConvertPathToShortPath(g_finalPackageRootPath);
-    
 
     mfr::Initialize_MFR_Mappings();
 

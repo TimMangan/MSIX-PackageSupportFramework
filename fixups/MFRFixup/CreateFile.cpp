@@ -29,8 +29,10 @@ HANDLE  WRAPPER_CREATEFILE(std::wstring theDestinationFile,
     _In_opt_ HANDLE templateFile, 
     DWORD dllInstance, bool debug)
 {
+    HANDLE retfinal;
     std::wstring LongDestinationFile = MakeLongPath(theDestinationFile);
-    HANDLE retfinal = impl::CreateFileW(LongDestinationFile.c_str(), desiredAccess, shareMode, securityAttributes, creationDisposition, flagsAndAttributes, templateFile);
+    retfinal = impl::CreateFileW(LongDestinationFile.c_str(), desiredAccess, shareMode, securityAttributes, creationDisposition, flagsAndAttributes, templateFile);
+
     if (debug)
     {
         if (retfinal == INVALID_HANDLE_VALUE)
@@ -42,7 +44,7 @@ HANDLE  WRAPPER_CREATEFILE(std::wstring theDestinationFile,
             Log(L"[%d] CreateFile returns handle 0x%x on file '%s'", dllInstance, retfinal, LongDestinationFile.c_str());
         }
     }
-    return retfinal;
+    return retfinal;  
 }
 
 
@@ -245,39 +247,71 @@ HANDLE __stdcall CreateFileFixup(_In_ const CharT* pathName,
             case mfr::mfr_path_types::in_package_pvad_area:
                 if (cohorts.map.Valid_mapping)
                 {
-                    //// try the redirected path, then package (COW), then don't need native.
-                   if (!cohorts.map.IsAnExclusionToRedirect && PathExists(cohorts.WsRedirected.c_str()))
-                    {
-                        retfinal = WRAPPER_CREATEFILE(cohorts.WsRedirected, desiredAccess, shareMode, securityAttributes, creationDisposition, flagsAndAttributes, templateFile, dllInstance, debug);
-                        return retfinal;
-                    }
                     if (PathExists(cohorts.WsPackage.c_str()))
                     {
-                        if(IsAWriteCase)
+                        if (MFRConfiguration.Ilv_Aware)
                         {
-                            // COW is applicable first.
-                            if (Cow(cohorts.WsPackage, cohorts.WsRedirected, dllInstance, L"CreateFileFixup"))
+                            retfinal = WRAPPER_CREATEFILE(cohorts.WsRedirected, desiredAccess, shareMode, securityAttributes, creationDisposition, flagsAndAttributes, templateFile, dllInstance, debug);
+                            return retfinal;
+                        }
+                        else
+                        {
+                            //// try the redirected path, then package (COW), then don't need native.
+                            if (!cohorts.map.IsAnExclusionToRedirect && PathExists(cohorts.WsRedirected.c_str()))
                             {
-                                //PreCreateFolders(testWsRedirected.c_str(), dllInstance, L"CreateFileFixup");
                                 retfinal = WRAPPER_CREATEFILE(cohorts.WsRedirected, desiredAccess, shareMode, securityAttributes, creationDisposition, flagsAndAttributes, templateFile, dllInstance, debug);
                                 return retfinal;
+                            }
+                            
+                            if (IsAWriteCase)
+                            {
+                                // COW is applicable first.
+                                if (Cow(cohorts.WsPackage, cohorts.WsRedirected, dllInstance, L"CreateFileFixup"))
+                                {
+                                    //PreCreateFolders(testWsRedirected.c_str(), dllInstance, L"CreateFileFixup");
+                                    retfinal = WRAPPER_CREATEFILE(cohorts.WsRedirected, desiredAccess, shareMode, securityAttributes, creationDisposition, flagsAndAttributes, templateFile, dllInstance, debug);
+                                    return retfinal;
+                                }
+                                else
+                                {
+                                    retfinal = WRAPPER_CREATEFILE(cohorts.WsPackage, desiredAccess, shareMode, securityAttributes, creationDisposition, flagsAndAttributes, templateFile, dllInstance, debug);
+                                    return retfinal;
+                                }
                             }
                             else
                             {
                                 retfinal = WRAPPER_CREATEFILE(cohorts.WsPackage, desiredAccess, shareMode, securityAttributes, creationDisposition, flagsAndAttributes, templateFile, dllInstance, debug);
                                 return retfinal;
                             }
-                        }
-                        else
-                        {
-                            retfinal = WRAPPER_CREATEFILE(cohorts.WsPackage, desiredAccess, shareMode, securityAttributes, creationDisposition, flagsAndAttributes, templateFile, dllInstance, debug);
+                            
+                            // There isn't such a file anywhere.  We want to create the redirection parent folder and let this call against the redirected file to create there.
+                            PreCreateFolders(cohorts.WsRedirected.c_str(), dllInstance, L"CreateFileFixup");
+                            retfinal = WRAPPER_CREATEFILE(cohorts.WsRedirected, desiredAccess, shareMode, securityAttributes, creationDisposition, flagsAndAttributes, templateFile, dllInstance, debug);
                             return retfinal;
                         }
                     }
-                    // There isn't such a file anywhere.  We want to create the redirection parent folder and let this call against the redirected file to create there.
-                    PreCreateFolders(cohorts.WsRedirected.c_str(), dllInstance, L"CreateFileFixup");
-                    retfinal = WRAPPER_CREATEFILE(cohorts.WsRedirected, desiredAccess, shareMode, securityAttributes, creationDisposition, flagsAndAttributes, templateFile, dllInstance, debug);
-                    return retfinal;
+                    else
+                    {
+                        if (MFRConfiguration.Ilv_Aware)
+                        {
+                            retfinal = WRAPPER_CREATEFILE(cohorts.WsRedirected, desiredAccess, shareMode, securityAttributes, creationDisposition, flagsAndAttributes, templateFile, dllInstance, debug);
+                            return retfinal;
+                        }
+                        else
+                        {
+                            //// try the redirected path, then package (COW), then don't need native.
+                            if (!cohorts.map.IsAnExclusionToRedirect && PathExists(cohorts.WsRedirected.c_str()))
+                            {
+                                retfinal = WRAPPER_CREATEFILE(cohorts.WsRedirected, desiredAccess, shareMode, securityAttributes, creationDisposition, flagsAndAttributes, templateFile, dllInstance, debug);
+                                return retfinal;
+                            }
+
+                            // There isn't such a file anywhere.  We want to create the redirection parent folder and let this call against the redirected file to create there.
+                            PreCreateFolders(cohorts.WsRedirected.c_str(), dllInstance, L"CreateFileFixup");
+                            retfinal = WRAPPER_CREATEFILE(cohorts.WsRedirected, desiredAccess, shareMode, securityAttributes, creationDisposition, flagsAndAttributes, templateFile, dllInstance, debug);
+                            return retfinal;
+                        }
+                    }
                 }
                 break;
             case mfr::mfr_path_types::in_package_vfs_area:
@@ -321,96 +355,149 @@ HANDLE __stdcall CreateFileFixup(_In_ const CharT* pathName,
                          (cohorts.map.RedirectionFlags == mfr::mfr_redirect_flags::prefer_redirection_containerized ||
                           cohorts.map.RedirectionFlags == mfr::mfr_redirect_flags::prefer_redirection_if_package_vfs))
                 {
-                    if (!IsADirectoryCase)
+                    if (PathExists(cohorts.WsPackage.c_str()))
                     {
-                        // try the redirection path, then the package (COW), then native (possibly COW)
-                        if (!cohorts.map.IsAnExclusionToRedirect && PathExists(cohorts.WsRedirected.c_str()))
+                        if (MFRConfiguration.Ilv_Aware)
                         {
-                            retfinal = WRAPPER_CREATEFILE(cohorts.WsRedirected, desiredAccess, shareMode, securityAttributes, creationDisposition, flagsAndAttributes, templateFile, dllInstance, debug);
+                            retfinal = WRAPPER_CREATEFILE(cohorts.WsPackage, desiredAccess, shareMode, securityAttributes, creationDisposition, flagsAndAttributes, templateFile, dllInstance, debug);
                             return retfinal;
                         }
-                        if (PathExists(cohorts.WsPackage.c_str()))
+                        else
                         {
-                            ///#if MOREDEBUG
-                            ///                        Log(L"[%d] CreateFileFixup: Package VFS exists", dllInstance);
-                            ///#endif
-                            if (IsAWriteCase)
+                            if (!IsADirectoryCase)
                             {
-                                ///#if MOREDEBUG
-                                ///                            Log(L"[%d] CreateFileFixup: Cow PkgVfs-->Redirected", dllInstance);
-                                ///#endif
-                                                            // COW is applicable first.
-                                if (Cow(cohorts.WsPackage, cohorts.WsRedirected, dllInstance, L"CreateFileFixup"))
+                                // try the redirection path, then the package (COW), then native (possibly COW)
+                                if (!cohorts.map.IsAnExclusionToRedirect && PathExists(cohorts.WsRedirected.c_str()))
                                 {
-                                    ///#if MOREDEBUG
-                                    ///                                Log(L"[%d] CreateFileFixup: Cow OK, ready to create", dllInstance);
-                                    ///#endif
                                     retfinal = WRAPPER_CREATEFILE(cohorts.WsRedirected, desiredAccess, shareMode, securityAttributes, creationDisposition, flagsAndAttributes, templateFile, dllInstance, debug);
+                                    return retfinal;
+                                }
+                                
+                                ///#if MOREDEBUG
+                                 ///                        Log(L"[%d] CreateFileFixup: Package VFS exists", dllInstance);
+                                 ///#endif
+                                 if (IsAWriteCase)
+                                    {
+                                        ///#if MOREDEBUG
+                                        ///                            Log(L"[%d] CreateFileFixup: Cow PkgVfs-->Redirected", dllInstance);
+                                        ///#endif
+                                                                    // COW is applicable first.
+                                        if (Cow(cohorts.WsPackage, cohorts.WsRedirected, dllInstance, L"CreateFileFixup"))
+                                        {
+                                            ///#if MOREDEBUG
+                                            ///                                Log(L"[%d] CreateFileFixup: Cow OK, ready to create", dllInstance);
+                                            ///#endif
+                                            retfinal = WRAPPER_CREATEFILE(cohorts.WsRedirected, desiredAccess, shareMode, securityAttributes, creationDisposition, flagsAndAttributes, templateFile, dllInstance, debug);
+                                            return retfinal;
+                                        }
+                                        else
+                                        {
+                                            ///#if MOREDEBUG
+                                            ///                                Log(L"[%d] CreateFileFixup: Cow Bad, ready to create", dllInstance);
+                                            ///#endif
+                                            retfinal = WRAPPER_CREATEFILE(cohorts.WsPackage, desiredAccess, shareMode, securityAttributes, creationDisposition, flagsAndAttributes, templateFile, dllInstance, debug);
+                                            return retfinal;
+                                        }
+                                    }
+                                 else
+                                 {
+                                     ///#if MOREDEBUG
+                                     ///                            Log(L"[%d] CreateFileFixup: Read only Package VFS, ready to create", dllInstance);
+                                     ///#endif
+                                     retfinal = WRAPPER_CREATEFILE(cohorts.WsPackage, desiredAccess, shareMode, securityAttributes, creationDisposition, flagsAndAttributes, templateFile, dllInstance, debug);
+                                     return retfinal;
+                                 }
+                                
+                                ///#if MOREDEBUG
+                                ///                    Log(L"[%d] CreateFileFixup: Package VFS wasn't present.", dllInstance);
+                                ///#endif
+                                if (cohorts.UsingNative )
+                                {
+                                    if (IsAWriteCase)
+                                    {
+                                        // COW is applicable first.
+                                        if (Cow(cohorts.WsNative, cohorts.WsRedirected, dllInstance, L"CreateFileFixup"))
+                                        {
+                                            retfinal = WRAPPER_CREATEFILE(cohorts.WsRedirected, desiredAccess, shareMode, securityAttributes, creationDisposition, flagsAndAttributes, templateFile, dllInstance, debug);
+                                            return retfinal;
+                                        }
+                                        else
+                                        {
+                                            retfinal = WRAPPER_CREATEFILE(cohorts.WsNative, desiredAccess, shareMode, securityAttributes, creationDisposition, flagsAndAttributes, templateFile, dllInstance, debug);
+                                            return retfinal;
+                                        }
+                                    }
+                                    else
+                                    {
+                                        retfinal = WRAPPER_CREATEFILE(cohorts.WsNative, desiredAccess, shareMode, securityAttributes, creationDisposition, flagsAndAttributes, templateFile, dllInstance, debug);
+                                        return retfinal;
+                                    }
+                                }
+                                // There isn't such a file anywhere.  We want to create the redirection parent folder and let this call against the redirected file to create there.
+                                PreCreateFolders(cohorts.WsRedirected.c_str(), dllInstance, L"CreateFileFixup");
+                                retfinal = WRAPPER_CREATEFILE(cohorts.WsRedirected, desiredAccess, shareMode, securityAttributes, creationDisposition, flagsAndAttributes, templateFile, dllInstance, debug);
+                                return retfinal;
+                            }
+                            else
+                            {
+                                // Is a directory, so we probably want to use the native location, if it exists, since that will layer in the package
+                                if (cohorts.UsingNative &&
+                                    PathExists(cohorts.WsNative.c_str()))
+                                {
+                                    retfinal = WRAPPER_CREATEFILE(cohorts.WsNative, desiredAccess, shareMode, securityAttributes, creationDisposition, flagsAndAttributes, templateFile, dllInstance, debug);
                                     return retfinal;
                                 }
                                 else
                                 {
-                                    ///#if MOREDEBUG
-                                    ///                                Log(L"[%d] CreateFileFixup: Cow Bad, ready to create", dllInstance);
-                                    ///#endif
+                                    PreCreateFolders(cohorts.WsRedirected.c_str(), dllInstance, L"CreateFileFixup");
+                                    retfinal = WRAPPER_CREATEFILE(cohorts.WsRedirected, desiredAccess, shareMode, securityAttributes, creationDisposition, flagsAndAttributes, templateFile, dllInstance, debug);
+                                    return retfinal;
+                                }
+                            }
+                        }
+                    }
+                    else
+                    {
+                        if (MFRConfiguration.Ilv_Aware)
+                        {
+                            retfinal = WRAPPER_CREATEFILE(cohorts.WsPackage, desiredAccess, shareMode, securityAttributes, creationDisposition, flagsAndAttributes, templateFile, dllInstance, debug);
+                            return retfinal;
+                        }
+                        else
+                        {
+                            if (!IsADirectoryCase)
+                            {
+                                if (IsAWriteCase)
+                                {
+                                    if (Cow(cohorts.WsPackage, cohorts.WsRedirected, dllInstance, L"CreateFileFixup"))
+                                    {
+                                        ///#if MOREDEBUG
+                                        ///                                Log(L"[%d] CreateFileFixup: Cow OK, ready to create", dllInstance);
+                                        ///#endif
+                                        retfinal = WRAPPER_CREATEFILE(cohorts.WsRedirected, desiredAccess, shareMode, securityAttributes, creationDisposition, flagsAndAttributes, templateFile, dllInstance, debug);
+                                        return retfinal;
+                                    }
+                                    else
+                                    {
+                                        ///#if MOREDEBUG
+                                        ///                                Log(L"[%d] CreateFileFixup: Cow Bad, ready to create", dllInstance);
+                                        ///#endif
+                                        retfinal = WRAPPER_CREATEFILE(cohorts.WsPackage, desiredAccess, shareMode, securityAttributes, creationDisposition, flagsAndAttributes, templateFile, dllInstance, debug);
+                                        return retfinal;
+                                    }
+                                }
+                                else
+                                {
                                     retfinal = WRAPPER_CREATEFILE(cohorts.WsPackage, desiredAccess, shareMode, securityAttributes, creationDisposition, flagsAndAttributes, templateFile, dllInstance, debug);
                                     return retfinal;
                                 }
                             }
                             else
                             {
-                                ///#if MOREDEBUG
-                                ///                            Log(L"[%d] CreateFileFixup: Read only Package VFS, ready to create", dllInstance);
-                                ///#endif
-                                retfinal = WRAPPER_CREATEFILE(cohorts.WsPackage, desiredAccess, shareMode, securityAttributes, creationDisposition, flagsAndAttributes, templateFile, dllInstance, debug);
+                                PreCreateFolders(cohorts.WsRedirected.c_str(), dllInstance, L"CreateFileFixup");
+                                retfinal = WRAPPER_CREATEFILE(cohorts.WsRedirected, desiredAccess, shareMode, securityAttributes, creationDisposition, flagsAndAttributes, templateFile, dllInstance, debug);
                                 return retfinal;
                             }
-                        }
-                        ///#if MOREDEBUG
-                        ///                    Log(L"[%d] CreateFileFixup: Package VFS wasn't present.", dllInstance);
-                        ///#endif
-                        if (cohorts.UsingNative &&
-                            PathExists(cohorts.WsNative.c_str()))
-                        {
-                            if (IsAWriteCase)
-                            {
-                                // COW is applicable first.
-                                if (Cow(cohorts.WsNative, cohorts.WsRedirected, dllInstance, L"CreateFileFixup"))
-                                {
-                                    retfinal = WRAPPER_CREATEFILE(cohorts.WsRedirected, desiredAccess, shareMode, securityAttributes, creationDisposition, flagsAndAttributes, templateFile, dllInstance, debug);
-                                    return retfinal;
-                                }
-                                else
-                                {
-                                    retfinal = WRAPPER_CREATEFILE(cohorts.WsNative, desiredAccess, shareMode, securityAttributes, creationDisposition, flagsAndAttributes, templateFile, dllInstance, debug);
-                                    return retfinal;
-                                }
-                            }
-                            else
-                            {
-                                retfinal = WRAPPER_CREATEFILE(cohorts.WsNative, desiredAccess, shareMode, securityAttributes, creationDisposition, flagsAndAttributes, templateFile, dllInstance, debug);
-                                return retfinal;
-                            }
-                        }
-                        // There isn't such a file anywhere.  We want to create the redirection parent folder and let this call against the redirected file to create there.
-                        PreCreateFolders(cohorts.WsRedirected.c_str(), dllInstance, L"CreateFileFixup");
-                        retfinal = WRAPPER_CREATEFILE(cohorts.WsRedirected, desiredAccess, shareMode, securityAttributes, creationDisposition, flagsAndAttributes, templateFile, dllInstance, debug);
-                        return retfinal;
-                    }
-                    else
-                    {
-                        // Is a directory, so we probably want to use the native location, if it exists, since that will layer in the package
-                        if (cohorts.UsingNative &&
-                            PathExists(cohorts.WsNative.c_str()))
-                        {
-                            retfinal = WRAPPER_CREATEFILE(cohorts.WsNative, desiredAccess, shareMode, securityAttributes, creationDisposition, flagsAndAttributes, templateFile, dllInstance, debug);
-                            return retfinal;
-                        }
-                        else
-                        {
-                            PreCreateFolders(cohorts.WsRedirected.c_str(), dllInstance, L"CreateFileFixup");
-                            retfinal = WRAPPER_CREATEFILE(cohorts.WsRedirected, desiredAccess, shareMode, securityAttributes, creationDisposition, flagsAndAttributes, templateFile, dllInstance, debug);
-                            return retfinal;
                         }
                     }
                 }
@@ -426,24 +513,32 @@ HANDLE __stdcall CreateFileFixup(_In_ const CharT* pathName,
                     }
                     if (PathExists(cohorts.WsPackage.c_str()))
                     {
-                        if (IsAWriteCase)
+                        if (MFRConfiguration.Ilv_Aware)
                         {
-                            // COW is applicable first.
-                            if (Cow(cohorts.WsPackage, cohorts.WsRedirected, dllInstance, L"CreateFileFixup"))
+                            retfinal = WRAPPER_CREATEFILE(cohorts.WsPackage, desiredAccess, shareMode, securityAttributes, creationDisposition, flagsAndAttributes, templateFile, dllInstance, debug);
+                            return retfinal;
+                        }
+                        else
+                        {
+                            if (IsAWriteCase)
                             {
-                                retfinal = WRAPPER_CREATEFILE(cohorts.WsRedirected, desiredAccess, shareMode, securityAttributes, creationDisposition, flagsAndAttributes, templateFile, dllInstance, debug);
-                                return retfinal;
+                                // COW is applicable first.
+                                if (Cow(cohorts.WsPackage, cohorts.WsRedirected, dllInstance, L"CreateFileFixup"))
+                                {
+                                    retfinal = WRAPPER_CREATEFILE(cohorts.WsRedirected, desiredAccess, shareMode, securityAttributes, creationDisposition, flagsAndAttributes, templateFile, dllInstance, debug);
+                                    return retfinal;
+                                }
+                                else
+                                {
+                                    retfinal = WRAPPER_CREATEFILE(cohorts.WsPackage, desiredAccess, shareMode, securityAttributes, creationDisposition, flagsAndAttributes, templateFile, dllInstance, debug);
+                                    return retfinal;
+                                }
                             }
                             else
                             {
                                 retfinal = WRAPPER_CREATEFILE(cohorts.WsPackage, desiredAccess, shareMode, securityAttributes, creationDisposition, flagsAndAttributes, templateFile, dllInstance, debug);
                                 return retfinal;
                             }
-                        }
-                        else
-                        {
-                            retfinal = WRAPPER_CREATEFILE(cohorts.WsPackage, desiredAccess, shareMode, securityAttributes, creationDisposition, flagsAndAttributes, templateFile, dllInstance, debug);
-                            return retfinal;
                         }
                     }
                     if (cohorts.UsingNative &&

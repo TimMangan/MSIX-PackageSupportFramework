@@ -12,6 +12,9 @@
 ///     to return success after the copy part.  Other essoteric options (like delayed boot) might not work under MSIX.
 ///     We could let these fail, but instead we will use a copy technique when the source ends up to be a package file and leave
 ///     the old file in place.
+/// 
+///     ***** This file and KernelBase_MoveFileEx must be kept in sync *****
+/// 
 
 //#define MOREDEBUG 1
 #endif

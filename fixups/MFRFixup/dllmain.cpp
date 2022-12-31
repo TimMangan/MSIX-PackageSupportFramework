@@ -58,9 +58,6 @@ extern "C" {
         switch (ul_reason_for_call)
         {
         case DLL_PROCESS_ATTACH:
-#ifdef _DEBUG
-            ::OutputDebugStringA("MFRFixup attached");
-#endif
             InitializeMFRFixup();
             InitializeConfiguration();
             break;

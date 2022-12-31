@@ -234,6 +234,7 @@
     <ClInclude Include="FID.h" />
     <ClInclude Include="FindData3.h" />
     <ClInclude Include="FindFirstHelpers.h" />
+    <ClInclude Include="KernelBase_FunctionalImplementations.h" />
     <ClInclude Include="MFRConfiguration.h" />
     <ClInclude Include="framework.h" />
     <ClInclude Include="FunctionImplementations.h" />
@@ -262,6 +263,7 @@
     <ClCompile Include="FindFirstFileEx.cpp" />
     <ClCompile Include="FindFirstHelpers.cpp" />
     <ClCompile Include="FindNextFile.cpp" />
+    <ClCompile Include="KernelBase_MoveFileEx.cpp" />
     <ClCompile Include="MoveFile.cpp" />
     <ClCompile Include="MoveFileEx.cpp" />
     <ClCompile Include="MoveFileWithProgress.cpp" />
@@ -283,6 +285,7 @@
     <ClCompile Include="SetCurrentDirectory.cpp" />
     <ClCompile Include="ShellExecute.cpp" />
     <ClCompile Include="ShellExecuteEx.cpp" />
+    <ClCompile Include="UCRT_wrename.cpp" />
     <ClCompile Include="WritePrivateProfileSection.cpp" />
     <ClCompile Include="WritePrivateProfileString.cpp" />
     <ClCompile Include="WritePrivateProfileStruct.cpp" />
