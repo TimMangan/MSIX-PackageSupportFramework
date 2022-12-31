@@ -14,6 +14,7 @@
 #include <psf_framework.h>
 #include <shellapi.h>
 
+//#define FIXUP_UCRTMOVE 1
 
 extern DWORD g_InterceptInstance;
 
@@ -77,6 +78,12 @@ namespace impl
     inline auto ShellExecuteW = &::ShellExecuteW;
     inline auto ShellExecuteExA = &::ShellExecuteExA;
     inline auto ShellExecuteExW = &::ShellExecuteExW;
+
+#if FIXUP_UCRTMOVE
+    // ucrtbased.dll function declarations
+     //int __cdecl wrename(const wchar_t* oldname, const wchar_t* newname);
+    inline auto Rename = psf::detoured_string_function( &::rename, &::_wrename);
+#endif
 
 #if FIXUP_UCRT
     // ucrtbased.dll functions
