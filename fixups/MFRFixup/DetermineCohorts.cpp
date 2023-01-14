@@ -88,8 +88,20 @@ void DetermineCohorts(std::wstring requestedPath, Cohorts *cohorts, bool UseMore
                 {
                     Log(L"[%d] %s:  Maps with known traditional redirection type %s", dllInstance, FixupName, RedirectFlagsName(cohorts->map.RedirectionFlags));
                 }
-                cohorts->WsRedirected = ReplacePathPart(cohorts->WsRequested.c_str(), cohorts->map.NativePathBase, cohorts->map.RedirectedPathBase);
-                cohorts->WsPackage = ReplacePathPart(cohorts->WsRequested.c_str(), cohorts->map.NativePathBase, cohorts->map.PackagePathBase);
+                // Exception processing
+                // We shouln't redirect to traditional area if the call was only to the WindowsApps folder.
+                // This can cause an issue in an app like R (language) that deals with Short Names and we can't force shortnames to be the same
+                // in the redirection area that they are natively. (Well, we could if MFR did everything but not with ILV in use as it creates these things behind our back.
+                if (comparei(cohorts->WsRequested, L"C:\\Program Files\\WindowsApps"))
+                {
+                    cohorts->WsPackage = ReplacePathPart(cohorts->WsRequested.c_str(), cohorts->map.NativePathBase, cohorts->map.PackagePathBase);
+                    cohorts->WsRedirected = cohorts->WsPackage;
+                }
+                else
+                {
+                    cohorts->WsRedirected = ReplacePathPart(cohorts->WsRequested.c_str(), cohorts->map.NativePathBase, cohorts->map.RedirectedPathBase);
+                    cohorts->WsPackage = ReplacePathPart(cohorts->WsRequested.c_str(), cohorts->map.NativePathBase, cohorts->map.PackagePathBase);
+                }
                 cohorts->WsNative = cohorts->WsRequested;
             }
             else
