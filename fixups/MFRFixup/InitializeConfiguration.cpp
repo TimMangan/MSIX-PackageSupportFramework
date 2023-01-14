@@ -19,7 +19,7 @@
 
 using namespace std::literals;
 
-#define MOREDEBUG 1
+//#define MOREDEBUG 1
 //#define EVENMOREDEBUG 1
 
 TRACELOGGING_DECLARE_PROVIDER(g_Log_ETW_ComponentProvider);
