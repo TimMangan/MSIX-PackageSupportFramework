@@ -17,7 +17,7 @@
 #include "ManagedPathTypes.h"
 #include "PathUtilities.h"
 #include "DetermineCohorts.h"
-
+#include "Detect_Pipe.h"
 
 
 HANDLE  WRAPPER_CREATEFILE(std::wstring theDestinationFile,
@@ -37,11 +37,11 @@ HANDLE  WRAPPER_CREATEFILE(std::wstring theDestinationFile,
     {
         if (retfinal == INVALID_HANDLE_VALUE)
         {
-            Log(L"[%d] CreateFile returns FAILURE 0x%x on file '%s'", dllInstance, GetLastError(), LongDestinationFile.c_str());
+            Log(L"[%d] WRAPPER_CREATEFILE returns FAILURE 0x%x on file '%s'", dllInstance, GetLastError(), LongDestinationFile.c_str());
         }
         else
         {
-            Log(L"[%d] CreateFile returns handle 0x%x on file '%s'", dllInstance, retfinal, LongDestinationFile.c_str());
+            Log(L"[%d] WRAPPER_CREATEFILE returns handle 0x%x on file '%s'", dllInstance, retfinal, LongDestinationFile.c_str());
         }
     }
     return retfinal;  
@@ -77,6 +77,7 @@ HANDLE __stdcall CreateFileFixup(_In_ const CharT* pathName,
             dllInstance = ++g_InterceptInstance;
             std::wstring wPathName = widen(pathName);
             wPathName = AdjustSlashes(wPathName);
+            wPathName = AdjustLocalPipeName(wPathName);
 
 #if _DEBUG
             LogString(dllInstance, L"CreateFileFixup for path", pathName);
@@ -584,6 +585,12 @@ HANDLE __stdcall CreateFileFixup(_In_ const CharT* pathName,
             }
 
         }
+        else
+        {
+#if _DEBUG
+            LogString(dllInstance, L"CreateFileFixup [unguarded] for path", pathName);
+#endif
+        }
     }
 #if _DEBUG
     // Fall back to assuming no redirection is necessary if exception
@@ -605,7 +612,7 @@ HANDLE __stdcall CreateFileFixup(_In_ const CharT* pathName,
         retfinal = INVALID_HANDLE_VALUE; //impl::CreateFile(pathName, desiredAccess, shareMode, securityAttributes, creationDisposition, flagsAndAttributes, templateFile);
     }
 #if _DEBUG
-    Log(L"[%d] CreateFileFixup returns handle 0x%x", dllInstance, retfinal);
+    Log(L"[%d] CreateFileFixup returns with handle 0x%x", dllInstance, retfinal);
 #endif
     return retfinal;
 }

@@ -17,7 +17,7 @@
 #include "ManagedPathTypes.h"
 #include "PathUtilities.h"
 #include "DetermineCohorts.h"
-
+#include "Detect_Pipe.h"
 
 
 HANDLE  WRAPPER_CREATEFILE2(std::wstring theDestinationFile,
@@ -72,6 +72,8 @@ HANDLE __stdcall CreateFile2Fixup(
             dllInstance = ++g_InterceptInstance;
             std::wstring wPathName = fileName;
             wPathName = AdjustSlashes(wPathName);
+            wPathName = AdjustLocalPipeName(wPathName);
+
 #if _DEBUG
             LogString(dllInstance, L"CreateFile2Fixup for ", fileName);
 #if MOREDEBUG
@@ -120,7 +122,7 @@ HANDLE __stdcall CreateFile2Fixup(
             //LogString(dllInstance, L"CreateFileFixup: Cohort redirection", cohorts.WsRedirected.c_str());
             //LogString(dllInstance, L"CreateFileFixup: Cohort package", cohorts.WsPackage.c_str());
             //LogString(dllInstance, L"CreateFileFixup: Cohort native", cohorts.WsNative.c_str());
-            Log(L"[%d] CreateFile2Fixup: MfrPathType=%s", dllInstance, MfrFlagTypesString(cohorts.file_mfr.Request_MfrPathType).c_str());
+            Log(L"[%d] CreateFile2Fixup: MfrPathType=%s", dllInstance, MfrFlagTypesString(cohorts.file_mfr.Request_MfrPathType));
 #endif
 
             switch (cohorts.file_mfr.Request_MfrPathType)
