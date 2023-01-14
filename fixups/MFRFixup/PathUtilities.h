@@ -64,6 +64,9 @@ extern std::wstring Log_CreationDisposition(DWORD creationDisposition);
 extern std::wstring Log_FlagsAndAttributes(DWORD flagsAndAttributes);
 
 
+extern bool comparei(const std::wstring wstrA, const std::wstring wstrB);
+extern bool comparei(const std::string strA, const std::string strB);
+
 #if NEEDED
 inline std::wstring widen(std::string_view str, UINT codePage = CP_UTF8)
 {

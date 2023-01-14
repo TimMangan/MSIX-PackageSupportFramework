@@ -485,6 +485,46 @@ bool IsCreateForDirectory(DWORD desiredAccess, [[maybe_unused]]DWORD creationDis
 }
 
 
+bool comparei(const std::wstring wstrA, const std::wstring wstrB)
+{
+    try
+    {
+        if (wstrA.length() != wstrB.length())
+            return false;
+
+        std::wstring lwstrA = wstrA;
+        std::wstring lwstrB = wstrB;
+        std::transform(lwstrA.begin(), lwstrA.end(), lwstrA.begin(), [](wchar_t wc) { return (wchar_t)std::tolower(wc); });
+        std::transform(lwstrB.begin(), lwstrB.end(), lwstrB.begin(), [](wchar_t wc) { return (wchar_t)std::tolower(wc); });
+        return (lwstrA == lwstrB);
+    }
+    catch (...)
+    {
+        Log("IteratorW issue");
+    }
+    return false;
+}
+
+bool comparei(const std::string strA, const std::string strB)
+{
+    try
+    {
+        if (strA.length() != strB.length())
+            return false;
+
+        std::string lstrA = strA;
+        std::string lstrB = strB;
+        std::transform(lstrA.begin(), lstrA.end(), lstrA.begin(), [](wchar_t wc) { return (char)std::tolower(wc); });
+        std::transform(lstrB.begin(), lstrB.end(), lstrB.begin(), [](wchar_t wc) { return (char)std::tolower(wc); });
+        return (lstrA == lstrB);
+    }
+    catch (...)
+    {
+        Log("IteratorA issue");
+    }
+    return false;
+}
+
 std::filesystem::path ConvertPathToShortPath(std::filesystem::path inputPath)
 {
     std::filesystem::path outputPath = inputPath;
