@@ -36,6 +36,8 @@ inline std::wstring GetFilenameOnly(std::wstring path)
 {
     size_t index = path.find_last_of(L"\\", std::wstring::npos);
     if (index == std::wstring::npos)
+        index = path.find_last_of(L"/", std::wstring::npos);
+    if (index == std::wstring::npos)
         return path;
     return path.substr(index + 1);
 }
