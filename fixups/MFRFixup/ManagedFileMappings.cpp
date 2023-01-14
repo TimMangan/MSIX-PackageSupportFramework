@@ -9,6 +9,10 @@
 #include "PathUtilities.h"
 #include <psf_logging.h>
 
+#if _DEBUG
+//#define MOREDEBUG 1
+#endif
+
 namespace mfr
 {
 
@@ -28,6 +32,9 @@ namespace mfr
 
         FID_Initialize(); 
 
+#if MOREDEBUG
+        Log("\t\tMFRFixup Initialize_MFR_Mappings: post FID");
+#endif  
 
         g_MfrFolderMappings.push_back(mfr::mfr_folder_mapping {  /*Valid_mapping =*/ true, /*IsAnExclusionToRedirect =*/ false,
                                                                 /*NativePathBase =*/ FID_System32 / LR"(catroot2)"sv,
@@ -405,8 +412,8 @@ namespace mfr
                                                                 false,
                                                                 g_writablePackageRootPath,
                                                                 mfr::mfr_redirect_flags::prefer_redirection_containerized});
-#if _DEBUG
-        //Log(L" MFR_Mappings initialized.");
+#if MOREDEBUG
+        Log(L" MFR_Mappings initialized.");
 #endif
     } // Initialize_MFR_Mappings()
 
