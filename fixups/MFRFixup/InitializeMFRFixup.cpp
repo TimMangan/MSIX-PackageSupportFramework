@@ -36,6 +36,9 @@ DWORD g_InterceptInstance = 60000;
 
 void InitializeMFRFixup()
 {
+#if MOREDEBUG
+    Log("\t\tMFRFixup InitializeMFRFixup: start");
+#endif  
 
     // For path comparison's sake - and the fact that std::filesystem::path doesn't handle (root-)local device paths all
     // that well - ensure that these paths are drive-absolute
@@ -55,11 +58,32 @@ void InitializeMFRFixup()
     g_finalPackageRootPath = psf::remove_trailing_path_separators(finalPackageRootPath);  // has \\?\ prepended to PackageRootPath
 
     // Ensure that the redirected root path exists
+    // We see some issues with multiple processes starting up and making the create_directories call simultaniously causing the second one to hit an exception.
+    // We can ignore those issues.
+    std::error_code ec;
     g_redirectRootPath = psf::known_folder(FOLDERID_LocalAppData) / std::filesystem::path(L"Packages") / psf::current_package_family_name() / LR"(LocalCache\Local\VFS)";
-    std::filesystem::create_directories(g_redirectRootPath);
+    try
+    {
+        std::filesystem::create_directories(g_redirectRootPath);
+    }
+    catch (...)
+    {
+#ifdef _DEBUG
+        Log("\t\tMfrFixup ignorable exception creating directories.");
+#endif
+    }
 
     g_writablePackageRootPath = psf::known_folder(FOLDERID_LocalAppData) / std::filesystem::path(L"Packages") / psf::current_package_family_name() / LR"(LocalCache\Local\Microsoft\WritablePackageRoot)";
-    std::filesystem::create_directories(g_writablePackageRootPath);
+    try
+    {
+        std::filesystem::create_directories(g_writablePackageRootPath);
+    }
+    catch (...)
+    {
+#ifdef _DEBUG
+        Log("\t\tMfrFixup ignorable exception creating directories.");
+#endif
+    }
 
     g_short_packageRootPath = ConvertPathToShortPath(g_packageRootPath);
     g_short_packageVfsRootPath = ConvertPathToShortPath(g_packageVfsRootPath);
@@ -67,6 +91,13 @@ void InitializeMFRFixup()
     g_short_writablePackageRootPath = ConvertPathToShortPath(g_writablePackageRootPath);
     g_short_finalPackageRootPath = ConvertPathToShortPath(g_finalPackageRootPath);
 
+#if MOREDEBUG
+    Log("\t\tMFRFixup InitializeMFRFixup: mid");
+#endif
+
     mfr::Initialize_MFR_Mappings();
 
+#if MOREDEBUG
+    Log("\t\tMFRFixup InitializeMFRFixup: end");
+#endif  
 }  //InitializeMFRFixup()
