@@ -6,6 +6,9 @@
 #include <psf_framework.h>
 #include <psf_logging.h>
 
+#if _DEBUG
+//#define MOREDEBUG 1
+#endif
 
 bool trace_function_entry = false;
 bool m_inhibitOutput = false;
