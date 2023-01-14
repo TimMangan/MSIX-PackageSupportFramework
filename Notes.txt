@@ -7,6 +7,11 @@ ideas:
  * MFR: Potential fix for CreateFile,CreateFile2 only - and only on redir case, to try package directly. (Spyder).
  * Launcher: Add UserProgramFiles to ArgumentVirtualization List
  * MFR: Add intercept to kerbase.dll version of MoveFileExW as the kernel32.dll version may be bypassed (Audacity).
+ * PsfRuntime: Add intercept to CreateProcessAsUserA/W.
+ * MFR: Avoid dll initialization crash when multiple processes are injecting at the same time.
+ * MFR: Don't redirect C:\Program Files\WindowsApps
+ * MFR: Add pipe support.
+ * DynDll: Handle dll loading using '/' for path separations.
  
  v.2022.12.11
  * MFR: Add an ILV-Aware mode for MFR. Could simplify some things.
