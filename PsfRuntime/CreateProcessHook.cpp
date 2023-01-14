@@ -39,6 +39,9 @@
 
 using namespace std::literals;
 
+#if _DEBUG
+//#define MOREDEBUG 1
+#endif
 
 extern wchar_t g_PsfRunTimeModulePath[];
 
@@ -78,7 +81,7 @@ USHORT ProcessBitness(HANDLE hProcess)
     USHORT pProcessMachine;
     USHORT pMachineNative;
     LPFN_ISWOW64PROCESS2 fnIsWow64Process2 = (LPFN_ISWOW64PROCESS2)GetProcAddress(
-        GetModuleHandle(TEXT("kernel32")), "IsWow64Process2");
+        GetModuleHandleW(TEXT("kernel32")), "IsWow64Process2");
 
     if (fnIsWow64Process2 != NULL)
     {
@@ -263,11 +266,13 @@ std::wstring ExtractArgs(LPWSTR commandline)
     return args;
 }
 
-void LogCreationFlags(DWORD Instance, DWORD CreationFlags)
+void LogCreationFlags(DWORD Instance, DWORD CreationFlags, LPCWSTR InterceptName)
 {
 
     std::wstring form;
-    form = L"\t[%d]\tCreateProcessFixup: CreationFlags=0x%x=";
+    form = L"\t[%d]\t";
+    form.append(InterceptName);
+    form.append(L": CreationFlags = 0x % x = ");
     if (CreationFlags & CREATE_BREAKAWAY_FROM_JOB)
         form.append(L"CREATE_BREAKAWAY_FROM_JOB ");
     if (CreationFlags & CREATE_DEFAULT_ERROR_MODE)
@@ -408,9 +413,42 @@ BOOL WINAPI CreateProcessFixup(
         , 0 // wShowWindow
         }
     };
+
     STARTUPINFOEX *MyReplacementStartupInfo = reinterpret_cast<STARTUPINFOEX*>(startupInfo);
 
     LogString(CreateProcessInstance, L"CreateProcessFixup: commandline", commandLine);
+
+#if _DEBUG
+    LogCreationFlags(CreateProcessInstance, PossiblyModifiedCreationFlags, L"CreateProcessFixup");
+#endif
+
+#ifdef MOREDEBUG
+    if (processAttributes != NULL)
+    {
+        if (processAttributes->lpSecurityDescriptor != NULL)
+        {
+            Log(L" [%d] CreateProcessFixup: Request has a ProcessAttributes/Security Descriptor.", CreateProcessInstance);
+        }
+        Log(L" [%d] CreateProcessFixup: Request ProcessAttributes bInheritHandle = 0x%x", CreateProcessInstance, processAttributes->bInheritHandle);
+    }
+    if (threadAttributes != NULL)
+    {
+        if (threadAttributes->lpSecurityDescriptor != NULL)
+        {
+            Log(L" [%d] CreateProcessFixup: Request has a ThreadAttributes/Security Descriptor.", CreateProcessInstance);
+        }
+        Log(L" [%d] CreateProcessFixup: Request ThreadAttributes bInheritHandle = 0x%x", CreateProcessInstance, threadAttributes->bInheritHandle);
+    }
+    Log(L" [%d] CreateProcessFixup: Request base InheritHandles = 0x%x", CreateProcessInstance, inheritHandles);
+    if (environment != NULL)
+    {
+        Log(L" [%d] CreateProcessFixup: Request has Environment.", CreateProcessInstance);
+    }
+    if (currentDirectory != NULL)
+    {
+        Log(L" [%d] CreateProcessFixup: Request has currentDirectory=%s", CreateProcessInstance,currentDirectory);
+    }
+#endif
 
     if constexpr (psf::is_ansi<CharT>)
     {
@@ -433,6 +471,22 @@ BOOL WINAPI CreateProcessFixup(
         }
     }
     
+#if CLEANUP_FLAG_CREATE_UNICODE_ENVIRONMENT
+    // Remove unneccessary UNICODE directive if not needed
+    if (environment == NULL &&
+        (PossiblyModifiedCreationFlags & CREATE_UNICODE_ENVIRONMENT) != 0)
+    {
+        PossiblyModifiedCreationFlags &= ~CREATE_UNICODE_ENVIRONMENT;
+    }
+#endif
+#if CLEANUP_FLAG_DETACHED_PROCESS
+    // Remove unneccessary DETACHED_PROCESS directive if not needed
+    if ((PossiblyModifiedCreationFlags & DETACHED_PROCESS) != 0)
+    {
+        PossiblyModifiedCreationFlags &= ~DETACHED_PROCESS;
+    }
+#endif
+
     if (!skipForce) 
     {
 
@@ -440,7 +494,6 @@ BOOL WINAPI CreateProcessFixup(
         {
 #if _DEBUG
             Log(L"\t[%d] CreateProcessFixup: Extended StartupInfo present but want to force running inside container unless app requested otherwise.", CreateProcessInstance);
-            LogCreationFlags(CreateProcessInstance, PossiblyModifiedCreationFlags);
 #endif
             // Hopefully it is set to start in the container anyway.
             if constexpr (psf::is_ansi<CharT>)
@@ -573,7 +626,7 @@ BOOL WINAPI CreateProcessFixup(
     PossiblyModifiedCreationFlags |= CREATE_SUSPENDED;
 
 #if MOREDEBUG
-    LogCreationFlags(CreateProcessInstance, PossiblyModifiedCreationFlags);
+    LogCreationFlags(CreateProcessInstance, PossiblyModifiedCreationFlags, L"CreateProcessFixup");
 #endif
 
     if (::CreateProcessImpl(
@@ -690,6 +743,7 @@ BOOL WINAPI CreateProcessFixup(
                 {
                     // looks bad, have no idea why or what to do here if here.
                     err = GetLastError();
+                    Log(L"\t[%d] CreateProcessFixup: Returns FALSE 0x%x", CreateProcessInstance,err);
                     return FALSE;
                 }
             }
@@ -779,9 +833,10 @@ BOOL WINAPI CreateProcessFixup(
 #ifdef _DEBUG
     Log(L"\t[%d] CreateProcessFixup: Process has started as suspended, now consider injections...", CreateProcessInstance);
 #endif
+
     iwstring path;
     DWORD size = MAX_PATH;
-    path.resize(size - 1);
+    path.resize(size_t(size - 1));
     while (true)
     {
         if (::QueryFullProcessImageNameW(processInformation->hProcess, 0, path.data(), &size))
@@ -792,7 +847,7 @@ BOOL WINAPI CreateProcessFixup(
         else if (auto err = ::GetLastError(); err == ERROR_INSUFFICIENT_BUFFER)
         {
             size *= 2;
-            path.resize(size - 1);
+            path.resize(size_t(size - 1));
         }
         else
         {
@@ -803,6 +858,7 @@ BOOL WINAPI CreateProcessFixup(
             ::CloseHandle(processInformation->hThread);
 
             ::SetLastError(err);
+            Log(L"\t[%d] CreateProcessFixup: Returns FALSE 0x%x", CreateProcessInstance,err);
             return FALSE;
         }
     }
@@ -1077,6 +1133,7 @@ BOOL WINAPI CreateProcessFixup(
                     ::CloseHandle(processInformation->hThread);
 
                     ::SetLastError(err);
+                    Log(L"\t[%d] CreateProcessFixup: Returns FALSE 0x%x", CreateProcessInstance, err);
                     return FALSE;
                 }
             }
@@ -1097,6 +1154,7 @@ BOOL WINAPI CreateProcessFixup(
     if ((creationFlags & CREATE_SUSPENDED) != CREATE_SUSPENDED)
     {
         // Caller did not want the process to start suspended
+        Log(L"\t[%d] CreateProcessFixup: Resume PID=%d\n", CreateProcessInstance, processInformation->dwProcessId);
         ::ResumeThread(processInformation->hThread);
         SetLastError(0);
     }
@@ -1108,6 +1166,7 @@ BOOL WINAPI CreateProcessFixup(
         ::CloseHandle(processInformation->hThread);
     }
 
+    Log(L"\t[%d] CreateProcessFixup: Returns TRUE", CreateProcessInstance);
     return TRUE;
 }
 catch (...)
