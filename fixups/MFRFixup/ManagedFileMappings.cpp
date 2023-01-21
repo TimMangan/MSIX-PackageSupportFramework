@@ -45,6 +45,7 @@ namespace mfr
                                                                 /*RedirectedPathBase =*/g_writablePackageRootPath / L"VFS"sv / L"AppVSystem32Catroot2"sv,
                                                                 /*RedirectionFlags =*/ mfr::mfr_redirect_flags::prefer_redirection_containerized });
 
+
         g_MfrFolderMappings.push_back(mfr::mfr_folder_mapping{ true, false, 
                                                                 FID_System32 / LR"(catroot)"sv,       
                                                                 L"FOLDERID_System\\Catroot",        
@@ -257,6 +258,14 @@ namespace mfr
                                                                 g_packageVfsRootPath / L"LocalAppDataLow"sv,
                                                                 false,
                                                                 g_writablePackageRootPath / L"VFS"sv / L"LocalAppDataLow"sv,
+                                                                mfr::mfr_redirect_flags::prefer_redirection_containerized });
+        g_MfrFolderMappings.push_back(mfr::mfr_folder_mapping{ true, true,
+                                                                FID_LocalAppData / LR"(Temp)"sv,
+                                                                L"Local AppData\\Temp",
+                                                                L"Local AppData\\Temp",
+                                                                g_packageVfsRootPath / L"Local AppData"sv / L"Temp"sv,
+                                                                false,
+                                                                g_writablePackageRootPath / L"VFS"sv / L"Local AppData"sv / L"Temp"sv,
                                                                 mfr::mfr_redirect_flags::prefer_redirection_containerized });
         g_MfrFolderMappings.push_back(mfr::mfr_folder_mapping{ true, true,
                                                                 FID_LocalAppData / LR"(Microsoft)"sv / LR"(Windows)"sv,

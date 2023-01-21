@@ -19,6 +19,7 @@
 #include "DetermineCohorts.h"
 
 #if FIXUP_UCRTMOVE
+// This appears to not be needed as it will later call our existing intercepts
 
 template <typename CharT>
 int  __cdecl wrenameFixup(

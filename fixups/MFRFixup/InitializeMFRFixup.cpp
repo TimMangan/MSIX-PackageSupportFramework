@@ -31,6 +31,11 @@ std::filesystem::path g_short_redirectRootPath;
 std::filesystem::path g_short_writablePackageRootPath;
 std::filesystem::path g_short_finalPackageRootPath;
 
+
+#if _DEBUG
+//#define MOREDEBUG 1
+#endif
+
 DWORD g_InterceptInstance = 60000;
 
 
@@ -49,7 +54,7 @@ void InitializeMFRFixup()
         packageRootPath += 4;
     }
     assert(psf::path_type(packageRootPath.c_str()) == psf::dos_path_type::drive_absolute);
-    transform(packageRootPath.begin(), packageRootPath.end(), packageRootPath.begin(), towlower);
+    //WHY???   transform(packageRootPath.begin(), packageRootPath.end(), packageRootPath.begin(), towlower);
     g_packageRootPath = psf::remove_trailing_path_separators(packageRootPath);
 
     g_packageVfsRootPath = g_packageRootPath / L"VFS";

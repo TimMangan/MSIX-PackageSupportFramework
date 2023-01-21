@@ -17,6 +17,7 @@
 #include "ManagedPathTypes.h"
 #include "PathUtilities.h"
 #include "DetermineCohorts.h"
+#include "DetermineILVpaths.h"
 
 #if _DEBUG
 //#define DEBUGPATHTESTING 1
@@ -25,22 +26,22 @@
 
 
 
-#define WRAPPER_SETFILEATTRIBUTES(theDestinationFilename, debug) \
-    { \
-        std::wstring LongDestinationFilename = MakeLongPath(theDestinationFilename); \
-        retfinal = impl::SetFileAttributesW(LongDestinationFilename.c_str(),fileAttributes); \
-        if (debug) \
-        { \
-            if (retfinal == 0) \
-            { \
-                Log(L"[%d] SetFileAttributes returns FAILURE 0x%x and file '%s'", dllInstance, retfinal, LongDestinationFilename.c_str()); \
-            } \
-            else \
-            { \
-                Log(L"[%d] SetFileAttributes returns SUCCESS 0x%x and file '%s'", dllInstance, retfinal, LongDestinationFilename.c_str()); \
-            } \
-        } \
-        return retfinal; \
+BOOL WRAPPER_SETFILEATTRIBUTES(std::wstring theDestinationFilename, DWORD fileAttributes, DWORD dllInstance, bool debug)
+    { 
+        std::wstring LongDestinationFilename = MakeLongPath(theDestinationFilename); 
+        bool retfinal = impl::SetFileAttributesW(LongDestinationFilename.c_str(),fileAttributes); 
+        if (debug) 
+        { 
+            if (retfinal == 0) 
+            { 
+                Log(L"[%d] SetFileAttributes wrapper returns FAILURE 0x%x and file '%s'", dllInstance, GetLastError(), LongDestinationFilename.c_str()); 
+            } 
+            else 
+            { 
+                Log(L"[%d] SetFileAttributes wrapper returns SUCCESS and file '%s'", dllInstance, LongDestinationFilename.c_str()); 
+            } 
+        } 
+        return retfinal; 
     }
 
 
@@ -75,290 +76,529 @@ BOOL __stdcall SetFileAttributesFixup(_In_ const CharT* fileName, _In_ DWORD fil
             Cohorts cohorts;
             DetermineCohorts(wfileName, &cohorts, moreDebug, dllInstance, L"SetFileAttributesFixup");
 
-            switch (cohorts.file_mfr.Request_MfrPathType)
+            if (!MFRConfiguration.Ilv_Aware)
             {
-            case mfr::mfr_path_types::in_native_area:
-                if (cohorts.map.Valid_mapping)
+                switch (cohorts.file_mfr.Request_MfrPathType)
                 {
-                    switch (cohorts.map.RedirectionFlags)
+                case mfr::mfr_path_types::in_native_area:
+                    if (cohorts.map.Valid_mapping)
                     {
-                    case mfr::mfr_redirect_flags::prefer_redirection_local:
-                        // try the request path, which must be the local redirected version by definition, and then a package equivalent using COW
-                        if (!cohorts.map.IsAnExclusionToRedirect && PathExists(cohorts.WsRedirected.c_str()))
+                        switch (cohorts.map.RedirectionFlags)
                         {
-                            WRAPPER_SETFILEATTRIBUTES(cohorts.WsRedirected, debug);  // always returns
-                        }
-                        else if (PathExists(cohorts.WsPackage.c_str()))
-                        {
-                            if (Cow(cohorts.WsPackage, cohorts.WsRedirected, dllInstance, L"SetFileAttributes"))
+                        case mfr::mfr_redirect_flags::prefer_redirection_local:
+                            if (!MFRConfiguration.Ilv_Aware)
                             {
-                                WRAPPER_SETFILEATTRIBUTES(cohorts.WsRedirected, debug); // always returns
-                            }
-                            else
-                            {
-                                WRAPPER_SETFILEATTRIBUTES(cohorts.WsPackage, debug); // always returns
-                            }
-                        }
-                        else if (PathParentExists(cohorts.WsPackage.c_str()))
-                        {
-                            PreCreateFolders(cohorts.WsRedirected.c_str(), dllInstance, L"SetFileAttributes");
-                            WRAPPER_SETFILEATTRIBUTES(cohorts.WsRedirected, debug) // always returns
-                        }
-                        else
-                        {
-                            // There isn't such a file anywhere.  We want to create the redirection parent folder and let this call against the redirected file to create there.
-                            PreCreateFolders(cohorts.WsRequested.c_str(), dllInstance, L"SetFileAttributes");
-                            WRAPPER_SETFILEATTRIBUTES(cohorts.WsRedirected, debug); // always returns
-                        }
-                        break;
-                    case mfr::mfr_redirect_flags::prefer_redirection_containerized:
-                    case mfr::mfr_redirect_flags::prefer_redirection_if_package_vfs:
-
-                        // try the redirected path, then package (via COW), then native (possibly via COW).
-                        if (!cohorts.map.IsAnExclusionToRedirect && PathExists(cohorts.WsRedirected.c_str()))
-                        {
-                            WRAPPER_SETFILEATTRIBUTES(cohorts.WsRedirected, debug);
-                        }
-                        else if (PathExists(cohorts.WsPackage.c_str()))
-                        {
-                            if (Cow(cohorts.WsPackage, cohorts.WsRedirected, dllInstance, L"SetFileAttributes"))
-                            {
-                                WRAPPER_SETFILEATTRIBUTES(cohorts.WsRedirected, debug);
-                            }
-                            else
-                            {
-                                WRAPPER_SETFILEATTRIBUTES(cohorts.WsPackage, debug);
-                            }
-                        }
-                        else if (PathExists(cohorts.WsNative.c_str()))
-                        {
-                            // TODO: This might not be the best way to decide is COW is appropriate.  
-                            //       Possibly we should always do it, or possibly only if the equivalent VFS folder exists in the package.
-                            //       Setting attributes on an external file subject to traditional redirection seems an unlikely scenario that we need COW, but it might make an old app work.
-                            if (cohorts.map.DoesRuntimeMapNativeToVFS)
-                            {
-                                if (Cow(cohorts.WsNative, cohorts.WsRedirected, dllInstance, L"SetFileAttributes"))
+                                // try the request path, which must be the local redirected version by definition, and then a package equivalent using COW
+                                if (!cohorts.map.IsAnExclusionToRedirect && PathExists(cohorts.WsRedirected.c_str()))
                                 {
-                                    WRAPPER_SETFILEATTRIBUTES(cohorts.WsRedirected, debug);
+                                    retfinal = WRAPPER_SETFILEATTRIBUTES(cohorts.WsRedirected, fileAttributes, dllInstance, debug);
+                                    return retfinal;
+                                }
+                                else if (PathExists(cohorts.WsPackage.c_str()))
+                                {
+                                    if (Cow(cohorts.WsPackage, cohorts.WsRedirected, dllInstance, L"SetFileAttributes"))
+                                    {
+                                        retfinal = WRAPPER_SETFILEATTRIBUTES(cohorts.WsRedirected, fileAttributes, dllInstance, debug);
+                                        return retfinal;
+                                    }
+                                    else
+                                    {
+                                        retfinal = WRAPPER_SETFILEATTRIBUTES(cohorts.WsPackage, fileAttributes, dllInstance, debug);
+                                        return retfinal;
+                                    }
+                                }
+                                else if (PathParentExists(cohorts.WsPackage.c_str()))
+                                {
+                                    PreCreateFolders(cohorts.WsRedirected.c_str(), dllInstance, L"SetFileAttributes");
+                                    retfinal = WRAPPER_SETFILEATTRIBUTES(cohorts.WsRedirected, fileAttributes, dllInstance, debug);
+                                    return retfinal;
                                 }
                                 else
                                 {
-                                    WRAPPER_SETFILEATTRIBUTES(cohorts.WsNative, debug);
+                                    // There isn't such a file anywhere.  We want to create the redirection parent folder and let this call against the redirected file to create there.
+                                    PreCreateFolders(cohorts.WsRequested.c_str(), dllInstance, L"SetFileAttributes");
+                                    retfinal = WRAPPER_SETFILEATTRIBUTES(cohorts.WsRedirected, fileAttributes, dllInstance, debug);
+                                    return retfinal;
                                 }
                             }
                             else
                             {
-                                WRAPPER_SETFILEATTRIBUTES(cohorts.WsNative, debug);
-                            }
-                        }
-                        else
-                        {
-                            // There isn't such a file anywhere.  We want to create the redirection parent folder and let this call against the redirected file to create there.
-                            PreCreateFolders(cohorts.WsRequested.c_str(), dllInstance, L"SetFileAttributes");
-                            WRAPPER_SETFILEATTRIBUTES(cohorts.WsRequested, debug);
-                        }
-                        break;
-                    case mfr::mfr_redirect_flags::prefer_redirection_none:
-                    case mfr::mfr_redirect_flags::disabled:
-                    default:
-                        // just fall through to unguarded code
-                        break;
-                    }
-                }
-                break;
-            case mfr::mfr_path_types::in_package_pvad_area:
-                if (cohorts.map.Valid_mapping)
-                {
-                    switch (cohorts.map.RedirectionFlags)
-                    {
-                    case mfr::mfr_redirect_flags::prefer_redirection_local:
-                        // not possible, fall through
-                        break;
-                    case mfr::mfr_redirect_flags::prefer_redirection_containerized:
-                    case mfr::mfr_redirect_flags::prefer_redirection_if_package_vfs:
-                        //// try the redirected path, then package (COW), then don't need native.
-                        if (!cohorts.map.IsAnExclusionToRedirect && PathExists(cohorts.WsRedirected.c_str()))
-                        {
-                            WRAPPER_SETFILEATTRIBUTES(cohorts.WsRedirected, debug);
-                        }
-                        else if (PathExists(cohorts.WsPackage.c_str()))
-                        {
-                            if (Cow(cohorts.WsPackage, cohorts.WsRedirected, dllInstance, L"SetFileAttributes"))
-                            {
-                                WRAPPER_SETFILEATTRIBUTES(cohorts.WsRedirected, debug);
-                            }
-                            else
-                            {
-                                WRAPPER_SETFILEATTRIBUTES(cohorts.WsPackage, debug);
-                            }
-                        }
-                        else
-                        {
-                            // There isn't such a file anywhere.  We want to create the redirection parent folder and let this call against the redirected file to create there.
-                            PreCreateFolders(cohorts.WsRedirected.c_str(), dllInstance, L"SetFileAttributes");
-                            WRAPPER_SETFILEATTRIBUTES(cohorts.WsRedirected, debug);
-                        }
-                        break;
-                    case mfr::mfr_redirect_flags::prefer_redirection_none:
-                    case mfr::mfr_redirect_flags::disabled:
-                    default:
-                        // just fall through to unguarded code
-                        break;
-                    }
-                }
-                break;
-            case mfr::mfr_path_types::in_package_vfs_area:
-                if (cohorts.map.Valid_mapping)
-                {
-                    switch (cohorts.map.RedirectionFlags)
-                    {
-                    case mfr::mfr_redirect_flags::prefer_redirection_local:
-                        if (!cohorts.map.IsAnExclusionToRedirect && PathExists(cohorts.WsRedirected.c_str()))
-                        {
-                            WRAPPER_SETFILEATTRIBUTES(cohorts.WsRedirected, debug);
-                        }
-                        else if (PathExists(cohorts.WsPackage.c_str()))
-                        {
-                            if (Cow(cohorts.WsPackage, cohorts.WsRedirected, dllInstance, L"SetFileAttributes"))
-                            {
-                                WRAPPER_SETFILEATTRIBUTES(cohorts.WsRedirected, debug);
-                            }
-                            else
-                            {
-                                WRAPPER_SETFILEATTRIBUTES(cohorts.WsPackage, debug);
-                            }
-                        }
-                        else
-                        {
-                            // There isn't such a file anywhere.  We want to create the redirection parent folder and let this call against the redirected file to create there.
-                            PreCreateFolders(cohorts.WsRedirected.c_str(), dllInstance, L"SetFileAttributes");
-                            WRAPPER_SETFILEATTRIBUTES(cohorts.WsRedirected, debug);
-                        }
-                        break;
-                    case mfr::mfr_redirect_flags::prefer_redirection_containerized:
-                    case mfr::mfr_redirect_flags::prefer_redirection_if_package_vfs:
-                        // try the redirection path, then the package (COW), then native (possibly COW)
-                        if (!cohorts.map.IsAnExclusionToRedirect && PathExists(cohorts.WsRedirected.c_str()))
-                        {
-                            WRAPPER_SETFILEATTRIBUTES(cohorts.WsRedirected, debug);
-                        }
-                        else if (PathExists(cohorts.WsPackage.c_str()))
-                        {
-                            if (Cow(cohorts.WsPackage, cohorts.WsRedirected, dllInstance, L"SetFileAttributes"))
-                            {
-                                WRAPPER_SETFILEATTRIBUTES(cohorts.WsRedirected, debug);
-                            }
-                            else
-                            {
-                                WRAPPER_SETFILEATTRIBUTES(cohorts.WsPackage, debug);
-                            }
-                        }
-                        else if (PathExists(cohorts.WsNative.c_str()))
-                        {
-                            // TODO: This might not be the best way to decide is COW is appropriate.  
-                            //       Possibly we should always do it, or possibly only if the equivalent VFS folder exists in the package.
-                            //       Setting attributes on an external file subject to traditional redirection seems an unlikely scenario that we need COW, but it might make an old app work.
-                            if (cohorts.map.DoesRuntimeMapNativeToVFS)
-                            {
-                                if (Cow(cohorts.WsNative, cohorts.WsRedirected, dllInstance, L"SetFileAttributes"))
+#if MOREDEBUG
+                                Log(L"[%d] SetFileAttributesFixup: Native Local with ILV", dllInstance);
+#endif
+                                if (!cohorts.map.IsAnExclusionToRedirect && PathExists(cohorts.WsPackage.c_str()))
                                 {
-                                    WRAPPER_SETFILEATTRIBUTES(cohorts.WsRedirected, debug);
+                                    retfinal = WRAPPER_SETFILEATTRIBUTES(cohorts.WsRequested, fileAttributes, dllInstance, debug);
+                                    if (!retfinal && GetLastError() == ERROR_CANT_ACCESS_FILE)
+                                    {
+                                        // ILV has issues with this, fake it.
+#if MOREDEBUG
+                                        Log(L"[%d] SetFileAttributeFixups: can't access package file; return fake success.", dllInstance);
+#endif
+                                        SetLastError(0);
+                                        return TRUE;
+                                    }
+                                    else
+                                    {
+                                        return retfinal;
+                                    }
                                 }
                                 else
                                 {
-                                    WRAPPER_SETFILEATTRIBUTES(cohorts.WsNative, debug);
+                                    retfinal = WRAPPER_SETFILEATTRIBUTES(cohorts.WsRequested, fileAttributes, dllInstance, debug);
+                                    if (!retfinal && GetLastError() == ERROR_CANT_ACCESS_FILE)
+                                    {
+                                        // ILV has issues with this, fake it.
+#if MOREDEBUG
+                                        Log(L"[%d] SetFileAttributeFixups: can't access requested file; return fake success.", dllInstance);
+#endif
+                                        SetLastError(0);
+                                        return TRUE;
+                                    }
+                                    else
+                                    {
+                                        return retfinal;
+                                    }
+                                }
+                            }
+                            break;
+                        case mfr::mfr_redirect_flags::prefer_redirection_containerized:
+                        case mfr::mfr_redirect_flags::prefer_redirection_if_package_vfs:
+                            if (!MFRConfiguration.Ilv_Aware)
+                            {
+                                // try the redirected path, then package (via COW), then native (possibly via COW).
+                                if (!cohorts.map.IsAnExclusionToRedirect && PathExists(cohorts.WsRedirected.c_str()))
+                                {
+                                    retfinal = WRAPPER_SETFILEATTRIBUTES(cohorts.WsRedirected, fileAttributes, dllInstance, debug);
+                                    return retfinal;
+                                }
+                                else if (PathExists(cohorts.WsPackage.c_str()))
+                                {
+                                    if (Cow(cohorts.WsPackage, cohorts.WsRedirected, dllInstance, L"SetFileAttributes"))
+                                    {
+                                        retfinal = WRAPPER_SETFILEATTRIBUTES(cohorts.WsRedirected, fileAttributes, dllInstance, debug);
+                                        return retfinal;
+                                    }
+                                    else
+                                    {
+                                        retfinal = WRAPPER_SETFILEATTRIBUTES(cohorts.WsPackage, fileAttributes, dllInstance, debug);
+                                        return retfinal;
+                                    }
+                                }
+                                else if (PathExists(cohorts.WsNative.c_str()))
+                                {
+                                    // TODO: This might not be the best way to decide is COW is appropriate.  
+                                    //       Possibly we should always do it, or possibly only if the equivalent VFS folder exists in the package.
+                                    //       Setting attributes on an external file subject to traditional redirection seems an unlikely scenario that we need COW, but it might make an old app work.
+                                    if (cohorts.map.DoesRuntimeMapNativeToVFS)
+                                    {
+                                        if (Cow(cohorts.WsNative, cohorts.WsRedirected, dllInstance, L"SetFileAttributes"))
+                                        {
+                                            retfinal = WRAPPER_SETFILEATTRIBUTES(cohorts.WsRedirected, fileAttributes, dllInstance, debug);
+                                            return retfinal;
+                                        }
+                                        else
+                                        {
+                                            retfinal = WRAPPER_SETFILEATTRIBUTES(cohorts.WsNative, fileAttributes, dllInstance, debug);
+                                            return retfinal;
+                                        }
+                                    }
+                                    else
+                                    {
+                                        retfinal = WRAPPER_SETFILEATTRIBUTES(cohorts.WsNative, fileAttributes, dllInstance, debug);
+                                        return retfinal;
+                                    }
+                                }
+                                else
+                                {
+                                    // There isn't such a file anywhere.  We want to create the redirection parent folder and let this call against the redirected file to create there.
+                                    PreCreateFolders(cohorts.WsRequested.c_str(), dllInstance, L"SetFileAttributes");
+                                    retfinal = WRAPPER_SETFILEATTRIBUTES(cohorts.WsRequested, fileAttributes, dllInstance, debug);
+                                    return retfinal;
+                                }
+                            }
+                            else
+                            {
+#if MOREDEBUG
+                                Log(L"[%d] SetFileAttributeFixups: Native Traditional with ILV", dllInstance);
+#endif
+                                // WIth IlvAware, we can't set the attribute and get this specific error if the file is in the package.
+                                if (!cohorts.map.IsAnExclusionToRedirect && PathExists(cohorts.WsRedirected.c_str()))
+                                {
+                                    retfinal = WRAPPER_SETFILEATTRIBUTES(cohorts.WsRedirected, fileAttributes, dllInstance, debug);
+                                }
+                                else
+                                {
+                                    retfinal = WRAPPER_SETFILEATTRIBUTES(cohorts.WsRequested, fileAttributes, dllInstance, debug);
+                                }
+                                if (!retfinal && GetLastError() == ERROR_CANT_ACCESS_FILE)
+                                {
+                                    // ILV has issues with this, fake it.
+#if MOREDEBUG
+                                    Log(L"[%d] SetFileAttributeFixups: Can't access file; return fake success.", dllInstance);
+#endif
+                                    SetLastError(0);
+                                    return TRUE;
+                                }
+                                else
+                                {
+                                    return retfinal;
+                                }
+                            }
+                            break;
+                        case mfr::mfr_redirect_flags::prefer_redirection_none:
+                        case mfr::mfr_redirect_flags::disabled:
+                        default:
+                            // just fall through to unguarded code
+                            break;
+                        }
+                    }
+                    break;
+                case mfr::mfr_path_types::in_package_pvad_area:
+                    if (cohorts.map.Valid_mapping)
+                    {
+                        switch (cohorts.map.RedirectionFlags)
+                        {
+                        case mfr::mfr_redirect_flags::prefer_redirection_local:
+                            // not possible, fall through
+                            break;
+                        case mfr::mfr_redirect_flags::prefer_redirection_containerized:
+                        case mfr::mfr_redirect_flags::prefer_redirection_if_package_vfs:
+                            if (!MFRConfiguration.Ilv_Aware)
+                            {
+                                //// try the redirected path, then package (COW), then don't need native.
+                                if (!cohorts.map.IsAnExclusionToRedirect && PathExists(cohorts.WsRedirected.c_str()))
+                                {
+                                    retfinal = WRAPPER_SETFILEATTRIBUTES(cohorts.WsRedirected, fileAttributes, dllInstance, debug);
+                                    return retfinal;
+                                }
+                                else if (PathExists(cohorts.WsPackage.c_str()))
+                                {
+                                    if (Cow(cohorts.WsPackage, cohorts.WsRedirected, dllInstance, L"SetFileAttributes"))
+                                    {
+                                        retfinal = WRAPPER_SETFILEATTRIBUTES(cohorts.WsRedirected, fileAttributes, dllInstance, debug);
+                                        return retfinal;
+                                    }
+                                    else
+                                    {
+                                        retfinal = WRAPPER_SETFILEATTRIBUTES(cohorts.WsPackage, fileAttributes, dllInstance, debug);
+                                        return retfinal;
+                                    }
+                                }
+                                else
+                                {
+                                    // There isn't such a file anywhere.  We want to create the redirection parent folder and let this call against the redirected file to create there.
+                                    PreCreateFolders(cohorts.WsRedirected.c_str(), dllInstance, L"SetFileAttributes");
+                                    retfinal = WRAPPER_SETFILEATTRIBUTES(cohorts.WsRedirected, fileAttributes, dllInstance, debug);
+                                    return retfinal;
+                                }
+                            }
+                            else
+                            {
+#if MOREDEBUG
+                                Log(L"[%d] SetFileAttributesFixup: PVAD Traditional with ILV", dllInstance);
+#endif
+                                retfinal = WRAPPER_SETFILEATTRIBUTES(cohorts.WsRedirected, fileAttributes, dllInstance, debug);
+                                if (!retfinal && GetLastError() == ERROR_CANT_ACCESS_FILE)
+                                {
+                                    // ILV has issues with this, fake it.
+#if MOREDEBUG
+                                    Log(L"[%d] SetFileAttributeFixups: can't access redirected file; return fake success.", dllInstance);
+#endif
+                                    SetLastError(0);
+                                    return TRUE;
+                                }
+                                else
+                                {
+                                    return retfinal;
+                                }
+                            }
+                            break;
+                        case mfr::mfr_redirect_flags::prefer_redirection_none:
+                        case mfr::mfr_redirect_flags::disabled:
+                        default:
+                            // just fall through to unguarded code
+                            break;
+                        }
+                    }
+                    break;
+                case mfr::mfr_path_types::in_package_vfs_area:
+                    if (cohorts.map.Valid_mapping)
+                    {
+                        switch (cohorts.map.RedirectionFlags)
+                        {
+                        case mfr::mfr_redirect_flags::prefer_redirection_local:
+                            if (!MFRConfiguration.Ilv_Aware)
+                            {
+                                if (!cohorts.map.IsAnExclusionToRedirect && PathExists(cohorts.WsRedirected.c_str()))
+                                {
+                                    retfinal = WRAPPER_SETFILEATTRIBUTES(cohorts.WsRedirected, fileAttributes, dllInstance, debug);
+                                    return retfinal;
+                                }
+                                else if (PathExists(cohorts.WsPackage.c_str()))
+                                {
+                                    if (Cow(cohorts.WsPackage, cohorts.WsRedirected, dllInstance, L"SetFileAttributes"))
+                                    {
+                                        retfinal = WRAPPER_SETFILEATTRIBUTES(cohorts.WsRedirected, fileAttributes, dllInstance, debug);
+                                        return retfinal;
+                                    }
+                                    else
+                                    {
+                                        retfinal = WRAPPER_SETFILEATTRIBUTES(cohorts.WsPackage, fileAttributes, dllInstance, debug);
+                                        return retfinal;
+                                    }
+                                }
+                                else
+                                {
+                                    // There isn't such a file anywhere.  We want to create the redirection parent folder and let this call against the redirected file to create there.
+                                    PreCreateFolders(cohorts.WsRedirected.c_str(), dllInstance, L"SetFileAttributes");
+                                    retfinal = WRAPPER_SETFILEATTRIBUTES(cohorts.WsRedirected, fileAttributes, dllInstance, debug);
+                                    return retfinal;
+                                }
+                            }
+                            else
+                            {
+#if MOREDEBUG
+                                Log(L"[%d] SetFileAttributesFixup: VFS Local with ILV", dllInstance);
+#endif
+                                if (cohorts.UsingNative)
+                                {
+                                    retfinal = WRAPPER_SETFILEATTRIBUTES(cohorts.WsRedirected, fileAttributes, dllInstance, debug);
+                                    if (!retfinal && GetLastError() == ERROR_CANT_ACCESS_FILE)
+                                    {
+                                        // ILV has issues with this, fake it.
+#if MOREDEBUG
+                                        Log(L"[%d] SetFileAttributeFixups: can't access file; return fake success.", dllInstance);
+#endif
+                                        SetLastError(0);
+                                        return TRUE;
+                                    }
+                                    else
+                                    {
+                                        return retfinal;
+                                    }
+                                }
+                                else
+                                {
+                                    retfinal = WRAPPER_SETFILEATTRIBUTES(cohorts.WsRequested, fileAttributes, dllInstance, debug);
+                                    if (!retfinal && GetLastError() == ERROR_CANT_ACCESS_FILE)
+                                    {
+                                        // ILV has issues with this, fake it.
+#if MOREDEBUG
+                                        Log(L"[%d] SetFileAttributeFixups: can't access requested file; return fake success.", dllInstance);
+#endif
+                                        SetLastError(0);
+                                        return TRUE;
+                                    }
+                                    else
+                                    {
+                                        return retfinal;
+                                    }
+                                }
+                            }
+                            break;
+                        case mfr::mfr_redirect_flags::prefer_redirection_containerized:
+                        case mfr::mfr_redirect_flags::prefer_redirection_if_package_vfs:
+                            if (!MFRConfiguration.Ilv_Aware)
+                            {
+                                // try the redirection path, then the package (COW), then native (possibly COW)
+                                if (!cohorts.map.IsAnExclusionToRedirect && PathExists(cohorts.WsRedirected.c_str()))
+                                {
+                                    retfinal = WRAPPER_SETFILEATTRIBUTES(cohorts.WsRedirected, fileAttributes, dllInstance, debug);
+                                    return retfinal;
+                                }
+                                else if (PathExists(cohorts.WsPackage.c_str()))
+                                {
+                                    if (Cow(cohorts.WsPackage, cohorts.WsRedirected, dllInstance, L"SetFileAttributes"))
+                                    {
+                                        retfinal = WRAPPER_SETFILEATTRIBUTES(cohorts.WsRedirected, fileAttributes, dllInstance, debug);
+                                        return retfinal;
+                                    }
+                                    else
+                                    {
+                                        retfinal = WRAPPER_SETFILEATTRIBUTES(cohorts.WsPackage, fileAttributes, dllInstance, debug);
+                                        return retfinal;
+                                    }
+                                }
+                                else if (PathExists(cohorts.WsNative.c_str()))
+                                {
+                                    // TODO: This might not be the best way to decide is COW is appropriate.  
+                                    //       Possibly we should always do it, or possibly only if the equivalent VFS folder exists in the package.
+                                    //       Setting attributes on an external file subject to traditional redirection seems an unlikely scenario that we need COW, but it might make an old app work.
+                                    if (cohorts.map.DoesRuntimeMapNativeToVFS)
+                                    {
+                                        if (Cow(cohorts.WsNative, cohorts.WsRedirected, dllInstance, L"SetFileAttributes"))
+                                        {
+                                            retfinal = WRAPPER_SETFILEATTRIBUTES(cohorts.WsRedirected, fileAttributes, dllInstance, debug);
+                                            return retfinal;
+                                        }
+                                        else
+                                        {
+                                            retfinal = WRAPPER_SETFILEATTRIBUTES(cohorts.WsNative, fileAttributes, dllInstance, debug);
+                                            return retfinal;
+                                        }
+                                    }
+                                    else
+                                    {
+                                        // There isn't such a file anywhere.  We want to create the redirection parent folder and let this call against the redirected file to create there or update registry.
+                                        PreCreateFolders(cohorts.WsRedirected.c_str(), dllInstance, L"SetFileAttributes");
+                                        retfinal = WRAPPER_SETFILEATTRIBUTES(cohorts.WsRedirected, fileAttributes, dllInstance, debug);
+                                        return retfinal;
+                                    }
+                                }
+                                else
+                                {
+                                    // There isn't such a file anywhere.  We want to create the redirection parent folder and let this call against the redirected file to create there.
+                                    PreCreateFolders(cohorts.WsRedirected.c_str(), dllInstance, L"SetFileAttributes");
+                                    retfinal = WRAPPER_SETFILEATTRIBUTES(cohorts.WsRedirected, fileAttributes, dllInstance, debug);
+                                    return retfinal;
+                                }
+                            }
+                            else
+                            {
+#if MOREDEBUG
+                                Log(L"[%d] SetFileAttributes: VFS Traditional with ILV", dllInstance);
+#endif
+                                retfinal = WRAPPER_SETFILEATTRIBUTES(cohorts.WsRedirected, fileAttributes, dllInstance, debug);
+                                if (!retfinal && GetLastError() == ERROR_CANT_ACCESS_FILE)
+                                {
+                                    // ILV has issues with this, fake it.
+#if MOREDEBUG
+                                    Log(L"[%d] SetFileAttributeFixups: can't access redirected file; return fake success.", dllInstance);
+#endif
+                                    SetLastError(0);
+                                    return TRUE;
+                                }
+                                else
+                                {
+                                    return retfinal;
+                                }
+                            }
+                            break;
+                        case mfr::mfr_redirect_flags::prefer_redirection_none:
+                        case mfr::mfr_redirect_flags::disabled:
+                        default:
+                            // just fall through to unguarded code
+                            break;
+                        }
+                    }
+                    break;
+                case mfr::mfr_path_types::in_redirection_area_writablepackageroot:
+                    if (cohorts.map.Valid_mapping)
+                    {
+                        if (!MFRConfiguration.Ilv_Aware)
+                        {
+                            // try the redirected path, then package (COW), then possibly native (Possibly COW).
+                            if (!cohorts.map.IsAnExclusionToRedirect && PathExists(cohorts.WsRedirected.c_str()))
+                            {
+                                retfinal = WRAPPER_SETFILEATTRIBUTES(cohorts.WsRedirected, fileAttributes, dllInstance, debug);
+                                return retfinal;
+                            }
+                            else if (PathExists(cohorts.WsPackage.c_str()))
+                            {
+                                if (Cow(cohorts.WsPackage, cohorts.WsRedirected, dllInstance, L"SetFileAttributes"))
+                                {
+                                    retfinal = WRAPPER_SETFILEATTRIBUTES(cohorts.WsRedirected, fileAttributes, dllInstance, debug);
+                                    return retfinal;
+                                }
+                                else
+                                {
+                                    retfinal = WRAPPER_SETFILEATTRIBUTES(cohorts.WsPackage, fileAttributes, dllInstance, debug);
+                                    return retfinal;
+                                }
+                            }
+                            else if (cohorts.UsingNative)
+                            {
+                                if (PathExists(cohorts.WsNative.c_str()))
+                                {
+                                    // TODO: This might not be the best way to decide is COW is appropriate.  
+                                    //       Possibly we should always do it, or possibly only if the equivalent VFS folder exists in the package.
+                                    //       Setting attributes on an external file subject to traditional redirection seems an unlikely scenario that we need COW, but it might make an old app work.
+                                    if (cohorts.map.DoesRuntimeMapNativeToVFS)
+                                    {
+                                        if (Cow(cohorts.WsNative, cohorts.WsRedirected, dllInstance, L"SetFileAttributes"))
+                                        {
+                                            retfinal = WRAPPER_SETFILEATTRIBUTES(cohorts.WsRedirected, fileAttributes, dllInstance, debug);
+                                            return retfinal;
+                                        }
+                                        else
+                                        {
+                                            retfinal = WRAPPER_SETFILEATTRIBUTES(cohorts.WsNative, fileAttributes, dllInstance, debug);
+                                            return retfinal;
+                                        }
+                                    }
+                                    else
+                                    {
+                                        retfinal = WRAPPER_SETFILEATTRIBUTES(cohorts.WsNative, fileAttributes, dllInstance, debug);
+                                        return retfinal;
+                                    }
+                                }
+                                else
+                                {
+                                    // There isn't such a file anywhere.  We want to create the redirection parent folder and let this call against the redirected file to create there or update registry.
+                                    PreCreateFolders(cohorts.WsRedirected.c_str(), dllInstance, L"SetFileAttributes");
+                                    retfinal = WRAPPER_SETFILEATTRIBUTES(cohorts.WsRedirected, fileAttributes, dllInstance, debug);
+                                    return retfinal;
                                 }
                             }
                             else
                             {
                                 // There isn't such a file anywhere.  We want to create the redirection parent folder and let this call against the redirected file to create there or update registry.
                                 PreCreateFolders(cohorts.WsRedirected.c_str(), dllInstance, L"SetFileAttributes");
-                                WRAPPER_SETFILEATTRIBUTES(cohorts.WsRedirected, debug);
+                                retfinal = WRAPPER_SETFILEATTRIBUTES(cohorts.WsRedirected, fileAttributes, dllInstance, debug);
+                                return retfinal;
                             }
                         }
                         else
                         {
-                            // There isn't such a file anywhere.  We want to create the redirection parent folder and let this call against the redirected file to create there.
-                            PreCreateFolders(cohorts.WsRedirected.c_str(), dllInstance, L"SetFileAttributes");
-                            WRAPPER_SETFILEATTRIBUTES(cohorts.WsRedirected, debug);
-                        }
-                        break;
-                    case mfr::mfr_redirect_flags::prefer_redirection_none:
-                    case mfr::mfr_redirect_flags::disabled:
-                    default:
-                        // just fall through to unguarded code
-                        break;
-                    }
-                }
-                break;
-            case mfr::mfr_path_types::in_redirection_area_writablepackageroot:
-                if (cohorts.map.Valid_mapping)
-                {
-                    // try the redirected path, then package (COW), then possibly native (Possibly COW).
-                    if (!cohorts.map.IsAnExclusionToRedirect && PathExists(cohorts.WsRedirected.c_str()))
-                    {
-                        WRAPPER_SETFILEATTRIBUTES(cohorts.WsRedirected, debug);
-                    }
-                    else if (PathExists(cohorts.WsPackage.c_str()))
-                    {
-                        if (Cow(cohorts.WsPackage, cohorts.WsRedirected, dllInstance, L"SetFileAttributes"))
-                        {
-                            WRAPPER_SETFILEATTRIBUTES(cohorts.WsRedirected, debug);
-                        }
-                        else
-                        {
-                            WRAPPER_SETFILEATTRIBUTES(cohorts.WsPackage, debug);
-                        }
-                    }
-                    else if (cohorts.UsingNative)
-                    {
-                        if (PathExists(cohorts.WsNative.c_str()))
-                        {
-                            // TODO: This might not be the best way to decide is COW is appropriate.  
-                            //       Possibly we should always do it, or possibly only if the equivalent VFS folder exists in the package.
-                            //       Setting attributes on an external file subject to traditional redirection seems an unlikely scenario that we need COW, but it might make an old app work.
-                            if (cohorts.map.DoesRuntimeMapNativeToVFS)
+#if MOREDEBUG
+                            Log(L"[%d] SetFileAttributes: writablepackageroot area with ILV", dllInstance);
+#endif
+                            retfinal = WRAPPER_SETFILEATTRIBUTES(cohorts.WsRequested, fileAttributes, dllInstance, debug);
+                            if (!retfinal && GetLastError() == ERROR_CANT_ACCESS_FILE)
                             {
-                                if (Cow(cohorts.WsNative, cohorts.WsRedirected, dllInstance, L"SetFileAttributes"))
-                                {
-                                    WRAPPER_SETFILEATTRIBUTES(cohorts.WsRedirected, debug);
-                                }
-                                else
-                                {
-                                    WRAPPER_SETFILEATTRIBUTES(cohorts.WsNative, debug);
-                                }
+                                // ILV has issues with this, fake it.
+#if MOREDEBUG
+                                Log(L"[%d] SetFileAttributeFixups: can't access requested file; return fake success.", dllInstance);
+#endif
+                                SetLastError(0);
+                                return TRUE;
                             }
                             else
                             {
-                                WRAPPER_SETFILEATTRIBUTES(cohorts.WsNative, debug);
+                                return retfinal;
                             }
                         }
-                        else
-                        {
-                            // There isn't such a file anywhere.  We want to create the redirection parent folder and let this call against the redirected file to create there or update registry.
-                            PreCreateFolders(cohorts.WsRedirected.c_str(), dllInstance, L"SetFileAttributes");
-                            WRAPPER_SETFILEATTRIBUTES(cohorts.WsRedirected, debug);
-                        }
                     }
-                    else
-                    {
-                        // There isn't such a file anywhere.  We want to create the redirection parent folder and let this call against the redirected file to create there or update registry.
-                        PreCreateFolders(cohorts.WsRedirected.c_str(), dllInstance, L"SetFileAttributes");
-                        WRAPPER_SETFILEATTRIBUTES(cohorts.WsRedirected, debug);
-                    }
+                    break;
+                case mfr::mfr_path_types::in_redirection_area_other:
+                    break;
+                case mfr::mfr_path_types::is_Protocol:
+                case mfr::mfr_path_types::is_DosSpecial:
+                case mfr::mfr_path_types::is_Shell:
+                case mfr::mfr_path_types::in_other_drive_area:
+                case mfr::mfr_path_types::is_UNC_path:
+                case mfr::mfr_path_types::unsupported_for_intercepts:
+                case mfr::mfr_path_types::unknown:
+                default:
+                    break;
                 }
-                break;
-            case mfr::mfr_path_types::in_redirection_area_other:
-                break;
-            case mfr::mfr_path_types::is_Protocol:
-            case mfr::mfr_path_types::is_DosSpecial:
-            case mfr::mfr_path_types::is_Shell:
-            case mfr::mfr_path_types::in_other_drive_area:
-            case mfr::mfr_path_types::is_UNC_path:
-            case mfr::mfr_path_types::unsupported_for_intercepts:
-            case mfr::mfr_path_types::unknown:
-            default:
-                break;
+            }
+            else
+            {
+                // ILV
+                // We can use the mapping for ReadOperations since no files are added or removed.
+                std::wstring UseName = DetermineIlvPathForReadOperations(cohorts, dllInstance, moreDebug);
+                // In a redirect to local scenario, we are responsible for determing if source is local or in package
+                UseName = SelectLocalOrPackageForRead(UseName, cohorts.WsPackage);
+
+                retfinal = WRAPPER_SETFILEATTRIBUTES(UseName, fileAttributes, dllInstance, debug);
+                if (retfinal)
+                {
+                    // ILV doesn't clear out the error on this call.
+                    SetLastError(0);
+                }
+                return retfinal;
             }
         }
     }
@@ -374,6 +614,9 @@ BOOL __stdcall SetFileAttributesFixup(_In_ const CharT* fileName, _In_ DWORD fil
     if (fileName != nullptr)
     {
         std::wstring LongFileName = MakeLongPath(widen(fileName));
+#if MOREDEBUG
+        Log(L"[%d] SetFileAttributesFixup:unguarded call for %s", dllInstance, LongFileName.c_str());
+#endif
         retfinal = impl::SetFileAttributes(LongFileName.c_str(), fileAttributes);
     }
     else

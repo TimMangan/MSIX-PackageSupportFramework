@@ -32,6 +32,8 @@
 #include "ManagedPathTypes.h"
 #include "PathUtilities.h"
 #include "DetermineCohorts.h"
+#include "DetermineIlvPaths.h"
+
 
 
 #if FIXUP_FROM_KernelBase
@@ -76,319 +78,363 @@ BOOL __stdcall Kb_MoveFileExWFixup(
             // Determine if path of existing file and if in package.
             std::wstring UseExistingFile = cohortsExisting.WsRequested;
             bool         ExistingFileIsPackagePath = false;
-            switch (cohortsExisting.file_mfr.Request_MfrPathType)
-            {
-            case mfr::mfr_path_types::in_native_area:
-                if (cohortsExisting.map.Valid_mapping &&
-                    cohortsExisting.map.RedirectionFlags == mfr::mfr_redirect_flags::prefer_redirection_local)
-                {
-                    if (!cohortsExisting.map.IsAnExclusionToRedirect && PathExists(cohortsExisting.WsRedirected.c_str()))
-                    {
-                        UseExistingFile = cohortsExisting.WsRedirected;
-                    }
-                    else if (PathExists(cohortsExisting.WsPackage.c_str()))
-                    {
-                        UseExistingFile = cohortsExisting.WsPackage;
-                        ExistingFileIsPackagePath = true;
-                    }
-                    else
-                    {
-                        UseExistingFile = cohortsExisting.WsRequested;
-                    }
-                    break;
-                }
-                else if (cohortsExisting.map.Valid_mapping &&
-                    (cohortsExisting.map.RedirectionFlags == mfr::mfr_redirect_flags::prefer_redirection_containerized ||
-                        cohortsExisting.map.RedirectionFlags == mfr::mfr_redirect_flags::prefer_redirection_if_package_vfs))
-                {
-                    if (!cohortsExisting.map.IsAnExclusionToRedirect && PathExists(cohortsExisting.WsRedirected.c_str()))
-                    {
-                        UseExistingFile = cohortsExisting.WsRedirected;
-                    }
-                    else if (PathExists(cohortsExisting.WsPackage.c_str()))
-                    {
-                        UseExistingFile = cohortsExisting.WsPackage;
-                        ExistingFileIsPackagePath = true;
-                    }
-                    else //if (cohortsExisting.UsingNative && PathExists(cohortsExisting.WsNative) or not since this is what was requested
-                    {
-                        UseExistingFile = cohortsExisting.WsRequested;
-                    }
-                    break;
-                }
-                break;
-            case mfr::mfr_path_types::in_package_pvad_area:
-                if (cohortsExisting.map.Valid_mapping)
-                {
-                    if (!cohortsExisting.map.IsAnExclusionToRedirect && PathExists(cohortsExisting.WsRedirected.c_str()))
-                    {
-                        UseExistingFile = cohortsExisting.WsRedirected;
-                    }
-                    else
-                    {
-                        UseExistingFile = cohortsExisting.WsPackage;
-                        ExistingFileIsPackagePath = true;
-                    }
-                    break;
-                }
-                break;
-            case mfr::mfr_path_types::in_package_vfs_area:
-                if (cohortsExisting.map.Valid_mapping &&
-                    cohortsExisting.map.RedirectionFlags == mfr::mfr_redirect_flags::prefer_redirection_local)
-                {
-                    if (!cohortsExisting.map.IsAnExclusionToRedirect && PathExists(cohortsExisting.WsRedirected.c_str()))
-                    {
-                        UseExistingFile = cohortsExisting.WsRedirected;
-                    }
-                    else
-                    {
-                        UseExistingFile = cohortsExisting.WsPackage;
-                        ExistingFileIsPackagePath = true;
-                    }
-                    break;
-                }
-                else if (cohortsExisting.map.Valid_mapping &&
-                    (cohortsExisting.map.RedirectionFlags == mfr::mfr_redirect_flags::prefer_redirection_containerized ||
-                        cohortsExisting.map.RedirectionFlags == mfr::mfr_redirect_flags::prefer_redirection_if_package_vfs))
-                {
-                    if (!cohortsExisting.map.IsAnExclusionToRedirect && PathExists(cohortsExisting.WsRedirected.c_str()))
-                    {
-                        UseExistingFile = cohortsExisting.WsRedirected;
-                    }
-                    else if (PathExists(cohortsExisting.WsPackage.c_str()))
-                    {
-                        UseExistingFile = cohortsExisting.WsPackage;
-                        ExistingFileIsPackagePath = true;
-                    }
-                    else if (cohortsExisting.UsingNative &&
-                        PathExists(cohortsExisting.WsNative.c_str()))
-                    {
-                        UseExistingFile = cohortsExisting.WsNative;
-                    }
-                    else
-                    {
-                        UseExistingFile = cohortsExisting.WsRequested;
-                        ExistingFileIsPackagePath = true;
-                    }
-                    break;
-                }
-                break;
-            case mfr::mfr_path_types::in_redirection_area_writablepackageroot:
-                if (cohortsExisting.map.Valid_mapping)
-                {
-                    if (!cohortsExisting.map.IsAnExclusionToRedirect && PathExists(cohortsExisting.WsRedirected.c_str()))
-                    {
-                        UseExistingFile = cohortsExisting.WsRedirected;
-                    }
-                    else if (PathExists(cohortsExisting.WsPackage.c_str()))
-                    {
-                        UseExistingFile = cohortsExisting.WsPackage;
-                        ExistingFileIsPackagePath = true;
-                    }
-                    else if (cohortsExisting.UsingNative &&
-                        PathExists(cohortsExisting.WsNative.c_str()))
-                    {
-                        UseExistingFile = cohortsExisting.WsNative;
-                    }
-                    else
-                    {
-                        UseExistingFile = cohortsExisting.WsRequested;
-                    }
-                    break;
-                }
-                break;
-            case mfr::mfr_path_types::in_redirection_area_other:
-                UseExistingFile = wExistingFileName;
-                break;
-            case mfr::mfr_path_types::is_Protocol:
-            case mfr::mfr_path_types::is_DosSpecial:
-            case mfr::mfr_path_types::is_Shell:
-            case mfr::mfr_path_types::in_other_drive_area:
-            case mfr::mfr_path_types::is_UNC_path:
-            case mfr::mfr_path_types::unsupported_for_intercepts:
-            case mfr::mfr_path_types::unknown:
-            default:
-                UseExistingFile = wExistingFileName;
-                break;
-            }
-
             std::wstring UseNewFile = cohortsNew.WsRequested;
-            // Determing the new destination
-            switch (cohortsNew.file_mfr.Request_MfrPathType)
+
+            if (!MFRConfiguration.Ilv_Aware)
             {
-            case mfr::mfr_path_types::in_native_area:
-                if (cohortsNew.map.Valid_mapping && !cohortsNew.map.IsAnExclusionToRedirect &&
-                    cohortsNew.map.RedirectionFlags == mfr::mfr_redirect_flags::prefer_redirection_local)
+                switch (cohortsExisting.file_mfr.Request_MfrPathType)
                 {
-                    UseNewFile = cohortsNew.WsRequested;
+                case mfr::mfr_path_types::in_native_area:
+                    if (cohortsExisting.map.Valid_mapping &&
+                        cohortsExisting.map.RedirectionFlags == mfr::mfr_redirect_flags::prefer_redirection_local)
+                    {
+                        if (!cohortsExisting.map.IsAnExclusionToRedirect && PathExists(cohortsExisting.WsRedirected.c_str()))
+                        {
+                            UseExistingFile = cohortsExisting.WsRedirected;
+                        }
+                        else if (PathExists(cohortsExisting.WsPackage.c_str()))
+                        {
+                            UseExistingFile = cohortsExisting.WsPackage;
+                            ExistingFileIsPackagePath = true;
+                        }
+                        else
+                        {
+                            UseExistingFile = cohortsExisting.WsRequested;
+                        }
+                        break;
+                    }
+                    else if (cohortsExisting.map.Valid_mapping &&
+                        (cohortsExisting.map.RedirectionFlags == mfr::mfr_redirect_flags::prefer_redirection_containerized ||
+                            cohortsExisting.map.RedirectionFlags == mfr::mfr_redirect_flags::prefer_redirection_if_package_vfs))
+                    {
+                        if (!cohortsExisting.map.IsAnExclusionToRedirect && PathExists(cohortsExisting.WsRedirected.c_str()))
+                        {
+                            UseExistingFile = cohortsExisting.WsRedirected;
+                        }
+                        else if (PathExists(cohortsExisting.WsPackage.c_str()))
+                        {
+                            UseExistingFile = cohortsExisting.WsPackage;
+                            ExistingFileIsPackagePath = true;
+                        }
+                        else //if (cohortsExisting.UsingNative && PathExists(cohortsExisting.WsNative) or not since this is what was requested
+                        {
+                            UseExistingFile = cohortsExisting.WsRequested;
+                        }
+                        break;
+                    }
+                    break;
+                case mfr::mfr_path_types::in_package_pvad_area:
+                    if (cohortsExisting.map.Valid_mapping)
+                    {
+                        if (!cohortsExisting.map.IsAnExclusionToRedirect && PathExists(cohortsExisting.WsRedirected.c_str()))
+                        {
+                            UseExistingFile = cohortsExisting.WsRedirected;
+                        }
+                        else
+                        {
+                            UseExistingFile = cohortsExisting.WsPackage;
+                            ExistingFileIsPackagePath = true;
+                        }
+                        break;
+                    }
+                    break;
+                case mfr::mfr_path_types::in_package_vfs_area:
+                    if (cohortsExisting.map.Valid_mapping &&
+                        cohortsExisting.map.RedirectionFlags == mfr::mfr_redirect_flags::prefer_redirection_local)
+                    {
+                        if (!cohortsExisting.map.IsAnExclusionToRedirect && PathExists(cohortsExisting.WsRedirected.c_str()))
+                        {
+                            UseExistingFile = cohortsExisting.WsRedirected;
+                        }
+                        else
+                        {
+                            UseExistingFile = cohortsExisting.WsPackage;
+                            ExistingFileIsPackagePath = true;
+                        }
+                        break;
+                    }
+                    else if (cohortsExisting.map.Valid_mapping &&
+                        (cohortsExisting.map.RedirectionFlags == mfr::mfr_redirect_flags::prefer_redirection_containerized ||
+                            cohortsExisting.map.RedirectionFlags == mfr::mfr_redirect_flags::prefer_redirection_if_package_vfs))
+                    {
+                        if (!cohortsExisting.map.IsAnExclusionToRedirect && PathExists(cohortsExisting.WsRedirected.c_str()))
+                        {
+                            UseExistingFile = cohortsExisting.WsRedirected;
+                        }
+                        else if (PathExists(cohortsExisting.WsPackage.c_str()))
+                        {
+                            UseExistingFile = cohortsExisting.WsPackage;
+                            ExistingFileIsPackagePath = true;
+                        }
+                        else if (cohortsExisting.UsingNative &&
+                            PathExists(cohortsExisting.WsNative.c_str()))
+                        {
+                            UseExistingFile = cohortsExisting.WsNative;
+                        }
+                        else
+                        {
+                            UseExistingFile = cohortsExisting.WsRequested;
+                            ExistingFileIsPackagePath = true;
+                        }
+                        break;
+                    }
+                    break;
+                case mfr::mfr_path_types::in_redirection_area_writablepackageroot:
+                    if (cohortsExisting.map.Valid_mapping)
+                    {
+                        if (!cohortsExisting.map.IsAnExclusionToRedirect && PathExists(cohortsExisting.WsRedirected.c_str()))
+                        {
+                            UseExistingFile = cohortsExisting.WsRedirected;
+                        }
+                        else if (PathExists(cohortsExisting.WsPackage.c_str()))
+                        {
+                            UseExistingFile = cohortsExisting.WsPackage;
+                            ExistingFileIsPackagePath = true;
+                        }
+                        else if (cohortsExisting.UsingNative &&
+                            PathExists(cohortsExisting.WsNative.c_str()))
+                        {
+                            UseExistingFile = cohortsExisting.WsNative;
+                        }
+                        else
+                        {
+                            UseExistingFile = cohortsExisting.WsRequested;
+                        }
+                        break;
+                    }
+                    break;
+                case mfr::mfr_path_types::in_redirection_area_other:
+                    UseExistingFile = wExistingFileName;
+                    break;
+                case mfr::mfr_path_types::is_Protocol:
+                case mfr::mfr_path_types::is_DosSpecial:
+                case mfr::mfr_path_types::is_Shell:
+                case mfr::mfr_path_types::in_other_drive_area:
+                case mfr::mfr_path_types::is_UNC_path:
+                case mfr::mfr_path_types::unsupported_for_intercepts:
+                case mfr::mfr_path_types::unknown:
+                default:
+                    UseExistingFile = wExistingFileName;
                     break;
                 }
-                else if (cohortsNew.map.Valid_mapping && !cohortsNew.map.IsAnExclusionToRedirect &&
-                    (cohortsNew.map.RedirectionFlags == mfr::mfr_redirect_flags::prefer_redirection_containerized ||
-                        cohortsNew.map.RedirectionFlags == mfr::mfr_redirect_flags::prefer_redirection_if_package_vfs))
+
+                // Determing the new destination
+                switch (cohortsNew.file_mfr.Request_MfrPathType)
                 {
-                    UseNewFile = cohortsNew.WsRedirected;
+                case mfr::mfr_path_types::in_native_area:
+                    if (cohortsNew.map.Valid_mapping && !cohortsNew.map.IsAnExclusionToRedirect &&
+                        cohortsNew.map.RedirectionFlags == mfr::mfr_redirect_flags::prefer_redirection_local)
+                    {
+                        UseNewFile = cohortsNew.WsRequested;
+                        break;
+                    }
+                    else if (cohortsNew.map.Valid_mapping && !cohortsNew.map.IsAnExclusionToRedirect &&
+                        (cohortsNew.map.RedirectionFlags == mfr::mfr_redirect_flags::prefer_redirection_containerized ||
+                            cohortsNew.map.RedirectionFlags == mfr::mfr_redirect_flags::prefer_redirection_if_package_vfs))
+                    {
+                        UseNewFile = cohortsNew.WsRedirected;
+                        break;
+                    }
+                    break;
+                case mfr::mfr_path_types::in_package_pvad_area:
+                    if (cohortsNew.map.Valid_mapping && !cohortsNew.map.IsAnExclusionToRedirect)
+                    {
+                        UseNewFile = cohortsNew.WsRedirected;
+                        break;
+                    }
+                    break;
+                case mfr::mfr_path_types::in_package_vfs_area:
+                    if (cohortsNew.map.Valid_mapping && !cohortsNew.map.IsAnExclusionToRedirect &&
+                        cohortsNew.map.RedirectionFlags == mfr::mfr_redirect_flags::prefer_redirection_local)
+                    {
+                        UseNewFile = cohortsNew.WsRequested;
+                        break;
+                    }
+                    else if (cohortsNew.map.Valid_mapping && !cohortsNew.map.IsAnExclusionToRedirect &&
+                        (cohortsNew.map.RedirectionFlags == mfr::mfr_redirect_flags::prefer_redirection_containerized ||
+                            cohortsNew.map.RedirectionFlags == mfr::mfr_redirect_flags::prefer_redirection_if_package_vfs))
+                    {
+                        UseNewFile = cohortsNew.WsRedirected;
+                        break;
+                    }
+                    break;
+                case mfr::mfr_path_types::in_redirection_area_writablepackageroot:
+                    if (cohortsNew.map.Valid_mapping)
+                    {
+                        UseNewFile = cohortsNew.WsRequested;
+                        break;
+                    }
+                    break;
+                case mfr::mfr_path_types::in_redirection_area_other:
+                    UseNewFile = wNewFileName;
+                    break;
+                case mfr::mfr_path_types::is_Protocol:
+                case mfr::mfr_path_types::is_DosSpecial:
+                case mfr::mfr_path_types::is_Shell:
+                case mfr::mfr_path_types::in_other_drive_area:
+                case mfr::mfr_path_types::is_UNC_path:
+                case mfr::mfr_path_types::unsupported_for_intercepts:
+                case mfr::mfr_path_types::unknown:
+                default:
+                    UseNewFile = wNewFileName;
                     break;
                 }
-                break;
-            case mfr::mfr_path_types::in_package_pvad_area:
-                if (cohortsNew.map.Valid_mapping && !cohortsNew.map.IsAnExclusionToRedirect)
-                {
-                    UseNewFile = cohortsNew.WsRedirected;
-                    break;
-                }
-                break;
-            case mfr::mfr_path_types::in_package_vfs_area:
-                if (cohortsNew.map.Valid_mapping && !cohortsNew.map.IsAnExclusionToRedirect &&
-                    cohortsNew.map.RedirectionFlags == mfr::mfr_redirect_flags::prefer_redirection_local)
-                {
-                    UseNewFile = cohortsNew.WsRequested;
-                    break;
-                }
-                else if (cohortsNew.map.Valid_mapping && !cohortsNew.map.IsAnExclusionToRedirect &&
-                    (cohortsNew.map.RedirectionFlags == mfr::mfr_redirect_flags::prefer_redirection_containerized ||
-                        cohortsNew.map.RedirectionFlags == mfr::mfr_redirect_flags::prefer_redirection_if_package_vfs))
-                {
-                    UseNewFile = cohortsNew.WsRedirected;
-                    break;
-                }
-                break;
-            case mfr::mfr_path_types::in_redirection_area_writablepackageroot:
-                if (cohortsNew.map.Valid_mapping)
-                {
-                    UseNewFile = cohortsNew.WsRequested;
-                    break;
-                }
-                break;
-            case mfr::mfr_path_types::in_redirection_area_other:
-                UseNewFile = wNewFileName;
-                break;
-            case mfr::mfr_path_types::is_Protocol:
-            case mfr::mfr_path_types::is_DosSpecial:
-            case mfr::mfr_path_types::is_Shell:
-            case mfr::mfr_path_types::in_other_drive_area:
-            case mfr::mfr_path_types::is_UNC_path:
-            case mfr::mfr_path_types::unsupported_for_intercepts:
-            case mfr::mfr_path_types::unknown:
-            default:
-                UseNewFile = wNewFileName;
-                break;
-            }
 
 #if MOREDEBUG
-            Log(L"[%d] Kb_MoveFileExWFixup: Source      to be is %s", dllInstance, UseExistingFile.c_str());
-            Log(L"[%d] Kb_MoveFileExWFixup: Destination to be is %s", dllInstance, UseNewFile.c_str());
-            if (ExistingFileIsPackagePath)
-            {
-                Log(L"[%d] Kb_MoveFileExWFixup: ExistingIsInPackagePath", dllInstance);
-            }
+                Log(L"[%d] Kb_MoveFileExWFixup: Source      to be is %s", dllInstance, UseExistingFile.c_str());
+                Log(L"[%d] Kb_MoveFileExWFixup: Destination to be is %s", dllInstance, UseNewFile.c_str());
+                if (ExistingFileIsPackagePath)
+                {
+                    Log(L"[%d] Kb_MoveFileExWFixup: ExistingIsInPackagePath", dllInstance);
+                }
 #endif
 
-            if (!ExistingFileIsPackagePath ||
-                (flags & MOVEFILE_COPY_ALLOWED) != 0)
-            {
-                // Can try MoveEx  (MOVEFILE_COPY_ALLOWED says it will succeed if the copy occurs without the delete)
-                std::wstring rldUseExistingFile = MakeLongPath(UseExistingFile);
-                std::wstring rldUseNewFile = MakeLongPath(UseNewFile);
-                PreCreateFolders(rldUseNewFile, dllInstance, L"Kb_MoveFileExWFixup");
+                if (!ExistingFileIsPackagePath ||
+                    (flags & MOVEFILE_COPY_ALLOWED) != 0)
+                {
+                    // Can try MoveEx  (MOVEFILE_COPY_ALLOWED says it will succeed if the copy occurs without the delete)
+                    std::wstring rldUseExistingFile = MakeLongPath(UseExistingFile);
+                    std::wstring rldUseNewFile = MakeLongPath(UseNewFile);
+                    PreCreateFolders(rldUseNewFile, dllInstance, L"Kb_MoveFileExWFixup");
 #if MOREDEBUG
-                Log(L"[%d] Kb_MoveFileExWFixup: from is %s", dllInstance, rldUseExistingFile.c_str());
-                Log(L"[%d] Kb_MoveFileExWFixup:   to is %s", dllInstance, rldUseNewFile.c_str());
+                    Log(L"[%d] Kb_MoveFileExWFixup: from is %s", dllInstance, rldUseExistingFile.c_str());
+                    Log(L"[%d] Kb_MoveFileExWFixup:   to is %s", dllInstance, rldUseNewFile.c_str());
 #endif
-                retfinal = kernelbaseimpl::MoveFileExWImpl(rldUseExistingFile.c_str(), rldUseNewFile.c_str(), flags);
+                    retfinal = kernelbaseimpl::MoveFileExWImpl(rldUseExistingFile.c_str(), rldUseNewFile.c_str(), flags);
 #if _DEBUG
-                if (retfinal == 0)
-                {
-                    Log(L"[%d] Kb_MoveFileExWFixup returns FAILURE 0x%x", dllInstance, GetLastError());
+                    if (retfinal == 0)
+                    {
+                        Log(L"[%d] Kb_MoveFileExWFixup returns FAILURE 0x%x", dllInstance, GetLastError());
+                    }
+                    else
+                    {
+                        Log(L"[%d] Kb_MoveFileExWFixup returns SUCCESS 0x%x", dllInstance, retfinal);
+                    }
+#endif
+                    return retfinal;
                 }
                 else
                 {
-                    Log(L"[%d] Kb_MoveFileExWFixup returns SUCCESS 0x%x", dllInstance, retfinal);
-                }
+                    // Replace move with copy since can't move due to package protections (or file doesn't exist anyway)
+                    std::wstring rldUseExistingFile = MakeLongPath(UseExistingFile);
+                    std::wstring rldUseNewFile = MakeLongPath(UseNewFile);
+                    PreCreateFolders(rldUseNewFile, dllInstance, L"Kb_MoveFileExWFixup");
+
+                    // MoveFile supports directory moves, but CopyFile does not
+                    auto atts = impl::GetFileAttributes(rldUseExistingFile.c_str());
+                    if (atts != INVALID_FILE_ATTRIBUTES &&
+                        (atts & FILE_ATTRIBUTE_DIRECTORY) == 0)
+                    {
+#if MOREDEBUG
+                        Log(L"[%d] Kb_MoveFileExWFixup: Implemeting stdcopy from is %s", dllInstance, rldUseExistingFile.c_str());
+                        Log(L"[%d] Kb_MoveFileExWFixup: Implemeting stdcopy   to is %s", dllInstance, rldUseNewFile.c_str());
 #endif
-                return retfinal;
+                        // std::filesystem::copy has some edge cases that might throw us for a loop requiring detection of edge
+                        // cases that need to be handled differently.  
+                        // Limiting use of this as a substitution to the directory scenario *should* keep that from happening.
+                        const std::filesystem::copy_options copyOptions = std::filesystem::copy_options::recursive;
+                        std::error_code eCode;
+                        std::filesystem::copy(UseExistingFile.c_str(),   // Not sure if std supports long path syntax
+                            UseNewFile.c_str(),
+                            copyOptions, eCode);
+                        if (eCode)
+                        {
+                            retfinal = 0; // error
+                        }
+                        else
+                        {
+                            retfinal = 1; // success
+                        }
+#if _DEBUG
+                        if (retfinal == 0)
+                        {
+                            Log(L"[%d] Kb_MoveFileExWFixup via copy(file) returns FAILURE 0x%x GetLastError 0x%x", dllInstance, eCode, GetLastError());
+                        }
+                        else
+                        {
+                            Log(L"[%d] Kb_MoveFileExWFixup via copy(file) returns SUCCESS 0x%x", dllInstance, retfinal);
+                        }
+                        // TODO: remove old???
+#endif
+                        return retfinal;
+                    }
+                    else
+                    {
+                        // Directory Copy
+                        // std::filesystem::copy has some edge cases that might throw us for a loop requiring detection of edge
+                        // cases that need to be handled differently.  
+                        // Limiting use of this as a substitution to the directory scenario *should* keep that from happening.
+                        const std::filesystem::copy_options copyOptions = std::filesystem::copy_options::recursive;
+                        std::error_code eCode;
+                        std::filesystem::copy(UseExistingFile.c_str(),   // Not sure if std supports long path syntax
+                            UseNewFile.c_str(),
+                            copyOptions, eCode);
+                        if (eCode)
+                        {
+                            retfinal = 0; // error
+                        }
+                        else
+                        {
+                            retfinal = 1; // success
+                        }
+#if _DEBUG
+                        if (retfinal == 0)
+                        {
+                            Log(L"[%d] Kb_MoveFileExWFixup via copy(dir) returns FAILURE 0x%x GetLastError 0x%x", dllInstance, eCode, GetLastError());
+                        }
+                        else
+                        {
+                            Log(L"[%d] Kb_MoveFileExWFixup via copy(dir) returns SUCCESS 0x%x", dllInstance, retfinal);
+                        }
+                        // TODO: Remove old???
+#endif
+                        return retfinal;
+                    }
+                }
+
             }
             else
             {
-                // Replace move with copy since can't move due to package protections (or file doesn't exist anyway)
-                std::wstring rldUseExistingFile = MakeLongPath(UseExistingFile);
-                std::wstring rldUseNewFile = MakeLongPath(UseNewFile);
-                PreCreateFolders(rldUseNewFile, dllInstance, L"Kb_MoveFileExWFixup");
+                // ILV Aware.  This is a write (or delete) operation to both the destination and source.  Generally, we prefer to use the package path when traditional redirection is in play since ILV works better there.
 
-                // MoveFile supports directory moves, but CopyFile does not
-                auto atts = impl::GetFileAttributes(rldUseExistingFile.c_str());
-                if (atts != INVALID_FILE_ATTRIBUTES &&
-                    (atts & FILE_ATTRIBUTE_DIRECTORY) == 0)
-                {
+                // Determine appropriate source
+                UseExistingFile = DetermineIlvPathForReadOperations(cohortsExisting, dllInstance, moredebug);
+                // In a redirect to local scenario, we are responsible for determing if source is local or in package
+                UseExistingFile = SelectLocalOrPackageForRead(UseExistingFile, cohortsExisting.WsPackage);
+
+                // Determing the new destination
+                UseNewFile = DetermineIlvPathForWriteOperations(cohortsNew, dllInstance, moredebug);
+                // In a redirect to local scenario, we are responsible for pre-creating the local parent folders
+                // if-and-only-if they are present in the package.
+                PreCreateLocalFoldersIfNeededForWrite(UseNewFile, cohortsNew.WsPackage, dllInstance, debug, L"Kb_MoveFileExWFixup");
+                // In a redirect to local scenario, if the file is not present locally, but is in the package, we are responsible to copy it there first.
+                CowLocalFoldersIfNeededForWrite(UseNewFile, cohortsNew.WsPackage, dllInstance, debug, L"Kb_MoveFileExWFixup");
+
 #if MOREDEBUG
-                    Log(L"[%d] Kb_MoveFileExWFixup: Implemeting stdcopy from is %s", dllInstance, rldUseExistingFile.c_str());
-                    Log(L"[%d] Kb_MoveFileExWFixup: Implemeting stdcopy   to is %s", dllInstance, rldUseNewFile.c_str());
+                    Log(L"[%d] Kb_MoveFileExWFixup: IlvAware Source      to be is %s", dllInstance, UseExistingFile.c_str());
+                    Log(L"[%d] Kb_MoveFileExWFixup: IlvAware Destination to be is %s", dllInstance, UseNewFile.c_str());
 #endif
-                    // std::filesystem::copy has some edge cases that might throw us for a loop requiring detection of edge
-                    // cases that need to be handled differently.  
-                    // Limiting use of this as a substitution to the directory scenario *should* keep that from happening.
-                    const std::filesystem::copy_options copyOptions = std::filesystem::copy_options::recursive;
-                    std::error_code eCode;
-                    std::filesystem::copy(UseExistingFile.c_str(),   // Not sure if std supports long path syntax
-                        UseNewFile.c_str(),
-                        copyOptions, eCode);
-                    if (eCode)
-                    {
-                        retfinal = 0; // error
-                    }
-                    else
-                    {
-                        retfinal = 1; // success
-                    }
+
+                    std::wstring rldUseExistingFile = MakeLongPath(UseExistingFile);
+                    std::wstring rldUseNewFile = MakeLongPath(UseNewFile);
+#if MOREDEBUG
+                    Log(L"[%d] Kb_MoveFileExWFixup: from is %s", dllInstance, rldUseExistingFile.c_str());
+                    Log(L"[%d] Kb_MoveFileExWFixup:   to is %s", dllInstance, rldUseNewFile.c_str());
+#endif
+                    retfinal = kernelbaseimpl::MoveFileExWImpl(rldUseExistingFile.c_str(), rldUseNewFile.c_str(), flags);
 #if _DEBUG
                     if (retfinal == 0)
                     {
-                        Log(L"[%d] Kb_MoveFileExWFixup via copy(file) returns FAILURE 0x%x GetLastError 0x%x", dllInstance, eCode, GetLastError());
+                        Log(L"[%d] Kb_MoveFileExWFixup returns FAILURE 0x%x", dllInstance, GetLastError());
                     }
                     else
                     {
-                        Log(L"[%d] Kb_MoveFileExWFixup via copy(file) returns SUCCESS 0x%x", dllInstance, retfinal);
+                        Log(L"[%d] Kb_MoveFileExWFixup returns SUCCESS 0x%x", dllInstance, retfinal);
                     }
-                    // TODO: remove old???
 #endif
                     return retfinal;
-                }
-                else
-                {
-                    // Directory Copy
-                    // std::filesystem::copy has some edge cases that might throw us for a loop requiring detection of edge
-                    // cases that need to be handled differently.  
-                    // Limiting use of this as a substitution to the directory scenario *should* keep that from happening.
-                    const std::filesystem::copy_options copyOptions = std::filesystem::copy_options::recursive;
-                    std::error_code eCode;
-                    std::filesystem::copy(UseExistingFile.c_str(),   // Not sure if std supports long path syntax
-                        UseNewFile.c_str(),
-                        copyOptions, eCode);
-                    if (eCode)
-                    {
-                        retfinal = 0; // error
-                    }
-                    else
-                    {
-                        retfinal = 1; // success
-                    }
-#if _DEBUG
-                    if (retfinal == 0)
-                    {
-                        Log(L"[%d] Kb_MoveFileExWFixup via copy(dir) returns FAILURE 0x%x GetLastError 0x%x", dllInstance, eCode, GetLastError());
-                    }
-                    else
-                    {
-                        Log(L"[%d] Kb_MoveFileExWFixup via copy(dir) returns SUCCESS 0x%x", dllInstance, retfinal);
-                    }
-                    // TODO: Remove old???
-#endif
-                    return retfinal;
-                }
+
             }
-
-
-
         }
         else
         {

@@ -232,6 +232,7 @@
     <ClInclude Include="Detect_Pipe.h" />
     <ClInclude Include="DetermineCohorts.h" />
     <ClInclude Include="DebugPathTesting.h" />
+    <ClInclude Include="DetermineIlvPaths.h" />
     <ClInclude Include="FID.h" />
     <ClInclude Include="FindData3.h" />
     <ClInclude Include="FindFirstHelpers.h" />
@@ -258,6 +259,7 @@
     <ClCompile Include="DeleteFile.cpp" />
     <ClCompile Include="Detect_Pipe.cpp" />
     <ClCompile Include="DetermineCohorts.cpp" />
+    <ClCompile Include="DetermineILVpaths.cpp" />
     <ClCompile Include="dllmain.cpp" />
     <ClCompile Include="FID.cpp" />
     <ClCompile Include="FindClose.cpp" />

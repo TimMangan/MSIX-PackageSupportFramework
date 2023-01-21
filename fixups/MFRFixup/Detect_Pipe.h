@@ -4,11 +4,6 @@
 // Copyright (C) TMurgent Technologies, LLP. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 //-------------------------------------------------------------------------------------------------------
-
-#if _DEBUG
-#define MOREDEBUG 1
-#endif
-
 #include <errno.h>
 #include "FunctionImplementations.h"
 #include <psf_logging.h>
