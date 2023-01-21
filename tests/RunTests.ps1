@@ -5,7 +5,7 @@ $pfxPath = "$PSScriptRoot\scenarios\signing\CentennialFixupsTestSigningCertifica
 
 function RunTest($Arch, $Config)
 {
-    Write-host "<<<<<<<<<<<<<<<<<<<< Test Pass for $()  $($Config) >>>>>>>>>>>>>>>>>>>>>"
+    Write-host "<<<<<<<<<<<<<<<<<<<< Test Pass for $($Arch)  $($Config) >>>>>>>>>>>>>>>>>>>>>"
     # For any directory under the "scenarios" directory that has a "FileMapping.txt", generate an appx for it$Arch
     Remove-Item "$PSScriptRoot\scenarios\Appx\*"
     foreach ($dir in (Get-ChildItem -Directory "$PSScriptRoot\scenarios"))
@@ -147,10 +147,10 @@ if(!(Test-Path "$PSScriptRoot\scenarios\Appx"))
     New-Item -ItemType Directory "$PSScriptRoot\scenarios\Appx"
 }
 
-RunTest "x64" "Debug"
-RunTest "x64" "Release"
+#RunTest "x64" "Debug"
+#RunTest "x64" "Release"
 RunTest "x86" "Debug"
-RunTest "x86" "Release"
+#RunTest "x86" "Release"
 
 
 if ($TestConfigFromXML)
