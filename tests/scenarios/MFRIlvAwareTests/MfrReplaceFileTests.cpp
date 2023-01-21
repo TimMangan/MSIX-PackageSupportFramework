@@ -106,9 +106,9 @@ int InitializeReplaceFileTest1()
     // Requests to Redirected File Locations for FileReplace using VFS
 #if _M_IX86
     tempReplaced = (std::wstring)g_writablePackageRootPath.c_str() + L"\\VFS\\ProgramFilesX86\\PlaceholderTestR\\Placeholder7.txt";
-    tempReplacement = g_Cwd + L"\\VFS\\ProgramFilesX86\\PlaceholderTest\\TestIniFileVfsPF.ini";
-    tempNoFile = g_Cwd + L"\\VFS\\ProgramFilesX86\\PlaceholderTest\\NoneSuchFile.ini";
-    tempNoPath = g_Cwd + L"\\VFS\\ProgramFilesX86\\PlaceholderTest\\NoSuchPath\\NoneSuchFile.ini";
+    tempReplacement = g_Cwd + L"\\VFS\\ProgramFilesX86\\PlaceholderTestR\\TestIniFileVfsPF7.ini";
+    tempNoFile = g_Cwd + L"\\VFS\\ProgramFilesX86\\PlaceholderTestR\\NoneSuchFile7.ini";
+    tempNoPath = g_Cwd + L"\\VFS\\ProgramFilesX86\\PlaceholderTestR\\NoSuchPath7\\NoneSuchFile7.ini";
 #else
     tempReplaced = (std::wstring)g_writablePackageRootPath.c_str() + L"\\VFS\\ProgramFilesX64\\PlaceholderTestR\\Placeholder7.txt";
     tempReplacement = g_Cwd + L"\\VFS\\ProgramFilesX64\\PlaceholderTestR\\TestIniFileVfsPF7.ini";

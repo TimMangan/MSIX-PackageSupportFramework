@@ -5,10 +5,10 @@
 "..\Assets\Logo44x44.png" "Assets\Logo44x44.png"
 "..\Assets\Logo150x150.png" "Assets\Logo150x150.png"
 
-"..\..\${Architecture}${Configuration}\MFRIlvAwareTests.exe" "MFRIlvAwareTests.exe"
+"..\..\Win32\Debug\MFRIlvAwareTests.exe" "MFRIlvAwareTests.exe"
 "..\..\..\Win32\Debug\PsfLauncher32.exe" "PsfLauncher.exe"
-"..\..\..\Win32\Debug\PsfRuntimex32.dll" "PsfRuntime32.dll"
-"..\..\..\Win32\Debug\MFRFixupx32.dll" "MFRFixup32.dll"
+"..\..\..\Win32\Debug\PsfRuntime32.dll" "PsfRuntime32.dll"
+"..\..\..\Win32\Debug\MFRFixup32.dll" "MFRFixup32.dll"
 "..\..\..\Win32\Debug\WaitForDebuggerFixup32.dll" "WaitForDebuggerFixup32.dll"
 
 "file.txt" "VFS\ProgramFilesX64\ShortenedPath\subdir\FileA1.txt"

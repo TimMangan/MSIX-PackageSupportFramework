@@ -297,7 +297,7 @@ int InitializeCreateFileTests3()
 
     temp = g_writablePackageRootPath.c_str();
 #if _M_IX86
-    temp.append(L"\\VFS\\ProgramFilesX86\\PlaceholderTest\\NoneSuchFile.txt");
+    temp.append(L"\\VFS\\ProgramFilesX86\\PlaceholderTest\\NoneSuchFileCreate3A.txt");
 #else
     temp.append(L"\\VFS\\ProgramFilesX64\\PlaceholderTest\\NoneSuchFileCreate3A.txt");
 #endif
@@ -309,7 +309,7 @@ int InitializeCreateFileTests3()
 
     temp = g_writablePackageRootPath.c_str();
 #if _M_IX86
-    temp.append(L"\\VFS\\ProgramFilesX86\\NoneSuchFolder\\NoneSuchFile.txt");
+    temp.append(L"\\VFS\\ProgramFilesX86\\NoneSuchFolderCreate3B\\NoneSuchFileCreate3B.txt");
 #else
     temp.append(L"\\VFS\\ProgramFilesX64\\NoneSuchFolderCreate3B\\NoneSuchFileCreate3B.txt");
 #endif
@@ -335,7 +335,7 @@ int InitializeCreateFileTests3()
 
     temp = g_writablePackageRootPath.c_str();
 #if _M_IX86
-    temp.append(L"\\VFS\\ProgramFilesX86\\PlaceholderTest\\NoneSuchFile.txt");
+    temp.append(L"\\VFS\\ProgramFilesX86\\PlaceholderTest\\NoneSuchFileCreate3C.txt");
 #else
     temp.append(L"\\VFS\\ProgramFilesX64\\PlaceholderTest\\NoneSuchFileCreate3C.txt");
 #endif
@@ -347,7 +347,7 @@ int InitializeCreateFileTests3()
 
     temp = g_writablePackageRootPath.c_str();
 #if _M_IX86
-    temp.append(L"\\VFS\\ProgramFilesX86\\NoneSuchFolder\\NoneSuchFile.txt");
+    temp.append(L"\\VFS\\ProgramFilesX86\\NoneSuchFolderCreate3D\\NoneSuchFileCreate3D.txt");
 #else
     temp.append(L"\\VFS\\ProgramFilesX64\\NoneSuchFolderCreate3D\\NoneSuchFileCreate3D.txt");
 #endif
@@ -374,7 +374,7 @@ int InitializeCreateFileTests3()
 
     temp = g_writablePackageRootPath.c_str();
 #if _M_IX86
-    temp.append(L"\\VFS\\ProgramFilesX86\\PlaceholderTest\\NoneSuchFile.txt");
+    temp.append(L"\\VFS\\ProgramFilesX86\\PlaceholderTest\\NoneSuchFileCreate3E.txt");
 #else
     temp.append(L"\\VFS\\ProgramFilesX64\\PlaceholderTest\\NoneSuchFileCreate3E.txt");
 #endif
@@ -386,7 +386,7 @@ int InitializeCreateFileTests3()
 
     temp = g_writablePackageRootPath.c_str();
 #if _M_IX86
-    temp.append(L"\\VFS\\ProgramFilesX86\\NoneSuchFolder\\NoneSuchFile.txt");
+    temp.append(L"\\VFS\\ProgramFilesX86\\NoneSuchFolderCreate3F\\NoneSuchFileCreate3F.txt");
 #else
     temp.append(L"\\VFS\\ProgramFilesX64\\NoneSuchFolderCreate3F\\NoneSuchFileCreate3F.txt");
 #endif
