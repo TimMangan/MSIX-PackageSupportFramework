@@ -29,7 +29,7 @@ int InitializeCreateHardLinkTest1()
 #endif
 
     // Requests to Native File Locations for GetPrivateProfileSection via existing VFS file with value present
-    MfrCreateHardLinkTest ts_Native_PF1f = { "Native-file VFS present in package", true, true, true, 
+    MfrCreateHardLinkTest ts_Native_PF1f = { "MFR Native-file VFS present in package", true, true, true, 
                                             (g_NativePF + L"\\PlaceholderTest\\NewLinkTestIniFileVfsPF.ini"),  
                                             (g_NativePF + L"\\PlaceholderTest\\TestIniFileVfsPF.ini"),
                                             true, ERROR_SUCCESS };
@@ -37,7 +37,7 @@ int InitializeCreateHardLinkTest1()
 
 
     // Requests to Native File Locations for GetPrivateProfileSection via existing VFS file with value present
-    MfrCreateHardLinkTest ts_Native_PF1s = { "Native-file VFS missing from package", true, true, true,
+    MfrCreateHardLinkTest ts_Native_PF1s = { "MFR Native-file VFS missing from package", true, true, true,
                                             (g_NativePF + L"\\PlaceholderTest\\TestIniFileVfsPF.ini"),
                                             (g_NativePF + L"\\PlaceholderTest\\NewLinkTestIniFileVfsPF.ini"),
                                             false, ERROR_FILE_NOT_FOUND };
@@ -45,13 +45,13 @@ int InitializeCreateHardLinkTest1()
 
     tempNewFrom = VFSPF + L"\\PlaceholderTest\\NewLinkTestIniFileVfsPF.ini";
     tempExistingTo = VFSPF + L"\\PlaceholderTest\\TestIniFileVfsPF.ini";
-    MfrCreateHardLinkTest ts_VFS_PF1f = { "Package-file VFS present in package", true, true, true,
+    MfrCreateHardLinkTest ts_VFS_PF1f = { "MFR Package-file VFS present in package", true, true, true,
                                             tempNewFrom.c_str(),
                                             tempExistingTo.c_str(),
                                             true, ERROR_SUCCESS };
     MfrCreateHardLinkTests1.push_back(ts_VFS_PF1f);
 
-    MfrCreateHardLinkTest ts_VFS_PF1s = { "Package-file VFS missing from package", true, true, true,
+    MfrCreateHardLinkTest ts_VFS_PF1s = { "MFR Package-file VFS missing from package", true, true, true,
                                         tempExistingTo.c_str(),
                                         tempNewFrom.c_str(),
                                         false, ERROR_FILE_NOT_FOUND };
@@ -62,13 +62,13 @@ int InitializeCreateHardLinkTest1()
     tempNewFrom.append(L"\\PlaceholderTest\\NewLinkTestIniFileVfsPF.ini");
     tempExistingTo = REVFSPF;
     tempExistingTo.append(L"\\PlaceholderTest\\TestIniFileVfsPF.ini");
-    MfrCreateHardLinkTest ts_REDIRECTED_PF1f = { "Redirected-file VFS present in package", true, true, true,
+    MfrCreateHardLinkTest ts_REDIRECTED_PF1f = { "MFR Redirected-file VFS present in package", true, true, true,
                                             tempNewFrom.c_str(),
                                             tempExistingTo.c_str(),
                                             true, ERROR_SUCCESS };
     MfrCreateHardLinkTests1.push_back(ts_REDIRECTED_PF1f);
 
-    MfrCreateHardLinkTest ts_REDIRECTED_PF1s = { "Redirected-file VFS missing from package", true, true, true,
+    MfrCreateHardLinkTest ts_REDIRECTED_PF1s = { "MFR Redirected-file VFS missing from package", true, true, true,
                                         tempExistingTo.c_str(),
                                         tempNewFrom.c_str(),
                                         false, ERROR_FILE_NOT_FOUND };
@@ -98,14 +98,14 @@ int InitializeCreateSymbolicLinkTest1()
 
     tempNewTo = VFSPF + L"\\PlaceholderTest\\NewLinkTestIniFileVfsPF.ini";
     tempExistingFrom = VFSPF + L"\\PlaceholderTest\\TestIniFileVfsPF.ini";
-    MfrCreateSymbolicLinkTest ts_VFS_PF1f = { "Package-file VFS present in package", true, true, true,
+    MfrCreateSymbolicLinkTest ts_VFS_PF1f = { "MFR Package-file VFS present in package", true, true, true,
                                             tempNewTo.c_str(),
                                             tempExistingFrom.c_str(),
                                             0,
                                             true, ERROR_SUCCESS };
     MfrCreateSymbolicLinkTests1.push_back(ts_VFS_PF1f);
 
-    MfrCreateSymbolicLinkTest ts_VFS_PF1s = { "Package-file VFS missing from package", true, true, true,
+    MfrCreateSymbolicLinkTest ts_VFS_PF1s = { "MFR Package-file VFS missing from package", true, true, true,
                                         tempExistingFrom.c_str(),
                                         tempNewTo.c_str(),
                                         0,
@@ -115,14 +115,14 @@ int InitializeCreateSymbolicLinkTest1()
 
     tempNewTo = L"NewLinkTestPvadFile.ini"; 
     tempExistingFrom = L"PvadFile1.ini";
-    MfrCreateSymbolicLinkTest ts_CWD_PF1f = { "Package-file PVAD relative present in package", true, true, true,
+    MfrCreateSymbolicLinkTest ts_CWD_PF1f = { "MFR Package-file PVAD relative present in package", true, true, true,
                                             tempNewTo.c_str(),
                                             tempExistingFrom.c_str(),
                                             0,
                                             true, ERROR_SUCCESS };
     MfrCreateSymbolicLinkTests1.push_back(ts_CWD_PF1f);
 
-    MfrCreateSymbolicLinkTest ts_CWD_PF1s = { "Package-file PVAD relative missing from package", true, true, true,
+    MfrCreateSymbolicLinkTest ts_CWD_PF1s = { "MFR Package-file PVAD relative missing from package", true, true, true,
                                         tempExistingFrom.c_str(),
                                         tempNewTo.c_str(),
                                         0,
@@ -154,14 +154,14 @@ int InitializeCreateSymbolicLinkTest2()
     tempNewTo = VFSPF + L"\\NewPlaceholderTest";
     tempExistingFrom = VFSPF + L"\\PlaceholderTest";
     std::wstring secondmissing = VFSPF + L"\\MissingPlaceholderTest";
-    MfrCreateSymbolicLinkTest ts_VFS_PF1f = { "Package-folder VFS present in package", true, true, true,
+    MfrCreateSymbolicLinkTest ts_VFS_PF1f = { "MFR Package-folder VFS present in package", true, true, true,
                                             tempNewTo.c_str(),
                                             tempExistingFrom.c_str(),
                                             0,
                                             true, ERROR_SUCCESS };
     MfrCreateSymbolicLinkTests2.push_back(ts_VFS_PF1f);
 
-    MfrCreateSymbolicLinkTest ts_VFS_PF1s = { "Package-folder VFS missing from package", true, true, true,
+    MfrCreateSymbolicLinkTest ts_VFS_PF1s = { "MFR Package-folder VFS missing from package", true, true, true,
                                         tempNewTo.c_str(),
                                         secondmissing.c_str(),
                                         0,
@@ -172,14 +172,14 @@ int InitializeCreateSymbolicLinkTest2()
     tempNewTo = L"NewPvadFolder";
     tempExistingFrom = L"PvadFolder";
     secondmissing = L"SecondMissingPavdFolder";
-    MfrCreateSymbolicLinkTest ts_CWD_PF1f = { "Package-folder PVAD relative present in package", true, true, true,
+    MfrCreateSymbolicLinkTest ts_CWD_PF1f = { "MFR Package-folder PVAD relative present in package", true, true, true,
                                             tempNewTo.c_str(),
                                             tempExistingFrom.c_str(),
                                             0,
                                             true, ERROR_SUCCESS };
     MfrCreateSymbolicLinkTests2.push_back(ts_CWD_PF1f);
 
-    MfrCreateSymbolicLinkTest ts_CWD_PF1s = { "Package-folder PVAD relative missing from package", true, true, true,
+    MfrCreateSymbolicLinkTest ts_CWD_PF1s = { "MFR Package-folder PVAD relative missing from package", true, true, true,
                                         tempNewTo.c_str(),
                                         secondmissing.c_str(),
                                         0,
@@ -213,7 +213,7 @@ int RunCreateOthersTests()
     {
         if (testInput.enabled)
         {
-            std::string testname = "CreateHardLink Test(1): ";
+            std::string testname = "MFR CreateHardLink Test(1): ";
             testname.append(testInput.TestName);
             test_begin(testname);
 
@@ -317,7 +317,7 @@ int RunCreateOthersTests()
     {
         if (testInput.enabled)
         {
-            std::string testname = "CreateSymbolicLink Test(1): ";
+            std::string testname = "MFR CreateSymbolicLink Test(1): ";
             testname.append(testInput.TestName);
             test_begin(testname);
 
@@ -429,7 +429,7 @@ int RunCreateOthersTests()
     {
         if (testInput.enabled)
         {
-            std::string testname = "CreateSymbolicLink Test(2): ";
+            std::string testname = "MFR CreateSymbolicLink Test(2): ";
             testname.append(testInput.TestName);
             test_begin(testname);
 

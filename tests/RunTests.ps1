@@ -5,8 +5,8 @@ $pfxPath = "$PSScriptRoot\scenarios\signing\CentennialFixupsTestSigningCertifica
 
 function RunTest($Arch, $Config)
 {
-    Write-host "<<<<<<<<<<<<<<<<<<<< Test Pass for $($Arch)  $($Config) >>>>>>>>>>>>>>>>>>>>>"
-    # For any directory under the "scenarios" directory that has a "FileMapping.txt", generate an appx for it
+    Write-host "<<<<<<<<<<<<<<<<<<<< Test Pass for $()  $($Config) >>>>>>>>>>>>>>>>>>>>>"
+    # For any directory under the "scenarios" directory that has a "FileMapping.txt", generate an appx for it$Arch
     Remove-Item "$PSScriptRoot\scenarios\Appx\*"
     foreach ($dir in (Get-ChildItem -Directory "$PSScriptRoot\scenarios"))
     {
@@ -31,10 +31,19 @@ function RunTest($Arch, $Config)
     try
     {
         Add-AppxPackage "$PSScriptRoot\scenarios\Appx\*.appx" | Out-Null
-
-        # Finally, execute the actual test. Note that the architecture of the runner doesn't actually matter
+        Add-AppxPackage "$PSScriptRoot\scenarios\Appx2\*.appx" | Out-Null
+         
+        # Finally, execute the actual test. Note that the architecture of the runner doesn't actually matter, except for powershell which only builds x64
         #. x64\Release\TestRunner.exe /onlyPrintSummary
-        . x64\Release\TestRunner.exe
+        if ($Arch -eq "x86")
+        {
+            . win32\Release\TestRunner.exe
+        }
+        else
+        {
+            . x64\Release\TestRunner.exe
+        }
+        
         $global:failedTests += $LASTEXITCODE
     }
     finally
@@ -76,7 +85,7 @@ function RunTest($Arch, $Config)
 
         # Uninstall all packages on exit. Ideally Add-AppxPackage would give us back something that we could use here,
         # but alas we must hard-code it
-        $packagesToUninstall = @("ArchitectureTest", "CompositionTest", "MFRTests", "FileSystemTest", "LongPathsTest", "PackageDriveTest", "WorkingDirectoryTest", "PowershellScriptTest", "DynamicLibraryTest", "RegLegacyTest", "EnvVarsATest", "EnvVarsWTest")
+        $packagesToUninstall = @("ArchitectureTest", "CompositionTest", "MFRIlvAwareTests", "MFRTests", "FileSystemTest", "LongPathsTest", "PackageDriveTest", "WorkingDirectoryTest", "PowershellScriptTest", "DynamicLibraryTest", "RegLegacyTest", "EnvVarsATest", "EnvVarsWTest")
         ####$packagesToUninstall = @("FileSystemTest")
         foreach ($pkg in $packagesToUninstall)
         {
@@ -139,9 +148,9 @@ if(!(Test-Path "$PSScriptRoot\scenarios\Appx"))
 }
 
 RunTest "x64" "Debug"
-#RunTest "x64" "Release"
+RunTest "x64" "Release"
 RunTest "x86" "Debug"
-#RunTest "x86" "Release"
+RunTest "x86" "Release"
 
 
 if ($TestConfigFromXML)

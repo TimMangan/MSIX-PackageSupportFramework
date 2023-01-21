@@ -33,25 +33,25 @@ int InitializeFindFileTests1()
 
     // Request to Native File/Folder Locations for FindFile for single file
     temp = g_NativePF + L"\\PlaceholderTest\\Placeholder.txt";
-    MfrFindFileTest t_Native_PFF1 = { "Native-file VFS single file exists in package", true, true, true,
+    MfrFindFileTest t_Native_PFF1 = { "MFR Native-file VFS single file exists in package", true, true, true,
                                        temp.c_str(),
                                        true, 1,  ERROR_SUCCESS };
     MfrFindFileTests1.push_back(t_Native_PFF1);
 
     temp = g_NativePF + L"\\PlaceholderTest";
-    MfrFindFileTest t_Native_PFF2 = { "Native-file VFS folder exists in package that has files", true, false, false,
+    MfrFindFileTest t_Native_PFF2 = { "MFR Native-file VFS folder exists in package that has files", true, false, false,
                                        temp.c_str(),
                                        true, 1,  ERROR_SUCCESS };
     MfrFindFileTests1.push_back(t_Native_PFF2);
 
     temp = g_NativePF + L"\\PlaceholderTest\\MissingPlaceholder.txt";
-    MfrFindFileTest t_Native_PFF1E = { "Native-file VFS single file missing in package (expect fail)", true, false, false,
+    MfrFindFileTest t_Native_PFF1E = { "MFR Native-file VFS single file missing in package (expect fail)", true, false, false,
                                        temp.c_str(),
                                        false, 0,  ERROR_FILE_NOT_FOUND };
     MfrFindFileTests1.push_back(t_Native_PFF1E);
 
     temp = g_NativePF + L"\\MissingPlaceholderTest";
-    MfrFindFileTest t_Native_PFF2E = { "Native-file VFS folder missing in package (expect fail)", true, false, false,
+    MfrFindFileTest t_Native_PFF2E = { "MFR Native-file VFS folder missing in package (expect fail)", true, false, false,
                                        temp.c_str(),
                                        false, 0,  ERROR_PATH_NOT_FOUND };
     MfrFindFileTests1.push_back(t_Native_PFF2E);
@@ -59,13 +59,13 @@ int InitializeFindFileTests1()
 
     // Request to Native File/Folder Locations for FindFile for multiple files
     temp = g_NativePF + L"\\PlaceholderTest2\\Test*";
-    MfrFindFileTest t_Native_PFF3 = { "Native-file VFS multiple file exists in package", true, false, false,
+    MfrFindFileTest t_Native_PFF3 = { "MFR Native-file VFS multiple file exists in package", true, false, false,
                                        temp.c_str(),
                                        true, 2,  ERROR_SUCCESS };
     MfrFindFileTests1.push_back(t_Native_PFF3);
 
     temp = g_NativePF + L"\\PlaceholderTest2\\*";
-    MfrFindFileTest t_Native_PFF4 = { "Native-file VFS folder with wildcard exists in package with files", true, false, false,
+    MfrFindFileTest t_Native_PFF4 = { "MFR Native-file VFS folder with wildcard exists in package with files", true, false, false,
                                        temp.c_str(),
                                        true, 5,  ERROR_SUCCESS };
     MfrFindFileTests1.push_back(t_Native_PFF4);
@@ -74,26 +74,26 @@ int InitializeFindFileTests1()
 
     // Request to Package File/Folder Locations for FindFile for single file
     temp = VfsPf + L"\\PlaceholderTest\\Placeholder.txt";
-    MfrFindFileTest t_Package_PFF1 = { "Package-file VFS single file exists in package", true, true, true,
+    MfrFindFileTest t_Package_PFF1 = { "MFR Package-file VFS single file exists in package", true, true, true,
                                        temp.c_str(),
                                        true, 1,  ERROR_SUCCESS };
     MfrFindFileTests1.push_back(t_Package_PFF1);
 
 
     temp = VfsPf + L"\\PlaceholderTest";
-    MfrFindFileTest t_Package_PFF2 = { "Package-file VFS folder exists in package that has files", true, false, false,
+    MfrFindFileTest t_Package_PFF2 = { "MFR Package-file VFS folder exists in package that has files", true, false, false,
                                        temp.c_str(),
                                        true, 1,  ERROR_SUCCESS };
     MfrFindFileTests1.push_back(t_Package_PFF2);
 
     temp = VfsPf + L"\\PlaceholderTest\\MissingPlaceholder.txt";
-    MfrFindFileTest t_Package_PFF1E = { "Package-file VFS single file missing in package (expect fail)", true, false, false,
+    MfrFindFileTest t_Package_PFF1E = { "MFR Package-file VFS single file missing in package (expect fail)", true, false, false,
                                        temp.c_str(),
                                        false, 0,  ERROR_FILE_NOT_FOUND };
     MfrFindFileTests1.push_back(t_Package_PFF1E);
 
     temp = VfsPf + L"\\MissingPlaceholderTest";
-    MfrFindFileTest t_Package_PFF2E = { "Package-file VFS folder missing in package (expect fail)", true, false, false,
+    MfrFindFileTest t_Package_PFF2E = { "MFR Package-file VFS folder missing in package (expect fail)", true, false, false,
                                        temp.c_str(),
                                        false, 0,  ERROR_PATH_NOT_FOUND };
     MfrFindFileTests1.push_back(t_Package_PFF2E);
@@ -101,13 +101,13 @@ int InitializeFindFileTests1()
 
     // Request to Native File/Folder Locations for FindFile for multiple files
     temp = VfsPf + L"\\PlaceholderTest2\\Test*";
-    MfrFindFileTest t_Package_PFF3 = { "Package-file VFS multiple file exists in package", true, false, false,
+    MfrFindFileTest t_Package_PFF3 = { "MFR Package-file VFS multiple file exists in package", true, false, false,
                                        temp.c_str(),
                                        true, 2,  ERROR_SUCCESS };
     MfrFindFileTests1.push_back(t_Package_PFF3);
 
     temp = VfsPf + L"\\PlaceholderTest2\\*";
-    MfrFindFileTest t_Package_PFF4 = { "Package-file VFS folder with wildcard exists in package with files", true, false, false,
+    MfrFindFileTest t_Package_PFF4 = { "MFR Package-file VFS folder with wildcard exists in package with files", true, false, false,
                                        temp.c_str(),
                                        true, 5,  ERROR_SUCCESS };
     MfrFindFileTests1.push_back(t_Package_PFF4);
@@ -116,26 +116,26 @@ int InitializeFindFileTests1()
 
     // Request to Redirected File/Folder Locations for FindFile for single file
     temp = WriteRootPF + L"\\PlaceholderTest\\Placeholder.txt";
-    MfrFindFileTest t_Redirected_PFF1 = { "Redirected-file VFS single file exists in package", true, true, true,
+    MfrFindFileTest t_Redirected_PFF1 = { "MFR Redirected-file VFS single file exists in package", true, true, true,
                                        temp.c_str(),
                                        true, 1,  ERROR_SUCCESS };
     MfrFindFileTests1.push_back(t_Redirected_PFF1);
 
 
     temp = WriteRootPF + L"\\PlaceholderTest";
-    MfrFindFileTest t_Redirected_PFF2 = { "Redirected-file VFS folder exists in package that has files", true, false, false,
+    MfrFindFileTest t_Redirected_PFF2 = { "MFR Redirected-file VFS folder exists in package that has files", true, false, false,
                                        temp.c_str(),
                                        true, 1,  ERROR_SUCCESS };
     MfrFindFileTests1.push_back(t_Redirected_PFF2);
 
     temp = WriteRootPF + L"\\PlaceholderTest\\MissingPlaceholder.txt";
-    MfrFindFileTest t_Redirected_PFF1E = { "Redirected-file VFS single file missing in package (expect fail)", true, false, false,
+    MfrFindFileTest t_Redirected_PFF1E = { "MFR Redirected-file VFS single file missing in package (expect fail)", true, false, false,
                                        temp.c_str(),
                                        false, 0,  ERROR_FILE_NOT_FOUND };
     MfrFindFileTests1.push_back(t_Redirected_PFF1E);
 
     temp = WriteRootPF + L"\\MissingPlaceholderTest";
-    MfrFindFileTest t_Redirected_PFF2E = { "Redirected-file VFS folder missing in package (expect fail)", true, false, false,
+    MfrFindFileTest t_Redirected_PFF2E = { "MFR Redirected-file VFS folder missing in package (expect fail)", true, false, false,
                                        temp.c_str(),
                                        false, 0,  ERROR_PATH_NOT_FOUND };
     MfrFindFileTests1.push_back(t_Redirected_PFF2E);
@@ -143,20 +143,20 @@ int InitializeFindFileTests1()
 
     // Request to Redirected File/Folder Locations for FindFile for multiple files
     temp = WriteRootPF + L"\\PlaceholderTest2\\Test*";
-    MfrFindFileTest t_Redirected_PFF3 = { "Redirected-file VFS multiple file exists in package", true, false, false,
+    MfrFindFileTest t_Redirected_PFF3 = { "MFR Redirected-file VFS multiple file exists in package", true, false, false,
                                        temp.c_str(),
                                        true, 2,  ERROR_SUCCESS };
     MfrFindFileTests1.push_back(t_Redirected_PFF3);
 
     temp = WriteRootPF + L"\\PlaceholderTest2\\*";
-    MfrFindFileTest t_Redirected_PFF4 = { "Redirected-file VFS folder with wildcard exists in package with files", true, false, false,
+    MfrFindFileTest t_Redirected_PFF4 = { "MFR Redirected-file VFS folder with wildcard exists in package with files", true, false, false,
                                        temp.c_str(),
                                        true, 5,  ERROR_SUCCESS };
     MfrFindFileTests1.push_back(t_Redirected_PFF4);
 
 
     temp =  L"C:\\Windows\\Microsoft.NET\\Framework64\\v4.0.30319\\*.xsd";
-    MfrFindFileTest t_Redirected_NET1 = { "Native-folder present but not in package", true, false, false,
+    MfrFindFileTest t_Redirected_NET1 = { "MFR Native-folder present but not in package", true, false, false,
                                        temp.c_str(),
                                        true, 1,  ERROR_SUCCESS };
     MfrFindFileTests1.push_back(t_Redirected_NET1);
@@ -164,7 +164,7 @@ int InitializeFindFileTests1()
 
 
     temp = L"C:\\Windows\\Microsoft.NET\\Framework64\\v4.0.30319\\\\*.xsd";
-    MfrFindFileTest t_Redirected_NET2 = { "Native-folder present but not in package (with extra backslash)", true, false, false,
+    MfrFindFileTest t_Redirected_NET2 = { "MFR Native-folder present but not in package (with extra backslash)", true, false, false,
                                        temp.c_str(),
                                        true, 1,  ERROR_SUCCESS };
     MfrFindFileTests1.push_back(t_Redirected_NET2);
@@ -196,32 +196,32 @@ int InitializeFindFileExTests1()
 
     // Request to Native File/Folder Locations for FindFile for single file
     temp = g_NativePF + L"\\PlaceholderTest\\Placeholder.txt";
-    MfrFindFileExTest t_Native_NF1 = { "Ex: Native-file VFS single file exists in package; basic namematch 0", true, false, false,
+    MfrFindFileExTest t_Native_NF1 = { "MFR Ex: Native-file VFS single file exists in package; basic namematch 0", true, false, false,
                                        temp.c_str(), FINDEX_INFO_LEVELS::FindExInfoBasic, FINDEX_SEARCH_OPS::FindExSearchNameMatch, 0,
                                        true, 1,  ERROR_SUCCESS };
     MfrFindFileExTests1.push_back(t_Native_NF1);
 
     temp = g_NativePF + L"\\PlaceholderTest\\PLACEHOLDER.txt";
-    MfrFindFileExTest t_Native_NF2 = { "Ex: Native-file VFS single file exists in package; basic namematch casesensitive (normally succeeds anyway)", true, false, false,
+    MfrFindFileExTest t_Native_NF2 = { "MFR Ex: Native-file VFS single file exists in package; basic namematch casesensitive (normally succeeds anyway)", true, false, false,
                                        temp.c_str(), FINDEX_INFO_LEVELS::FindExInfoBasic, FINDEX_SEARCH_OPS::FindExSearchNameMatch, FIND_FIRST_EX_CASE_SENSITIVE,
                                        true, 1,  ERROR_SUCCESS };
     MfrFindFileExTests1.push_back(t_Native_NF2);
 
     temp = g_NativePF + L"\\PlaceholderTest\\Placeholder.txt";
-    MfrFindFileExTest t_Native_NF3 = { "Ex: Native-file VFS single file exists in package; standard namematch casesensitive", true, false, false,
+    MfrFindFileExTest t_Native_NF3 = { "MFR Ex: Native-file VFS single file exists in package; standard namematch casesensitive", true, false, false,
                                        temp.c_str(), FINDEX_INFO_LEVELS::FindExInfoStandard, FINDEX_SEARCH_OPS::FindExSearchNameMatch, FIND_FIRST_EX_CASE_SENSITIVE,
                                        true, 1,  ERROR_SUCCESS };
     MfrFindFileExTests1.push_back(t_Native_NF3);
 
 
     temp = g_NativePF + L"\\PlaceholderTest3\\*";
-    MfrFindFileExTest t_Native_NF4 = { "Ex: Native-folder VFS folder exists in package with files standard directorymatch", true, false, false,
+    MfrFindFileExTest t_Native_NF4 = { "MFR Ex: Native-folder VFS folder exists in package with files standard directorymatch", true, false, false,
                                        temp.c_str(), FINDEX_INFO_LEVELS::FindExInfoStandard, FINDEX_SEARCH_OPS::FindExSearchLimitToDirectories, 0,
                                        true, 3,  ERROR_SUCCESS };
     MfrFindFileExTests1.push_back(t_Native_NF4);
 
     temp = g_NativePF + L"\\MissingFolderPlaceholderTest\\*";
-    MfrFindFileExTest t_Native_NF5e = { "Ex: Native-folder VFS folder missing from package with files standard directorymatch", true, false, false,
+    MfrFindFileExTest t_Native_NF5e = { "MFR Ex: Native-folder VFS folder missing from package with files standard directorymatch", true, false, false,
                                        temp.c_str(), FINDEX_INFO_LEVELS::FindExInfoStandard, FINDEX_SEARCH_OPS::FindExSearchLimitToDirectories, 0,
                                        false, 0,  ERROR_PATH_NOT_FOUND };
     MfrFindFileExTests1.push_back(t_Native_NF5e);
@@ -229,13 +229,13 @@ int InitializeFindFileExTests1()
 
     // Request to Package locations for FindFile for missing file/folder
     temp = VfsPf + L"\\PlaceholderTest\\MissingPlaceholder.txt";
-    MfrFindFileExTest t_Package_PFF1E = { "Ex: Package-file VFS single file missing in package standard namematch (expect fail)", true, false, false,
+    MfrFindFileExTest t_Package_PFF1E = { "MFR Ex: Package-file VFS single file missing in package standard namematch (expect fail)", true, false, false,
                                        temp.c_str(), FINDEX_INFO_LEVELS::FindExInfoStandard, FINDEX_SEARCH_OPS::FindExSearchNameMatch, 0,
                                        false, 0,  ERROR_FILE_NOT_FOUND };
     MfrFindFileExTests1.push_back(t_Package_PFF1E);
 
     temp = VfsPf + L"\\MissingPlaceholderTest";
-    MfrFindFileExTest t_Package_PFF2E = { "Ex: Package-file VFS folder missing in package standard namematch (expect fail)", true, false, false,
+    MfrFindFileExTest t_Package_PFF2E = { "MFR Ex: Package-file VFS folder missing in package standard namematch (expect fail)", true, false, false,
                                        temp.c_str(), FINDEX_INFO_LEVELS::FindExInfoStandard, FINDEX_SEARCH_OPS::FindExSearchNameMatch, 0,
                                        false, 0,  ERROR_PATH_NOT_FOUND };
     MfrFindFileExTests1.push_back(t_Package_PFF2E);
@@ -244,13 +244,13 @@ int InitializeFindFileExTests1()
 
     // Request to Native File/Folder Locations for FindFile for multiple files
     temp = WriteRootPF + L"\\PlaceholderTest2\\Test*";
-    MfrFindFileExTest t_Redirected_RF1 = { "Ex: Redirected-file VFS multiple file exists in package standard namematch", true, false, false,
+    MfrFindFileExTest t_Redirected_RF1 = { "MFR Ex: Redirected-file VFS multiple file exists in package standard namematch", true, false, false,
                                        temp.c_str(), FINDEX_INFO_LEVELS::FindExInfoStandard, FINDEX_SEARCH_OPS::FindExSearchNameMatch, 0,
                                        true, 2,  ERROR_SUCCESS };
     MfrFindFileExTests1.push_back(t_Redirected_RF1);
 
     temp = WriteRootPF + L"\\PlaceholderTest2\\*";
-    MfrFindFileExTest t_Redirected_RF2 = { "Ex: Redirected-file VFS folder with wildcard exists in package with files standard namematch", true, false, false,
+    MfrFindFileExTest t_Redirected_RF2 = { "MFR Ex: Redirected-file VFS folder with wildcard exists in package with files standard namematch", true, false, false,
                                        temp.c_str(), FINDEX_INFO_LEVELS::FindExInfoStandard, FINDEX_SEARCH_OPS::FindExSearchNameMatch, 0,
                                        true, 5,  ERROR_SUCCESS };
     MfrFindFileExTests1.push_back(t_Redirected_RF2);
@@ -277,7 +277,7 @@ int RunFindFileIndividualTest(MfrFindFileTest testInput, int setnum)
 
     if (testInput.enabled)
     {
-        std::string testname = "FindFirst/Next File Test set";
+        std::string testname = "MFR FindFirst/Next File Test set";
         testname.append(std::to_string(setnum));
         testname.append(": ");
         testname.append(testInput.TestName);
@@ -425,7 +425,7 @@ int RunFindFileExIndividualTest(MfrFindFileExTest testInput, int setnum)
 
     if (testInput.enabled)
     {
-        std::string testname = "FindFirstEx/Next File Test set";
+        std::string testname = "MFR FindFirstEx/Next File Test set";
         testname.append(std::to_string(setnum));
         testname.append(": ");
         testname.append(testInput.TestName);

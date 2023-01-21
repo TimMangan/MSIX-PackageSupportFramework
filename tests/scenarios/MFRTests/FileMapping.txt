@@ -13,6 +13,8 @@
 
 "file.txt" "VFS\ProgramFilesX64\PlaceholderTest\Placeholder.txt"
 "file.txt" "VFS\ProgramFilesX86\PlaceholderTest\Placeholder.txt"
+"file.txt" "VFS\ProgramFilesX64\PlaceholderTest4\Placeholder4.txt"
+"file.txt" "VFS\ProgramFilesX86\PlaceholderTest4\Placeholder4.txt"
 "file.txt" "VFS\SystemX86\SystemX86Fïℓè.txt"
 "file.txt" "VFS\SystemX64\SystemX64Fïℓè.txt"
 "file.txt" "VFS\AppData\AppDataFile.txt"

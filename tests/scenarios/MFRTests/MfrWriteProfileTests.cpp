@@ -43,7 +43,7 @@ int InitializeWriteProfileTestsSection()
     wchar_t* buffer1 = makesectionbuffer(test1);
     if (buffer1 == NULL)
         return 0;
-    MfrWriteProfileSectionTest ts_Native_PF1 = { "Section Native-file VFS exists in package", true, true, true, 
+    MfrWriteProfileSectionTest ts_Native_PF1 = { "MFR Section Native-file VFS exists in package", true, true, true, 
                                     (g_NativePF + L"\\PlaceholderTest\\TestIniFileVfsPF.ini"), L"Section4", (DWORD)test1.length()+1, buffer1};
     MfrWriteProfileSectionTests.push_back(ts_Native_PF1);
 
@@ -53,7 +53,7 @@ int InitializeWriteProfileTestsSection()
     wchar_t* buffer2 = makesectionbuffer(test2);
     if (buffer2 == NULL)
         return 0;
-    MfrWriteProfileSectionTest ts_Native_PF2 = { "Section Native-file VFS missing in package", true, false, false, 
+    MfrWriteProfileSectionTest ts_Native_PF2 = { "MFR Section Native-file VFS missing in package", true, false, false, 
                                     (g_NativePF + L"\\PlaceholderTest\\Nonesuch.ini"), L"Section4",  (DWORD)test2.length() + 1, buffer2 };
     MfrWriteProfileSectionTests.push_back(ts_Native_PF2);
 
@@ -65,7 +65,7 @@ int InitializeWriteProfileTestsSection()
         return 0;
     temp = g_PackageRootPath.c_str();
     temp.append(L"\\TestIniFilePVAD.ini");
-    MfrWriteProfileSectionTest ts_PackagePVAD_F1 = { "Section Package-file PVAD exists in package", true, false, false, 
+    MfrWriteProfileSectionTest ts_PackagePVAD_F1 = { "MFR Section Package-file PVAD exists in package", true, false, false, 
                                     temp.c_str() ,  L"Section4", (DWORD)test3.length() + 1, buffer3 };
     MfrWriteProfileSectionTests.push_back(ts_PackagePVAD_F1);
 
@@ -76,7 +76,7 @@ int InitializeWriteProfileTestsSection()
         return 0;
     temp = g_PackageRootPath.c_str();
     temp.append(L"\\Nonesuch.ini");
-    MfrWriteProfileSectionTest ts_PackagePVAD_F2 = { "Section Package-file PVAD missing in package", true, false, false, 
+    MfrWriteProfileSectionTest ts_PackagePVAD_F2 = { "MFR Section Package-file PVAD missing in package", true, false, false, 
                                     temp.c_str(),  L"Section4", (DWORD)test4.length() + 1, buffer4 };
     MfrWriteProfileSectionTests.push_back(ts_PackagePVAD_F2);
 
@@ -88,7 +88,7 @@ int InitializeWriteProfileTestsSection()
         return 0;
     temp = VFSPF;
     temp.append(L"\\PlaceholderTest\\TestIniFileVfsPF.ini");
-    MfrWriteProfileSectionTest ts_PackageVFS_PF1 = { "Section Package-file VFS exists in package", true, false, false, 
+    MfrWriteProfileSectionTest ts_PackageVFS_PF1 = { "MFR Section Package-file VFS exists in package", true, false, false, 
                                     temp.c_str() ,  L"Section4", (DWORD)test5.length() + 1, buffer5 };
     MfrWriteProfileSectionTests.push_back(ts_PackageVFS_PF1);
 
@@ -99,7 +99,7 @@ int InitializeWriteProfileTestsSection()
         return 0;
     temp = VFSPF;
     temp.append(L"\\PlaceholderTest\\Nonesuch.ini");
-    MfrWriteProfileSectionTest ts_PackageVFS_PF2 = { "Section Package-file VFS missing in package", true, false, false, 
+    MfrWriteProfileSectionTest ts_PackageVFS_PF2 = { "MFR Section Package-file VFS missing in package", true, false, false, 
                                     temp.c_str(),  L"Section4",  (DWORD)test6.length() + 1, buffer6 };
     MfrWriteProfileSectionTests.push_back(ts_PackageVFS_PF2);
 
@@ -111,7 +111,7 @@ int InitializeWriteProfileTestsSection()
         return 0;
     temp = REVFSPF;
     temp.append(L"\\PlaceholderTest\\TestIniFileVfsPF.ini");
-    MfrWriteProfileSectionTest ts_RedirectedVFS_PF1 = { "Section Redirected-file VFS exists in package", true, false, false, 
+    MfrWriteProfileSectionTest ts_RedirectedVFS_PF1 = { "MFR Section Redirected-file VFS exists in package", true, false, false, 
                                     temp.c_str() ,  L"Section4", (DWORD)test7.length() + 1, buffer7 };
     MfrWriteProfileSectionTests.push_back(ts_RedirectedVFS_PF1);
 
@@ -122,7 +122,7 @@ int InitializeWriteProfileTestsSection()
         return 0;
     temp = REVFSPF;
     temp.append(L"\\PlaceholderTest\\Nonesuch.ini");
-    MfrWriteProfileSectionTest ts_RedirectedVFS_PF2 = { "Section Redirected-file VFS missing in package", true, false, false, 
+    MfrWriteProfileSectionTest ts_RedirectedVFS_PF2 = { "MFR Section Redirected-file VFS missing in package", true, false, false, 
                                     temp.c_str(),  L"Section4",  (DWORD)test8.length() + 1, buffer8 };
     MfrWriteProfileSectionTests.push_back(ts_RedirectedVFS_PF2);
 
@@ -134,7 +134,7 @@ int InitializeWriteProfileTestsSection()
         return 0;
     temp = g_writablePackageRootPath.c_str();
     temp.append(L"\\TestIniFilePVAD.ini");
-    MfrWriteProfileSectionTest ts_RedirectedPVAD_F1 = { "Section Redirected-file VFS exists in package", true, false, false, 
+    MfrWriteProfileSectionTest ts_RedirectedPVAD_F1 = { "MFR Section Redirected-file VFS exists in package", true, false, false, 
                                     temp.c_str() , L"Section4", (DWORD)test9.length() + 1, buffer9 };
     MfrWriteProfileSectionTests.push_back(ts_RedirectedPVAD_F1);
 
@@ -145,7 +145,7 @@ int InitializeWriteProfileTestsSection()
         return 0;
     temp = g_writablePackageRootPath.c_str();
     temp.append(L"\\Nonesuch.ini");
-    MfrWriteProfileSectionTest ts_RedirectedPVAD_F2 = { "Section Redirected-file VFS missing in package", true, false, false, 
+    MfrWriteProfileSectionTest ts_RedirectedPVAD_F2 = { "MFR Section Redirected-file VFS missing in package", true, false, false, 
                                     temp.c_str(),  L"Section4", (DWORD)test10.length() + 1, buffer10 };
     MfrWriteProfileSectionTests.push_back(ts_RedirectedPVAD_F2);
 
@@ -157,7 +157,7 @@ int InitializeWriteProfileTestsSection()
     if (bufferNull == NULL)
         return 0;
     std::wstring nullpathS;
-    MfrWriteProfileSectionTest ts_NULL = { "Section NULL FILE", true, false, false,
+    MfrWriteProfileSectionTest ts_NULL = { "MFR Section NULL FILE", true, false, false,
                                     nullpathS,  L"Section4", 0, bufferNull };
     MfrWriteProfileSectionTests.push_back(ts_NULL);
 
@@ -183,12 +183,12 @@ int InitializeWriteProfileTestsString()
 #endif
 
     // Requests to Native File Locations for WritePrivateProfileString via existing VFS file with value present
-    MfrWriteProfileStringTest ts_Native_PF1 = { "String Native-file VFS exists in package", true, true, true, 
+    MfrWriteProfileStringTest ts_Native_PF1 = { "MFR String Native-file VFS exists in package", true, true, true, 
                                     (g_NativePF + L"\\PlaceholderTest\\TestIniFileVfsPF.ini"), L"Section1", L"ItemString", L"InvalidString", 13, L"InvalidString" };
     MfrWriteProfileStringTests.push_back(ts_Native_PF1);
 
     // Requests to Native File Locations for WritePrivateProfileString via Missing VFS file with value present
-    MfrWriteProfileStringTest ts_Native_PF2 = { "String Native-file VFS missing in package", true, false, false, 
+    MfrWriteProfileStringTest ts_Native_PF2 = { "MFR String Native-file VFS missing in package", true, false, false, 
                                     (g_NativePF + L"\\PlaceholderTest\\Nonesuch.ini"), L"Section1", L"ItemString", L"InvalidString", 13, L"InvalidString" };
     MfrWriteProfileStringTests.push_back(ts_Native_PF2);
 
@@ -196,14 +196,14 @@ int InitializeWriteProfileTestsString()
     // Requests to Package PVAD File Locations for WritePrivateProfileString via existing file with value present
     temp = g_PackageRootPath.c_str();
     temp.append(L"\\TestIniFilePVAD.ini");
-    MfrWriteProfileStringTest ts_PackagePVAD_F1 = { "String Package-file PVAD exists in package", true, false, false, 
+    MfrWriteProfileStringTest ts_PackagePVAD_F1 = { "MFR String Package-file PVAD exists in package", true, false, false, 
                                     temp.c_str() , L"Section1", L"ItemString",  L"InvalidString", 13, L"InvalidString" };
     MfrWriteProfileStringTests.push_back(ts_PackagePVAD_F1);
 
     // Requests to Package PVAD File Locations for WritePrivateProfileString via Missing file with value present
     temp = g_PackageRootPath.c_str();
     temp.append(L"\\Nonesuch.ini");
-    MfrWriteProfileStringTest ts_PackagePVAD_F2 = { "String Package-file PVAD missing in package", true, false, false, 
+    MfrWriteProfileStringTest ts_PackagePVAD_F2 = { "MFR String Package-file PVAD missing in package", true, false, false, 
                                     temp.c_str(), L"Section1", L"ItemString", L"InvalidString", 13, L"InvalidString" };
     MfrWriteProfileStringTests.push_back(ts_PackagePVAD_F2);
 
@@ -211,14 +211,14 @@ int InitializeWriteProfileTestsString()
     // Requests to Package VFS File Locations for WritePrivateProfileString via existing VFS file with value present
     temp = VFSPF;
     temp.append(L"\\PlaceholderTest\\TestIniFileVfsPF.ini");
-    MfrWriteProfileStringTest ts_PackageVFS_PF1 = { "String Package-file VFS exists in package", true, false, false, 
+    MfrWriteProfileStringTest ts_PackageVFS_PF1 = { "MFR String Package-file VFS exists in package", true, false, false, 
                                     temp.c_str() , L"Section1", L"ItemString", L"InvalidString", 13, L"InvalidString" };
     MfrWriteProfileStringTests.push_back(ts_PackageVFS_PF1);
 
     // Requests to Package VFS File Locations for WritePrivateProfileString via Missing VFS file with value present
     temp = VFSPF;
     temp.append(L"\\PlaceholderTest\\Nonesuch.ini");
-    MfrWriteProfileStringTest ts_PackageVFS_PF2 = { "String Package-file VFS missing in package", true, false, false, 
+    MfrWriteProfileStringTest ts_PackageVFS_PF2 = { "MFR String Package-file VFS missing in package", true, false, false, 
                                     temp.c_str(), L"Section1", L"ItemString", L"InvalidString", 13, L"InvalidString" };
     MfrWriteProfileStringTests.push_back(ts_PackageVFS_PF2);
 
@@ -226,14 +226,14 @@ int InitializeWriteProfileTestsString()
     // Requests to Redirected VFS File Locations for WritePrivateProfileString via existing VFS file with value present
     temp = REVFSPF;
     temp.append(L"\\PlaceholderTest\\TestIniFileVfsPF.ini");
-    MfrWriteProfileStringTest ts_RedirectedVFS_PF1 = { "String Redirected-file VFS exists in package", true, false, false, 
+    MfrWriteProfileStringTest ts_RedirectedVFS_PF1 = { "MFR String Redirected-file VFS exists in package", true, false, false, 
                                     temp.c_str() , L"Section1", L"ItemString",  L"InvalidString", 13, L"InvalidString" };
     MfrWriteProfileStringTests.push_back(ts_RedirectedVFS_PF1);
 
     // Requests to Redirected VFS File Locations for WritePrivateProfileString via Missing VFS file with value present
     temp = REVFSPF;
     temp.append(L"\\PlaceholderTest\\Nonesuch.ini");
-    MfrWriteProfileStringTest ts_RedirectedVFS_PF2 = { "String Redirected-file VFS missing in package", true, false, false, 
+    MfrWriteProfileStringTest ts_RedirectedVFS_PF2 = { "MFR String Redirected-file VFS missing in package", true, false, false, 
                                     temp.c_str(), L"Section1", L"ItemString", L"InvalidString", 13, L"InvalidString" };
     MfrWriteProfileStringTests.push_back(ts_RedirectedVFS_PF2);
 
@@ -241,14 +241,14 @@ int InitializeWriteProfileTestsString()
     // Requests to Redirected PVAD File Locations for WritePrivateProfileString via existing file with value present
     temp = g_writablePackageRootPath.c_str();
     temp.append(L"\\TestIniFilePVAD.ini");
-    MfrWriteProfileStringTest ts_RedirectedPVAD_F1 = { "String Redirected-file VFS exists in package", true, false, false, 
+    MfrWriteProfileStringTest ts_RedirectedPVAD_F1 = { "MFR String Redirected-file VFS exists in package", true, false, false, 
                                     temp.c_str() , L"Section1", L"ItemString",  L"InvalidString", 13, L"InvalidString" };
     MfrWriteProfileStringTests.push_back(ts_RedirectedPVAD_F1);
 
     // Requests to Redirected PVAD File Locations for WritePrivateProfileString via Missing file with value present
     temp = g_writablePackageRootPath.c_str();
     temp.append(L"\\Nonesuch.ini");
-    MfrWriteProfileStringTest ts_RedirectedPVAD_F2 = { "String Redirected-file VFS missing in package", true, false, false, 
+    MfrWriteProfileStringTest ts_RedirectedPVAD_F2 = { "MFR String Redirected-file VFS missing in package", true, false, false, 
                                     temp.c_str(), L"Section1", L"ItemString", L"InvalidString", 13, L"InvalidString" };
     MfrWriteProfileStringTests.push_back(ts_RedirectedPVAD_F2);
 
@@ -256,7 +256,7 @@ int InitializeWriteProfileTestsString()
 
     // Requests to NULL FILE for WritePrivateProfileString 
     std::wstring nullpathS;
-    MfrWriteProfileStringTest ts_NULL = { "String NULL FILE", true, false, false, 
+    MfrWriteProfileStringTest ts_NULL = { "MFR String NULL FILE", true, false, false, 
                                     nullpathS, L"Section1", L"ItemString", L"InvalidString", 0, L"" };
     MfrWriteProfileStringTests.push_back(ts_NULL);
 
@@ -311,7 +311,7 @@ int RunWriteProfileTests()
         {
             if (testInput.enabled)
             {
-                std::string testname = "WritePrivateProfileSection Test: ";
+                std::string testname = "MFR WritePrivateProfileSection Test: ";
                 testname.append(testInput.TestName);
                 test_begin(testname);
 
@@ -386,7 +386,7 @@ int RunWriteProfileTests()
         {
             if (testInput.enabled)
             {
-                std::string testname = "WritePrivateProfileString Test: ";
+                std::string testname = "MFR WritePrivateProfileString Test: ";
                 testname.append(testInput.TestName);
                 test_begin(testname);
 
@@ -459,7 +459,7 @@ int RunWriteProfileTests()
         {
             if (testInput.enabled)
             {
-                std::string testname = "WritePrivateProfileStruct Test: ";
+                std::string testname = "MFR WritePrivateProfileStruct Test: ";
                 testname.append(testInput.TestName);
                 test_begin(testname);
 

@@ -23,29 +23,62 @@ using namespace std::literals;
 // It may be worth considering doing some enumeration of installed applications to find ones that we care about, but for
 // now since the list is small and known, just declare them ahead of time. We'll just need to be careful to not treat
 // missing applications as too serious
+
+////#define DO_ARCHITECTURE_TESTS
+#define DO_POWERSHELL_TESTS
+//#define DO_COMPOSITION_TESTS
+#define DO_MFRILVAWARE_TESTS
+#define DO_MFR_TESTS
+#define DO_FRF_TESTS
+#define DO_DYNDLL_TESTS
+#define DO_REGLEG_TESTS
+#define DO_ENVVAR_TESTS
+
+
 static constexpr const wchar_t* g_applications[] =
 {
-    ////L"ArchitectureTest_8wekyb3d8bbwe!Fixed32",
-    ////L"ArchitectureTest_8wekyb3d8bbwe!Fixed64",
-    //L"PowershellScriptTest_8wekyb3d8bbwe!PsfShellLaunchTest",
-    //L"PowershellScriptTest_8wekyb3d8bbwe!PsfShellLaunchVerify",
-    //L"PowershellScriptTest_8wekyb3d8bbwe!PSNoScripts",
-    //L"PowershellScriptTest_8wekyb3d8bbwe!PSOnlyStart",
-    //L"PowershellScriptTest_8wekyb3d8bbwe!PSBothStartingFirst",
-    //L"PowershellScriptTest_8wekyb3d8bbwe!PSScriptWithArg",
-    //L"CompositionTest_8wekyb3d8bbwe!Fixed",
-    //L"MFRTests_8wekyb3d8bbwe!Fixed",
-    //L"PackageDriveTest_8wekyb3d8bbwe!Fixed",
-    //L"FileSystemTest_8wekyb3d8bbwe!Fixed",
-    //L"LongPathsTest_8wekyb3d8bbwe!Fixed",
+#ifdef DO_ARCHITECTURE_TESTS
+    L"ArchitectureTest_8wekyb3d8bbwe!Fixed32",
+    L"ArchitectureTest_8wekyb3d8bbwe!Fixed64",
+#endif
+#ifdef DO_POWERSHELL_TESTS
+    #if !_M_IX86
+    L"PowershellScriptTest_8wekyb3d8bbwe!PsfShellLaunchTest",
+    L"PowershellScriptTest_8wekyb3d8bbwe!PsfShellLaunchVerify",
+    L"PowershellScriptTest_8wekyb3d8bbwe!PSNoScripts",
+    L"PowershellScriptTest_8wekyb3d8bbwe!PSOnlyStart",
+    L"PowershellScriptTest_8wekyb3d8bbwe!PSBothStartingFirst",
+    L"PowershellScriptTest_8wekyb3d8bbwe!PSScriptWithArg", 
+    #endif  // x64 only tests
+#endif 
+#ifdef DO_COMPOSITION_TESTS
+    L"CompositionTest_8wekyb3d8bbwe!Fixed",
+#endif
+#ifdef DO_MFRILVAWARE_TESTS
+    L"MFRIlvAwareTests_8wekyb3d8bbwe!Fixed",
+#endif
+#ifdef DO_MFR_TESTS
+    L"MFRTests_8wekyb3d8bbwe!Fixed",
+#endif
+#ifdef DO_FRF_TESTS
+    L"PackageDriveTest_8wekyb3d8bbwe!Fixed",
+    L"FileSystemTest_8wekyb3d8bbwe!Fixed",
+    L"LongPathsTest_8wekyb3d8bbwe!Fixed",
+#endif
+#ifdef DO_DYNDLL_TESTS
     L"DynamicLibraryTest_8wekyb3d8bbwe!Fixed32",
     L"DynamicLibraryTest_8wekyb3d8bbwe!Fixed64",
-    //L"RegLegacyTest_8wekyb3d8bbwe!Fixed32",
-    //L"RegLegacyTest_8wekyb3d8bbwe!Fixed64",
-    //L"EnvVarsATest_8wekyb3d8bbwe!Fixed32",
-    //L"EnvVarsATest_8wekyb3d8bbwe!Fixed64",
-    //L"EnvVarsWTest_8wekyb3d8bbwe!Fixed32",
-    //L"EnvVarsWTest_8wekyb3d8bbwe!Fixed64"
+#endif
+#ifdef DO_REGLEG_TESTS
+    L"RegLegacyTest_8wekyb3d8bbwe!Fixed32",
+    L"RegLegacyTest_8wekyb3d8bbwe!Fixed64",
+#endif
+#ifdef DO_ENVVAR_TESTS
+    L"EnvVarsATest_8wekyb3d8bbwe!Fixed32",
+    L"EnvVarsATest_8wekyb3d8bbwe!Fixed64",
+    L"EnvVarsWTest_8wekyb3d8bbwe!Fixed32",
+    L"EnvVarsWTest_8wekyb3d8bbwe!Fixed64"
+#endif
 };
 
 bool g_onlyPrintSummary = false;

@@ -2,6 +2,7 @@
 <Package xmlns="http://schemas.microsoft.com/appx/manifest/foundation/windows10"
          xmlns:uap="http://schemas.microsoft.com/appx/manifest/uap/windows10"
          xmlns:uap3="http://schemas.microsoft.com/appx/manifest/uap/windows10/3"
+         xmlns:uap10="http://schemas.microsoft.com/appx/manifest/uap/windows10/10"
          xmlns:rescap="http://schemas.microsoft.com/appx/manifest/foundation/windows10/restrictedcapabilities"
          xmlns:mp="http://schemas.microsoft.com/appx/2014/phone/manifest"
          xmlns:desktop="http://schemas.microsoft.com/appx/manifest/desktop/windows10">
@@ -40,4 +41,13 @@
                           Description="No description entered" />
     </Application>
   </Applications>
+  <!--
+  <Extensions>
+    <uap10:Extension Category="windows.installedLocationVirtualization">
+      <uap10:InstalledLocationVirtualization>
+        <uap10:UpdateActions ModifiedItems="keep" AddedItems="keep" DeletedItems="keep" />
+      </uap10:InstalledLocationVirtualization>
+    </uap10:Extension>
+  </Extensions>
+  -->
 </Package>

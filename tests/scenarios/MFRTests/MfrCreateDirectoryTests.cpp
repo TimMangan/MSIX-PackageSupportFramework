@@ -17,7 +17,7 @@ int InitializeCreateDirectoryTestArray()
     // Requests to Native File Locations for CreateDirectory via VFS
     tempD = g_NativePF;
     tempD.append(L"\\PlaceholderTest");
-    MfrCreateDirectoryTest ts_Native_PF1 = { "CreateDirectory Native-folder VFS exists in package",  true, true,  true,
+    MfrCreateDirectoryTest ts_Native_PF1 = { "MFR CreateDirectory Native-folder VFS exists in package",  true, true,  true,
                                 tempD, true, ERROR_SUCCESS };
     MfrCreateDirectoryTests.push_back(ts_Native_PF1);
 
@@ -30,14 +30,14 @@ int InitializeCreateDirectoryTestArray()
 #else
     tempD.append(L"\\VFS\\ProgramFilesX64\\NotPreviousExistingDirectoryTest");
 #endif
-    MfrCreateDirectoryTest ts_Package_PF1 = { "CreateDirectory Non-Existing Directory in Package VFS Test",  true, true,  true,
+    MfrCreateDirectoryTest ts_Package_PF1 = { "MFR CreateDirectory Non-Existing Directory in Package VFS Test",  true, true,  true,
                                 tempD, true, ERROR_SUCCESS };
     MfrCreateDirectoryTests.push_back(ts_Package_PF1);
 
     // Requests to Package File Locations for CreateDirectory PVAD
     tempD = g_Cwd;
-    tempD.append(L"\\DoesNotPreExistFolderTest");
-    MfrCreateDirectoryTest ts_PVAD_1 = { "CreateDirectory Package-folder PVAD not exists in package",  true, true,  true,
+    tempD.append(L"\\DoesNotPreExistFolderTest_PVAD");
+    MfrCreateDirectoryTest ts_PVAD_1 = { "MFR CreateDirectory Package-folder PVAD not exists in package",  true, true,  true,
                                 tempD, true, ERROR_SUCCESS };
     MfrCreateDirectoryTests.push_back(ts_PVAD_1);
     
@@ -48,7 +48,7 @@ int InitializeCreateDirectoryTestArray()
 #else
     tempD.append(L"\\VFS\\ProgramFilesX64\\PlaceholderTest\\NewFolder1");
 #endif
-    MfrCreateDirectoryTest t_Redir_PF1 = { "Redirected-file VFS missing in package with parent present", true, true, true, 
+    MfrCreateDirectoryTest t_Redir_PF1 = { "MFR Redirected-file VFS missing in package with parent present", true, true, true, 
                                     tempD, true, ERROR_SUCCESS };
     MfrCreateDirectoryTests.push_back(t_Redir_PF1);
 
@@ -58,7 +58,7 @@ int InitializeCreateDirectoryTestArray()
 #else
     tempD.append(L"\\VFS\\ProgramFilesX64\\PlaceholderTest\\NewFolder2\\NewFolder3");
 #endif
-    MfrCreateDirectoryTest t_Redir_PF2 = { "Redirected-file VFS missing in package with parent missing", true, true, true, 
+    MfrCreateDirectoryTest t_Redir_PF2 = { "MFR Redirected-file VFS missing in package with parent missing", true, true, true, 
                                     tempD, true, ERROR_SUCCESS };
     MfrCreateDirectoryTests.push_back(t_Redir_PF2);
 
@@ -83,7 +83,7 @@ int InitializeCreateDirectoryExTestArray()
     tempS.append(L"\\PlaceholderTest");
     tempD = g_NativePF;;
     tempD.append(L"\\PlaceholderTestCopied");
-    MfrCreateDirectoryExTest ts_Native_PF1 = { "CreateDirectoryEx from Native-folder VFS exists in package", true, true,  true,
+    MfrCreateDirectoryExTest ts_Native_PF1 = { "MFR CreateDirectoryEx from Native-folder VFS exists in package", true, true,  true,
                                 tempS, tempD, true, ERROR_SUCCESS };
     MfrCreateDirectoryExTests.push_back(ts_Native_PF1);
 
@@ -92,14 +92,14 @@ int InitializeCreateDirectoryExTestArray()
     // 
     tempD = g_NativePF;
     tempD.append(L"\\VFS\\ProgramFilesX64\\NotPreviousExistingDirectoryTest");
-    MfrCreateDirectoryExTest ts_Package_PF1 = { "CreateDirectory Non-Existing Directory in Package VFS Test",  true, true,  true,
+    MfrCreateDirectoryExTest ts_Package_PF1 = { "MFR CreateDirectory Non-Existing Directory in Package VFS Test",  true, true,  true,
                                 tempS, tempD, true, ERROR_SUCCESS };
     MfrCreateDirectoryExTests.push_back(ts_Package_PF1);
 
     // Requests to Package File Locations for Directory PVAD
     tempD = g_Cwd;
-    tempD.append(L"\\DoesNotPreExistFolderTest");
-    MfrCreateDirectoryExTest ts_PVAD_1 = { "CreateDirectory Package-folder PVAD not exists in package",  true, true,  true,
+    tempD.append(L"\\DoesNotPreExistFolderTest_PVADEx");
+    MfrCreateDirectoryExTest ts_PVAD_1 = { "MFR CreateDirectory Package-folder PVAD not exists in package",  true, true,  true,
                                 tempS, tempD, true, ERROR_SUCCESS };
     MfrCreateDirectoryExTests.push_back(ts_PVAD_1);
 
@@ -107,14 +107,14 @@ int InitializeCreateDirectoryExTestArray()
     // Requests to Redirected File Locations for CreateDirectory using VFS
     tempD = g_writablePackageRootPath.c_str();
     tempD.append(L"\\VFS\\ProgramFilesX64\\PlaceholderTest\\NewFolder1");
-    MfrCreateDirectoryExTest t_Redir_PF1 = { "Redirected-file VFS missing in package with parent present", true, true, true,
+    MfrCreateDirectoryExTest t_Redir_PF1 = { "MFR Redirected-file VFS missing in package with parent present", true, true, true,
                                     tempS, tempD, true, ERROR_SUCCESS };
     MfrCreateDirectoryExTests.push_back(t_Redir_PF1);
 
     tempD = g_writablePackageRootPath.c_str();
     tempD.append(L"\\VFS\\ProgramFilesX64\\PlaceholderTest\\NewFolder2\\NewFolder3");
     tempD.append(L"\\DoesNotPreExistFolderTest");
-    MfrCreateDirectoryExTest t_Redir_PF2 = { "Redirected-file VFS missing in package with parent missing", true, true, true,
+    MfrCreateDirectoryExTest t_Redir_PF2 = { "MFR Redirected-file VFS missing in package with parent missing", true, true, true,
                                     tempS, tempD, true, ERROR_SUCCESS };
     MfrCreateDirectoryExTests.push_back(t_Redir_PF2);
 
@@ -141,7 +141,7 @@ BOOL CreateDirectoryIndividualTest(MfrCreateDirectoryTest testInput)
     int result = ERROR_SUCCESS;
     if (testInput.enabled)
     {
-        std::string testname = "CreateDirectory Test: ";
+        std::string testname = "MFR CreateDirectory Test: ";
         testname.append(testInput.TestName);
         test_begin(testname);
 
@@ -248,7 +248,7 @@ BOOL CreateDirectoryExIndividualTest(MfrCreateDirectoryExTest testInput)
     int result = ERROR_SUCCESS;
     if (testInput.enabled)
     {
-        std::string testname = "CreateDirectoryEx Test: ";
+        std::string testname = "MFR CreateDirectoryEx Test: ";
         testname.append(testInput.TestName);
         test_begin(testname);
 

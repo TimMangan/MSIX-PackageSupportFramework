@@ -17,7 +17,7 @@ auto GetFileAttributesFunc = &::GetFileAttributesW;
 
 int DoPlaceholderTest()
 {
-    trace_message("Running a placeholder test.\n", info_color);
+    trace_message("MFR Running a placeholder test.\n", info_color);
     auto attr = ::GetFileAttributesW(L"C:\\Program Files\\PlaceholderTest\\Placeholder.txt");
     if (attr == INVALID_FILE_ATTRIBUTES)
     {
@@ -30,7 +30,7 @@ int DoPlaceholderTest()
 
 int PlaceholderTest()
 {
-    test_begin("Placeholder Test");
+    test_begin("MFR Placeholder Test");
     Log("<<<<<MFRTests Placeholder Test");
     auto result = DoPlaceholderTest();
     Log("MFRTests Placeholder Test>>>>>");

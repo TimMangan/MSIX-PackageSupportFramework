@@ -28,6 +28,7 @@
         {
           "dll": "MFRFixup.dll",
           "config": {
+            "ilvAware": false,
             "overrideCOW": "default",
             "overrideLocalRedirections": [
               {
