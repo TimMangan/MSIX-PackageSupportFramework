@@ -30,14 +30,42 @@ std::wstring DetermineIlvPathForReadOperations(Cohorts cohorts, [[maybe_unused]]
         if (cohorts.map.Valid_mapping && !cohorts.map.IsAnExclusionToRedirect &&
             cohorts.map.RedirectionFlags == mfr::mfr_redirect_flags::prefer_redirection_local)
         {
-            UseFile = cohorts.WsRequested;
+            if (PathExists(cohorts.WsRequested.c_str()))
+            {
+                UseFile = cohorts.WsRequested;
+            }
+            else
+            {
+                if (PathExists(cohorts.WsPackage.c_str()))
+                {
+                    UseFile = cohorts.WsPackage;
+                }
+                else
+                {
+                    UseFile = cohorts.WsRequested;
+                }
+            }
             break;
         }
         else if (cohorts.map.Valid_mapping && !cohorts.map.IsAnExclusionToRedirect &&
             (cohorts.map.RedirectionFlags == mfr::mfr_redirect_flags::prefer_redirection_containerized ||
                 cohorts.map.RedirectionFlags == mfr::mfr_redirect_flags::prefer_redirection_if_package_vfs))
         {
-            UseFile = cohorts.WsPackage;
+            if (PathExists(cohorts.WsPackage.c_str()))
+            {
+                UseFile = cohorts.WsPackage;
+            }
+            else
+            {
+                if (PathExists(cohorts.WsRequested.c_str()))
+                {
+                    UseFile = cohorts.WsRequested;
+                }
+                else
+                {
+                    UseFile = cohorts.WsPackage;
+                }
+            }
             break;
         }
         else

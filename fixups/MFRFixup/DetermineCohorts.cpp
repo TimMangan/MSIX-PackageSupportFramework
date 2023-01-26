@@ -94,7 +94,7 @@ void DetermineCohorts(std::wstring requestedPath, Cohorts *cohorts, bool UseMore
                 // in the redirection area that they are natively. (Well, we could if MFR did everything but not with ILV in use as it creates these things behind our back.
                 if (comparei(cohorts->WsRequested, L"C:\\Program Files\\WindowsApps"))
                 {
-                    Log(L"[%d] %s: DetermineCohorts: Windows Apps exclusion.", dllInstance);
+                    Log(L"[%d] %s: DetermineCohorts: Windows Apps exclusion.", dllInstance, cohorts->WsRequested.c_str());
                     cohorts->WsPackage = ReplacePathPart(cohorts->WsRequested.c_str(), cohorts->map.NativePathBase, cohorts->map.PackagePathBase);
                     cohorts->WsRedirected = cohorts->WsPackage;
                 }
