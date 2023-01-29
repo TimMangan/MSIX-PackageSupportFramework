@@ -324,6 +324,8 @@ BOOL __stdcall CopyFileExFixup(
                 PreCreateLocalFoldersIfNeededForWrite(usePathNew, cohortsNew.WsPackage, dllInstance, debug, L"CopyFileExFixup");
                 // In a redirect to local scenario, if the file is not present locally, but is in the package, we are responsible to copy it there first.
                 CowLocalFoldersIfNeededForWrite(usePathNew, cohortsNew.WsPackage, dllInstance, debug, L"CopyFileExFixup");
+                // In a write to package scenario, folders may be needed.
+                PreCreatePackageFoldersIfIlvNeededForWrite(usePathNew, dllInstance, debug, L"CopyFileExFixup");
 
                 std::wstring usePathExisting = DetermineIlvPathForReadOperations(cohortsExisting, dllInstance, moredebug);
                 // In a redirect to local scenario, we are responsible for determing if source is local or in package

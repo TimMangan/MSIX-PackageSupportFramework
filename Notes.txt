@@ -1,5 +1,7 @@
 ideas:
  * Consider hidden/system file marker in redirection for deletion, similar to what ILV does.
+ * Check out CreateFile on C:\CONOUT$ in Calibre.  Returns with invalid handle? MVR.
+ 
  
  v.Next
  * MFR: Add UserProgramFiles to the VFS Traditional mappings.

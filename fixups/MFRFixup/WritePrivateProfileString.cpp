@@ -373,6 +373,8 @@ BOOL __stdcall WritePrivateProfileStringFixup(
                     PreCreateLocalFoldersIfNeededForWrite(UseFile, cohorts.WsPackage, dllInstance, debug, L"WritePrivateProfileStringFixup");
                     // In a redirect to local scenario, if the file is not present locally, but is in the package, we are responsible to copy it there first.
                     CowLocalFoldersIfNeededForWrite(UseFile, cohorts.WsPackage, dllInstance, debug, L"WritePrivateProfileStringFixup");
+                    // In a write to package scenario, folders may be needed.
+                    PreCreatePackageFoldersIfIlvNeededForWrite(UseFile, dllInstance, debug, L"WritePrivateProfileStringFixup");
 
                     WRAPPER_WRITEPRIVATEPROFILESTRING(UseFile, debug);
                 }

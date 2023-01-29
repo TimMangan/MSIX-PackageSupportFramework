@@ -402,9 +402,11 @@ BOOL __stdcall MoveFileExFixup(
                 UseNewFile = DetermineIlvPathForWriteOperations(cohortsNew, dllInstance, moredebug);
                 // In a redirect to local scenario, we are responsible for pre-creating the local parent folders
                 // if-and-only-if they are present in the package.
-                PreCreateLocalFoldersIfNeededForWrite(UseNewFile, cohortsNew.WsPackage, dllInstance, debug, L"Kb_MoveFileExWFixup");
+                PreCreateLocalFoldersIfNeededForWrite(UseNewFile, cohortsNew.WsPackage, dllInstance, debug, L"MoveFileExFixup");
                 // In a redirect to local scenario, if the file is not present locally, but is in the package, we are responsible to copy it there first.
-                CowLocalFoldersIfNeededForWrite(UseNewFile, cohortsNew.WsPackage, dllInstance, debug, L"Kb_MoveFileExWFixup");
+                CowLocalFoldersIfNeededForWrite(UseNewFile, cohortsNew.WsPackage, dllInstance, debug, L"MoveFileExFixup");
+                // In a write to package scenario, folders may be needed.
+                PreCreatePackageFoldersIfIlvNeededForWrite(UseNewFile, dllInstance, debug, L"MoveFileExFixup");
 
 #if MOREDEBUG
                Log(L"[%d] MoveFileExFixup: IlvAware Source      to be is %s", dllInstance, UseExistingFile.c_str());

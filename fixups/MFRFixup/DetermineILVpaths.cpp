@@ -228,6 +228,16 @@ bool IsThisALocalPathNow(std::wstring path)
     }
     return false;
 } // IsThisLocalPathNow
+bool IsThisAPackagePathNow(std::wstring path)
+{
+    mfr::mfr_path mfr = mfr::create_mfr_path(path);
+    if (mfr.Request_MfrPathType == mfr::mfr_path_types::in_package_pvad_area ||
+        mfr.Request_MfrPathType == mfr::mfr_path_types::in_package_vfs_area)
+    {
+        return true;
+    }
+    return false;
+} // IsThisLocalPathNow
 
 std::wstring SelectLocalOrPackageForRead(std::wstring localPath, std::wstring packagePath)
 {
@@ -263,7 +273,27 @@ void PreCreateLocalFoldersIfNeededForWrite(std::wstring localPath, std::wstring 
             }
         }
     }
-} // PreCreateLocalFoldersIfNeededForWrite()
+} // PreCreateLocalFoldersIfNeededForWrite() // PreCreateLocalFoldersIfNeededForWrite()
+
+void PreCreatePackageFoldersIfIlvNeededForWrite(std::wstring filePath, DWORD dllInstance, bool debug, std::wstring debugString)
+{
+    if (IsThisAPackagePathNow(filePath))
+    {
+        // In an ILV situation, we may need to create parent folders.
+        if (!PathExists(filePath.c_str()))
+        {
+            std::filesystem::path packagePathAsPath = std::filesystem::path(filePath);
+            if (!PathExists(packagePathAsPath.parent_path().c_str()))
+            {
+                if (debug)
+                {
+                    Log(L"[%d] %s: Pre-create package parent path to match the package first %s", dllInstance, debugString.c_str(), packagePathAsPath.parent_path().c_str());
+                }
+                PreCreateFolders(filePath, dllInstance, debugString.c_str());
+            }
+        }
+    }
+} // PreCreatePackageFoldersIfIlvNeededForWrite()
 
 void CowLocalFoldersIfNeededForWrite(std::wstring localPath, std::wstring packagePath, DWORD dllInstance, [[maybe_unused]] bool debug, std::wstring debugString)
 {

@@ -812,6 +812,8 @@ HANDLE __stdcall CreateFileFixup(_In_ const CharT* pathName,
                         PreCreateLocalFoldersIfNeededForWrite(usePath, cohorts.WsPackage, dllInstance, debug, L"CreateFileFixup");
                         // In a redirect to local scenario, if the file is not present locally, but is in the package, we are responsible to copy it there first.
                         CowLocalFoldersIfNeededForWrite(usePath, cohorts.WsPackage, dllInstance, debug, L"CreateFileFixup");
+                        // In a write to package scenario, folders may be needed.
+                        PreCreatePackageFoldersIfIlvNeededForWrite(usePath, dllInstance, debug, L"CreateFileFixup");
                     }
                     else
                     {
@@ -852,7 +854,7 @@ HANDLE __stdcall CreateFileFixup(_In_ const CharT* pathName,
         retfinal = INVALID_HANDLE_VALUE; //impl::CreateFile(pathName, desiredAccess, shareMode, securityAttributes, creationDisposition, flagsAndAttributes, templateFile);
     }
 #if _DEBUG
-    Log(L"[%d] CreateFileFixup returns with handle 0x%x", dllInstance, retfinal);
+    Log(L"[%d] CreateFileFixup (unguarded) returns with handle 0x%x and error=0x%x", dllInstance, retfinal, GetLastError());
 #endif
     return retfinal;
 }

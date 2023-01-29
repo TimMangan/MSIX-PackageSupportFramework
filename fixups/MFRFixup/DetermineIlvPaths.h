@@ -15,10 +15,13 @@ extern std::wstring DetermineIlvPathForReadOperations(Cohorts cohorts, [[maybe_u
 extern std::wstring DetermineIlvPathForWriteOperations(Cohorts cohorts, [[maybe_unused]] DWORD dllInstance, [[maybe_unused]] bool moredebug);
 
 extern bool IsThisALocalPathNow(std::wstring path);
+extern bool IsThisAPackagePathNow(std::wstring path);
 
 extern std::wstring SelectLocalOrPackageForRead(std::wstring localPath, std::wstring packagePath);
 
 extern void PreCreateLocalFoldersIfNeededForWrite(std::wstring localPath, std::wstring packagePath, DWORD dllInstance,  bool debug,  std::wstring debugString );
+
+extern void PreCreatePackageFoldersIfIlvNeededForWrite(std::wstring localPath, DWORD dllInstance, bool debug, std::wstring debugString);
 
 extern void CowLocalFoldersIfNeededForWrite(std::wstring localPath, std::wstring packagePath, DWORD dllInstance, bool debug, std::wstring debugString);
 

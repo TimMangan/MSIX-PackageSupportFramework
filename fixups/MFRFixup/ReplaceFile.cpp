@@ -464,6 +464,8 @@ BOOL __stdcall ReplaceFileFixup(
                 PreCreateLocalFoldersIfNeededForWrite(UseReplacedFile, cohortsReplaced.WsPackage, dllInstance, debug, L"ReplaceFileFixup");
                 // In a redirect to local scenario, if the file is not present locally, but is in the package, we are responsible to copy it there first.
                 CowLocalFoldersIfNeededForWrite(UseReplacedFile, cohortsReplaced.WsPackage, dllInstance, debug, L"ReplaceFileFixup");
+                // In a write to package scenario, folders may be needed.
+                PreCreatePackageFoldersIfIlvNeededForWrite(UseReplacedFile, dllInstance, debug, L"ReplaceFileFixup");
 
                 // Determine the actual source to use
                 UseReplacementFile = DetermineIlvPathForReadOperations(cohortsReplacement, dllInstance, moredebug);
@@ -500,6 +502,8 @@ BOOL __stdcall ReplaceFileFixup(
                     PreCreateLocalFoldersIfNeededForWrite(UseBackupFile, cohortsBackup.WsPackage, dllInstance, debug, L"ReplaceFileFixup (backup)");
                     // In a redirect to local scenario, if the file is not present locally, but is in the package, we are responsible to copy it there first.
                     CowLocalFoldersIfNeededForWrite(UseBackupFile, cohortsBackup.WsPackage, dllInstance, debug, L"ReplaceFileFixup (backup)");
+                    // In a write to package scenario, folders may be needed.
+                    PreCreatePackageFoldersIfIlvNeededForWrite(UseBackupFile, dllInstance, debug, L"ReplaceFileFixup (backup)");
                 }
                 else
                 {

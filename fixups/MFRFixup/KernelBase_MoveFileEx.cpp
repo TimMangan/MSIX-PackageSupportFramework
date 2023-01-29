@@ -409,6 +409,8 @@ BOOL __stdcall Kb_MoveFileExWFixup(
                 PreCreateLocalFoldersIfNeededForWrite(UseNewFile, cohortsNew.WsPackage, dllInstance, debug, L"Kb_MoveFileExWFixup");
                 // In a redirect to local scenario, if the file is not present locally, but is in the package, we are responsible to copy it there first.
                 CowLocalFoldersIfNeededForWrite(UseNewFile, cohortsNew.WsPackage, dllInstance, debug, L"Kb_MoveFileExWFixup");
+                // In a write to package scenario, folders may be needed.
+                PreCreatePackageFoldersIfIlvNeededForWrite(UseNewFile, dllInstance, debug, L"Kb_MoveFileExWFixup");
 
 #if MOREDEBUG
                     Log(L"[%d] Kb_MoveFileExWFixup: IlvAware Source      to be is %s", dllInstance, UseExistingFile.c_str());

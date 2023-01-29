@@ -456,7 +456,8 @@ BOOL __stdcall CreateDirectoryFixup(_In_ const CharT* pathName, _In_opt_ LPSECUR
                 // In a redirect to local scenario, we are responsible for pre-creating the local parent folders
                 // if-and-only-if they are present in the package.
                 PreCreateLocalFoldersIfNeededForWrite(usePath, cohorts.WsPackage, dllInstance, debug, L"CreateDirectoryFixup");
-                
+                PreCreatePackageFoldersIfIlvNeededForWrite(usePath, dllInstance, debug, L"CreateDirectoryFixup");
+
                 retfinal = WRAPPER_CREATEDIRECTORY(usePath, securityAttributes, dllInstance, debug);
                 return retfinal;
             }

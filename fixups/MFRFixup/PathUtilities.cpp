@@ -281,6 +281,8 @@ bool PathParentExists(const wchar_t* path)
 void PreCreateFolders(std::wstring filepath, [[maybe_unused]] DWORD dllInstance, [[maybe_unused]] std::wstring DebugMessage)
 {
     std::wstring notlongfilepath = MakeNotLongPath(filepath);
+    mfr::mfr_path mfr = mfr::create_mfr_path(notlongfilepath);
+
     size_t position;
     std::vector<std::wstring> folderlist;
     bool done = false;
@@ -294,13 +296,46 @@ void PreCreateFolders(std::wstring filepath, [[maybe_unused]] DWORD dllInstance,
         }
         else
         {
+
             notlongfilepath = notlongfilepath.substr(0, position);
-            // Skip recreating the folders below WritablePackageRoot folder (must create WritablePackageRoot to be sure).
-            if (notlongfilepath.length() < g_writablePackageRootPath.wstring().length())
+
+            if (mfr.Request_MfrPathType == mfr::mfr_path_types::in_package_pvad_area ||
+                mfr.Request_MfrPathType == mfr::mfr_path_types::in_package_vfs_area)
             {
-                if (g_writablePackageRootPath.wstring().find(notlongfilepath) == std::wstring::npos)
+                // Skip recreating the folders below VFS
+                if (notlongfilepath.length() > g_packageRootPath.wstring().length())
                 {
-                    folderlist.push_back(notlongfilepath);
+                    if (!PathExists(notlongfilepath.c_str()))
+                    {
+                        folderlist.push_back(notlongfilepath);
+                    }
+                    else
+                    {
+                        done = true;
+                    }                       
+                }
+                else
+                {
+                    done = true;
+                }
+            }
+            else if (mfr.Request_MfrPathType == mfr::mfr_path_types::in_redirection_area_writablepackageroot)
+            {
+                // Skip recreating the folders below WritablePackageRoot folder (must create WritablePackageRoot to be sure).
+                if (notlongfilepath.length() > g_writablePackageRootPath.wstring().length())
+                {
+                    if (!PathExists(notlongfilepath.c_str()))
+                    {
+                        folderlist.push_back(notlongfilepath);
+                    }
+                    else
+                    {
+                        done = true;
+                    }
+                }
+                else
+                {
+                    done = true;
                 }
             }
             else

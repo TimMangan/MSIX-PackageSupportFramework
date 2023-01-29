@@ -548,6 +548,7 @@ BOOL __stdcall CreateDirectoryExFixup(
                 // In a redirect to local scenario, we are responsible for pre-creating the local parent folders
                 // if-and-only-if they are present in the package.
                 PreCreateLocalFoldersIfNeededForWrite(UseNewDir, cohortsNew.WsPackage, dllInstance, debug, L"CreateDirectoryExFixup");
+                PreCreatePackageFoldersIfIlvNeededForWrite(UseNewDir, dllInstance, debug, L"CreateDirectoryExFixup");
 
                 std::wstring UseTemplate = DetermineIlvPathForReadOperations(cohortsTemplate, dllInstance, moredebug);
                 UseTemplate = SelectLocalOrPackageForRead(UseTemplate, cohortsTemplate.WsPackage);
