@@ -1,7 +1,13 @@
 ideas:
  * Consider hidden/system file marker in redirection for deletion, similar to what ILV does.
  * Check out CreateFile on C:\CONOUT$ in Calibre.  Returns with invalid handle? MVR.
- 
+ * Psf is unaware of SPC.  This means that FRF/MFR determine redirection area on package level of
+       the launched app rather than container folder for redirection.  Not breaking anything currently, but ugh!
+*  Psf FRF/MFR make assumptions that it can use the package path if the file looks like it is in the package path 
+       using PathExits.  FindFile works also.  GetFileAttributes and CreateFile, however, need the call to use the native path.
+	   This might be a bug, and we might be able to work around it for the folders that map like Program Files, but not
+	   for non-mapped native folders.
+*  SPC seems to immedietly fail PsfLauncher if Ilv is set in package.
  
  v.Next
  * MFR: Add UserProgramFiles to the VFS Traditional mappings.
