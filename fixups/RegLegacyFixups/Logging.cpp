@@ -278,7 +278,7 @@ std::string InterpretKeyPath(HKEY key, const char* msg)
                 sret = InterpretCountedString(msg, info->Name, info->NameLength / 2);
             }
             else
-                sret = "InterpretKeyPath failure2";
+                sret = "InterpretKeyPath failure2a";
         }
         else if (status == STATUS_INVALID_HANDLE)
         {
@@ -317,7 +317,7 @@ std::string InterpretKeyPath(HKEY key)
                 sret = InterpretCountedString("", info->Name, info->NameLength / 2);
             }
             else
-                sret = "InterpretKeyPath failure2";
+                sret = "InterpretKeyPath failure2b";
         }
         else if (status == STATUS_INVALID_HANDLE)
         {
@@ -327,8 +327,10 @@ std::string InterpretKeyPath(HKEY key)
                 sret = InterpretStringA("HKEY_CURRENT_USER");
             else if (key == HKEY_CLASSES_ROOT)
                 sret = InterpretStringA("HKEY_CLASSES_ROOT");
+#if _DEBUG
             else
-                Log(L"InterpretKeyPath failure2.");
+                Log(L"InterpretKeyPath failure2c.");
+#endif
         }
         else
         {
