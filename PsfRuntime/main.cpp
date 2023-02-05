@@ -339,7 +339,9 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID) noexcept try
     }
 #endif
 
+#if _DEBUG
     Log("PsfRuntime: In DllMain Pid=%d Tid=%d", GetCurrentProcessId(), GetCurrentThreadId());
+#endif
     // Per detours documentation, immediately return true if running in a helper process
     if (::DetourIsHelperProcess())
     {
