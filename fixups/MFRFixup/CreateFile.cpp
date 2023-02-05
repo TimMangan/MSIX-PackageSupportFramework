@@ -846,7 +846,14 @@ HANDLE __stdcall CreateFileFixup(_In_ const CharT* pathName,
     if (pathName != nullptr)
     {
         std::wstring LongDirectory = MakeLongPath(widen(pathName));
-        retfinal = impl::CreateFile(LongDirectory.c_str(), desiredAccess, shareMode, securityAttributes, creationDisposition, flagsAndAttributes, templateFile);
+        if (LongDirectory.length() != widen(pathName).length())
+        {
+            retfinal = impl::CreateFileW(LongDirectory.c_str(), desiredAccess, shareMode, securityAttributes, creationDisposition, flagsAndAttributes, templateFile);
+        }
+        else
+        {
+            retfinal = impl::CreateFile(pathName, desiredAccess, shareMode, securityAttributes, creationDisposition, flagsAndAttributes, templateFile);
+        }
     }
     else
     {
