@@ -124,10 +124,12 @@ REGSAM RegFixupSam(std::string keypath, REGSAM samDesired, DWORD RegLocalInstanc
                                     case Modify_Key_Access_Type_Full2RW:
                                         //(samDesired & (DELETE | WRITE_DAC | WRITE_OWNER | KEY_CREATE_LINK)) != 0)
                                         if ((samDesired & (KEY_ALL_ACCESS)) == (KEY_ALL_ACCESS) ||
-                                            (samDesired & (DELETE | WRITE_DAC | WRITE_OWNER | KEY_CREATE_LINK | KEY_CREATE_SUB_KEY)) != 0)
-                                        {
+                                            // (samDesired & (DELETE | WRITE_DAC | WRITE_OWNER | KEY_CREATE_LINK | KEY_CREATE_SUB_KEY)) != 0)
+                                            (samDesired & (DELETE | WRITE_DAC | WRITE_OWNER | KEY_CREATE_LINK)) != 0)
+                                            {
                                             //samModified = samDesired & ~(DELETE | WRITE_DAC | WRITE_OWNER | KEY_CREATE_LINK);
-                                            samModified = samDesired & ~(DELETE | WRITE_DAC | WRITE_OWNER | KEY_CREATE_LINK | KEY_CREATE_SUB_KEY);
+                                            // samModified = samDesired & ~(DELETE | WRITE_DAC | WRITE_OWNER | KEY_CREATE_LINK | KEY_CREATE_SUB_KEY);
+                                            samModified = samDesired & ~(DELETE | WRITE_DAC | WRITE_OWNER | KEY_CREATE_LINK);
 #ifdef _DEBUG
                                             Log(L"[%d]   RegFixupSam: Full2RW\n", RegLocalInstance);
 #endif
@@ -136,12 +138,13 @@ REGSAM RegFixupSam(std::string keypath, REGSAM samDesired, DWORD RegLocalInstanc
                                     case Modify_Key_Access_Type_Full2MaxAllowed:
                                         //(samDesired & (DELETE | WRITE_DAC | WRITE_OWNER | KEY_CREATE_LINK)) != 0)
                                         if ((samDesired & (KEY_ALL_ACCESS)) == (KEY_ALL_ACCESS) ||
-                                            (samDesired & (DELETE | WRITE_DAC | WRITE_OWNER | KEY_CREATE_LINK | KEY_CREATE_SUB_KEY)) != 0)
+                                            // (samDesired & (DELETE | WRITE_DAC | WRITE_OWNER | KEY_CREATE_LINK | KEY_CREATE_SUB_KEY)) != 0)
+                                            (samDesired & (DELETE | WRITE_DAC | WRITE_OWNER | KEY_CREATE_LINK)) != 0)
                                         {
                                             // MAXIMUM_ALLOWED turns out to not have the maximum permissions allowed for
                                             // running in the container, for example to create a subkey.  So We'll try this.
-                                            samModified = KEY_READ | KEY_WRITE;
-                                            //samModified = MAXIMUM_ALLOWED;
+                                            // samModified = KEY_READ | KEY_WRITE;
+                                            samModified = MAXIMUM_ALLOWED;
 #ifdef _DEBUG
                                             Log(L"[%d]   RegFixupSam: Full2MaxAllowed\n", RegLocalInstance);
 #endif                                    
@@ -171,12 +174,13 @@ REGSAM RegFixupSam(std::string keypath, REGSAM samDesired, DWORD RegLocalInstanc
                                     case Modify_Key_Access_Type_RW2MaxAllowed:
                                         //(samDesired & (DELETE | WRITE_DAC | WRITE_OWNER | KEY_CREATE_LINK)) != 0)
                                         if ((samDesired & (KEY_SET_VALUE | KEY_CREATE_SUB_KEY)) != 0 ||
-                                            (samDesired & (DELETE | WRITE_DAC | WRITE_OWNER | KEY_CREATE_LINK | KEY_CREATE_SUB_KEY)) != 0)
+                                            // (samDesired & (DELETE | WRITE_DAC | WRITE_OWNER | KEY_CREATE_LINK | KEY_CREATE_SUB_KEY)) != 0)
+                                            (samDesired & (DELETE | WRITE_DAC | WRITE_OWNER | KEY_CREATE_LINK)) != 0)
                                         {
                                             // MAXIMUM_ALLOWED turns out to not have the maximum permissions allowed for
                                             // running in the container, for example to create a subkey.  So We'll try this.
-                                            samModified = KEY_READ | KEY_WRITE;
-                                            //samModified = MAXIMUM_ALLOWED;
+                                            // samModified = KEY_READ | KEY_WRITE;
+                                            samModified = MAXIMUM_ALLOWED;
 #ifdef _DEBUG
                                             Log(L"[%d]   RegFixupSam: RW2MaxAllowed\n", RegLocalInstance);
 #endif                                    
@@ -233,10 +237,12 @@ REGSAM RegFixupSam(std::string keypath, REGSAM samDesired, DWORD RegLocalInstanc
                                     case Modify_Key_Access_Type_Full2RW:
                                         //(samDesired & (DELETE | WRITE_DAC | WRITE_OWNER | KEY_CREATE_LINK)) != 0)
                                         if ((samDesired & (KEY_ALL_ACCESS)) == (KEY_ALL_ACCESS) ||
-                                            (samDesired & (DELETE | WRITE_DAC | WRITE_OWNER | KEY_CREATE_LINK | KEY_CREATE_SUB_KEY)) != 0)
+                                            // (samDesired & (DELETE | WRITE_DAC | WRITE_OWNER | KEY_CREATE_LINK | KEY_CREATE_SUB_KEY)) != 0)
+                                            (samDesired & (DELETE | WRITE_DAC | WRITE_OWNER | KEY_CREATE_LINK)) != 0)
                                         {
                                             //samModified = samDesired & ~(DELETE | WRITE_DAC | WRITE_OWNER | KEY_CREATE_LINK );
-                                            samModified = samDesired & ~(DELETE | WRITE_DAC | WRITE_OWNER | KEY_CREATE_LINK | KEY_CREATE_SUB_KEY);
+                                            // samModified = samDesired & ~(DELETE | WRITE_DAC | WRITE_OWNER | KEY_CREATE_LINK | KEY_CREATE_SUB_KEY);
+                                            samModified = samDesired & ~(DELETE | WRITE_DAC | WRITE_OWNER | KEY_CREATE_LINK);
 #ifdef _DEBUG
                                             Log(L"[%d]   RegFixupSam: Full2RW\n", RegLocalInstance);
 #endif
@@ -256,7 +262,8 @@ REGSAM RegFixupSam(std::string keypath, REGSAM samDesired, DWORD RegLocalInstanc
                                     case Modify_Key_Access_Type_Full2MaxAllowed:
                                         //(samDesired & (DELETE | WRITE_DAC | WRITE_OWNER | KEY_CREATE_LINK)) != 0)
                                         if ((samDesired & (KEY_ALL_ACCESS)) == (KEY_ALL_ACCESS) ||
-                                            (samDesired & (DELETE | WRITE_DAC | WRITE_OWNER | KEY_CREATE_LINK | KEY_CREATE_SUB_KEY)) != 0)
+                                            // (samDesired & (DELETE | WRITE_DAC | WRITE_OWNER | KEY_CREATE_LINK | KEY_CREATE_SUB_KEY)) != 0)
+                                            (samDesired & (DELETE | WRITE_DAC | WRITE_OWNER | KEY_CREATE_LINK)) != 0)
                                         {
                                             samModified = MAXIMUM_ALLOWED;
 #ifdef _DEBUG
@@ -278,7 +285,8 @@ REGSAM RegFixupSam(std::string keypath, REGSAM samDesired, DWORD RegLocalInstanc
                                     case Modify_Key_Access_Type_RW2MaxAllowed:
                                         //(samDesired & (DELETE | WRITE_DAC | WRITE_OWNER | KEY_CREATE_LINK)) != 0)
                                         if ((samDesired & (KEY_SET_VALUE | KEY_CREATE_SUB_KEY)) != 0 ||
-                                            (samDesired & (DELETE | WRITE_DAC | WRITE_OWNER | KEY_CREATE_LINK | KEY_CREATE_SUB_KEY)) != 0)
+                                            // (samDesired & (DELETE | WRITE_DAC | WRITE_OWNER | KEY_CREATE_LINK | KEY_CREATE_SUB_KEY)) != 0)
+                                            (samDesired & (DELETE | WRITE_DAC | WRITE_OWNER | KEY_CREATE_LINK)) != 0)
                                         {
                                             samModified = MAXIMUM_ALLOWED;
 #ifdef _DEBUG
