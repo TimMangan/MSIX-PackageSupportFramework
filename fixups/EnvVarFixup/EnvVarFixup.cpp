@@ -202,7 +202,7 @@ DWORD __stdcall GetEnvironmentVariableFixup(_In_ const CharC* lpName, _Inout_ Ch
                     Log(L"[%d] GetEnvironmentVariableFixup: Json supplied case.", GetEnvVarInstance);
 #endif
 
-                    if (valuelen < lenBuf)
+                    if (valuelen <= lenBuf)
                     {
 #if _DEBUG
                         Log(L"[%d] GetEnvironmentVariableFixup: Match to be returned.", GetEnvVarInstance);
@@ -244,7 +244,14 @@ DWORD __stdcall GetEnvironmentVariableFixup(_In_ const CharC* lpName, _Inout_ Ch
                     else
                     {
 #if _DEBUG
-                        Log(L"GetEnvironmentVariableFixup: Match returns bufferoverflow.");
+                        if constexpr (psf::is_ansi<CharT>)
+                        {
+                            Log(L"[%d] GetEnvironmentVariableFixup: (A) Match returns bufferoverflow. Needs 0x%x more than 0x%x.",GetEnvVarInstance,valuelen-lenBuf, lenBuf);
+                        }
+                        else
+                        {
+                            Log(L"[%d] GetEnvironmentVariableFixup: (W) Match returns bufferoverflow. Needs 0x%x more than 0x%x.", GetEnvVarInstance, valuelen - lenBuf, lenBuf);
+                        }
 #endif
                         // return buffer overflow
                         result = ERROR_BUFFER_OVERFLOW;

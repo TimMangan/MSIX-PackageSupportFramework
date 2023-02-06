@@ -33,6 +33,9 @@
     <ClCompile Include="AddSetDllDirectory.cpp">
       <Filter>src</Filter>
     </ClCompile>
+    <ClCompile Include="CreateProcessAsUser.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="PsfRuntime.def" />

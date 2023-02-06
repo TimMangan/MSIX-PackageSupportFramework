@@ -50,7 +50,7 @@ int RunOddDirectoryTests()
     }
 
 
-    test_begin("OddDirectory #1 CreateDirectory for Testing a new directory (should succeed).");
+    test_begin("MFR OddDirectory #1 CreateDirectory for Testing a new directory (should succeed).");
 
     BOOL testB = CreateDirectory(FolderTest.c_str(),  NULL);
     if (testB == 0)
@@ -65,7 +65,7 @@ int RunOddDirectoryTests()
     test_end(testResult);
 
 
-    test_begin("OddDirectory #2 CreateDirectory for Testing a existing directory (should fail).");
+    test_begin("MFR OddDirectory #2 CreateDirectory for Testing a existing directory (should fail).");
     testB = CreateDirectory(FolderTest.c_str(), NULL);
     if (testB == 0)
     {
@@ -88,7 +88,7 @@ int RunOddDirectoryTests()
 
 
 
-    test_begin("OddDirectory #3 CreateDirectory for Testing a directory with no name (should fail).");
+    test_begin("MFR OddDirectory #3 CreateDirectory for Testing a directory with no name (should fail).");
     testB = CreateDirectory(L"", NULL);
     if (testB == 0)
     {
@@ -104,7 +104,7 @@ int RunOddDirectoryTests()
 
 
 
-    test_begin("OddDirectory #4 CreateFile to open directory handle and ReadDirectoryChanges without changes.");
+    test_begin("MFR OddDirectory #4 CreateFile to open directory handle and ReadDirectoryChanges without changes.");
     SetLastError(0);
     SpecialCounter = 0;
 
@@ -166,7 +166,7 @@ int RunOddDirectoryTests()
 
 #if DOWATCH
 
-    test_begin("OddDirectory #5 CreateFile to open directory handle and ReadDirectoryChangesEx for a VFS folder (with Notify) ");
+    test_begin("MFR OddDirectory #5 CreateFile to open directory handle and ReadDirectoryChangesEx for a VFS folder (with Notify) ");
     SetLastError(0);
     SpecialCounter = 0;
 
@@ -265,7 +265,7 @@ int RunOddDirectoryTests()
     test_end(testResult);
 
 
-    test_begin("OddDirectory #6 CreateFile to open directory handle and ReadDirectoryChangesEx for a VFS folder (NotifyExtended) ");
+    test_begin("MFR OddDirectory #6 CreateFile to open directory handle and ReadDirectoryChangesEx for a VFS folder (NotifyExtended) ");
     SetLastError(0);
     SpecialCounter = 0;
 
@@ -360,7 +360,7 @@ int RunOddDirectoryTests()
 
     
 
-    test_begin("OddDirectory #7 CreateFile to open directory handle and ReadDirectoryChangesEx for a VFS folder (NotifyFull) ");
+    test_begin("MFR OddDirectory #7 CreateFile to open directory handle and ReadDirectoryChangesEx for a VFS folder (NotifyFull) ");
     SetLastError(0);
     SpecialCounter = 0;
 

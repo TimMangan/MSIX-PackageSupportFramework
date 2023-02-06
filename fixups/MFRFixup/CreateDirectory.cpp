@@ -33,8 +33,11 @@
 //
 //               Turn on the define to get the second behavior.  Consider CreateDirectoryEx which would need a similar
 //               strategy if you do.
+//   
+//               NOTE: In an ILV scenario with traditional redirection, we want to add the directory to the package and not
+//                     the redirection area.
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-//#define IMPROVE_RETURN_ACCURACY 1
+#define IMPROVE_RETURN_ACCURACY 1
 
 #include <errno.h>
 #include "FunctionImplementations.h"
@@ -43,7 +46,11 @@
 #include "ManagedPathTypes.h"
 #include "PathUtilities.h"
 #include "DetermineCohorts.h"
+#include "DetermineIlvPaths.h"
 
+#if _DEBUG
+//#define MOREDEBUG 1
+#endif
 
 BOOL  WRAPPER_CREATEDIRECTORY(std::wstring theDestinationDirectory, LPSECURITY_ATTRIBUTES securityAttributes, DWORD dllInstance, bool debug)
 {
@@ -53,7 +60,7 @@ BOOL  WRAPPER_CREATEDIRECTORY(std::wstring theDestinationDirectory, LPSECURITY_A
     {
         if (retfinal == 0)
         {
-            Log(L"[%d] CreateDirectory returns FAILURE 0x%x and file '%s'", dllInstance, retfinal, LongDestinationDirectory.c_str());
+            Log(L"[%d] CreateDirectory returns FAILURE 0x%x GetLastError=0x%x and file '%s'", dllInstance, retfinal, GetLastError(), LongDestinationDirectory.c_str());
         }
         else
         {
@@ -98,312 +105,362 @@ BOOL __stdcall CreateDirectoryFixup(_In_ const CharT* pathName, _In_opt_ LPSECUR
             Cohorts cohorts;
             DetermineCohorts(wPathName, &cohorts, moredebug, dllInstance, L"CreateDirectoryFixup");
 
-            switch (cohorts.file_mfr.Request_MfrPathType)
+            if (!MFRConfiguration.Ilv_Aware)
             {
-            case mfr::mfr_path_types::in_native_area:
-                if (cohorts.map.Valid_mapping &&
-                    cohorts.map.RedirectionFlags == mfr::mfr_redirect_flags::prefer_redirection_local)
+                switch (cohorts.file_mfr.Request_MfrPathType)
                 {
-                    // try the request path, which must be the local redirected version by definition, and then a package equivalent
-                    if (!cohorts.map.IsAnExclusionToRedirect && PathExists(cohorts.WsRedirected.c_str()))
+                case mfr::mfr_path_types::in_native_area:
+                    if (cohorts.map.Valid_mapping &&
+                        cohorts.map.RedirectionFlags == mfr::mfr_redirect_flags::prefer_redirection_local)
                     {
-                        // Still do this to set attributes
-                        retfinal = WRAPPER_CREATEDIRECTORY(cohorts.WsRedirected, securityAttributes, dllInstance, debug);
-#if IMPROVE_RETURN_ACCURACY
-                        if (PathExists(cohorts.tWsPackage.c_str()))
+                        // try the request path, which must be the local redirected version by definition, and then a package equivalent
+                        if (!cohorts.map.IsAnExclusionToRedirect && PathExists(cohorts.WsRedirected.c_str()))
                         {
-                            retfinal = FALSE;
-                            SetLastError(ERROR_ALREADY_EXISTS);
+                            // Still do this to set attributes
+                            retfinal = WRAPPER_CREATEDIRECTORY(cohorts.WsRedirected, securityAttributes, dllInstance, debug);
+#if IMPROVE_RETURN_ACCURACY
+                            if (!retfinal)
+                            {
+                                if (PathExists(cohorts.WsPackage.c_str()))
+                                {
+                                    SetLastError(ERROR_ALREADY_EXISTS);
 #if _DEBUG
-                            Log("[%d] CreateDirectoryFixup: Resetting return code to ERROR_ALREADY_EXISTS.");
+                                    Log("[%d] CreateDirectoryFixup: Resetting return code to ERROR_ALREADY_EXISTS.");
 #endif
+                                }
+                            }
+#endif
+                            return retfinal;
                         }
-#endif
-                        return retfinal;
-                    }
-                    else if (PathExists(cohorts.WsPackage.c_str()))
-                    {
-                        // COW is not applicable, we don't need to copy the whole directory, just create it.
-                        PreCreateFolders(cohorts.WsRedirected.c_str(), dllInstance, L"CreateDirectoryFixup");
-                        retfinal = WRAPPER_CREATEDIRECTORY(cohorts.WsRedirected, securityAttributes, dllInstance, debug);
+                        else if (PathExists(cohorts.WsPackage.c_str()))
+                        {
+                            // COW is not applicable, we don't need to copy the whole directory, just create it.
+                            PreCreateFolders(cohorts.WsRedirected.c_str(), dllInstance, L"CreateDirectoryFixup");
+                            retfinal = WRAPPER_CREATEDIRECTORY(cohorts.WsRedirected, securityAttributes, dllInstance, debug);
 #if IMPROVE_RETURN_ACCURACY
-                        retfinal = FALSE;
-                        SetLastError(ERROR_ALREADY_EXISTS);
+                            if (!retfinal)
+                            {
+                                SetLastError(ERROR_ALREADY_EXISTS);
 #if _DEBUG
-                        Log("[%d] CreateDirectoryFixup: Resetting return code to ERROR_ALREADY_EXISTS.");
+                                Log("[%d] CreateDirectoryFixup: Resetting return code to ERROR_ALREADY_EXISTS.");
 #endif
+                            }
 #endif
-                        return retfinal;
+                            return retfinal;
+                        }
+                        else
+                        {
+                            // There isn't such a file anywhere.  We want to create the redirection parent folder and let this call against the redirected file to create there.
+                            PreCreateFolders(cohorts.WsRedirected.c_str(), dllInstance, L"CreateDirectoryFixup");
+                            return WRAPPER_CREATEDIRECTORY(cohorts.WsRedirected, securityAttributes, dllInstance, debug);
+                        }
                     }
-                    else
+                    else if (cohorts.map.Valid_mapping &&
+                        (cohorts.map.RedirectionFlags == mfr::mfr_redirect_flags::prefer_redirection_containerized ||
+                            cohorts.map.RedirectionFlags == mfr::mfr_redirect_flags::prefer_redirection_if_package_vfs))
                     {
-                        // There isn't such a file anywhere.  We want to create the redirection parent folder and let this call against the redirected file to create there.
-                        PreCreateFolders(cohorts.WsRedirected.c_str(), dllInstance, L"CreateDirectoryFixup");
-                        return WRAPPER_CREATEDIRECTORY(cohorts.WsRedirected, securityAttributes, dllInstance, debug);
-                    }
-                }
-                else if (cohorts.map.Valid_mapping &&
-                         (cohorts.map.RedirectionFlags == mfr::mfr_redirect_flags::prefer_redirection_containerized ||
-                          cohorts.map.RedirectionFlags == mfr::mfr_redirect_flags::prefer_redirection_if_package_vfs) )
-                {
-                    // try the redirected path, then package (via COW), then native (possibly via COW).
-                    if (!cohorts.map.IsAnExclusionToRedirect && PathExists(cohorts.WsRedirected.c_str()))
-                    {
-                        retfinal = WRAPPER_CREATEDIRECTORY(cohorts.WsRedirected, securityAttributes, dllInstance, debug);
+                        // try the redirected path, then package (via COW), then native (possibly via COW).
+                        if (!cohorts.map.IsAnExclusionToRedirect && PathExists(cohorts.WsRedirected.c_str()))
+                        {
+                            retfinal = WRAPPER_CREATEDIRECTORY(cohorts.WsRedirected, securityAttributes, dllInstance, debug);
 #if IMPROVE_RETURN_ACCURACY
-                        if (PathExists(cohorts.WsPackage.c_str()) ||
+                            if (!retfinal)
+                            {
+                                if (PathExists(cohorts.WsPackage.c_str()) ||
+                                    (cohorts.UsingNative && PathExists(cohorts.WsNative.c_str())))
+                                {
+                                    retfinal = FALSE;
+                                    SetLastError(ERROR_ALREADY_EXISTS);
+#if _DEBUG
+                                    Log("[%d] CreateDirectoryFixup: Resetting return code to ERROR_ALREADY_EXISTS.");
+#endif
+                                }
+                            }
+#endif
+                            return retfinal;
+                        }
+                        else if (PathExists(cohorts.WsPackage.c_str()))
+                        {
+                            PreCreateFolders(cohorts.WsRedirected.c_str(), dllInstance, L"CreateDirectoryFixup");
+                            retfinal = WRAPPER_CREATEDIRECTORY(cohorts.WsRedirected, securityAttributes, dllInstance, debug);
+#if IMPROVE_RETURN_ACCURACY
+                            if (!retfinal)
+                            {
+                                SetLastError(ERROR_ALREADY_EXISTS);
+#if _DEBUG
+                                Log("[%d] CreateDirectoryFixup: Resetting return code to ERROR_ALREADY_EXISTS.");
+#endif
+                            }
+#endif
+                            return retfinal;
+                        }
+                        else if (cohorts.UsingNative &&
                             PathExists(cohorts.WsNative.c_str()))
                         {
-                            retfinal = FALSE;
-                            SetLastError(ERROR_ALREADY_EXISTS);
+                            PreCreateFolders(cohorts.WsRedirected.c_str(), dllInstance, L"CreateDirectoryFixup");
+                            retfinal = WRAPPER_CREATEDIRECTORY(cohorts.WsRedirected, securityAttributes, dllInstance, debug);
+#if IMPROVE_RETURN_ACCURACY
+                            if (!retfinal)
+                            {
+                                SetLastError(ERROR_ALREADY_EXISTS);
 #if _DEBUG
-                            Log("[%d] CreateDirectoryFixup: Resetting return code to ERROR_ALREADY_EXISTS.");
+                                Log("[%d] CreateDirectoryFixup: Resetting return code to ERROR_ALREADY_EXISTS.");
 #endif
+                            }
+#endif
+                            return retfinal;
                         }
-#endif
-                        return retfinal;
-                    }
-                    else if (PathExists(cohorts.WsPackage.c_str()))
-                    {
-                        PreCreateFolders(cohorts.WsRedirected.c_str(), dllInstance, L"CreateDirectoryFixup");
-                        retfinal = WRAPPER_CREATEDIRECTORY(cohorts.WsRedirected, securityAttributes, dllInstance, debug);
-#if IMPROVE_RETURN_ACCURACY
-                        retfinal = FALSE;
-                        SetLastError(ERROR_ALREADY_EXISTS);
-#if _DEBUG
-                        Log("[%d] CreateDirectoryFixup: Resetting return code to ERROR_ALREADY_EXISTS.");
-#endif
-#endif
-                        return retfinal;
-                    }
-                    else if (cohorts.UsingNative &&
-                             PathExists(cohorts.WsNative.c_str()))
-                    {
-                        PreCreateFolders(cohorts.WsRedirected.c_str(), dllInstance, L"CreateDirectoryFixup");
-                        retfinal =  WRAPPER_CREATEDIRECTORY(cohorts.WsRedirected, securityAttributes, dllInstance, debug);
-#if IMPROVE_RETURN_ACCURACY
-                        retfinal = FALSE;
-                        SetLastError(ERROR_ALREADY_EXISTS);
-#if _DEBUG
-                        Log("[%d] CreateDirectoryFixup: Resetting return code to ERROR_ALREADY_EXISTS.");
-#endif
-#endif
-                    }
-                    else
-                    {
-                        // There isn't such a file anywhere.  We want to create the redirection parent folder and let this call against the redirected file to create there.
-                        PreCreateFolders(cohorts.WsRedirected.c_str(), dllInstance, L"CreateDirectoryFixup");
-                        return WRAPPER_CREATEDIRECTORY(cohorts.WsRedirected, securityAttributes, dllInstance, debug);
-                    }
-                }
-                break;
-            case mfr::mfr_path_types::in_package_pvad_area:
-                if (cohorts.map.Valid_mapping)
-                {
-                    //// try the redirected path, then package (COW), then don't need native.
-                    if (!cohorts.map.IsAnExclusionToRedirect && PathExists(cohorts.WsRedirected.c_str()))
-                    {
-                        PreCreateFolders(cohorts.WsRedirected.c_str(), dllInstance, L"CreateDirectoryFixup");
-                        retfinal = WRAPPER_CREATEDIRECTORY(cohorts.WsRedirected, securityAttributes, dllInstance, debug);
-#if IMPROVE_RETURN_ACCURACY
-                        if (PathExists(cohorts.WsPackage.c_str()))
+                        else
                         {
-                            retfinal = FALSE;
-                            SetLastError(ERROR_ALREADY_EXISTS);
-#if _DEBUG
-                            Log("[%d] CreateDirectoryFixup: Resetting return code to ERROR_ALREADY_EXISTS.");
-#endif
+                            // There isn't such a file anywhere.  We want to create the redirection parent folder and let this call against the redirected file to create there.
+                            PreCreateFolders(cohorts.WsRedirected.c_str(), dllInstance, L"CreateDirectoryFixup");
+                            return WRAPPER_CREATEDIRECTORY(cohorts.WsRedirected, securityAttributes, dllInstance, debug);
                         }
-#endif
-                        return retfinal;
                     }
-                    else if (PathExists(cohorts.WsPackage.c_str()))
+                    break;
+                case mfr::mfr_path_types::in_package_pvad_area:
+                    if (cohorts.map.Valid_mapping)
                     {
-                        PreCreateFolders(cohorts.WsRedirected.c_str(), dllInstance, L"CreateDirectoryFixup");
-                        retfinal = WRAPPER_CREATEDIRECTORY(cohorts.WsRedirected, securityAttributes, dllInstance, debug);
-#if IMPROVE_RETURN_ACCURACY
-                        retfinal = FALSE;
-                        SetLastError(ERROR_ALREADY_EXISTS);
-#if _DEBUG
-                        Log("[%d] CreateDirectoryFixup: Resetting return code to ERROR_ALREADY_EXISTS.");
-#endif
-#endif
-                    }
-                    else
-                    {
-                        // There isn't such a file anywhere.  We want to create the redirection parent folder and let this call against the redirected file to create there.
-                        PreCreateFolders(cohorts.WsRedirected.c_str(), dllInstance, L"CreateDirectoryFixup");
-                        return WRAPPER_CREATEDIRECTORY(cohorts.WsRedirected, securityAttributes, dllInstance, debug);
-                    }
-                }
-                break;
-            case mfr::mfr_path_types::in_package_vfs_area:
-                if (cohorts.map.Valid_mapping &&
-                    cohorts.map.RedirectionFlags == mfr::mfr_redirect_flags::prefer_redirection_local)
-                {
-                    // try the redirection path, then the package (COW).
-                    if (!cohorts.map.IsAnExclusionToRedirect && PathExists(cohorts.WsRedirected.c_str()))
-                    {
-                        PreCreateFolders(cohorts.WsRedirected.c_str(), dllInstance, L"CreateDirectoryFixup");
-                        retfinal = WRAPPER_CREATEDIRECTORY(cohorts.WsRedirected, securityAttributes, dllInstance, debug);
-#if IMPROVE_RETURN_ACCURACY
-                        if (PathExists(cohorts.tWsPackage.c_str()))
+                        //// try the redirected path, then package (COW), then don't need native.
+                        if (!cohorts.map.IsAnExclusionToRedirect && PathExists(cohorts.WsRedirected.c_str()))
                         {
-                            retfinal = FALSE;
-                            SetLastError(ERROR_ALREADY_EXISTS);
+                            PreCreateFolders(cohorts.WsRedirected.c_str(), dllInstance, L"CreateDirectoryFixup");
+                            retfinal = WRAPPER_CREATEDIRECTORY(cohorts.WsRedirected, securityAttributes, dllInstance, debug);
+#if IMPROVE_RETURN_ACCURACY
+                            if (!retfinal)
+                            {
+                                if (PathExists(cohorts.WsPackage.c_str()))
+                                {
+                                    retfinal = FALSE;
+                                    SetLastError(ERROR_ALREADY_EXISTS);
 #if _DEBUG
-                            Log("[%d] CreateDirectoryFixup: Resetting return code to ERROR_ALREADY_EXISTS.");
+                                    Log("[%d] CreateDirectoryFixup: Resetting return code to ERROR_ALREADY_EXISTS.");
+#endif
+                                }
+                            }
+#endif
+                            return retfinal;
+                        }
+                        else if (PathExists(cohorts.WsPackage.c_str()))
+                        {
+                            PreCreateFolders(cohorts.WsRedirected.c_str(), dllInstance, L"CreateDirectoryFixup");
+                            retfinal = WRAPPER_CREATEDIRECTORY(cohorts.WsRedirected, securityAttributes, dllInstance, debug);
+#if IMPROVE_RETURN_ACCURACY
+                            if (!retfinal)
+                            {
+                                SetLastError(ERROR_ALREADY_EXISTS);
+#if _DEBUG
+                                Log("[%d] CreateDirectoryFixup: Resetting return code to ERROR_ALREADY_EXISTS.");
+#endif
+                            }
+#endif
+                            return retfinal;
+                        }
+                        else
+                        {
+                            // There isn't such a file anywhere.  We want to create the redirection parent folder and let this call against the redirected file to create there.
+                            PreCreateFolders(cohorts.WsRedirected.c_str(), dllInstance, L"CreateDirectoryFixup");
+                            return WRAPPER_CREATEDIRECTORY(cohorts.WsRedirected, securityAttributes, dllInstance, debug);
+                        }
+                    }
+                    break;
+                case mfr::mfr_path_types::in_package_vfs_area:
+                    if (cohorts.map.Valid_mapping &&
+                        cohorts.map.RedirectionFlags == mfr::mfr_redirect_flags::prefer_redirection_local)
+                    {
+                        // try the redirection path, then the package (COW).
+                        if (!cohorts.map.IsAnExclusionToRedirect && PathExists(cohorts.WsRedirected.c_str()))
+                        {
+                            PreCreateFolders(cohorts.WsRedirected.c_str(), dllInstance, L"CreateDirectoryFixup");
+                            retfinal = WRAPPER_CREATEDIRECTORY(cohorts.WsRedirected, securityAttributes, dllInstance, debug);
+#if IMPROVE_RETURN_ACCURACY
+                            if (!retfinal)
+                            {
+                                if (PathExists(cohorts.WsPackage.c_str()))
+                                {
+                                    SetLastError(ERROR_ALREADY_EXISTS);
+#if _DEBUG
+                                    Log("[%d] CreateDirectoryFixup: Resetting return code to ERROR_ALREADY_EXISTS.");
+#endif
+                                }
+                            }
+#endif
+                            return retfinal;
+                        }
+                        else if (PathExists(cohorts.WsPackage.c_str()))
+                        {
+                            PreCreateFolders(cohorts.WsRedirected.c_str(), dllInstance, L"CreateDirectoryFixup");
+                            retfinal = WRAPPER_CREATEDIRECTORY(cohorts.WsRedirected, securityAttributes, dllInstance, debug);
+#if IMPROVE_RETURN_ACCURACY
+                            if (!retfinal)
+                            {
+                                SetLastError(ERROR_ALREADY_EXISTS);
+#if _DEBUG
+                                Log("[%d] CreateDirectoryFixup: Resetting return code to ERROR_ALREADY_EXISTS.");
+#endif
+                            }
 #endif
                         }
-#endif
-                        return retfinal;
+                        else
+                        {
+                            // There isn't such a file anywhere.  We want to create the redirection parent folder and let this call against the redirected file to create there.
+                            PreCreateFolders(cohorts.WsRedirected.c_str(), dllInstance, L"CreateDirectoryFixup");
+                            return WRAPPER_CREATEDIRECTORY(cohorts.WsRedirected, securityAttributes, dllInstance, debug);
+                        }
                     }
-                    else if (PathExists(cohorts.WsPackage.c_str()))
+                    else if (cohorts.map.Valid_mapping &&
+                        (cohorts.map.RedirectionFlags == mfr::mfr_redirect_flags::prefer_redirection_containerized ||
+                            cohorts.map.RedirectionFlags == mfr::mfr_redirect_flags::prefer_redirection_if_package_vfs))
                     {
-                        PreCreateFolders(cohorts.WsRedirected.c_str(), dllInstance, L"CreateDirectoryFixup");
-                        retfinal = WRAPPER_CREATEDIRECTORY(cohorts.WsRedirected, securityAttributes, dllInstance, debug);
+                        // try the redirection path, then the package (COW), then native (possibly COW)
+                        if (!cohorts.map.IsAnExclusionToRedirect && PathExists(cohorts.WsRedirected.c_str()))
+                        {
+                            PreCreateFolders(cohorts.WsRedirected.c_str(), dllInstance, L"CreateDirectoryFixup");
+                            retfinal = WRAPPER_CREATEDIRECTORY(cohorts.WsRedirected, securityAttributes, dllInstance, debug);
 #if IMPROVE_RETURN_ACCURACY
-                        retfinal = FALSE;
-                        SetLastError(ERROR_ALREADY_EXISTS);
+                            if (!retfinal)
+                            {
+                                if (PathExists(cohorts.WsPackage.c_str()) ||
+                                    PathExists(cohorts.WsNative.c_str()))
+                                {
+                                    SetLastError(ERROR_ALREADY_EXISTS);
 #if _DEBUG
-                        Log("[%d] CreateDirectoryFixup: Resetting return code to ERROR_ALREADY_EXISTS.");
+                                    Log("[%d] CreateDirectoryFixup: Resetting return code to ERROR_ALREADY_EXISTS.");
 #endif
+                                }
+                            }
 #endif
-                    }
-                    else
-                    {
-                        // There isn't such a file anywhere.  We want to create the redirection parent folder and let this call against the redirected file to create there.
-                        PreCreateFolders(cohorts.WsRedirected.c_str(), dllInstance, L"CreateDirectoryFixup");
-                        return WRAPPER_CREATEDIRECTORY(cohorts.WsRedirected, securityAttributes, dllInstance, debug);
-                    }
-                }
-                else if (cohorts.map.Valid_mapping &&
-                         (cohorts.map.RedirectionFlags == mfr::mfr_redirect_flags::prefer_redirection_containerized ||
-                          cohorts.map.RedirectionFlags == mfr::mfr_redirect_flags::prefer_redirection_if_package_vfs))
-                {
-                    // try the redirection path, then the package (COW), then native (possibly COW)
-                    if (!cohorts.map.IsAnExclusionToRedirect && PathExists(cohorts.WsRedirected.c_str()))
-                    {
-                        PreCreateFolders(cohorts.WsRedirected.c_str(), dllInstance, L"CreateDirectoryFixup");
-                        retfinal = WRAPPER_CREATEDIRECTORY(cohorts.WsRedirected, securityAttributes, dllInstance, debug);
+                            return retfinal;
+                        }
+                        else if (PathExists(cohorts.WsPackage.c_str()))
+                        {
+                            PreCreateFolders(cohorts.WsRedirected.c_str(), dllInstance, L"CreateDirectoryFixup");
+                            retfinal = WRAPPER_CREATEDIRECTORY(cohorts.WsRedirected, securityAttributes, dllInstance, debug);
 #if IMPROVE_RETURN_ACCURACY
-                        if (PathExists(cohorts.WsPackage.c_str()) ||
+                            if (!retfinal)
+                            {
+                                SetLastError(ERROR_ALREADY_EXISTS);
+#if _DEBUG
+                                Log("[%d] CreateDirectoryFixup: Resetting return code to ERROR_ALREADY_EXISTS.");
+#endif
+                            }
+#endif
+                            return retfinal;
+                        }
+                        else if (cohorts.UsingNative &&
                             PathExists(cohorts.WsNative.c_str()))
                         {
-                            retfinal = FALSE;
-                            SetLastError(ERROR_ALREADY_EXISTS);
+                            PreCreateFolders(cohorts.WsRedirected.c_str(), dllInstance, L"CreateDirectoryFixup");
+                            retfinal = WRAPPER_CREATEDIRECTORY(cohorts.WsRedirected, securityAttributes, dllInstance, debug);
+#if IMPROVE_RETURN_ACCURACY
+                            if (!retfinal)
+                            {
+                                SetLastError(ERROR_ALREADY_EXISTS);
 #if _DEBUG
-                            Log("[%d] CreateDirectoryFixup: Resetting return code to ERROR_ALREADY_EXISTS.");
+                                Log("[%d] CreateDirectoryFixup: Resetting return code to ERROR_ALREADY_EXISTS.");
 #endif
+                            }
+#endif
+                            return retfinal;
                         }
-#endif
-                        return retfinal;
+                        else
+                        {
+                            // There isn't such a file anywhere.  We want to create the redirection parent folder and let this call against the redirected file to create there.
+                            PreCreateFolders(cohorts.WsRedirected.c_str(), dllInstance, L"CreateDirectoryFixup");
+                            return WRAPPER_CREATEDIRECTORY(cohorts.WsRedirected, securityAttributes, dllInstance, debug);
+                        }
                     }
-                    else if (PathExists(cohorts.WsPackage.c_str()))
+                    break;
+                case mfr::mfr_path_types::in_redirection_area_writablepackageroot:
+                    if (cohorts.map.Valid_mapping)
                     {
-                        PreCreateFolders(cohorts.WsRedirected.c_str(), dllInstance, L"CreateDirectoryFixup");
-                        retfinal = WRAPPER_CREATEDIRECTORY(cohorts.WsRedirected, securityAttributes, dllInstance, debug);
+                        // try the redirected path, then package (COW), then possibly native (Possibly COW).
+                        if (!cohorts.map.IsAnExclusionToRedirect && PathExists(cohorts.WsRedirected.c_str()))
+                        {
+                            PreCreateFolders(cohorts.WsRedirected.c_str(), dllInstance, L"CreateDirectoryFixup");
+                            retfinal = WRAPPER_CREATEDIRECTORY(cohorts.WsRedirected, securityAttributes, dllInstance, debug);
 #if IMPROVE_RETURN_ACCURACY
-                        retfinal = FALSE;
-                        SetLastError(ERROR_ALREADY_EXISTS);
+                            if (!retfinal)
+                            {
+                                if (PathExists(cohorts.WsPackage.c_str()) ||
+                                    PathExists(cohorts.WsNative.c_str()))
+                                {
+                                    retfinal = FALSE;
+                                    SetLastError(ERROR_ALREADY_EXISTS);
 #if _DEBUG
-                        Log("[%d] CreateDirectoryFixup: Resetting return code to ERROR_ALREADY_EXISTS.");
+                                    Log("[%d] CreateDirectoryFixup: Resetting return code to ERROR_ALREADY_EXISTS.");
 #endif
+                                }
+                            }
 #endif
-                        return retfinal;
-                    }
-                    else if (cohorts.UsingNative &&
-                             PathExists(cohorts.WsNative.c_str()))
-                    {
-                        PreCreateFolders(cohorts.WsRedirected.c_str(), dllInstance, L"CreateDirectoryFixup");
-                        retfinal = WRAPPER_CREATEDIRECTORY(cohorts.WsRedirected, securityAttributes, dllInstance, debug);
+                            return retfinal;
+                        }
+                        else if (PathExists(cohorts.WsPackage.c_str()))
+                        {
+                            PreCreateFolders(cohorts.WsRedirected.c_str(), dllInstance, L"CreateDirectoryFixup");
+                            retfinal = WRAPPER_CREATEDIRECTORY(cohorts.WsRedirected, securityAttributes, dllInstance, debug);
 #if IMPROVE_RETURN_ACCURACY
-                        retfinal = FALSE;
-                        SetLastError(ERROR_ALREADY_EXISTS);
+                            if (!retfinal)
+                            {
+                                SetLastError(ERROR_ALREADY_EXISTS);
 #if _DEBUG
-                        Log("[%d] CreateDirectoryFixup: Resetting return code to ERROR_ALREADY_EXISTS.");
+                                Log("[%d] CreateDirectoryFixup: Resetting return code to ERROR_ALREADY_EXISTS.");
 #endif
+                            }
 #endif
-                    }
-                    else
-                    {
-                        // There isn't such a file anywhere.  We want to create the redirection parent folder and let this call against the redirected file to create there.
-                        PreCreateFolders(cohorts.WsRedirected.c_str(), dllInstance, L"CreateDirectoryFixup");
-                        return WRAPPER_CREATEDIRECTORY(cohorts.WsRedirected, securityAttributes, dllInstance, debug);
-                    }
-                }
-                break;
-            case mfr::mfr_path_types::in_redirection_area_writablepackageroot:
-                if (cohorts.map.Valid_mapping)
-                {
-                    // try the redirected path, then package (COW), then possibly native (Possibly COW).
-                    if (!cohorts.map.IsAnExclusionToRedirect && PathExists(cohorts.WsRedirected.c_str()))
-                    {
-                        PreCreateFolders(cohorts.WsRedirected.c_str(), dllInstance, L"CreateDirectoryFixup");
-                        retfinal = WRAPPER_CREATEDIRECTORY(cohorts.WsRedirected, securityAttributes, dllInstance, debug);
-#if IMPROVE_RETURN_ACCURACY
-                        if (PathExists(cohorts.WsPackage.c_str()) ||
+                            return retfinal;
+                        }
+                        else if (cohorts.UsingNative &&
                             PathExists(cohorts.WsNative.c_str()))
                         {
-                            retfinal = FALSE;
-                            SetLastError(ERROR_ALREADY_EXISTS);
+                            PreCreateFolders(cohorts.WsRedirected.c_str(), dllInstance, L"CreateDirectoryFixup");
+                            retfinal = WRAPPER_CREATEDIRECTORY(cohorts.WsRedirected, securityAttributes, dllInstance, debug);
+#if IMPROVE_RETURN_ACCURACY
+                            if (!retfinal)
+                            {
+                                SetLastError(ERROR_ALREADY_EXISTS);
 #if _DEBUG
-                            Log("[%d] CreateDirectoryFixup: Resetting return code to ERROR_ALREADY_EXISTS.");
+                                Log("[%d] CreateDirectoryFixup: Resetting return code to ERROR_ALREADY_EXISTS.");
 #endif
+                            }
+#endif
+                            return retfinal;
                         }
-#endif
-                        return retfinal;
+                        else
+                        {
+                            // There isn't such a file anywhere.  We want to create the redirection parent folder and let this call against the redirected file to create there or update registry.
+                            PreCreateFolders(cohorts.WsRedirected.c_str(), dllInstance, L"CreateDirectoryFixup");
+                            return WRAPPER_CREATEDIRECTORY(cohorts.WsRedirected, securityAttributes, dllInstance, debug);
+                        }
                     }
-                    else if (PathExists(cohorts.WsPackage.c_str()))
-                    {
-                        PreCreateFolders(cohorts.WsRedirected.c_str(), dllInstance, L"CreateDirectoryFixup");
-                        retfinal = WRAPPER_CREATEDIRECTORY(cohorts.WsRedirected, securityAttributes, dllInstance, debug);
-#if IMPROVE_RETURN_ACCURACY
-                        retfinal = FALSE;
-                        SetLastError(ERROR_ALREADY_EXISTS);
-#if _DEBUG
-                        Log("[%d] CreateDirectoryFixup: Resetting return code to ERROR_ALREADY_EXISTS.");
-#endif
-#endif
-                        return retfinal;
-                    }
-                    else if (cohorts.UsingNative &&
-                             PathExists(cohorts.WsNative.c_str()))
-                    {
-                        PreCreateFolders(cohorts.WsRedirected.c_str(), dllInstance, L"CreateDirectoryFixup");
-                        retfinal = WRAPPER_CREATEDIRECTORY(cohorts.WsRedirected, securityAttributes, dllInstance, debug);
-#if IMPROVE_RETURN_ACCURACY
-                        retfinal = FALSE;
-                        SetLastError(ERROR_ALREADY_EXISTS);
-#if _DEBUG
-                        Log("[%d] CreateDirectoryFixup: Resetting return code to ERROR_ALREADY_EXISTS.");
-#endif
-#endif
-                        return retfinal;
-                    }
-                    else
-                    {
-                        // There isn't such a file anywhere.  We want to create the redirection parent folder and let this call against the redirected file to create there or update registry.
-                        PreCreateFolders(cohorts.WsRedirected.c_str(), dllInstance, L"CreateDirectoryFixup");
-                        return WRAPPER_CREATEDIRECTORY(cohorts.WsRedirected, securityAttributes, dllInstance, debug);
-                    }
+                    break;
+                case mfr::mfr_path_types::in_redirection_area_other:
+                    PreCreateFolders(cohorts.WsRequested.c_str(), dllInstance, L"CreateDirectoryFixup");
+                    return WRAPPER_CREATEDIRECTORY(cohorts.WsRequested, securityAttributes, dllInstance, debug);
+                    break;
+                case mfr::mfr_path_types::is_Protocol:
+                case mfr::mfr_path_types::is_DosSpecial:
+                case mfr::mfr_path_types::is_Shell:
+                case mfr::mfr_path_types::in_other_drive_area:
+                case mfr::mfr_path_types::is_UNC_path:
+                case mfr::mfr_path_types::unsupported_for_intercepts:
+                case mfr::mfr_path_types::unknown:
+                default:
+                    break;
                 }
-                break;
-            case mfr::mfr_path_types::in_redirection_area_other:
-                PreCreateFolders(cohorts.WsRequested.c_str(), dllInstance, L"CreateDirectoryFixup");
-                return WRAPPER_CREATEDIRECTORY(cohorts.WsRequested, securityAttributes, dllInstance, debug);
-                break;
-            case mfr::mfr_path_types::is_Protocol:
-            case mfr::mfr_path_types::is_DosSpecial:
-            case mfr::mfr_path_types::is_Shell:
-            case mfr::mfr_path_types::in_other_drive_area:
-            case mfr::mfr_path_types::is_UNC_path:
-            case mfr::mfr_path_types::unsupported_for_intercepts:
-            case mfr::mfr_path_types::unknown:
-            default:
-                break;
             }
+            else
+            {
+                //ILV aware
+                std::wstring usePath = DetermineIlvPathForWriteOperations(cohorts, dllInstance, moredebug);
+                // In a redirect to local scenario, we are responsible for pre-creating the local parent folders
+                // if-and-only-if they are present in the package.
+                PreCreateLocalFoldersIfNeededForWrite(usePath, cohorts.WsPackage, dllInstance, debug, L"CreateDirectoryFixup");
+                PreCreatePackageFoldersIfIlvNeededForWrite(usePath, dllInstance, debug, L"CreateDirectoryFixup");
 
+                retfinal = WRAPPER_CREATEDIRECTORY(usePath, securityAttributes, dllInstance, debug);
+                return retfinal;
+            }
         }
     }
 #if _DEBUG

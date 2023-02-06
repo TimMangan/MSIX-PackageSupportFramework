@@ -219,13 +219,17 @@ std::wstring MakeLongPath(std::wstring path)
     // Only add to full paths on a drive letter
     if (path.length() > 0)
     {
-        psf::dos_path_type dosType = psf::path_type(path.c_str());
-        if (dosType == psf::dos_path_type::drive_absolute)
+        // Only add if getting near the limit
+        if (path.length() > 230)
         {
-            if (path.length() > 3)   // Don't extend C:\ as it messes up FindFirstFile(Ex)
+            psf::dos_path_type dosType = psf::path_type(path.c_str());
+            if (dosType == psf::dos_path_type::drive_absolute)
             {
-                std::wstring outPath = L"\\\\?\\";
-                return outPath.append(path);
+                if (path.length() > 3)   // Don't extend C:\ as it messes up FindFirstFile(Ex)
+                {
+                    std::wstring outPath = L"\\\\?\\";
+                    return outPath.append(path);
+                }
             }
         }
     }
@@ -277,6 +281,8 @@ bool PathParentExists(const wchar_t* path)
 void PreCreateFolders(std::wstring filepath, [[maybe_unused]] DWORD dllInstance, [[maybe_unused]] std::wstring DebugMessage)
 {
     std::wstring notlongfilepath = MakeNotLongPath(filepath);
+    mfr::mfr_path mfr = mfr::create_mfr_path(notlongfilepath);
+
     size_t position;
     std::vector<std::wstring> folderlist;
     bool done = false;
@@ -290,13 +296,46 @@ void PreCreateFolders(std::wstring filepath, [[maybe_unused]] DWORD dllInstance,
         }
         else
         {
+
             notlongfilepath = notlongfilepath.substr(0, position);
-            // Skip recreating the folders below WritablePackageRoot folder (must create WritablePackageRoot to be sure).
-            if (notlongfilepath.length() < g_writablePackageRootPath.wstring().length())
+
+            if (mfr.Request_MfrPathType == mfr::mfr_path_types::in_package_pvad_area ||
+                mfr.Request_MfrPathType == mfr::mfr_path_types::in_package_vfs_area)
             {
-                if (g_writablePackageRootPath.wstring().find(notlongfilepath) == std::wstring::npos)
+                // Skip recreating the folders below VFS
+                if (notlongfilepath.length() > g_packageRootPath.wstring().length())
                 {
-                    folderlist.push_back(notlongfilepath);
+                    if (!PathExists(notlongfilepath.c_str()))
+                    {
+                        folderlist.push_back(notlongfilepath);
+                    }
+                    else
+                    {
+                        done = true;
+                    }                       
+                }
+                else
+                {
+                    done = true;
+                }
+            }
+            else if (mfr.Request_MfrPathType == mfr::mfr_path_types::in_redirection_area_writablepackageroot)
+            {
+                // Skip recreating the folders below WritablePackageRoot folder (must create WritablePackageRoot to be sure).
+                if (notlongfilepath.length() > g_writablePackageRootPath.wstring().length())
+                {
+                    if (!PathExists(notlongfilepath.c_str()))
+                    {
+                        folderlist.push_back(notlongfilepath);
+                    }
+                    else
+                    {
+                        done = true;
+                    }
+                }
+                else
+                {
+                    done = true;
                 }
             }
             else
@@ -418,12 +457,6 @@ BOOL Cow(std::wstring from, std::wstring to, [[maybe_unused]] int dllInstance, [
 // a change in the file system based on this parameters.  This would potentially trigger a COW event.
 bool IsCreateForChange(DWORD desiredAccess, DWORD creationDisposition, DWORD flagsAndAttributes)
 {
-    if ((flagsAndAttributes & FILE_FLAG_BACKUP_SEMANTICS) != 0)
-    {
-        // This is used for opening a directory, but the app would have to use CreateDirectory to actually create one.
-        // So in spite of desiredAccess/creationDisposition settings, we will not trigger a COW.
-        return false;
-    }
     // Check desiredAccess versus Generic Access Rights (ACCESS_MASK) values
     if ((desiredAccess & (GENERIC_WRITE | GENERIC_ALL | MAXIMUM_ALLOWED | DELETE | WRITE_DAC | WRITE_OWNER)) != 0)
     {
@@ -450,6 +483,12 @@ bool IsCreateForChange(DWORD desiredAccess, DWORD creationDisposition, DWORD fla
     if ((flagsAndAttributes & (FILE_ATTRIBUTE_TEMPORARY | FILE_FLAG_DELETE_ON_CLOSE)) != 0)
     {
         return true;
+    }
+    if ((flagsAndAttributes & FILE_FLAG_BACKUP_SEMANTICS) != 0)
+    {
+        // This is used for opening a directory, but the app would have to use CreateDirectory to actually create one.
+        // So in spite of desiredAccess/creationDisposition settings, we will not trigger a COW.
+        return false;
     }
     return false;
 }
@@ -480,6 +519,46 @@ bool IsCreateForDirectory(DWORD desiredAccess, [[maybe_unused]]DWORD creationDis
     return false;
 }
 
+
+bool comparei(const std::wstring wstrA, const std::wstring wstrB)
+{
+    try
+    {
+        if (wstrA.length() != wstrB.length())
+            return false;
+
+        std::wstring lwstrA = wstrA;
+        std::wstring lwstrB = wstrB;
+        std::transform(lwstrA.begin(), lwstrA.end(), lwstrA.begin(), [](wchar_t wc) { return (wchar_t)std::tolower(wc); });
+        std::transform(lwstrB.begin(), lwstrB.end(), lwstrB.begin(), [](wchar_t wc) { return (wchar_t)std::tolower(wc); });
+        return (lwstrA == lwstrB);
+    }
+    catch (...)
+    {
+        Log("IteratorW issue");
+    }
+    return false;
+}
+
+bool comparei(const std::string strA, const std::string strB)
+{
+    try
+    {
+        if (strA.length() != strB.length())
+            return false;
+
+        std::string lstrA = strA;
+        std::string lstrB = strB;
+        std::transform(lstrA.begin(), lstrA.end(), lstrA.begin(), [](wchar_t wc) { return (char)std::tolower(wc); });
+        std::transform(lstrB.begin(), lstrB.end(), lstrB.begin(), [](wchar_t wc) { return (char)std::tolower(wc); });
+        return (lstrA == lstrB);
+    }
+    catch (...)
+    {
+        Log("IteratorA issue");
+    }
+    return false;
+}
 
 std::filesystem::path ConvertPathToShortPath(std::filesystem::path inputPath)
 {

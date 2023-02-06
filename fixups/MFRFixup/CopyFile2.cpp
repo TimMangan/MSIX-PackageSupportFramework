@@ -17,6 +17,7 @@
 #include "ManagedPathTypes.h"
 #include "PathUtilities.h"
 #include "DetermineCohorts.h"
+#include "DetermineIlvPaths.h"
 
 
 #define  WRAPPER_COPYFILE2(existingFileWs, newFileWs, extendedParameters, debug, moredebug) \
@@ -82,230 +83,251 @@ HRESULT __stdcall CopyFile2Fixup(
 
             Cohorts cohortsNew;
             DetermineCohorts(wNewFileName, &cohortsNew, moredebug, dllInstance, L"CopyFile2Fixup (new)");
-            std::wstring newFileWsRedirected;
-
-
-
-            switch (cohortsNew.file_mfr.Request_MfrPathType)
+            
+            
+            if (!MFRConfiguration.Ilv_Aware)
             {
-            case mfr::mfr_path_types::in_native_area:
-                if (cohortsNew.map.Valid_mapping && !cohortsNew.map.IsAnExclusionToRedirect)
+                std::wstring newFileWsRedirected;
+
+                switch (cohortsNew.file_mfr.Request_MfrPathType)
                 {
-                    newFileWsRedirected = cohortsNew.WsRedirected;
-                }
-                else
-                {
+                case mfr::mfr_path_types::in_native_area:
+                    if (cohortsNew.map.Valid_mapping && !cohortsNew.map.IsAnExclusionToRedirect)
+                    {
+                        newFileWsRedirected = cohortsNew.WsRedirected;
+                    }
+                    else
+                    {
+                        newFileWsRedirected = cohortsNew.WsRequested;
+                    }
+                    break;
+                case mfr::mfr_path_types::in_package_pvad_area:
+                    if (cohortsNew.map.Valid_mapping && !cohortsNew.map.IsAnExclusionToRedirect)
+                    {
+                        newFileWsRedirected = cohortsNew.WsRedirected;
+                    }
+                    else
+                    {
+                        newFileWsRedirected = cohortsNew.WsRequested;
+                    }
+                    break;
+                case mfr::mfr_path_types::in_package_vfs_area:
+                    if (cohortsNew.map.Valid_mapping && !cohortsNew.map.IsAnExclusionToRedirect)
+                    {
+                        newFileWsRedirected = cohortsNew.WsRedirected;
+                    }
+                    else
+                    {
+                        newFileWsRedirected = cohortsNew.WsRequested;
+                    }
+                    break;
+                case mfr::mfr_path_types::in_redirection_area_writablepackageroot:
+                    if (cohortsNew.map.Valid_mapping && !cohortsNew.map.IsAnExclusionToRedirect)
+                    {
+                        newFileWsRedirected = cohortsNew.WsRedirected;
+                    }
+                    else
+                    {
+                        newFileWsRedirected = cohortsNew.WsRequested;
+                    }
+                    break;
+                case mfr::mfr_path_types::in_redirection_area_other:
                     newFileWsRedirected = cohortsNew.WsRequested;
-                }
-                break;
-            case mfr::mfr_path_types::in_package_pvad_area:
-                if (cohortsNew.map.Valid_mapping && !cohortsNew.map.IsAnExclusionToRedirect)
-                {
-                    newFileWsRedirected = cohortsNew.WsRedirected;
-                }
-                else
-                {
+                    break;
+                case mfr::mfr_path_types::is_Protocol:
+                case mfr::mfr_path_types::is_DosSpecial:
+                case mfr::mfr_path_types::is_Shell:
+                case mfr::mfr_path_types::in_other_drive_area:
+                case mfr::mfr_path_types::is_UNC_path:
+                case mfr::mfr_path_types::unsupported_for_intercepts:
+                case mfr::mfr_path_types::unknown:
+                default:
                     newFileWsRedirected = cohortsNew.WsRequested;
+                    break;
                 }
-                break;
-            case mfr::mfr_path_types::in_package_vfs_area:
-                if (cohortsNew.map.Valid_mapping && !cohortsNew.map.IsAnExclusionToRedirect)
-                {
-                    newFileWsRedirected = cohortsNew.WsRedirected;
-                }
-                else
-                {
-                    newFileWsRedirected = cohortsNew.WsRequested;
-                }
-                break;
-            case mfr::mfr_path_types::in_redirection_area_writablepackageroot:
-                if (cohortsNew.map.Valid_mapping & !cohortsNew.map.IsAnExclusionToRedirect)
-                {
-                    newFileWsRedirected = cohortsNew.WsRedirected;
-                }
-                else
-                {
-                    newFileWsRedirected = cohortsNew.WsRequested;
-                }
-                break;
-            case mfr::mfr_path_types::in_redirection_area_other:
-                newFileWsRedirected = cohortsNew.WsRequested;
-                break;
-            case mfr::mfr_path_types::is_Protocol:
-            case mfr::mfr_path_types::is_DosSpecial:
-            case mfr::mfr_path_types::is_Shell:
-            case mfr::mfr_path_types::in_other_drive_area:
-            case mfr::mfr_path_types::is_UNC_path:
-            case mfr::mfr_path_types::unsupported_for_intercepts:
-            case mfr::mfr_path_types::unknown:
-            default:
-                newFileWsRedirected = cohortsNew.WsRequested;
-                break;
-            }
 #if MOREDEBUG
-            Log(L"[%d] CopyFile2Fixup: redirected destination=%s", dllInstance, newFileWsRedirected.c_str());
+                Log(L"[%d] CopyFile2Fixup: redirected destination=%s", dllInstance, newFileWsRedirected.c_str());
 #endif
 
 
-            switch (cohortsExisting.file_mfr.Request_MfrPathType)
+                switch (cohortsExisting.file_mfr.Request_MfrPathType)
+                {
+                case mfr::mfr_path_types::in_native_area:
+                    if (cohortsExisting.map.RedirectionFlags == mfr::mfr_redirect_flags::prefer_redirection_local &&
+                        cohortsExisting.map.Valid_mapping)
+                    {
+                        // try the request path, which must be the local redirected version by definition, and then a package equivalent, or make original call to fail.
+                        if (!cohortsExisting.map.IsAnExclusionToRedirect && PathExists(cohortsExisting.WsRedirected.c_str()))
+                        {
+                            PreCreateFolders(newFileWsRedirected.c_str(), dllInstance, L"CopyFile2Fixup");
+                            WRAPPER_COPYFILE2(cohortsExisting.WsRedirected, newFileWsRedirected, extendedParameters, debug, moredebug);
+                        }
+                        else if (PathExists(cohortsExisting.WsPackage.c_str()))
+                        {
+                            PreCreateFolders(newFileWsRedirected.c_str(), dllInstance, L"CopyFile2Fixup");
+                            WRAPPER_COPYFILE2(cohortsExisting.WsPackage, newFileWsRedirected, extendedParameters, debug, moredebug);
+                        }
+                        else
+                        {
+                            // There isn't such a file anywhere.  So the call will fail.
+                            WRAPPER_COPYFILE2(cohortsExisting.WsRequested, newFileWsRedirected, extendedParameters, debug, moredebug);
+                        }
+                    }
+                    else if ((cohortsExisting.map.RedirectionFlags == mfr::mfr_redirect_flags::prefer_redirection_containerized ||
+                        cohortsExisting.map.RedirectionFlags == mfr::mfr_redirect_flags::prefer_redirection_if_package_vfs) &&
+                        cohortsExisting.map.Valid_mapping)
+                    {
+                        // try the redirected path, then package, then native, or let fail using original.
+                        if (!cohortsExisting.map.IsAnExclusionToRedirect && PathExists(cohortsExisting.WsRedirected.c_str()))
+                        {
+                            PreCreateFolders(newFileWsRedirected.c_str(), dllInstance, L"CopyFile2Fixup");
+                            WRAPPER_COPYFILE2(cohortsExisting.WsRedirected, newFileWsRedirected, extendedParameters, debug, moredebug);
+                        }
+                        else if (PathExists(cohortsExisting.WsPackage.c_str()))
+                        {
+                            PreCreateFolders(newFileWsRedirected.c_str(), dllInstance, L"CopyFile2Fixup");
+                            WRAPPER_COPYFILE2(cohortsExisting.WsPackage, newFileWsRedirected, extendedParameters, debug, moredebug);
+                        }
+                        else if (cohortsExisting.UsingNative &&
+                            PathExists(cohortsExisting.WsNative.c_str()))
+                        {
+                            PreCreateFolders(newFileWsRedirected.c_str(), dllInstance, L"CopyFile2Fixup");
+                            WRAPPER_COPYFILE2(cohortsExisting.WsNative, newFileWsRedirected, extendedParameters, debug, moredebug);
+                        }
+                        else
+                        {
+                            // There isn't such a file anywhere.  Let the call fails as requested.
+                            WRAPPER_COPYFILE2(cohortsExisting.WsRequested, newFileWsRedirected, extendedParameters, debug, moredebug);
+                        }
+                    }
+                    break;
+                case mfr::mfr_path_types::in_package_pvad_area:
+                    if (cohortsExisting.map.Valid_mapping)
+                    {
+                        //// try the redirected path, then package (COW), then don't need native.
+                        if (!cohortsExisting.map.IsAnExclusionToRedirect && PathExists(cohortsExisting.WsRedirected.c_str()))
+                        {
+                            PreCreateFolders(newFileWsRedirected.c_str(), dllInstance, L"CopyFile2Fixup");
+                            WRAPPER_COPYFILE2(cohortsExisting.WsRedirected, newFileWsRedirected, extendedParameters, debug, moredebug);
+                        }
+                        else if (PathExists(cohortsExisting.WsPackage.c_str()))
+                        {
+                            PreCreateFolders(newFileWsRedirected.c_str(), dllInstance, L"CopyFile2Fixup");
+                            WRAPPER_COPYFILE2(cohortsExisting.WsPackage, newFileWsRedirected, extendedParameters, debug, moredebug);
+                        }
+                        else
+                        {
+                            // There isn't such a file anywhere.  Let the call fails as requested.
+                            WRAPPER_COPYFILE2(cohortsExisting.WsRequested, newFileWsRedirected, extendedParameters, debug, moredebug);
+                        }
+                    }
+                    break;
+                case mfr::mfr_path_types::in_package_vfs_area:
+                    if (cohortsExisting.map.RedirectionFlags == mfr::mfr_redirect_flags::prefer_redirection_local &&
+                        cohortsExisting.map.Valid_mapping)
+                    {
+                        // try the redirection path, then the package (COW).
+                        if (!cohortsExisting.map.IsAnExclusionToRedirect && PathExists(cohortsExisting.WsRedirected.c_str()))
+                        {
+                            PreCreateFolders(newFileWsRedirected.c_str(), dllInstance, L"CopyFile2Fixup");
+                            WRAPPER_COPYFILE2(cohortsExisting.WsRedirected, newFileWsRedirected, extendedParameters, debug, moredebug);
+                        }
+                        else if (PathExists(cohortsExisting.WsPackage.c_str()))
+                        {
+                            PreCreateFolders(newFileWsRedirected.c_str(), dllInstance, L"CopyFile2Fixup");
+                            WRAPPER_COPYFILE2(cohortsExisting.WsPackage, newFileWsRedirected, extendedParameters, debug, moredebug);
+                        }
+                        else
+                        {
+                            // There isn't such a file anywhere.  Let the call fails as requested.
+                            WRAPPER_COPYFILE2(cohortsExisting.WsRequested, newFileWsRedirected, extendedParameters, debug, moredebug);
+                        }
+                    }
+                    else if ((cohortsExisting.map.RedirectionFlags == mfr::mfr_redirect_flags::prefer_redirection_containerized ||
+                        cohortsExisting.map.RedirectionFlags == mfr::mfr_redirect_flags::prefer_redirection_if_package_vfs) &&
+                        cohortsExisting.map.Valid_mapping)
+                    {
+                        // try the redirection path, then the package (COW), then native (possibly COW)
+                        if (!cohortsExisting.map.IsAnExclusionToRedirect && PathExists(cohortsExisting.WsRedirected.c_str()))
+                        {
+                            PreCreateFolders(newFileWsRedirected.c_str(), dllInstance, L"CopyFile2Fixup");
+                            WRAPPER_COPYFILE2(cohortsExisting.WsRedirected, newFileWsRedirected, extendedParameters, debug, moredebug);
+                        }
+                        else if (PathExists(cohortsExisting.WsPackage.c_str()))
+                        {
+                            PreCreateFolders(newFileWsRedirected.c_str(), dllInstance, L"CopyFile2Fixup");
+                            WRAPPER_COPYFILE2(cohortsExisting.WsPackage, newFileWsRedirected, extendedParameters, debug, moredebug);
+                        }
+                        else if (cohortsExisting.UsingNative &&
+                            PathExists(cohortsExisting.WsNative.c_str()))
+                        {
+                            PreCreateFolders(newFileWsRedirected.c_str(), dllInstance, L"CopyFile2Fixup");
+                            WRAPPER_COPYFILE2(cohortsExisting.WsNative, newFileWsRedirected, extendedParameters, debug, moredebug);
+                        }
+                        else
+                        {
+                            // There isn't such a file anywhere.  Let the call fails as requested.
+                            WRAPPER_COPYFILE2(cohortsExisting.WsRequested, newFileWsRedirected, extendedParameters, debug, moredebug);
+                        }
+                    }
+                    break;
+                case mfr::mfr_path_types::in_redirection_area_writablepackageroot:
+                    if (cohortsExisting.map.Valid_mapping)
+                    {
+                        // try the redirected path, then package (COW), then possibly native (Possibly COW).
+                        if (!cohortsExisting.map.IsAnExclusionToRedirect && PathExists(cohortsExisting.WsRedirected.c_str()))
+                        {
+                            PreCreateFolders(newFileWsRedirected.c_str(), dllInstance, L"CopyFile2Fixup");
+                            WRAPPER_COPYFILE2(cohortsExisting.WsRedirected, newFileWsRedirected, extendedParameters, debug, moredebug);
+                        }
+                        else if (PathExists(cohortsExisting.WsPackage.c_str()))
+                        {
+                            PreCreateFolders(newFileWsRedirected.c_str(), dllInstance, L"CopyFile2Fixup");
+                            WRAPPER_COPYFILE2(cohortsExisting.WsPackage, newFileWsRedirected, extendedParameters, debug, moredebug);
+                        }
+                        else if (cohortsExisting.UsingNative &&
+                            PathExists(cohortsExisting.WsNative.c_str()))
+                        {
+                            PreCreateFolders(newFileWsRedirected.c_str(), dllInstance, L"CopyFile2Fixup");
+                            WRAPPER_COPYFILE2(cohortsExisting.WsNative, newFileWsRedirected, extendedParameters, debug, moredebug);
+                        }
+                        else
+                        {
+                            // There isn't such a file anywhere.  Let the call fails as requested.
+                            WRAPPER_COPYFILE2(cohortsExisting.WsRequested, newFileWsRedirected, extendedParameters, debug, moredebug);
+                        }
+                    }
+                    break;
+                case mfr::mfr_path_types::in_redirection_area_other:
+                    break;
+                case mfr::mfr_path_types::is_Protocol:
+                case mfr::mfr_path_types::is_DosSpecial:
+                case mfr::mfr_path_types::is_Shell:
+                case mfr::mfr_path_types::in_other_drive_area:
+                case mfr::mfr_path_types::is_UNC_path:
+                case mfr::mfr_path_types::unsupported_for_intercepts:
+                case mfr::mfr_path_types::unknown:
+                default:
+                    break;
+                }
+            }
+            else
             {
-            case mfr::mfr_path_types::in_native_area:
-                if (cohortsExisting.map.RedirectionFlags == mfr::mfr_redirect_flags::prefer_redirection_local &&
-                    cohortsExisting.map.Valid_mapping)
-                {
-                    // try the request path, which must be the local redirected version by definition, and then a package equivalent, or make original call to fail.
-                    if (!cohortsExisting.map.IsAnExclusionToRedirect && PathExists(cohortsExisting.WsRedirected.c_str()))
-                    {
-                        PreCreateFolders(newFileWsRedirected.c_str(), dllInstance, L"CopyFile2Fixup");
-                        WRAPPER_COPYFILE2(cohortsExisting.WsRedirected, newFileWsRedirected, extendedParameters, debug, moredebug);
-                    }
-                    else if (PathExists(cohortsExisting.WsPackage.c_str()))
-                    {
-                        PreCreateFolders(newFileWsRedirected.c_str(), dllInstance, L"CopyFile2Fixup");
-                        WRAPPER_COPYFILE2(cohortsExisting.WsPackage, newFileWsRedirected, extendedParameters, debug, moredebug);
-                    }
-                    else
-                    {
-                        // There isn't such a file anywhere.  So the call will fail.
-                        WRAPPER_COPYFILE2(cohortsExisting.WsRequested, newFileWsRedirected, extendedParameters, debug, moredebug);
-                    }
-                }
-                else if ((cohortsExisting.map.RedirectionFlags == mfr::mfr_redirect_flags::prefer_redirection_containerized ||
-                          cohortsExisting.map.RedirectionFlags == mfr::mfr_redirect_flags::prefer_redirection_if_package_vfs ) &&
-                         cohortsExisting.map.Valid_mapping)
-                {
-                    // try the redirected path, then package, then native, or let fail using original.
-                    if (!cohortsExisting.map.IsAnExclusionToRedirect && PathExists(cohortsExisting.WsRedirected.c_str()))
-                    {
-                        PreCreateFolders(newFileWsRedirected.c_str(), dllInstance, L"CopyFile2Fixup");
-                        WRAPPER_COPYFILE2(cohortsExisting.WsRedirected, newFileWsRedirected, extendedParameters, debug, moredebug);
-                    }
-                    else if (PathExists(cohortsExisting.WsPackage.c_str()))
-                    {
-                        PreCreateFolders(newFileWsRedirected.c_str(), dllInstance, L"CopyFile2Fixup");
-                        WRAPPER_COPYFILE2(cohortsExisting.WsPackage, newFileWsRedirected, extendedParameters, debug, moredebug);
-                    }
-                    else if (cohortsExisting.UsingNative && 
-                             PathExists(cohortsExisting.WsNative.c_str()))
-                    {
-                        PreCreateFolders(newFileWsRedirected.c_str(), dllInstance, L"CopyFile2Fixup");
-                        WRAPPER_COPYFILE2(cohortsExisting.WsNative, newFileWsRedirected, extendedParameters, debug, moredebug);
-                    }
-                    else
-                    {
-                        // There isn't such a file anywhere.  Let the call fails as requested.
-                        WRAPPER_COPYFILE2(cohortsExisting.WsRequested, newFileWsRedirected, extendedParameters, debug, moredebug);
-                    }
-                }
-                break;
-            case mfr::mfr_path_types::in_package_pvad_area:
-                if (cohortsExisting.map.Valid_mapping)
-                {
-                    //// try the redirected path, then package (COW), then don't need native.
-                    if (!cohortsExisting.map.IsAnExclusionToRedirect && PathExists(cohortsExisting.WsRedirected.c_str()))
-                    {
-                        PreCreateFolders(newFileWsRedirected.c_str(), dllInstance, L"CopyFile2Fixup");
-                        WRAPPER_COPYFILE2(cohortsExisting.WsRedirected, newFileWsRedirected, extendedParameters, debug, moredebug);
-                    }
-                    else if (PathExists(cohortsExisting.WsPackage.c_str()))
-                    {
-                        PreCreateFolders(newFileWsRedirected.c_str(), dllInstance, L"CopyFile2Fixup");
-                        WRAPPER_COPYFILE2(cohortsExisting.WsPackage, newFileWsRedirected, extendedParameters, debug, moredebug);
-                    }
-                    else
-                    {
-                        // There isn't such a file anywhere.  Let the call fails as requested.
-                        WRAPPER_COPYFILE2(cohortsExisting.WsRequested, newFileWsRedirected, extendedParameters, debug, moredebug);
-                    }
-                }
-                break;
-            case mfr::mfr_path_types::in_package_vfs_area:
-                if (cohortsExisting.map.RedirectionFlags == mfr::mfr_redirect_flags::prefer_redirection_local &&
-                    cohortsExisting.map.Valid_mapping)
-                {
-                    // try the redirection path, then the package (COW).
-                    if (!cohortsExisting.map.IsAnExclusionToRedirect && PathExists(cohortsExisting.WsRedirected.c_str()))
-                    {
-                        PreCreateFolders(newFileWsRedirected.c_str(), dllInstance, L"CopyFile2Fixup");
-                        WRAPPER_COPYFILE2(cohortsExisting.WsRedirected, newFileWsRedirected, extendedParameters, debug, moredebug);
-                    }
-                    else if (PathExists(cohortsExisting.WsPackage.c_str()))
-                    {
-                        PreCreateFolders(newFileWsRedirected.c_str(), dllInstance, L"CopyFile2Fixup");
-                        WRAPPER_COPYFILE2(cohortsExisting.WsPackage, newFileWsRedirected, extendedParameters, debug, moredebug);
-                    }
-                    else
-                    {
-                        // There isn't such a file anywhere.  Let the call fails as requested.
-                        WRAPPER_COPYFILE2(cohortsExisting.WsRequested, newFileWsRedirected, extendedParameters, debug, moredebug);
-                    }
-                }
-                else if ((cohortsExisting.map.RedirectionFlags == mfr::mfr_redirect_flags::prefer_redirection_containerized ||
-                          cohortsExisting.map.RedirectionFlags == mfr::mfr_redirect_flags::prefer_redirection_if_package_vfs ) &&
-                         cohortsExisting.map.Valid_mapping)
-                {
-                    // try the redirection path, then the package (COW), then native (possibly COW)
-                   if (!cohortsExisting.map.IsAnExclusionToRedirect && PathExists(cohortsExisting.WsRedirected.c_str()))
-                    {
-                        PreCreateFolders(newFileWsRedirected.c_str(), dllInstance, L"CopyFile2Fixup");
-                        WRAPPER_COPYFILE2(cohortsExisting.WsRedirected, newFileWsRedirected, extendedParameters, debug, moredebug);
-                    }
-                    else if (PathExists(cohortsExisting.WsPackage.c_str()))
-                    {
-                        PreCreateFolders(newFileWsRedirected.c_str(), dllInstance, L"CopyFile2Fixup");
-                        WRAPPER_COPYFILE2(cohortsExisting.WsPackage, newFileWsRedirected, extendedParameters, debug, moredebug);
-                    }
-                    else if (cohortsExisting.UsingNative &&
-                             PathExists(cohortsExisting.WsNative.c_str()))
-                    {
-                        PreCreateFolders(newFileWsRedirected.c_str(), dllInstance, L"CopyFile2Fixup");
-                        WRAPPER_COPYFILE2(cohortsExisting.WsNative, newFileWsRedirected, extendedParameters, debug, moredebug);
-                    }
-                    else
-                    {
-                        // There isn't such a file anywhere.  Let the call fails as requested.
-                        WRAPPER_COPYFILE2(cohortsExisting.WsRequested, newFileWsRedirected, extendedParameters, debug, moredebug);
-                    }
-                }
-                break;
-            case mfr::mfr_path_types::in_redirection_area_writablepackageroot:
-                if (cohortsExisting.map.Valid_mapping)
-                {
-                    // try the redirected path, then package (COW), then possibly native (Possibly COW).
-                    if (!cohortsExisting.map.IsAnExclusionToRedirect && PathExists(cohortsExisting.WsRedirected.c_str()))
-                    {
-                        PreCreateFolders(newFileWsRedirected.c_str(), dllInstance, L"CopyFile2Fixup");
-                        WRAPPER_COPYFILE2(cohortsExisting.WsRedirected, newFileWsRedirected, extendedParameters, debug, moredebug);
-                    }
-                    else if (PathExists(cohortsExisting.WsPackage.c_str()))
-                    {
-                        PreCreateFolders(newFileWsRedirected.c_str(), dllInstance, L"CopyFile2Fixup");
-                        WRAPPER_COPYFILE2(cohortsExisting.WsPackage, newFileWsRedirected, extendedParameters, debug, moredebug);
-                    }
-                    else if (cohortsExisting.UsingNative &&
-                             PathExists(cohortsExisting.WsNative.c_str()))
-                    {
-                        PreCreateFolders(newFileWsRedirected.c_str(), dllInstance, L"CopyFile2Fixup");
-                        WRAPPER_COPYFILE2(cohortsExisting.WsNative, newFileWsRedirected, extendedParameters, debug, moredebug);
-                    }
-                    else
-                    {
-                        // There isn't such a file anywhere.  Let the call fails as requested.
-                        WRAPPER_COPYFILE2(cohortsExisting.WsRequested, newFileWsRedirected, extendedParameters, debug, moredebug);
-                    }
-                }
-                break;
-            case mfr::mfr_path_types::in_redirection_area_other:
-                break;
-            case mfr::mfr_path_types::is_Protocol:
-            case mfr::mfr_path_types::is_DosSpecial:
-            case mfr::mfr_path_types::is_Shell:
-            case mfr::mfr_path_types::in_other_drive_area:
-            case mfr::mfr_path_types::is_UNC_path:
-            case mfr::mfr_path_types::unsupported_for_intercepts:
-            case mfr::mfr_path_types::unknown:
-            default:
-                break;
+                // ILV
+                std::wstring usePathNew = DetermineIlvPathForWriteOperations(cohortsNew, dllInstance, moredebug);
+                // In a redirect to local scenario, we are responsible for pre-creating the local parent folders
+                // if-and-only-if they are present in the package.
+                PreCreateLocalFoldersIfNeededForWrite(usePathNew, cohortsNew.WsPackage, dllInstance, debug, L"CopyFile2Fixup");
+                // In a redirect to local scenario, if the file is not present locally, but is in the package, we are responsible to copy it there first.
+                CowLocalFoldersIfNeededForWrite(usePathNew, cohortsNew.WsPackage, dllInstance, debug, L"CopyFile2Fixup");
+                // In a write to package scenario, folders may be needed.
+                PreCreatePackageFoldersIfIlvNeededForWrite(usePathNew, dllInstance, debug, L"CopyFile2Fixup");
+
+                std::wstring usePathExisting = DetermineIlvPathForReadOperations(cohortsExisting, dllInstance, moredebug);
+                // In a redirect to local scenario, we are responsible for determing if source is local or in package
+                usePathExisting = SelectLocalOrPackageForRead(usePathExisting, cohortsExisting.WsPackage);
+
+                WRAPPER_COPYFILE2(usePathExisting, usePathNew, extendedParameters, debug, moredebug);
             }
         }
     }

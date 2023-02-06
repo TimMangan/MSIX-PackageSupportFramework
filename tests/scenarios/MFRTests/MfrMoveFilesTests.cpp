@@ -40,31 +40,31 @@ int InitializeMoveFileTest1()
 #endif
 
     // Requests to Native File Locations for CopyFile via VFS
-    MfrMoveFileTest ts_Native_PF1 = { "MoveFile Native-file VFS exists in package but not dest",             true, true,  true,
+    MfrMoveFileTest ts_Native_PF1 = { "MFR MoveFile Native-file VFS exists in package but not dest",             true, true,  true,
                                     (g_NativePF + L"\\PlaceholderTest\\TestIniFileVfsPF.ini"),
                                     (g_NativePF + L"\\PlaceholderTest\\CopiedTestIniFileVfsPF.ini"),
                                     true, ERROR_SUCCESS };
     MfrMoveFileTests1.push_back(ts_Native_PF1);
 
-    MfrMoveFileTest ts_Native_PF1E1 = { "MoveFile Native-file VFS exists in package and dest (not allowed)", true, false, false,
+    MfrMoveFileTest ts_Native_PF1E1 = { "MFR MoveFile Native-file VFS exists in package and dest (not allowed)", true, false, false,
                                     (g_NativePF + L"\\PlaceholderTest\\TestIniFileVfsPF.ini"),
                                     (g_NativePF + L"\\PlaceholderTest\\CopiedTestIniFileVfsPF.ini"),
                                     false, ERROR_FILE_EXISTS };
     MfrMoveFileTests1.push_back(ts_Native_PF1E1);
 
-    MfrMoveFileTest ts_Native_PF1E2 = { "MoveFile Native-file VFS exists in package and not dest subdir (allowed)", true, false, false,
+    MfrMoveFileTest ts_Native_PF1E2 = { "MFR MoveFile Native-file VFS exists in package and not dest subdir (allowed)", true, false, false,
                                     (g_NativePF + L"\\PlaceholderTest\\TestIniFileVfsPF.ini"),
                                     (g_NativePF + L"\\PlaceholderTest\\NoSuchFolder\\CopiedTestIniFileVfsPF.ini"),
                                     true, ERROR_SUCCESS };
     MfrMoveFileTests1.push_back(ts_Native_PF1E2);
 
-    MfrMoveFileTest t_Native_PF2 = { "MoveFile Native-file VFS missing in package",                          true, false, false,
+    MfrMoveFileTest t_Native_PF2 = { "MFR MoveFile Native-file VFS missing in package",                          true, false, false,
                                     (g_NativePF + L"\\PlaceholderTest\\MissingNativePlaceholder.txt"),
                                     (g_NativePF + L"\\PlaceholderTest\\CopiedMissingNativePlaceholder.txt"),
                                     false, ERROR_FILE_NOT_FOUND };
     MfrMoveFileTests1.push_back(t_Native_PF2);
 
-    MfrMoveFileTest t_Native_PF3 = { "MoveFile Native-file VFS parent-folder missing in package",            true, false, false,
+    MfrMoveFileTest t_Native_PF3 = { "MFR MoveFile Native-file VFS parent-folder missing in package",            true, false, false,
                                     (g_NativePF + L"\\MissingPlaceholderTest\\MissingNativePlaceholder.txt"),
                                     (g_NativePF + L"\\MissingPlaceholderTest\\CopiedMissingNarivePlaceholder.txt"),
                                     false, ERROR_PATH_NOT_FOUND };
@@ -79,11 +79,11 @@ int InitializeMoveFileTest1()
     tempS = g_Cwd + L"\\VFS\\ProgramFilesX64\\PlaceholderTest\\Placeholder.txt";
     tempD = g_Cwd + L"\\VFS\\ProgramFilesX64\\PlaceholderTest\\CopiedPlaceholder.txt";
 #endif
-    MfrMoveFileTest t_Vfs_PF1 = { "MoveFile Package-file VFS exists in package",                           true, true,  true,
+    MfrMoveFileTest t_Vfs_PF1 = { "MFR MoveFile Package-file VFS exists in package",                           true, true,  true,
                                 tempS, tempD, true, ERROR_SUCCESS };
     MfrMoveFileTests1.push_back(t_Vfs_PF1);
 
-    MfrMoveFileTest ts_Vfs_PF1E1 = { "MoveFile Package-file VFS exists in package and dest (not allowed)", true, false, false,
+    MfrMoveFileTest ts_Vfs_PF1E1 = { "MFR MoveFile Package-file VFS exists in package and dest (not allowed)", true, false, false,
                                 tempS, tempD, true, ERROR_ALREADY_EXISTS };
     MfrMoveFileTests1.push_back(ts_Vfs_PF1E1);
 
@@ -94,7 +94,7 @@ int InitializeMoveFileTest1()
     tempS = g_Cwd + L"\\VFS\\ProgramFilesX64\\PlaceholderTest\\MissingVFSPlaceholder.txt";
     tempD = g_Cwd + L"\\VFS\\ProgramFilesX64\\PlaceholderTest\\CopiedMissingVFSPlaceholder.txt";
 #endif
-    MfrMoveFileTest t_Vfs_PF2 = { "MoveFile Package-file VFS missing in package",                          true, false, false,
+    MfrMoveFileTest t_Vfs_PF2 = { "MFR MoveFile Package-file VFS missing in package",                          true, false, false,
                                 tempS, tempD, false, ERROR_FILE_NOT_FOUND };
     MfrMoveFileTests1.push_back(t_Vfs_PF2);
 
@@ -105,7 +105,7 @@ int InitializeMoveFileTest1()
     tempS = g_Cwd + L"\\VFS\\ProgramFilesX64\\MissingPlaceholderTest\\MissingVFSPlaceholder.txt";
     tempD = g_Cwd + L"\\VFS\\ProgramFilesX64\\MissingPlaceholderTest\\CopiedMissingVFSPlaceholder.txt";
 #endif
-    MfrMoveFileTest t_Vfs_PF3 = { "MoveFile Package-file VFS parent-folder missing in package",            true, false, false,
+    MfrMoveFileTest t_Vfs_PF3 = { "MFR MoveFile Package-file VFS parent-folder missing in package",            true, false, false,
                                 tempS, tempD, false, ERROR_PATH_NOT_FOUND };
     MfrMoveFileTests1.push_back(t_Vfs_PF3);
 
@@ -119,11 +119,11 @@ int InitializeMoveFileTest1()
     tempS.append(L"\\VFS\\ProgramFilesX64\\PlaceholderTest\\Placeholder.txt");
     tempD = g_Cwd + L"\\VFS\\ProgramFilesX64\\PlaceholderTest\\CopiedRedirPlaceholder.txt";
 #endif
-    MfrMoveFileTest t_Redir_PF1 = { "MoveFile Redirected-file VFS exists in package",                                   true, true,  true,
+    MfrMoveFileTest t_Redir_PF1 = { "MFR MoveFile Redirected-file VFS exists in package",                                   true, true,  true,
                                 tempS, tempD, true, ERROR_SUCCESS };
     MfrMoveFileTests1.push_back(t_Redir_PF1);
 
-    MfrMoveFileTest ts_Redir_PF1E1 = { "MoveFile Redirected Package-file VFS exists in package and dest (not allowed)", true, false, false,
+    MfrMoveFileTest ts_Redir_PF1E1 = { "MFR MoveFile Redirected Package-file VFS exists in package and dest (not allowed)", true, false, false,
                                 tempS, tempD, true, ERROR_ALREADY_EXISTS };
     MfrMoveFileTests1.push_back(ts_Redir_PF1E1);
 
@@ -135,7 +135,7 @@ int InitializeMoveFileTest1()
     tempS.append(L"\\VFS\\ProgramFilesX64\\PlaceholderTest\\MissingVFSPlaceholder.txt");
     tempD = g_Cwd + L"\\VFS\\ProgramFilesX64\\PlaceholderTest\\CopiedMissingVFSPlaceholder.txt";
 #endif
-    MfrMoveFileTest t_Redir_PF2 = { "MoveFile Redirected Package-file VFS missing in package",                          true, false, false,
+    MfrMoveFileTest t_Redir_PF2 = { "MFR MoveFile Redirected Package-file VFS missing in package",                          true, false, false,
                                 tempS, tempD, false, ERROR_FILE_NOT_FOUND };
     MfrMoveFileTests1.push_back(t_Redir_PF2);
 
@@ -148,7 +148,7 @@ int InitializeMoveFileTest1()
     tempS = g_Cwd + L"\\VFS\\ProgramFilesX64\\MissingPlaceholderTest\\MissingVFSPlaceholder.txt";
     tempD = g_Cwd + L"\\VFS\\ProgramFilesX64\\MissingPlaceholderTest\\CopiedMissingVFSPlaceholder.txt";
 #endif
-    MfrMoveFileTest t_Redir_PF3 = { "MoveFile Package-file VFS parent-folder missing in package",              true, false, false,
+    MfrMoveFileTest t_Redir_PF3 = { "MFR MoveFile Package-file VFS parent-folder missing in package",              true, false, false,
                                 tempS, tempD, false, ERROR_PATH_NOT_FOUND };
     MfrMoveFileTests1.push_back(t_Redir_PF3);
 
@@ -158,11 +158,11 @@ int InitializeMoveFileTest1()
     tempD.append(L"\\");
     tempD.append(MFRTESTDOCS);
     tempD.append(L"\\Copy\\CopiedPresonalFile.txt");
-    MfrMoveFileTest t_LocalDoc_1 = { "MoveFile Package-file VFS to Local Documents to succeed",              true, true,  true,
+    MfrMoveFileTest t_LocalDoc_1 = { "MFR MoveFile Package-file VFS to Local Documents to succeed",              true, true,  true,
                                 tempS, tempD, true, ERROR_SUCCESS };
     MfrMoveFileTests1.push_back(t_LocalDoc_1);
 
-    MfrMoveFileTest t_LocalDoc_2 = { "MoveFile Package-file VFS to Local Documents to fail",                 true, false, false,
+    MfrMoveFileTest t_LocalDoc_2 = { "MFR MoveFile Package-file VFS to Local Documents to fail",                 true, false, false,
                                 tempS, tempD, false, ERROR_FILE_EXISTS };
     MfrMoveFileTests1.push_back(t_LocalDoc_2);
 
@@ -188,19 +188,19 @@ int InitializeMoveFileTest2()
 #endif
 
     // Requests to Native File Locations for MoveCopyFile via VFS
-    MfrMoveFileTest ts_Native_PF1 = { "MoveFile Native-folder VFS exists in package but not dest",             true, true,  true,
+    MfrMoveFileTest ts_Native_PF1 = { "MFR MoveFile Native-folder VFS exists in package but not dest",             true, true,  true,
                                     (g_NativePF + L"\\PlaceholderTest"),
                                     (g_NativePF + L"\\PlaceholderTestCopied"),
                                     true, ERROR_SUCCESS };
     MfrMoveFileTests2.push_back(ts_Native_PF1);
 
-    MfrMoveFileTest ts_Native_PF1E = { "MoveFile Native-folder VFS exists in package and now in dest",             true, false,  false,
+    MfrMoveFileTest ts_Native_PF1E = { "MFR MoveFile Native-folder VFS exists in package and now in dest",             true, false,  false,
                                 (g_NativePF + L"\\PlaceholderTest"),
                                 (g_NativePF + L"\\PlaceholderTestCopied"),
                                 false, ERROR_FILE_EXISTS };
     MfrMoveFileTests2.push_back(ts_Native_PF1E);
 
-    MfrMoveFileTest t_Native_PF2 = { "MoveFile Native-folder VFS missing in package",                          true, false, false,
+    MfrMoveFileTest t_Native_PF2 = { "MFR MoveFile Native-folder VFS missing in package",                          true, false, false,
                                     (g_NativePF + L"\\MissingPlaceholderTest"),
                                     (g_NativePF + L"\\PlaceholderTest\\CopiedMissingNativePlaceholder"),
                                     false, ERROR_FILE_NOT_FOUND };
@@ -215,11 +215,11 @@ int InitializeMoveFileTest2()
     tempS = g_Cwd + L"\\VFS\\ProgramFilesX64\\PlaceholderTest";
     tempD = g_Cwd + L"\\VFS\\ProgramFilesX64\\CopiedPlaceholderTest";
 #endif
-    MfrMoveFileTest t_Vfs_PF1 = { "MoveFile Package-folder VFS exists in package but not dest",              true, true,  true,
+    MfrMoveFileTest t_Vfs_PF1 = { "MFR MoveFile Package-folder VFS exists in package but not dest",              true, true,  true,
                                 tempS, tempD, true, ERROR_SUCCESS };
     MfrMoveFileTests2.push_back(t_Vfs_PF1);
 
-    MfrMoveFileTest ts_Vfs_PF1E1 = { "MoveFile Package-folder VFS exists in package and dest (not allowed)", true, false, false,
+    MfrMoveFileTest ts_Vfs_PF1E1 = { "MFR MoveFile Package-folder VFS exists in package and dest (not allowed)", true, false, false,
                                 tempS, tempD, true, ERROR_ALREADY_EXISTS };
     MfrMoveFileTests2.push_back(ts_Vfs_PF1E1);
 
@@ -230,7 +230,7 @@ int InitializeMoveFileTest2()
     tempS = g_Cwd + L"\\VFS\\ProgramFilesX64\\MissingPlaceholderTest";
     tempD = g_Cwd + L"\\VFS\\ProgramFilesX64\\CopiedMissingPlaceholderTest";
 #endif
-    MfrMoveFileTest t_Vfs_PF2 = { "MoveFile Package-folder VFS missing in package",                          true, false, false,
+    MfrMoveFileTest t_Vfs_PF2 = { "MFR MoveFile Package-folder VFS missing in package",                          true, false, false,
                                 tempS, tempD, false, ERROR_FILE_NOT_FOUND };
     MfrMoveFileTests2.push_back(t_Vfs_PF2);
 
@@ -241,7 +241,7 @@ int InitializeMoveFileTest2()
     tempS = g_Cwd + L"\\VFS\\ProgramFilesX64\\MissingPlaceholderTest\\MissingSubFolder";
     tempD = g_Cwd + L"\\VFS\\ProgramFilesX64\\MissingPlaceholderTest\\CopiedMissingSubFolder";
 #endif
-    MfrMoveFileTest t_Vfs_PF3 = { "MoveFile Package-folder VFS parent-folder missing in package",            true, false, false,
+    MfrMoveFileTest t_Vfs_PF3 = { "MFR MoveFile Package-folder VFS parent-folder missing in package",            true, false, false,
                                 tempS, tempD, false, ERROR_PATH_NOT_FOUND };
     MfrMoveFileTests2.push_back(t_Vfs_PF3);
 
@@ -256,11 +256,11 @@ int InitializeMoveFileTest2()
     tempS.append(L"\\VFS\\ProgramFilesX64\\PlaceholderTest");
     tempD = g_Cwd + L"\\VFS\\ProgramFilesX64\\CopiedPlaceholderTest";
 #endif
-    MfrMoveFileTest t_Redir_PF1 = { "MoveFile Redirected-folder VFS exists in package but not dest.",                     true, true,  true,
+    MfrMoveFileTest t_Redir_PF1 = { "MFR MoveFile Redirected-folder VFS exists in package but not dest.",                     true, true,  true,
                                 tempS, tempD, true, ERROR_SUCCESS };
     MfrMoveFileTests2.push_back(t_Redir_PF1);
 
-    MfrMoveFileTest ts_Redir_PF1E1 = { "MoveFile Redirected Package-folder VFS exists in package and dest (not allowed)", true, false, false,
+    MfrMoveFileTest ts_Redir_PF1E1 = { "MFR MoveFile Redirected Package-folder VFS exists in package and dest (not allowed)", true, false, false,
                                 tempS, tempD, true, ERROR_ALREADY_EXISTS };
     MfrMoveFileTests2.push_back(ts_Redir_PF1E1);
 
@@ -272,7 +272,7 @@ int InitializeMoveFileTest2()
     tempS.append(L"\\VFS\\ProgramFilesX64\\MissingPlaceholderTest");
     tempD = g_Cwd + L"\\VFS\\ProgramFilesX64\\CopiedMissingPlaceholderTest";
 #endif
-    MfrMoveFileTest t_Redir_PF2 = { "MoveFile Redirected Package-folder VFS missing in package",                          true, false, false,
+    MfrMoveFileTest t_Redir_PF2 = { "MFR MoveFile Redirected Package-folder VFS missing in package",                          true, false, false,
                                 tempS, tempD, false, ERROR_FILE_NOT_FOUND };
     MfrMoveFileTests2.push_back(t_Redir_PF2);
 
@@ -285,7 +285,7 @@ int InitializeMoveFileTest2()
     tempS = g_Cwd + L"\\VFS\\ProgramFilesX64\\MissingPlaceholderTest\\MissingSubFolder";
     tempD = g_Cwd + L"\\VFS\\ProgramFilesX64\\CopiedMissingPlaceholder";
 #endif
-    MfrMoveFileTest t_Redir_PF3 = { "MoveFile Package-folder VFS parent-folder missing in package",              true, false, false,
+    MfrMoveFileTest t_Redir_PF3 = { "MFR MoveFile Package-folder VFS parent-folder missing in package",              true, false, false,
                                 tempS, tempD, false, ERROR_PATH_NOT_FOUND };
     MfrMoveFileTests2.push_back(t_Redir_PF3);
 
@@ -295,11 +295,11 @@ int InitializeMoveFileTest2()
     tempD.append(L"\\");
     tempD.append(MFRTESTDOCS);
     tempD.append(L"\\CopiedDocs");
-    MfrMoveFileTest t_LocalDoc_1 = { "MoveFile Package-folder VFS to Local Documents to succeed",              true, true,  true,
+    MfrMoveFileTest t_LocalDoc_1 = { "MFR MoveFile Package-folder VFS to Local Documents to succeed",              true, true,  true,
                                 tempS, tempD, true, ERROR_SUCCESS };
     MfrMoveFileTests2.push_back(t_LocalDoc_1);
 
-    MfrMoveFileTest t_LocalDoc_2 = { "MoveFile Package-folder VFS to Local Documents to fail",                 true, false, false,
+    MfrMoveFileTest t_LocalDoc_2 = { "MFR MoveFile Package-folder VFS to Local Documents to fail",                 true, false, false,
                                 tempS, tempD, false, ERROR_INVALID_PARAMETER };
     MfrMoveFileTests2.push_back(t_LocalDoc_2);
 
@@ -328,31 +328,31 @@ int InitializeMoveFileExTest1()
 
 
     // Requests to Native File Locations for CopyFile via VFS
-    MfrMoveFileExTest ts_Native_PF1 = { "MoveFileEx Native-file VFS exists in package but not dest",             true, true,  true,
+    MfrMoveFileExTest ts_Native_PF1 = { "MFR MoveFileEx Native-file VFS exists in package but not dest",             true, true,  true,
                                     (g_NativePF + L"\\PlaceholderTest\\TestIniFileVfsPF.ini"),
                                     (g_NativePF + L"\\PlaceholderTest\\CopiedTestIniFileVfsPF.ini"),
                                     0, true, ERROR_SUCCESS };
     MfrMoveFileExTests1.push_back(ts_Native_PF1);
 
-    MfrMoveFileExTest ts_Native_PF1E1 = { "MoveFileEx Native-file VFS exists in package and dest (not allowed)", true, false, false,
+    MfrMoveFileExTest ts_Native_PF1E1 = { "MFR MoveFileEx Native-file VFS exists in package and dest (not allowed)", true, false, false,
                                     (g_NativePF + L"\\PlaceholderTest\\TestIniFileVfsPF.ini"),
                                     (g_NativePF + L"\\PlaceholderTest\\CopiedTestIniFileVfsPF.ini"),
                                     0, false, ERROR_FILE_EXISTS };
     MfrMoveFileExTests1.push_back(ts_Native_PF1E1);
 
-    MfrMoveFileExTest ts_Native_PF1E2 = { "MoveFileEx Native-file VFS exists in package and not dest subdir (allowed)", true, false, false,
+    MfrMoveFileExTest ts_Native_PF1E2 = { "MFR MoveFileEx Native-file VFS exists in package and not dest subdir (allowed)", true, false, false,
                                     (g_NativePF + L"\\PlaceholderTest\\TestIniFileVfsPF.ini"),
                                     (g_NativePF + L"\\PlaceholderTest\\NoSuchFolder\\CopiedTestIniFileVfsPF.ini"),
                                     0, true, ERROR_SUCCESS };
     MfrMoveFileExTests1.push_back(ts_Native_PF1E2);
 
-    MfrMoveFileExTest t_Native_PF2 = { "MoveFileEx Native-file VFS missing in package",                          true, false, false,
+    MfrMoveFileExTest t_Native_PF2 = { "MFR MoveFileEx Native-file VFS missing in package",                          true, false, false,
                                     (g_NativePF + L"\\PlaceholderTest\\MissingNativePlaceholder.txt"),
                                     (g_NativePF + L"\\PlaceholderTest\\CopiedMissingNativePlaceholder.txt"),
                                     0, false, ERROR_FILE_NOT_FOUND };
     MfrMoveFileExTests1.push_back(t_Native_PF2);
 
-    MfrMoveFileExTest t_Native_PF3 = { "MoveFileEx Native-file VFS parent-folder missing in package",            true, false, false,
+    MfrMoveFileExTest t_Native_PF3 = { "MFR MoveFileEx Native-file VFS parent-folder missing in package",            true, false, false,
                                     (g_NativePF + L"\\MissingPlaceholderTest\\MissingNativePlaceholder.txt"),
                                     (g_NativePF + L"\\MissingPlaceholderTest\\CopiedMissingNarivePlaceholder.txt"),
                                     0, false, ERROR_PATH_NOT_FOUND };
@@ -367,11 +367,11 @@ int InitializeMoveFileExTest1()
     tempS = g_Cwd + L"\\VFS\\ProgramFilesX64\\PlaceholderTest\\Placeholder.txt";
     tempD = g_Cwd + L"\\VFS\\ProgramFilesX64\\PlaceholderTest\\CopiedPlaceholder.txt";
 #endif
-    MfrMoveFileExTest t_Vfs_PF1 = { "MoveFileEx Package-file VFS exists in package",                           true, true,  true,
+    MfrMoveFileExTest t_Vfs_PF1 = { "MFR MoveFileEx Package-file VFS exists in package",                           true, true,  true,
                                 tempS, tempD, 0, true, ERROR_SUCCESS };
     MfrMoveFileExTests1.push_back(t_Vfs_PF1);
 
-    MfrMoveFileExTest ts_Vfs_PF1E1 = { "MoveFileEx Package-file VFS exists in package and dest (not allowed)", true, false, false,
+    MfrMoveFileExTest ts_Vfs_PF1E1 = { "MFR MoveFileEx Package-file VFS exists in package and dest (not allowed)", true, false, false,
                                 tempS, tempD, 0, true, ERROR_ALREADY_EXISTS };
     MfrMoveFileExTests1.push_back(ts_Vfs_PF1E1);
 
@@ -382,7 +382,7 @@ int InitializeMoveFileExTest1()
     tempS = g_Cwd + L"\\VFS\\ProgramFilesX64\\PlaceholderTest\\MissingVFSPlaceholder.txt";
     tempD = g_Cwd + L"\\VFS\\ProgramFilesX64\\PlaceholderTest\\CopiedMissingVFSPlaceholder.txt";
 #endif
-    MfrMoveFileExTest t_Vfs_PF2 = { "MoveFileEx Package-file VFS missing in package",                          true, false, false,
+    MfrMoveFileExTest t_Vfs_PF2 = { "MFR MoveFileEx Package-file VFS missing in package",                          true, false, false,
                                 tempS, tempD, 0, false, ERROR_FILE_NOT_FOUND };
     MfrMoveFileExTests1.push_back(t_Vfs_PF2);
 
@@ -393,7 +393,7 @@ int InitializeMoveFileExTest1()
     tempS = g_Cwd + L"\\VFS\\ProgramFilesX64\\MissingPlaceholderTest\\MissingVFSPlaceholder.txt";
     tempD = g_Cwd + L"\\VFS\\ProgramFilesX64\\MissingPlaceholderTest\\CopiedMissingVFSPlaceholder.txt";
 #endif
-    MfrMoveFileExTest t_Vfs_PF3 = { "MoveFileEx Package-file VFS parent-folder missing in package",            true, false, false,
+    MfrMoveFileExTest t_Vfs_PF3 = { "MFR MoveFileEx Package-file VFS parent-folder missing in package",            true, false, false,
                                 tempS, tempD, 0, false, ERROR_PATH_NOT_FOUND };
     MfrMoveFileExTests1.push_back(t_Vfs_PF3);
 
@@ -407,11 +407,11 @@ int InitializeMoveFileExTest1()
     tempS.append(L"\\VFS\\ProgramFilesX64\\PlaceholderTest\\Placeholder.txt");
     tempD = g_Cwd + L"\\VFS\\ProgramFilesX64\\PlaceholderTest\\CopiedRedirPlaceholder.txt";
 #endif
-    MfrMoveFileExTest t_Redir_PF1 = { "MoveFileEx Redirected-file VFS exists in package",                                   true, true,  true,
+    MfrMoveFileExTest t_Redir_PF1 = { "MFR MoveFileEx Redirected-file VFS exists in package",                                   true, true,  true,
                                 tempS, tempD, 0, true, ERROR_SUCCESS };
     MfrMoveFileExTests1.push_back(t_Redir_PF1);
 
-    MfrMoveFileExTest ts_Redir_PF1E1 = { "MoveFileEx Redirected Package-file VFS exists in package and dest (not allowed)", true, false, false,
+    MfrMoveFileExTest ts_Redir_PF1E1 = { "MFR MoveFileEx Redirected Package-file VFS exists in package and dest (not allowed)", true, false, false,
                                 tempS, tempD, 0, true, ERROR_ALREADY_EXISTS };
     MfrMoveFileExTests1.push_back(ts_Redir_PF1E1);
 
@@ -423,7 +423,7 @@ int InitializeMoveFileExTest1()
     tempS.append(L"\\VFS\\ProgramFilesX64\\PlaceholderTest\\MissingVFSPlaceholder.txt");
     tempD = g_Cwd + L"\\VFS\\ProgramFilesX64\\PlaceholderTest\\CopiedMissingVFSPlaceholder.txt";
 #endif
-    MfrMoveFileExTest t_Redir_PF2 = { "MoveFileEx Redirected Package-file VFS missing in package",                          true, false, false,
+    MfrMoveFileExTest t_Redir_PF2 = { "MFR MoveFileEx Redirected Package-file VFS missing in package",                          true, false, false,
                                 tempS, tempD, 0, false, ERROR_FILE_NOT_FOUND };
     MfrMoveFileExTests1.push_back(t_Redir_PF2);
 
@@ -436,7 +436,7 @@ int InitializeMoveFileExTest1()
     tempS = g_Cwd + L"\\VFS\\ProgramFilesX64\\MissingPlaceholderTest\\MissingVFSPlaceholder.txt";
     tempD = g_Cwd + L"\\VFS\\ProgramFilesX64\\MissingPlaceholderTest\\CopiedMissingVFSPlaceholder.txt";
 #endif
-    MfrMoveFileExTest t_Redir_PF3 = { "MoveFileEx Package-file VFS parent-folder missing in package",              true, false, false,
+    MfrMoveFileExTest t_Redir_PF3 = { "MFR MoveFileEx Package-file VFS parent-folder missing in package",              true, false, false,
                                 tempS, tempD, 0, false, ERROR_PATH_NOT_FOUND };
     MfrMoveFileExTests1.push_back(t_Redir_PF3);
 
@@ -446,11 +446,11 @@ int InitializeMoveFileExTest1()
     tempD.append(L"\\");
     tempD.append(MFRTESTDOCS);
     tempD.append(L"\\Copy\\CopiedPresonalFile.txt");
-    MfrMoveFileExTest t_LocalDoc_1 = { "MoveFileEx Package-file VFS to Local Documents to succeed",              true, true,  true,
+    MfrMoveFileExTest t_LocalDoc_1 = { "MFR MoveFileEx Package-file VFS to Local Documents to succeed",              true, true,  true,
                                 tempS, tempD, 0, true, ERROR_SUCCESS };
     MfrMoveFileExTests1.push_back(t_LocalDoc_1);
 
-    MfrMoveFileExTest t_LocalDoc_2 = { "MoveFileEx Package-file VFS to Local Documents to fail",                 true, false, false,
+    MfrMoveFileExTest t_LocalDoc_2 = { "MFR MoveFileEx Package-file VFS to Local Documents to fail",                 true, false, false,
                                 tempS, tempD, 0, false, ERROR_FILE_EXISTS };
     MfrMoveFileExTests1.push_back(t_LocalDoc_2);
 
@@ -476,19 +476,19 @@ int InitializeMoveFileExTest2()
 #endif
 
     // Requests to Native File Locations for MoveCopyFile via VFS
-    MfrMoveFileExTest ts_Native_PF1 = { "MoveFileEx Native-folder VFS exists in package but not dest",             true, true,  true,
+    MfrMoveFileExTest ts_Native_PF1 = { "MFR MoveFileEx Native-folder VFS exists in package but not dest",             true, true,  true,
                                     (g_NativePF + L"\\PlaceholderTest"),
                                     (g_NativePF + L"\\PlaceholderTestCopied"),
                                     0, true, ERROR_SUCCESS };
     MfrMoveFileExTests2.push_back(ts_Native_PF1);
 
-    MfrMoveFileExTest ts_Native_PF1E = { "MoveFileEx Native-folder VFS exists in package and now in dest",             true, false,  false,
+    MfrMoveFileExTest ts_Native_PF1E = { "MFR MoveFileEx Native-folder VFS exists in package and now in dest",             true, false,  false,
                                 (g_NativePF + L"\\PlaceholderTest"),
                                 (g_NativePF + L"\\PlaceholderTestCopied"),
                                 0, false, ERROR_FILE_EXISTS };
     MfrMoveFileExTests2.push_back(ts_Native_PF1E);
 
-    MfrMoveFileExTest t_Native_PF2 = { "MoveFileEx Native-folder VFS missing in package",                          true, false, false,
+    MfrMoveFileExTest t_Native_PF2 = { "MFR MoveFileEx Native-folder VFS missing in package",                          true, false, false,
                                     (g_NativePF + L"\\MissingPlaceholderTest"),
                                     (g_NativePF + L"\\PlaceholderTest\\CopiedMissingNativePlaceholder"),
                                     0, false, ERROR_FILE_NOT_FOUND };
@@ -503,11 +503,11 @@ int InitializeMoveFileExTest2()
     tempS = g_Cwd + L"\\VFS\\ProgramFilesX64\\PlaceholderTest";
     tempD = g_Cwd + L"\\VFS\\ProgramFilesX64\\CopiedPlaceholderTest";
 #endif
-    MfrMoveFileExTest t_Vfs_PF1 = { "MoveFileEx Package-folder VFS exists in package but not dest",              true, true,  true,
+    MfrMoveFileExTest t_Vfs_PF1 = { "MFR MoveFileEx Package-folder VFS exists in package but not dest",              true, true,  true,
                                 tempS, tempD, 0, true, ERROR_SUCCESS };
     MfrMoveFileExTests2.push_back(t_Vfs_PF1);
 
-    MfrMoveFileExTest ts_Vfs_PF1E1 = { "MoveFileEx Package-folder VFS exists in package and dest (not allowed)", true, false, false,
+    MfrMoveFileExTest ts_Vfs_PF1E1 = { "MFR MoveFileEx Package-folder VFS exists in package and dest (not allowed)", true, false, false,
                                 tempS, tempD, 0, true, ERROR_ALREADY_EXISTS };
     MfrMoveFileExTests2.push_back(ts_Vfs_PF1E1);
 
@@ -518,7 +518,7 @@ int InitializeMoveFileExTest2()
     tempS = g_Cwd + L"\\VFS\\ProgramFilesX64\\MissingPlaceholderTest";
     tempD = g_Cwd + L"\\VFS\\ProgramFilesX64\\CopiedMissingPlaceholderTest";
 #endif
-    MfrMoveFileExTest t_Vfs_PF2 = { "MoveFileEx Package-folder VFS missing in package",                          true, false, false,
+    MfrMoveFileExTest t_Vfs_PF2 = { "MFR MoveFileEx Package-folder VFS missing in package",                          true, false, false,
                                 tempS, tempD, 0, false, ERROR_FILE_NOT_FOUND };
     MfrMoveFileExTests2.push_back(t_Vfs_PF2);
 
@@ -529,7 +529,7 @@ int InitializeMoveFileExTest2()
     tempS = g_Cwd + L"\\VFS\\ProgramFilesX64\\MissingPlaceholderTest\\MissingSubFolder";
     tempD = g_Cwd + L"\\VFS\\ProgramFilesX64\\MissingPlaceholderTest\\CopiedMissingSubFolder";
 #endif
-    MfrMoveFileExTest t_Vfs_PF3 = { "MoveFileEx Package-folder VFS parent-folder missing in package",            true, false, false,
+    MfrMoveFileExTest t_Vfs_PF3 = { "MFR MoveFileEx Package-folder VFS parent-folder missing in package",            true, false, false,
                                 tempS, tempD, 0, false, ERROR_PATH_NOT_FOUND };
     MfrMoveFileExTests2.push_back(t_Vfs_PF3);
 
@@ -544,11 +544,11 @@ int InitializeMoveFileExTest2()
     tempS.append(L"\\VFS\\ProgramFilesX64\\PlaceholderTest");
     tempD = g_Cwd + L"\\VFS\\ProgramFilesX64\\CopiedPlaceholderTest";
 #endif
-    MfrMoveFileExTest t_Redir_PF1 = { "MoveFileEx Redirected-folder VFS exists in package but not dest.",                     true, true,  true,
+    MfrMoveFileExTest t_Redir_PF1 = { "MFR MoveFileEx Redirected-folder VFS exists in package but not dest.",                     true, true,  true,
                                 tempS, tempD, 0, true, ERROR_SUCCESS };
     MfrMoveFileExTests2.push_back(t_Redir_PF1);
 
-    MfrMoveFileExTest ts_Redir_PF1E1 = { "MoveFileEx Redirected Package-folder VFS exists in package and dest (not allowed)", true, false, false,
+    MfrMoveFileExTest ts_Redir_PF1E1 = { "MFR MoveFileEx Redirected Package-folder VFS exists in package and dest (not allowed)", true, false, false,
                                 tempS, tempD, 0, true, ERROR_ALREADY_EXISTS };
     MfrMoveFileExTests2.push_back(ts_Redir_PF1E1);
 
@@ -560,7 +560,7 @@ int InitializeMoveFileExTest2()
     tempS.append(L"\\VFS\\ProgramFilesX64\\MissingPlaceholderTest");
     tempD = g_Cwd + L"\\VFS\\ProgramFilesX64\\CopiedMissingPlaceholderTest";
 #endif
-    MfrMoveFileExTest t_Redir_PF2 = { "MoveFileEx Redirected Package-folder VFS missing in package",                          true, false, false,
+    MfrMoveFileExTest t_Redir_PF2 = { "MFR MoveFileEx Redirected Package-folder VFS missing in package",                          true, false, false,
                                 tempS, tempD, 0, false, ERROR_FILE_NOT_FOUND };
     MfrMoveFileExTests2.push_back(t_Redir_PF2);
 
@@ -573,7 +573,7 @@ int InitializeMoveFileExTest2()
     tempS = g_Cwd + L"\\VFS\\ProgramFilesX64\\MissingPlaceholderTest\\MissingSubFolder";
     tempD = g_Cwd + L"\\VFS\\ProgramFilesX64\\CopiedMissingPlaceholder";
 #endif
-    MfrMoveFileExTest t_Redir_PF3 = { "MoveFileEx Package-folder VFS parent-folder missing in package",              true, false, false,
+    MfrMoveFileExTest t_Redir_PF3 = { "MFR MoveFileEx Package-folder VFS parent-folder missing in package",              true, false, false,
                                 tempS, tempD, 0, false, ERROR_PATH_NOT_FOUND };
     MfrMoveFileExTests2.push_back(t_Redir_PF3);
 
@@ -583,11 +583,11 @@ int InitializeMoveFileExTest2()
     tempD.append(L"\\");
     tempD.append(MFRTESTDOCS);
     tempD.append(L"\\CopiedDocs");
-    MfrMoveFileExTest t_LocalDoc_1 = { "MoveFileEx Package-folder VFS to Local Documents to succeed",              true, true,  true,
+    MfrMoveFileExTest t_LocalDoc_1 = { "MFR MoveFileEx Package-folder VFS to Local Documents to succeed",              true, true,  true,
                                 tempS, tempD, 0, true, ERROR_SUCCESS };
     MfrMoveFileExTests2.push_back(t_LocalDoc_1);
 
-    MfrMoveFileExTest t_LocalDoc_2 = { "MoveFileEx Package-folder VFS to Local Documents to fail",                 true, false, false,
+    MfrMoveFileExTest t_LocalDoc_2 = { "MFR MoveFileEx Package-folder VFS to Local Documents to fail",                 true, false, false,
                                 tempS, tempD, 0, false, ERROR_INVALID_PARAMETER };
     MfrMoveFileExTests2.push_back(t_LocalDoc_2);
 
@@ -615,13 +615,13 @@ int InitializeMoveFileExTest3()
 
 
     // Requests to Native File Locations for MoveFileEx via VFS
-    MfrMoveFileExTest ts_Native_PF1 = { "MoveFileEx with Replace Native-file VFS exists in package but not dest",             true, true,  true,
+    MfrMoveFileExTest ts_Native_PF1 = { "MFR MoveFileEx with Replace Native-file VFS exists in package but not dest",             true, true,  true,
                                     (g_NativePF + L"\\PlaceholderTest\\TestIniFileVfsPF.ini"),
                                     (g_NativePF + L"\\PlaceholderTest\\CopiedTestIniFileVfsPF.ini"),
                                     MOVEFILE_REPLACE_EXISTING, true, ERROR_SUCCESS };
     MfrMoveFileExTests3.push_back(ts_Native_PF1);
 
-    MfrMoveFileExTest ts_Native_PF1E1 = { "MoveFileEx with Replace Native-file VFS exists in package and dest (also allowed)", true, false, false,
+    MfrMoveFileExTest ts_Native_PF1E1 = { "MFR MoveFileEx with Replace Native-file VFS exists in package and dest (also allowed)", true, false, false,
                                     (g_NativePF + L"\\PlaceholderTest\\TestIniFileVfsPF.ini"),
                                     (g_NativePF + L"\\PlaceholderTest\\CopiedTestIniFileVfsPF.ini"),
                                     MOVEFILE_REPLACE_EXISTING, true, ERROR_SUCCESS };
@@ -651,31 +651,31 @@ int InitializeMoveFileWithProgressTest1()
 
 
     // Requests to Native File Locations for CopyFile via VFS
-    MfrMoveFileWithProgressTest ts_Native_PF1 = { "MoveFileWithProgress Native-file VFS exists in package but not dest",             true, true,  true,
+    MfrMoveFileWithProgressTest ts_Native_PF1 = { "MFR MoveFileWithProgress Native-file VFS exists in package but not dest",             true, true,  true,
                                     (g_NativePF + L"\\PlaceholderTest\\TestIniFileVfsPF.ini"),
                                     (g_NativePF + L"\\PlaceholderTest\\CopiedTestIniFileVfsPF.ini"),
                                     0, true, ERROR_SUCCESS };
     MfrMoveFileWithProgressTests1.push_back(ts_Native_PF1);
 
-    MfrMoveFileWithProgressTest ts_Native_PF1E1 = { "MoveFileWithProgress Native-file VFS exists in package and dest (not allowed)", true, false, false,
+    MfrMoveFileWithProgressTest ts_Native_PF1E1 = { "MFR MoveFileWithProgress Native-file VFS exists in package and dest (not allowed)", true, false, false,
                                     (g_NativePF + L"\\PlaceholderTest\\TestIniFileVfsPF.ini"),
                                     (g_NativePF + L"\\PlaceholderTest\\CopiedTestIniFileVfsPF.ini"),
                                     0, false, ERROR_FILE_EXISTS };
     MfrMoveFileWithProgressTests1.push_back(ts_Native_PF1E1);
 
-    MfrMoveFileWithProgressTest ts_Native_PF1E2 = { "MoveFileWithProgress Native-file VFS exists in package but not dest subfolder (allowed)", true, false, false,
+    MfrMoveFileWithProgressTest ts_Native_PF1E2 = { "MFR MoveFileWithProgress Native-file VFS exists in package but not dest subfolder (allowed)", true, false, false,
                                     (g_NativePF + L"\\PlaceholderTest\\TestIniFileVfsPF.ini"),
                                     (g_NativePF + L"\\PlaceholderTest\\NoSuchFolder\\CopiedTestIniFileVfsPF.ini"),
                                     0, true, ERROR_SUCCESS };
     MfrMoveFileWithProgressTests1.push_back(ts_Native_PF1E2);
 
-    MfrMoveFileWithProgressTest t_Native_PF2 = { "MoveFileWithProgress Native-file VFS missing in package",                          true, false, false,
+    MfrMoveFileWithProgressTest t_Native_PF2 = { "MFR MoveFileWithProgress Native-file VFS missing in package",                          true, false, false,
                                     (g_NativePF + L"\\PlaceholderTest\\MissingNativePlaceholder.txt"),
                                     (g_NativePF + L"\\PlaceholderTest\\CopiedMissingNativePlaceholder.txt"),
                                     0, false, ERROR_FILE_NOT_FOUND };
     MfrMoveFileWithProgressTests1.push_back(t_Native_PF2);
 
-    MfrMoveFileWithProgressTest t_Native_PF3 = { "MoveFileWithProgress Native-file VFS parent-folder missing in package",            true, false, false,
+    MfrMoveFileWithProgressTest t_Native_PF3 = { "MFR MoveFileWithProgress Native-file VFS parent-folder missing in package",            true, false, false,
                                     (g_NativePF + L"\\MissingPlaceholderTest\\MissingNativePlaceholder.txt"),
                                     (g_NativePF + L"\\MissingPlaceholderTest\\CopiedMissingNarivePlaceholder.txt"),
                                     0, false, ERROR_PATH_NOT_FOUND };
@@ -690,11 +690,11 @@ int InitializeMoveFileWithProgressTest1()
     tempS = g_Cwd + L"\\VFS\\ProgramFilesX64\\PlaceholderTest\\Placeholder.txt";
     tempD = g_Cwd + L"\\VFS\\ProgramFilesX64\\PlaceholderTest\\CopiedPlaceholder.txt";
 #endif
-    MfrMoveFileWithProgressTest t_Vfs_PF1 = { "MoveFileWithProgress Package-file VFS exists in package",                           true, true,  true,
+    MfrMoveFileWithProgressTest t_Vfs_PF1 = { "MFR MoveFileWithProgress Package-file VFS exists in package",                           true, true,  true,
                                 tempS, tempD, 0, true, ERROR_SUCCESS };
     MfrMoveFileWithProgressTests1.push_back(t_Vfs_PF1);
 
-    MfrMoveFileWithProgressTest ts_Vfs_PF1E1 = { "MoveFileWithProgress Package-file VFS exists in package and dest (not allowed)", true, false, false,
+    MfrMoveFileWithProgressTest ts_Vfs_PF1E1 = { "MFR MoveFileWithProgress Package-file VFS exists in package and dest (not allowed)", true, false, false,
                                 tempS, tempD, 0, true, ERROR_ALREADY_EXISTS };
     MfrMoveFileWithProgressTests1.push_back(ts_Vfs_PF1E1);
 
@@ -705,7 +705,7 @@ int InitializeMoveFileWithProgressTest1()
     tempS = g_Cwd + L"\\VFS\\ProgramFilesX64\\PlaceholderTest\\MissingVFSPlaceholder.txt";
     tempD = g_Cwd + L"\\VFS\\ProgramFilesX64\\PlaceholderTest\\CopiedMissingVFSPlaceholder.txt";
 #endif
-    MfrMoveFileWithProgressTest t_Vfs_PF2 = { "MoveFileWithProgress Package-file VFS missing in package",                          true, false, false,
+    MfrMoveFileWithProgressTest t_Vfs_PF2 = { "MFR MoveFileWithProgress Package-file VFS missing in package",                          true, false, false,
                                 tempS, tempD, 0, false, ERROR_FILE_NOT_FOUND };
     MfrMoveFileWithProgressTests1.push_back(t_Vfs_PF2);
 
@@ -716,7 +716,7 @@ int InitializeMoveFileWithProgressTest1()
     tempS = g_Cwd + L"\\VFS\\ProgramFilesX64\\MissingPlaceholderTest\\MissingVFSPlaceholder.txt";
     tempD = g_Cwd + L"\\VFS\\ProgramFilesX64\\MissingPlaceholderTest\\CopiedMissingVFSPlaceholder.txt";
 #endif
-    MfrMoveFileWithProgressTest t_Vfs_PF3 = { "MoveFileWithProgress Package-file VFS parent-folder missing in package",            true, false, false,
+    MfrMoveFileWithProgressTest t_Vfs_PF3 = { "MFR MoveFileWithProgress Package-file VFS parent-folder missing in package",            true, false, false,
                                 tempS, tempD, 0, false, ERROR_PATH_NOT_FOUND };
     MfrMoveFileWithProgressTests1.push_back(t_Vfs_PF3);
 
@@ -730,11 +730,11 @@ int InitializeMoveFileWithProgressTest1()
     tempS.append(L"\\VFS\\ProgramFilesX64\\PlaceholderTest\\Placeholder.txt");
     tempD = g_Cwd + L"\\VFS\\ProgramFilesX64\\PlaceholderTest\\CopiedRedirPlaceholder.txt";
 #endif
-    MfrMoveFileWithProgressTest t_Redir_PF1 = { "MoveFileWithProgress Redirected-file VFS exists in package",                                   true, true,  true,
+    MfrMoveFileWithProgressTest t_Redir_PF1 = { "MFR MoveFileWithProgress Redirected-file VFS exists in package",                                   true, true,  true,
                                 tempS, tempD, 0, true, ERROR_SUCCESS };
     MfrMoveFileWithProgressTests1.push_back(t_Redir_PF1);
 
-    MfrMoveFileWithProgressTest ts_Redir_PF1E1 = { "MoveFileWithProgress Redirected Package-file VFS exists in package and dest (not allowed)", true, false, false,
+    MfrMoveFileWithProgressTest ts_Redir_PF1E1 = { "MFR MoveFileWithProgress Redirected Package-file VFS exists in package and dest (not allowed)", true, false, false,
                                 tempS, tempD, 0, true, ERROR_ALREADY_EXISTS };
     MfrMoveFileWithProgressTests1.push_back(ts_Redir_PF1E1);
 
@@ -746,7 +746,7 @@ int InitializeMoveFileWithProgressTest1()
     tempS.append(L"\\VFS\\ProgramFilesX64\\PlaceholderTest\\MissingVFSPlaceholder.txt");
     tempD = g_Cwd + L"\\VFS\\ProgramFilesX64\\PlaceholderTest\\CopiedMissingVFSPlaceholder.txt";
 #endif
-    MfrMoveFileWithProgressTest t_Redir_PF2 = { "MoveFileWithProgress Redirected Package-file VFS missing in package",                          true, false, false,
+    MfrMoveFileWithProgressTest t_Redir_PF2 = { "MFR MoveFileWithProgress Redirected Package-file VFS missing in package",                          true, false, false,
                                 tempS, tempD, 0, false, ERROR_FILE_NOT_FOUND };
     MfrMoveFileWithProgressTests1.push_back(t_Redir_PF2);
 
@@ -759,7 +759,7 @@ int InitializeMoveFileWithProgressTest1()
     tempS = g_Cwd + L"\\VFS\\ProgramFilesX64\\MissingPlaceholderTest\\MissingVFSPlaceholder.txt";
     tempD = g_Cwd + L"\\VFS\\ProgramFilesX64\\MissingPlaceholderTest\\CopiedMissingVFSPlaceholder.txt";
 #endif
-    MfrMoveFileWithProgressTest t_Redir_PF3 = { "MoveFileWithProgress Package-file VFS parent-folder missing in package",              true, false, false,
+    MfrMoveFileWithProgressTest t_Redir_PF3 = { "MFR MoveFileWithProgress Package-file VFS parent-folder missing in package",              true, false, false,
                                 tempS, tempD, 0, false, ERROR_PATH_NOT_FOUND };
     MfrMoveFileWithProgressTests1.push_back(t_Redir_PF3);
 
@@ -769,24 +769,24 @@ int InitializeMoveFileWithProgressTest1()
     tempD.append(L"\\");
     tempD.append(MFRTESTDOCS);
     tempD.append(L"\\Copy\\CopiedPresonalFile.txt");
-    MfrMoveFileWithProgressTest t_LocalDoc_1 = { "MoveFileWithProgress Package-file VFS to Local Documents to succeed",              true, true,  true,
+    MfrMoveFileWithProgressTest t_LocalDoc_1 = { "MFR MoveFileWithProgress Package-file VFS to Local Documents to succeed",              true, true,  true,
                                 tempS, tempD, 0, true, ERROR_SUCCESS };
     MfrMoveFileWithProgressTests1.push_back(t_LocalDoc_1);
 
-    MfrMoveFileWithProgressTest t_LocalDoc_2 = { "MoveFileWithProgress Package-file VFS to Local Documents to fail",                 true, false, false,
+    MfrMoveFileWithProgressTest t_LocalDoc_2 = { "MFR MoveFileWithProgress Package-file VFS to Local Documents to fail",                 true, false, false,
                                 tempS, tempD, 0, false, ERROR_FILE_EXISTS };
     MfrMoveFileWithProgressTests1.push_back(t_LocalDoc_2);
 
 
 
     // Requests to Native File Locations for MoveFileWithProgress via VFS
-    MfrMoveFileWithProgressTest ts_Native2_PF1 = { "MoveFileWithProgress with Replace Native-file VFS exists in package but not dest",             true, true,  true,
+    MfrMoveFileWithProgressTest ts_Native2_PF1 = { "MFR MoveFileWithProgress with Replace Native-file VFS exists in package but not dest",             true, true,  true,
                                     (g_NativePF + L"\\PlaceholderTest\\TestIniFileVfsPF.ini"),
                                     (g_NativePF + L"\\PlaceholderTest\\CopiedTestIniFileVfsPF.ini"),
                                     MOVEFILE_REPLACE_EXISTING, true, ERROR_SUCCESS };
     MfrMoveFileWithProgressTests1.push_back(ts_Native2_PF1);
 
-    MfrMoveFileWithProgressTest ts_Native2_PF1E1 = { "MoveFileWithProgress with Replace Native-file VFS exists in package and dest (also allowed)", true, false, false,
+    MfrMoveFileWithProgressTest ts_Native2_PF1E1 = { "MFR MoveFileWithProgress with Replace Native-file VFS exists in package and dest (also allowed)", true, false, false,
                                     (g_NativePF + L"\\PlaceholderTest\\TestIniFileVfsPF.ini"),
                                     (g_NativePF + L"\\PlaceholderTest\\CopiedTestIniFileVfsPF.ini"),
                                     MOVEFILE_REPLACE_EXISTING, true, ERROR_SUCCESS };
@@ -822,7 +822,7 @@ int RunMoveFilesTests()
     {
         if (testInput.enabled)
         {
-            std::string testname = "MoveFile File Test (#1): ";
+            std::string testname = "MFR MoveFile File Test (#1): ";
             testname.append(testInput.TestName);
             test_begin(testname);
 
@@ -928,7 +928,7 @@ int RunMoveFilesTests()
     {
         if (testInput.enabled)
         {
-            std::string testname = "MoveFile File Test (#2): ";
+            std::string testname = "MFR MoveFile File Test (#2): ";
             testname.append(testInput.TestName);
             test_begin(testname);
 
@@ -1035,7 +1035,7 @@ int RunMoveFilesTests()
     {
         if (testInput.enabled)
         {
-            std::string testname = "MoveFileEx File Test (#1): ";
+            std::string testname = "MFR MoveFileEx File Test (#1): ";
             testname.append(testInput.TestName);
             test_begin(testname);
 
@@ -1141,7 +1141,7 @@ int RunMoveFilesTests()
     {
         if (testInput.enabled)
         {
-            std::string testname = "MoveFileEx File Test (#2): ";
+            std::string testname = "MFR MoveFileEx File Test (#2): ";
             testname.append(testInput.TestName);
             test_begin(testname);
 
@@ -1247,7 +1247,7 @@ int RunMoveFilesTests()
     {
         if (testInput.enabled)
         {
-            std::string testname = "MoveFileEx File Test (#3): ";
+            std::string testname = "MFR MoveFileEx File Test (#3): ";
             testname.append(testInput.TestName);
             test_begin(testname);
 
@@ -1354,7 +1354,7 @@ int RunMoveFilesTests()
     {
         if (testInput.enabled)
         {
-            std::string testname = "MoveFileWithProgress File Test (#1): ";
+            std::string testname = "MFR MoveFileWithProgress File Test (#1): ";
             testname.append(testInput.TestName);
             test_begin(testname);
 

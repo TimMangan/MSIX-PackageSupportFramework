@@ -127,7 +127,7 @@
 
      LogString(dllInstance, L"ShellExecuteExW: unguarded verb", pExecInfo->lpVerb);
 
-     retfinal = ::ShellExecuteExW(pExecInfo);
+     retfinal = impl::ShellExecuteExW(pExecInfo);
      return retfinal;
  }
  DECLARE_FIXUP(impl::ShellExecuteExW, ShellExecuteExWFixup);

@@ -176,7 +176,7 @@ public:
             countAtt++;
         }
         // Ffor example of this code with two attributes see: https://github.com/microsoft/terminal/blob/main/src/server/Entrypoints.cpp
-        SIZE_T AttributeListSize;
+        SIZE_T AttributeListSize = 0;
         InitializeProcThreadAttributeList(nullptr, countAtt, 0, &AttributeListSize);
         attributeList = std::unique_ptr<_PROC_THREAD_ATTRIBUTE_LIST>(reinterpret_cast<_PROC_THREAD_ATTRIBUTE_LIST*>(new char[AttributeListSize]));
         //attributeList = std::unique_ptr<_PROC_THREAD_ATTRIBUTE_LIST>(reinterpret_cast<_PROC_THREAD_ATTRIBUTE_LIST*>(HeapAlloc(GetProcessHeap(), 0, AttributeListSize)));
@@ -301,7 +301,7 @@ public:
         {
             // We need to add an extra attribute, so we'll replace that one.
 
-            SIZE_T AttributeListSize;
+            SIZE_T AttributeListSize=0;
             InitializeProcThreadAttributeList(nullptr, countAtt, 0, &AttributeListSize);
             attributeList = std::unique_ptr<_PROC_THREAD_ATTRIBUTE_LIST>(reinterpret_cast<_PROC_THREAD_ATTRIBUTE_LIST*>(new char[AttributeListSize]));
             InitializeProcThreadAttributeList(

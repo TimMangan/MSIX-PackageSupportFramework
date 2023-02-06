@@ -1,6 +1,25 @@
 ideas:
  * Consider hidden/system file marker in redirection for deletion, similar to what ILV does.
+ * Check out CreateFile on C:\CONOUT$ in Calibre.  Returns with invalid handle? MVR.
+ * Psf is unaware of SPC.  This means that FRF/MFR determine redirection area on package level of
+       the launched app rather than container folder for redirection.  Not breaking anything currently, but ugh!
+*  Psf FRF/MFR make assumptions that it can use the package path if the file looks like it is in the package path 
+       using PathExits.  FindFile works also.  GetFileAttributes and CreateFile, however, need the call to use the native path.
+	   This might be a bug, and we might be able to work around it for the folders that map like Program Files, but not
+	   for non-mapped native folders.
+*  SPC seems to immedietly fail PsfLauncher if Ilv is set in package.
  
+ v.Next
+ * MFR: Add UserProgramFiles to the VFS Traditional mappings.
+ * MFR: Fix IsCreateForChange to consider FILE_ALL_ACCESS before BACKUP_SEMANTICS (unsure I want to do this).
+ * MFR: Potential fix for CreateFile,CreateFile2 only - and only on redir case, to try package directly. (Spyder).
+ * Launcher: Add UserProgramFiles to ArgumentVirtualization List
+ * MFR: Add intercept to kerbase.dll version of MoveFileExW as the kernel32.dll version may be bypassed (Audacity).
+ * PsfRuntime: Add intercept to CreateProcessAsUserA/W.
+ * MFR: Avoid dll initialization crash when multiple processes are injecting at the same time.
+ * MFR: Don't redirect C:\Program Files\WindowsApps
+ * MFR: Add pipe support.
+ * DynDll: Handle dll loading using '/' for path separations.
  
  v.2022.12.11
  * MFR: Add an ILV-Aware mode for MFR. Could simplify some things.

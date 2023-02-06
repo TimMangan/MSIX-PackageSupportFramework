@@ -35,7 +35,7 @@ int InitializeReplaceFileTest1()
     std::wstring NullBackup;
 
     // Requests to Native File Locations for ReplaceFile via VFS
-    MfrReplaceFileTest ts_Native_PF1 = { "ReplaceFile Native-file VFS both exist in package (allowed)",             
+    MfrReplaceFileTest ts_Native_PF1 = { "MFR ReplaceFile Native-file VFS both exist in package (allowed)",             
                                         true, true,  true,
                                         (g_NativePF + L"\\PlaceholderTest\\TestIniFileVfsPF.ini"),
                                         (g_NativePF + L"\\PlaceholderTest\\Placeholder.txt"),
@@ -43,28 +43,28 @@ int InitializeReplaceFileTest1()
                                         true, ERROR_SUCCESS };
     MfrReplaceFileTests1.push_back(ts_Native_PF1);
 
-    MfrReplaceFileTest ts_Native_PF1E1 = { "ReplaceFile Native-file VFS exists in package with missing file (not allowed)", true, false, false,
+    MfrReplaceFileTest ts_Native_PF1E1 = { "MFR ReplaceFile Native-file VFS exists in package with missing file (not allowed)", true, false, false,
                                         (g_NativePF + L"\\PlaceholderTest\\TestIniFileVfsPF.ini"),
                                         (g_NativePF + L"\\PlaceholderTest\\CopiedTestIniFileVfsPF.ini"),
                                         NullBackup, 0,
                                         false, ERROR_FILE_NOT_FOUND };
     MfrReplaceFileTests1.push_back(ts_Native_PF1E1);
 
-    MfrReplaceFileTest ts_Native_PF1E2 = { "ReplaceFile Native-file VFS exists in package with missing folder (not allowed)", true, false, false,
+    MfrReplaceFileTest ts_Native_PF1E2 = { "MFR ReplaceFile Native-file VFS exists in package with missing folder (not allowed)", true, false, false,
                                     (g_NativePF + L"\\PlaceholderTest\\TestIniFileVfsPF.ini"),
                                     (g_NativePF + L"\\PlaceholderTest\\NoSuchFolder\\CopiedTestIniFileVfsPF.ini"),
                                     NullBackup, 0,
                                     false, ERROR_FILE_NOT_FOUND };
     MfrReplaceFileTests1.push_back(ts_Native_PF1E2);
 
-    MfrReplaceFileTest t_Native_PF2 = { "ReplaceFile Native-file VFS missing in package with file (not allowed)",                          true, false, false,
+    MfrReplaceFileTest t_Native_PF2 = { "MFR ReplaceFile Native-file VFS missing in package with file (not allowed)",                          true, false, false,
                                     (g_NativePF + L"\\PlaceholderTest\\MissingNativePlaceholder.txt"),
                                     (g_NativePF + L"\\PlaceholderTest\\Placeholder.txt"),
                                     NullBackup, 0,
                                     false, ERROR_FILE_NOT_FOUND };
     MfrReplaceFileTests1.push_back(t_Native_PF2);
 
-    MfrReplaceFileTest t_Native_PF3 = { "ReplaceFile Native-file VFS parent-folder missing in package with missing path-file (not allowed)",            true, false, false,
+    MfrReplaceFileTest t_Native_PF3 = { "MFR ReplaceFile Native-file VFS parent-folder missing in package with missing path-file (not allowed)",            true, false, false,
                                     (g_NativePF + L"\\MissingPlaceholderTest\\MissingNativePlaceholder.txt"),
                                     (g_NativePF + L"\\MissingPlaceholderTest\\CopiedMissingNarivePlaceholder.txt"),
                                     NullBackup, 0,
@@ -84,20 +84,20 @@ int InitializeReplaceFileTest1()
     tempNoFile = g_Cwd + L"\\VFS\\ProgramFilesX64\\PlaceholderTest\\NoneSuchFile.ini";
     tempNoPath = g_Cwd + L"\\VFS\\ProgramFilesX86\\PlaceholderTest\\NoSuchPath\\NoneSuchFile.ini";
 #endif
-    MfrReplaceFileTest t_Vfs_PF1 = { "ReplaceFile Package-file VFS both exist in package (allowed)",                      true, true,  true,
+    MfrReplaceFileTest t_Vfs_PF1 = { "MFR ReplaceFile Package-file VFS both exist in package (allowed)",                      true, true,  true,
                                 tempReplaced, tempReplacement, NullBackup, 0, true, ERROR_SUCCESS };
     MfrReplaceFileTests1.push_back(t_Vfs_PF1);
 
-    MfrReplaceFileTest ts_Vfs_PF1E1 = { "ReplaceFile Package-file VFS exists in package with missing file (not allowed)", true, true, true,
+    MfrReplaceFileTest ts_Vfs_PF1E1 = { "MFR ReplaceFile Package-file VFS exists in package with missing file (not allowed)", true, true, true,
                                 tempReplaced, tempNoFile, NullBackup, 0, false, ERROR_FILE_NOT_FOUND };
     MfrReplaceFileTests1.push_back(ts_Vfs_PF1E1);
 
 
-    MfrReplaceFileTest t_Vfs_PF2 = { "ReplaceFile Package-file VFS missing in package with file (not allowed)",              true, true, true,
+    MfrReplaceFileTest t_Vfs_PF2 = { "MFR ReplaceFile Package-file VFS missing in package with file (not allowed)",              true, true, true,
                                 tempNoFile, tempReplacement, NullBackup, 0, false, ERROR_FILE_NOT_FOUND };
     MfrReplaceFileTests1.push_back(t_Vfs_PF2);
 
-    MfrReplaceFileTest t_Vfs_PF3 = { "ReplaceFile Package-file VFS parent-folder missing in package with file (not allowed)",            true, true, true,
+    MfrReplaceFileTest t_Vfs_PF3 = { "RMFR eplaceFile Package-file VFS parent-folder missing in package with file (not allowed)",            true, true, true,
                                 tempNoPath, tempReplacement, NullBackup, 0, false, ERROR_FILE_NOT_FOUND };
     MfrReplaceFileTests1.push_back(t_Vfs_PF3);
 
@@ -114,23 +114,23 @@ int InitializeReplaceFileTest1()
     tempNoFile = g_Cwd + L"\\VFS\\ProgramFilesX64\\PlaceholderTest\\NoneSuchFile.ini";
     tempNoPath = g_Cwd + L"\\VFS\\ProgramFilesX64\\PlaceholderTest\\NoSuchPath\\NoneSuchFile.ini";
 #endif
-    MfrReplaceFileTest t_Redir_PF1 = { "ReplaceFile Redirected-file VFS exists in package with package file (allowed)",      true, true,  true,
+    MfrReplaceFileTest t_Redir_PF1 = { "MFR ReplaceFile Redirected-file VFS exists in package with package file (allowed)",      true, true,  true,
                                 tempReplaced, tempReplacement, NullBackup, 0, true, ERROR_SUCCESS };
     MfrReplaceFileTests1.push_back(t_Redir_PF1);
 
-    MfrReplaceFileTest ts_Redir_PF1E1 = { "ReplaceFile Redirected Package-file VFS exists in package with missing file (not allowed)", true, true, true,
+    MfrReplaceFileTest ts_Redir_PF1E1 = { "MFR ReplaceFile Redirected Package-file VFS exists in package with missing file (not allowed)", true, true, true,
                                 tempReplaced, tempNoFile, NullBackup, 0, false, ERROR_FILE_NOT_FOUND };
     MfrReplaceFileTests1.push_back(ts_Redir_PF1E1);
 
-    MfrReplaceFileTest ts_Redir_PF1E2 = { "ReplaceFile Redirected Package-file VFS exists in package with missing folder (not allowed)", true, true, true,
+    MfrReplaceFileTest ts_Redir_PF1E2 = { "MFR ReplaceFile Redirected Package-file VFS exists in package with missing folder (not allowed)", true, true, true,
                                 tempReplaced, tempNoPath, NullBackup, 0, false, ERROR_FILE_NOT_FOUND };
     MfrReplaceFileTests1.push_back(ts_Redir_PF1E2);
 
-    MfrReplaceFileTest t_Redir_PF2E1 = { "ReplaceFile Redirected Package-file VFS missing in package with file (not allowed)",       true, true, true,
+    MfrReplaceFileTest t_Redir_PF2E1 = { "MFR ReplaceFile Redirected Package-file VFS missing in package with file (not allowed)",       true, true, true,
                                 tempNoFile, tempReplacement, NullBackup, 0, false, ERROR_FILE_NOT_FOUND };
     MfrReplaceFileTests1.push_back(t_Redir_PF2E1);
 
-    MfrReplaceFileTest t_Redir_PF2E2 = { "ReplaceFile Redirected Package-file VFS missing folder in package with file (not allowed)",       true, true, true,
+    MfrReplaceFileTest t_Redir_PF2E2 = { "MFR ReplaceFile Redirected Package-file VFS missing folder in package with file (not allowed)",       true, true, true,
                                 tempNoPath, tempReplacement, NullBackup, 0, false, ERROR_FILE_NOT_FOUND };
     MfrReplaceFileTests1.push_back(t_Redir_PF2E2);
 
@@ -141,11 +141,11 @@ int InitializeReplaceFileTest1()
     tempReplacement.append(L"\\");
     tempReplacement.append(MFRTESTDOCS);
     tempReplacement.append(L"\\Copy\\CopiedPresonalFile.txt");
-    MfrReplaceFileTest t_LocalDoc_1 = { "ReplaceFile Package-file VFS exists with missing path Local Documents  (not allowed)",              true, true,  true,
+    MfrReplaceFileTest t_LocalDoc_1 = { "MFR ReplaceFile Package-file VFS exists with missing path Local Documents  (not allowed)",              true, true,  true,
                                 tempReplaced, tempReplacement, NullBackup, 0, false, ERROR_FILE_NOT_FOUND };
     MfrReplaceFileTests1.push_back(t_LocalDoc_1);
 
-    MfrReplaceFileTest t_LocalDoc_2 = { "ReplaceFile Package-file VFS exists with missing file Local Documents (not allowed)",                 true, true, true,
+    MfrReplaceFileTest t_LocalDoc_2 = { "MFR ReplaceFile Package-file VFS exists with missing file Local Documents (not allowed)",                 true, true, true,
                                 tempReplaced, tempNoFile, NullBackup, 0, false, ERROR_FILE_NOT_FOUND };
     MfrReplaceFileTests1.push_back(t_LocalDoc_2);
 
@@ -174,35 +174,35 @@ int InitializeReplaceFileTest2()
 #endif
 
     // Requests to Native File Locations for ReplaceFile via VFS
-    MfrReplaceFileTest ts_Native_PF1 = { "ReplaceFile w/Backup Native-file VFS both exist in package (allowed)",             true, true,  true,
+    MfrReplaceFileTest ts_Native_PF1 = { "MFR ReplaceFile w/Backup Native-file VFS both exist in package (allowed)",             true, true,  true,
                                     (g_NativePF + L"\\PlaceholderTest\\TestIniFileVfsPF.ini"),
                                     (g_NativePF + L"\\PlaceholderTest\\Placeholder.txt.ini"),
                                     (REVFSPF + L"\\VFS\\Local AppData\\Backup\\TestIniFileVfsPF.ini"), 0,
                                     true, ERROR_SUCCESS };
     MfrReplaceFileTests2.push_back(ts_Native_PF1);
 
-    MfrReplaceFileTest ts_Native_PF1E1 = { "ReplaceFile w/Backup Native-file VFS exists in package and dest (not allowed)", true, false, false,
+    MfrReplaceFileTest ts_Native_PF1E1 = { "MFR ReplaceFile w/Backup Native-file VFS exists in package and dest (not allowed)", true, false, false,
                                     (g_NativePF + L"\\PlaceholderTest\\TestIniFileVfsPF.ini"),
                                     (g_NativePF + L"\\PlaceholderTest\\CopiedTestIniFileVfsPF.ini"),
                                     (REVFSPF + L"\\VFS\\Local AppData\\Backup\\TestIniFileVfsPF.ini"), 0,
                                     false, ERROR_FILE_NOT_FOUND };
     MfrReplaceFileTests2.push_back(ts_Native_PF1E1);
 
-    MfrReplaceFileTest ts_Native_PF1E2 = { "ReplaceFile w/Backup Native-file VFS exists in package with missing folder (not allowed)", true, false, false,
+    MfrReplaceFileTest ts_Native_PF1E2 = { "MFR ReplaceFile w/Backup Native-file VFS exists in package with missing folder (not allowed)", true, false, false,
                                     (g_NativePF + L"\\PlaceholderTest\\TestIniFileVfsPF.ini"),
                                     (g_NativePF + L"\\PlaceholderTest\\NoSuchFolder\\CopiedTestIniFileVfsPF.ini"),
                                     (REVFSPF + L"\\VFS\\Local AppData\\Backup\\TestIniFileVfsPF.ini"), 0,
                                     false, ERROR_FILE_NOT_FOUND };
     MfrReplaceFileTests2.push_back(ts_Native_PF1E2);
 
-    MfrReplaceFileTest t_Native_PF2 = { "ReplaceFile w/Backup Native-file VFS missing in package with file (not allowed)",                          true, false, false,
+    MfrReplaceFileTest t_Native_PF2 = { "MFR ReplaceFile w/Backup Native-file VFS missing in package with file (not allowed)",                          true, false, false,
                                     (g_NativePF + L"\\PlaceholderTest\\MissingNativePlaceholder.txt"),
                                     (g_NativePF + L"\\PlaceholderTest\\Placeholder.txt"),
                                     (REVFSPF + L"\\VFS\\Local AppData\\Backup\\TestIniFileVfsPF.ini"), 0,
                                     false, ERROR_FILE_NOT_FOUND };
     MfrReplaceFileTests2.push_back(t_Native_PF2);
 
-    MfrReplaceFileTest t_Native_PF3 = { "ReplaceFile w/Backup Native-file VFS parent-folder missing in package with missing path-file (not allowed)",            true, false, false,
+    MfrReplaceFileTest t_Native_PF3 = { "MFR ReplaceFile w/Backup Native-file VFS parent-folder missing in package with missing path-file (not allowed)",            true, false, false,
                                     (g_NativePF + L"\\MissingPlaceholderTest\\MissingNativePlaceholder.txt"),
                                     (g_NativePF + L"\\MissingPlaceholderTest\\CopiedMissingNarivePlaceholder.txt"),
                                     (REVFSPF + L"\\VFS\\Local AppData\\Backup\\TestIniFileVfsPF.ini"), 0,
@@ -222,26 +222,26 @@ int InitializeReplaceFileTest2()
     tempNoFile = g_Cwd + L"\\VFS\\ProgramFilesX64\\PlaceholderTest\\NoneSuchFile.ini";
     tempNoPath = g_Cwd + L"\\VFS\\ProgramFilesX86\\PlaceholderTest\\NoSuchPath\\NoneSuchFile.ini";
 #endif
-    MfrReplaceFileTest t_Vfs_PF1 = { "ReplaceFile w/Backup Package-file VFS both exist in package (allowed)",                           true, true,  true,
+    MfrReplaceFileTest t_Vfs_PF1 = { "MFR ReplaceFile w/Backup Package-file VFS both exist in package (allowed)",                           true, true,  true,
                                 tempReplaced, tempReplacement, 
                                 (REVFSPF + L"\\VFS\\Local AppData\\Backup\\TestIniFileVfsPF.ini"), 0,
                                 true, ERROR_SUCCESS };
     MfrReplaceFileTests2.push_back(t_Vfs_PF1);
 
-    MfrReplaceFileTest ts_Vfs_PF1E1 = { "ReplaceFile w/Backup Package-file VFS exists in package with missing file (not allowed)", true, false, false,
+    MfrReplaceFileTest ts_Vfs_PF1E1 = { "MFR ReplaceFile w/Backup Package-file VFS exists in package with missing file (not allowed)", true, false, false,
                                 tempReplaced, tempNoFile, 
                                 (REVFSPF + L"\\VFS\\Local AppData\\Backup\\TestIniFileVfsPF.ini"), 0,
                                 false, ERROR_FILE_NOT_FOUND };
     MfrReplaceFileTests2.push_back(ts_Vfs_PF1E1);
 
 
-    MfrReplaceFileTest t_Vfs_PF2 = { "ReplaceFile w/Backup Package-file VFS missing in package with file (not allowed)",                          true, true, true,
+    MfrReplaceFileTest t_Vfs_PF2 = { "MFR ReplaceFile w/Backup Package-file VFS missing in package with file (not allowed)",                          true, true, true,
                                 tempNoFile, tempReplacement,
                                 (REVFSPF + L"\\VFS\\Local AppData\\Backup\\TestIniFileVfsPF.ini"), 0, 
                                 false, ERROR_FILE_NOT_FOUND };
     MfrReplaceFileTests2.push_back(t_Vfs_PF2);
 
-    MfrReplaceFileTest t_Vfs_PF3 = { "ReplaceFile w/Backup Package-file VFS parent-folder missing in package with file (not allowed)",            true, true, true,
+    MfrReplaceFileTest t_Vfs_PF3 = { "MFR ReplaceFile w/Backup Package-file VFS parent-folder missing in package with file (not allowed)",            true, true, true,
                                 tempNoPath, tempReplacement, 
                                 (REVFSPF + L"\\VFS\\Local AppData\\Backup\\TestIniFileVfsPF.ini"), 0,
                                 false, ERROR_FILE_NOT_FOUND };
@@ -260,31 +260,31 @@ int InitializeReplaceFileTest2()
     tempNoFile = g_Cwd + L"\\VFS\\ProgramFilesX64\\PlaceholderTest\\NoneSuchFile.ini";
     tempNoPath = g_Cwd + L"\\VFS\\ProgramFilesX64\\PlaceholderTest\\NoSuchPath\\NoneSuchFile.ini";
 #endif
-    MfrReplaceFileTest t_Redir_PF1 = { "ReplaceFile w/Backup Redirected-file VFS exists in package with package file (allowed)",      true, true,  true,
+    MfrReplaceFileTest t_Redir_PF1 = { "MFR ReplaceFile w/Backup Redirected-file VFS exists in package with package file (allowed)",      true, true,  true,
                                 tempReplaced, tempReplacement,
                                 (REVFSPF + L"\\VFS\\Local AppData\\Backup\\TestIniFileVfsPF.ini"), 0,
                                 true, ERROR_SUCCESS };
     MfrReplaceFileTests2.push_back(t_Redir_PF1);
 
-    MfrReplaceFileTest ts_Redir_PF1E1 = { "ReplaceFile w/Backup Redirected Package-file VFS exists in package with missing file (not allowed)", true, true, true,
+    MfrReplaceFileTest ts_Redir_PF1E1 = { "MFR ReplaceFile w/Backup Redirected Package-file VFS exists in package with missing file (not allowed)", true, true, true,
                                 tempReplaced, tempNoFile,
                                 (REVFSPF + L"\\VFS\\Local AppData\\Backup\\TestIniFileVfsPF.ini"), 0,
                                 false, ERROR_FILE_NOT_FOUND };
     MfrReplaceFileTests2.push_back(ts_Redir_PF1E1);
 
-    MfrReplaceFileTest ts_Redir_PF1E2 = { "ReplaceFile w/Backup Redirected Package-file VFS exists in package with missing folder (not allowed)", true, true, true,
+    MfrReplaceFileTest ts_Redir_PF1E2 = { "MFR ReplaceFile w/Backup Redirected Package-file VFS exists in package with missing folder (not allowed)", true, true, true,
                                 tempReplaced, tempNoPath,
                                 (REVFSPF + L"\\VFS\\Local AppData\\Backup\\TestIniFileVfsPF.ini"), 0,
                                 false, ERROR_FILE_NOT_FOUND };
     MfrReplaceFileTests2.push_back(ts_Redir_PF1E2);
 
-    MfrReplaceFileTest t_Redir_PF2E1 = { "ReplaceFile w/Backup Redirected Package-file VFS missing in package with file (not allowed)",       true, true, true,
+    MfrReplaceFileTest t_Redir_PF2E1 = { "MFR ReplaceFile w/Backup Redirected Package-file VFS missing in package with file (not allowed)",       true, true, true,
                                 tempNoFile, tempReplacement,
                                 (REVFSPF + L"\\VFS\\Local AppData\\Backup\\TestIniFileVfsPF.ini"), 0,
                                 false, ERROR_FILE_NOT_FOUND };
     MfrReplaceFileTests2.push_back(t_Redir_PF2E1);
 
-    MfrReplaceFileTest t_Redir_PF2E2 = { "ReplaceFile w/Backup Redirected Package-file VFS missing folder in package with file (not allowed)",       true, true, true,
+    MfrReplaceFileTest t_Redir_PF2E2 = { "MFR ReplaceFile w/Backup Redirected Package-file VFS missing folder in package with file (not allowed)",       true, true, true,
                                 tempNoPath, tempReplacement,
                                 (REVFSPF + L"\\VFS\\Local AppData\\Backup\\TestIniFileVfsPF.ini"), 0,
                                 false, ERROR_FILE_NOT_FOUND };
@@ -297,13 +297,13 @@ int InitializeReplaceFileTest2()
     tempReplacement.append(L"\\");
     tempReplacement.append(MFRTESTDOCS);
     tempReplacement.append(L"\\Copy\\CopiedPresonalFile.txt");
-    MfrReplaceFileTest t_LocalDoc_1 = { "ReplaceFile w/Backup Package-file VFS exists with missing path Local Documents  (not allowed)",              true, true,  true,
+    MfrReplaceFileTest t_LocalDoc_1 = { "MFR ReplaceFile w/Backup Package-file VFS exists with missing path Local Documents  (not allowed)",              true, true,  true,
                                 tempReplaced, tempReplacement,
                                 (REVFSPF + L"\\VFS\\Local AppData\\Backup\\TestIniFileVfsPF.ini"), 0,
                                 false, ERROR_FILE_NOT_FOUND };
     MfrReplaceFileTests2.push_back(t_LocalDoc_1);
 
-    MfrReplaceFileTest t_LocalDoc_2 = { "ReplaceFile w/Backup Package-file VFS exists with missing file Local Documents (not allowed)",                 true, true, true,
+    MfrReplaceFileTest t_LocalDoc_2 = { "MFR ReplaceFile w/Backup Package-file VFS exists with missing file Local Documents (not allowed)",                 true, true, true,
                                 tempReplaced, tempNoFile,
                                 (REVFSPF + L"\\VFS\\Local AppData\\Backup\\TestIniFileVfsPF.ini"), 0,
                                 false, ERROR_FILE_NOT_FOUND };
@@ -335,7 +335,7 @@ int RunReplaceFileTests()
     {
         if (testInput.enabled)
         {
-            std::string testname = "ReplaceFile File Test (#1): ";
+            std::string testname = "MFR ReplaceFile File Test (#1): ";
             testname.append(testInput.TestName);
             test_begin(testname);
 
@@ -455,7 +455,7 @@ int RunReplaceFileTests()
     {
         if (testInput.enabled)
         {
-            std::string testname = "ReplaceFile File Test (#2): ";
+            std::string testname = "MFR ReplaceFile File Test (#2): ";
             testname.append(testInput.TestName);
             test_begin(testname);
 

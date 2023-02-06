@@ -71,10 +71,10 @@ BOOL __stdcall SetCurrentDirectoryFixup(_In_ const CharT* pathName) noexcept
 #if _DEBUG
             LogString(dllInstance, L"SetCurrentDirectory for pathName", wPathName.c_str());
 #endif
-            if (MFRConfiguration.Ilv_Aware)
+            ///if (MFRConfiguration.Ilv_Aware)
             {
                 Cohorts cohorts;
-                DetermineCohorts(wPathName, &cohorts, moredebug, dllInstance, L"DeleteFileFixup");
+                DetermineCohorts(wPathName, &cohorts, moredebug, dllInstance, L"SetCurrentDirectory");
 
                 switch (cohorts.file_mfr.Request_MfrPathType)
                 {
@@ -97,7 +97,12 @@ BOOL __stdcall SetCurrentDirectoryFixup(_In_ const CharT* pathName) noexcept
                     // treat as is
                     break;
                 case mfr::mfr_path_types::in_redirection_area_writablepackageroot:
-                    // treat as is for now, no need to reverse since ILV handles backwards too
+                    // treat as is for now in the package (necessary if not ILV)
+                    if (PathExists(cohorts.WsPackage.c_str()))
+                    {
+                        retfinal = WRAPPER_SETCURRENTDIRECTORY(cohorts.WsPackage, dllInstance, debug);
+                        return retfinal;
+                    }
                     break;
                 case mfr::mfr_path_types::in_redirection_area_other:
                     // treat as is

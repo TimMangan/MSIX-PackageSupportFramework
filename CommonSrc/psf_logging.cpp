@@ -324,7 +324,7 @@ void Loghexdump(void* pAddressIn, long  lSize, DWORD instance=0)
 
             if (!(lRelPos & 3)) lIndex--;
 
-            sprintf_s(szBuf + lIndex, 100 - lIndex, "<    %08lx  ", (unsigned long)(rememberPtmp - pAddress));
+            sprintf_s(szBuf + lIndex, 100 - lIndex, "<%08lx  ", (unsigned long)(rememberPtmp - pAddress));
             szBuf[lIndex + 14] = 0x0;
 
             if (instance == 0)
@@ -333,7 +333,7 @@ void Loghexdump(void* pAddressIn, long  lSize, DWORD instance=0)
             }
             else
             {
-                Log("[%d]\t\t%s", instance, szBuf);
+                Log("    [%d]\t\t%s", instance, szBuf);
             }
 
             buf.pData += lOutLen;

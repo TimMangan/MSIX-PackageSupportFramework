@@ -86,6 +86,15 @@
     <ClInclude Include="DetermineCohorts.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="KernelBase_FunctionalImplementations.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Detect_Pipe.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="DetermineIlvPaths.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="dllmain.cpp">
@@ -219,6 +228,18 @@
     </ClCompile>
     <ClCompile Include="SetCurrentDirectory.cpp">
       <Filter>Source Files\Intercepts\WorkingDirectories</Filter>
+    </ClCompile>
+    <ClCompile Include="UCRT_wrename.cpp">
+      <Filter>Source Files\Intercepts\Moves</Filter>
+    </ClCompile>
+    <ClCompile Include="KernelBase_MoveFileEx.cpp">
+      <Filter>Source Files\Intercepts\Moves</Filter>
+    </ClCompile>
+    <ClCompile Include="Detect_Pipe.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="DetermineILVpaths.cpp">
+      <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

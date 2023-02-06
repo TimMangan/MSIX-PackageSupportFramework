@@ -13,6 +13,9 @@
 
 #include "Config.h"
 
+#if _DEBUG
+//#define MOREDEBUG 1
+#endif 
 
 struct loaded_fixup
 {
@@ -97,6 +100,17 @@ void load_fixups()
 #endif                            
                                     path = pathfromroot;
                                 }
+#ifdef MOREDEBUG
+                                else
+                                {
+                                    DWORD rember = GetLastError();
+                                    DWORD att = ::GetFileAttributesW(pathfromroot.c_str());
+                                    if (att != INVALID_FILE_ATTRIBUTES)
+                                    {
+                                        Log("\t???file %ls attrib 0x%x but load error 0x%x", pathfromroot.c_str(), att, rember);
+                                    }
+                                }
+#endif
                             }
 
                             if (!fixup.module_handle)
@@ -147,33 +161,43 @@ void load_fixups()
 
                             if (!fixup.module_handle)
                             {
-                                auto message = narrow(path.c_str());
-                                throw_last_error(message.c_str());
+                                if (GetLastError() == ERROR_NO_MORE_FILES)
+                                {
+                                    Log("\tERROR: fixup not found in package; ignoring.");
+                                }
+                                else
+                                {
+                                    auto message = narrow(path.c_str());
+                                    throw_last_error(message.c_str());
+                                }
                             }
                         }
-                        Log("\tInjected into current process: %ls\n", path.c_str());
-
-                        auto initialize = reinterpret_cast<PSFInitializeProc>(::GetProcAddress(fixup.module_handle, "PSFInitialize"));
-                        if (!initialize)
+                        if (fixup.module_handle)
                         {
-                            auto message = "PSFInitialize export not found in "s + narrow(path.c_str());
-                            throw_win32(ERROR_PROC_NOT_FOUND, message.c_str());
-                        }
-                        auto uninitialize = reinterpret_cast<PSFUninitializeProc>(::GetProcAddress(fixup.module_handle, "PSFUninitialize"));
-                        if (!uninitialize)
-                        {
-                            auto message = "PSFUninitialize export not found in "s + narrow(path.c_str());
-                            throw_win32(ERROR_PROC_NOT_FOUND, message.c_str());
-                        }
+                            Log("\tInjected into current process: %ls\n", path.c_str());
 
-                        auto transaction = detours::transaction();
-                        check_win32(::DetourUpdateThread(::GetCurrentThread()));
+                            auto initialize = reinterpret_cast<PSFInitializeProc>(::GetProcAddress(fixup.module_handle, "PSFInitialize"));
+                            if (!initialize)
+                            {
+                                auto message = "PSFInitialize export not found in "s + narrow(path.c_str());
+                                throw_win32(ERROR_PROC_NOT_FOUND, message.c_str());
+                            }
+                            auto uninitialize = reinterpret_cast<PSFUninitializeProc>(::GetProcAddress(fixup.module_handle, "PSFUninitialize"));
+                            if (!uninitialize)
+                            {
+                                auto message = "PSFUninitialize export not found in "s + narrow(path.c_str());
+                                throw_win32(ERROR_PROC_NOT_FOUND, message.c_str());
+                            }
 
-                        // Only set the uninitialize pointer if the transaction commits successfully since that's our cue to clean
-                        // it up, which will attempt to call DetourDetach
-                        check_win32(initialize());
-                        transaction.commit();
-                        fixup.uninitialize = uninitialize;
+                            auto transaction = detours::transaction();
+                            check_win32(::DetourUpdateThread(::GetCurrentThread()));
+
+                            // Only set the uninitialize pointer if the transaction commits successfully since that's our cue to clean
+                            // it up, which will attempt to call DetourDetach
+                            check_win32(initialize());
+                            transaction.commit();
+                            fixup.uninitialize = uninitialize;
+                        }
                     }
                 }
             }
@@ -315,7 +339,9 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID) noexcept try
     }
 #endif
 
+#if _DEBUG
     Log("PsfRuntime: In DllMain Pid=%d Tid=%d", GetCurrentProcessId(), GetCurrentThreadId());
+#endif
     // Per detours documentation, immediately return true if running in a helper process
     if (::DetourIsHelperProcess())
     {

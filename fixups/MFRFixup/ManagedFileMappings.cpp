@@ -9,6 +9,10 @@
 #include "PathUtilities.h"
 #include <psf_logging.h>
 
+#if _DEBUG
+//#define MOREDEBUG 1
+#endif
+
 namespace mfr
 {
 
@@ -28,6 +32,9 @@ namespace mfr
 
         FID_Initialize(); 
 
+#if MOREDEBUG
+        Log("\t\tMFRFixup Initialize_MFR_Mappings: post FID");
+#endif  
 
         g_MfrFolderMappings.push_back(mfr::mfr_folder_mapping {  /*Valid_mapping =*/ true, /*IsAnExclusionToRedirect =*/ false,
                                                                 /*NativePathBase =*/ FID_System32 / LR"(catroot2)"sv,
@@ -37,6 +44,7 @@ namespace mfr
                                                                 /*DoesRuntimeMapNativeToVFS =*/ true,
                                                                 /*RedirectedPathBase =*/g_writablePackageRootPath / L"VFS"sv / L"AppVSystem32Catroot2"sv,
                                                                 /*RedirectionFlags =*/ mfr::mfr_redirect_flags::prefer_redirection_containerized });
+
 
         g_MfrFolderMappings.push_back(mfr::mfr_folder_mapping{ true, false, 
                                                                 FID_System32 / LR"(catroot)"sv,       
@@ -252,6 +260,14 @@ namespace mfr
                                                                 g_writablePackageRootPath / L"VFS"sv / L"LocalAppDataLow"sv,
                                                                 mfr::mfr_redirect_flags::prefer_redirection_containerized });
         g_MfrFolderMappings.push_back(mfr::mfr_folder_mapping{ true, true,
+                                                                FID_LocalAppData / LR"(Temp)"sv,
+                                                                L"Local AppData\\Temp",
+                                                                L"Local AppData\\Temp",
+                                                                g_packageVfsRootPath / L"Local AppData"sv / L"Temp"sv,
+                                                                false,
+                                                                g_writablePackageRootPath / L"VFS"sv / L"Local AppData"sv / L"Temp"sv,
+                                                                mfr::mfr_redirect_flags::prefer_redirection_containerized });
+        g_MfrFolderMappings.push_back(mfr::mfr_folder_mapping{ true, true,
                                                                 FID_LocalAppData / LR"(Microsoft)"sv / LR"(Windows)"sv,
                                                                 L"Local AppData\\Microsoft\\Windows",
                                                                 L"Local AppData\\Microsoft\\Windows",
@@ -298,6 +314,14 @@ namespace mfr
                                                                 g_packageVfsRootPath / L"AppData"sv,
                                                                 false,
                                                                 g_writablePackageRootPath / L"VFS"sv / L"AppData"sv,
+                                                                mfr::mfr_redirect_flags::prefer_redirection_containerized });
+        g_MfrFolderMappings.push_back(mfr::mfr_folder_mapping{ true, false,
+                                                                FID_UserProgramFiles,
+                                                                L"UserProgramFiles",
+                                                                L"UserProgramFiles",
+                                                                g_packageVfsRootPath / L"UserProgramFiles"sv,
+                                                                false,
+                                                                g_writablePackageRootPath / L"VFS"sv / L"UserProgramFiles"sv,
                                                                 mfr::mfr_redirect_flags::prefer_redirection_containerized });
 
         g_MfrFolderMappings.push_back(mfr::mfr_folder_mapping{ true, false,
@@ -397,8 +421,8 @@ namespace mfr
                                                                 false,
                                                                 g_writablePackageRootPath,
                                                                 mfr::mfr_redirect_flags::prefer_redirection_containerized});
-#if _DEBUG
-        //Log(L" MFR_Mappings initialized.");
+#if MOREDEBUG
+        Log(L" MFR_Mappings initialized.");
 #endif
     } // Initialize_MFR_Mappings()
 

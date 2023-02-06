@@ -83,6 +83,14 @@ std::wstring CanReplaceWithVFS(const std::wstring input)
     try
     {
         testpath = psf::known_folder(FOLDERID_LocalAppData);
+        std::filesystem::path testuserprogramspath = testpath / L"Programs";
+        if (findStringIC(input, testuserprogramspath))
+        {
+            // Getting known folder on FOLDERID_UserProgramFiles guid causes an exception.
+            output = ((std::wstring)l_PackageRootPath.c_str()) + L"\\VFS\\UserProgramFiles" + input.substr(testuserprogramspath.wstring().length()).c_str();
+            return output;
+        }
+
         if (findStringIC(input, testpath))
         {
             output = ((std::wstring)l_PackageRootPath.c_str()) + L"\\VFS\\Local AppData" + input.substr(testpath.wstring().length()).c_str();

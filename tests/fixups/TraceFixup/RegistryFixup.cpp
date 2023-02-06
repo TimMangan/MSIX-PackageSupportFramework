@@ -51,7 +51,7 @@ std::string InterpretKeyPath(HKEY key, const char* msg = "Key")
                 sret = InterpretCountedString(msg, info->Name, info->NameLength / 2);
             }
             else
-                sret = "InterpretKeyPath failure2";
+                sret = "InterpretKeyPath failure2d";
         }
         else if (status == STATUS_INVALID_HANDLE)
         {
