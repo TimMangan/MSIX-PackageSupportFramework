@@ -9,9 +9,9 @@ ideas:
 	   for non-mapped native folders.
 *  SPC seems to immedietly fail PsfLauncher if Ilv is set in package.
  
- v.Next
+ v.2023.02.05
  * MFR: Add UserProgramFiles to the VFS Traditional mappings.
- * MFR: Fix IsCreateForChange to consider FILE_ALL_ACCESS before BACKUP_SEMANTICS (unsure I want to do this).
+ * MFR: Fix IsCreateForChange to consider FILE_ALL_ACCESS before BACKUP_SEMANTICS.
  * MFR: Potential fix for CreateFile,CreateFile2 only - and only on redir case, to try package directly. (Spyder).
  * Launcher: Add UserProgramFiles to ArgumentVirtualization List
  * MFR: Add intercept to kerbase.dll version of MoveFileExW as the kernel32.dll version may be bypassed (Audacity).
