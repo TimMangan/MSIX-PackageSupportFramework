@@ -240,7 +240,7 @@ To apply an override to change the local redirections to traditional or disabled
 ...
 ```
 
-To apply an override to prevent binary files to be written to the redirection area, this might be used:
+To apply a configuration to assume InstalledLocationVirtualization and override to enable binary files to be written to the redirection area, this might be used:
 
 ```
 ...
@@ -248,7 +248,8 @@ To apply an override to prevent binary files to be written to the redirection ar
         {
           "dll": "MFRFixup.dll",
           "config": {
-            "overrideCOW": "disablePe"
+            "ilvAware": "true",
+            "overrideCOW": "enablePe"
            }
         }
 ]
