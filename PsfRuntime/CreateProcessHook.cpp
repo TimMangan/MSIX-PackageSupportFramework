@@ -1047,12 +1047,11 @@ BOOL WINAPI CreateProcessFixup(
 #if _DEBUG
         Log(L"\t[%d] CreateProcessFixup: Use runtime %ls", CreateProcessInstance, wtargetDllName.c_str());
 #endif
-        ///static const auto pathToPsfRuntime = (PackageRootPath() / wtargetDllName.c_str()).string();
         static std::string pathToPsfRuntime;
         if (g_PsfRunTimeModulePath[0] != 0x0)
         {
             std::filesystem::path RuntimePath = g_PsfRunTimeModulePath;
-            pathToPsfRuntime = RuntimePath.string();
+            pathToPsfRuntime = (RuntimePath.parent_path() / wtargetDllName.c_str()).string();
         }
         else
         {
