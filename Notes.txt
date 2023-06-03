@@ -9,6 +9,10 @@ ideas:
 	   for non-mapped native folders.
 *  SPC seems to immedietly fail PsfLauncher if Ilv is set in package.
  
+ v.next
+ * PsfRuntime: Fix issue with mixed bit processes and injection of PsfRuntime into new process when the Psf components are not located in the 
+   root folder of the package (i.e. PsfTooling was used).
+
  v.2023.02.05
  * MFR: Add UserProgramFiles to the VFS Traditional mappings.
  * MFR: Fix IsCreateForChange to consider FILE_ALL_ACCESS before BACKUP_SEMANTICS.
