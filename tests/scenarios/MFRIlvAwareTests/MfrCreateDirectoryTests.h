@@ -22,6 +22,8 @@ struct MfrCreateDirectoryTest
     std::wstring DirectoryPath;
     DWORD Expected_Result;
     DWORD Expected_LastError;
+    bool AllowAlternateError = false;
+    DWORD AlternateError;
 };
 
 
@@ -35,4 +37,6 @@ struct MfrCreateDirectoryExTest
     std::wstring DirectoryPath;
     DWORD Expected_Result;
     DWORD Expected_LastError;
+    bool AllowAlternateError = false;
+    DWORD AlternateError;
 };

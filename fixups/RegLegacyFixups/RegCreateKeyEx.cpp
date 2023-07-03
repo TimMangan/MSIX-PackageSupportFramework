@@ -101,7 +101,7 @@ LSTATUS __stdcall RegCreateKeyExFixup(
         else
         {
 #ifdef _DEBUG
-            Log("[%d] RegCreateKeyEx result=SUCCESS", RegLocalInstance);
+            Log("[%d] RegCreateKeyEx result=SUCCESS key=0x%x", RegLocalInstance,key);
 #endif
         }
     }

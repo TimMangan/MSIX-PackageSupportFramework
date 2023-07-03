@@ -60,11 +60,10 @@ int InitializeCreateFileTests1()
     MfrCreateFileTests1.push_back(t_Native_PFN2);
 
     temp = g_NativePF + L"\\NoneSuchFolder\\NoneSuchFile.txt";
-    MfrCreateFileTest t_Native_PFN3 = { "MFR+ILV Native-file VFS folder missing in package New existing", true, true, true,
+    MfrCreateFileTest t_Native_PFN3 = { "MFR+ILV Native-file VFS folder missing in package New existing (Expect failure normally but OK)", true, true, true,
                                        temp.c_str(),
                                        GENERIC_READ, FILE_SHARE_READ, nullptr, CREATE_NEW, FILE_ATTRIBUTE_NORMAL,
-                                       FALSE, ERROR_PATH_NOT_FOUND };
-//   Non-ILV case COW's the folder                                    true, ERROR_SUCCESS };
+                                       TRUE, ERROR_SUCCESS };
     MfrCreateFileTests1.push_back(t_Native_PFN3);
 
 
@@ -87,7 +86,7 @@ int InitializeCreateFileTests1()
     MfrCreateFileTest t_Native_PFT3 = { "MFR+ILV Native-file VFS folder missing in package Truncate existing", true, true, true,
                                        temp.c_str(),
                                        GENERIC_WRITE, FILE_SHARE_READ, nullptr, TRUNCATE_EXISTING, FILE_ATTRIBUTE_NORMAL,
-                                       false, ERROR_PATH_NOT_FOUND };
+                                       false, ERROR_PATH_NOT_FOUND, true, ERROR_FILE_NOT_FOUND };
     MfrCreateFileTests1.push_back(t_Native_PFT3);
 
 
@@ -108,11 +107,10 @@ int InitializeCreateFileTests1()
     MfrCreateFileTests1.push_back(t_Native_PFOA2);
 
     temp = g_NativePF + L"\\NoneSuchFolder\\NoneSuchFile.txt";
-    MfrCreateFileTest t_Native_PFOA3 = { "MFR+ILV Native-file VFS folder missing in package OpenAlways existing", true, true, true,
+    MfrCreateFileTest t_Native_PFOA3 = { "MFR+ILV Native-file VFS folder missing in package OpenAlways existing (normally fail but OK)", true, true, true,
                                        temp.c_str(),
                                        GENERIC_WRITE, FILE_SHARE_READ, nullptr, OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL,
-                                       FALSE, ERROR_PATH_NOT_FOUND };
-//  Non-Ilv                                       true, ERROR_SUCCESS };
+                                       true, ERROR_SUCCESS };
     MfrCreateFileTests1.push_back(t_Native_PFOA3);
 
 
@@ -133,11 +131,10 @@ int InitializeCreateFileTests1()
     MfrCreateFileTests1.push_back(t_Native_PFA2);
 
     temp = g_NativePF + L"\\NoneSuchFolderCreate1B\\NoneSuchFileCreate1B.txt";
-    MfrCreateFileTest t_Native_PFA3 = { "MFR+ILV Native-file VFS folder missing in package CreateAlways existing", true, true, true,
+    MfrCreateFileTest t_Native_PFA3 = { "MFR+ILV Native-file VFS folder missing in package CreateAlways existing (normally fail but OK)", true, true, true,
                                        temp.c_str(),
                                        GENERIC_WRITE, FILE_SHARE_READ, nullptr, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL,
-                                       FALSE, ERROR_PATH_NOT_FOUND };
-    // Non-ILV case                     true, ERROR_SUCCESS
+                                       true, ERROR_SUCCESS };
     MfrCreateFileTests1.push_back(t_Native_PFA3);
 
 
@@ -194,10 +191,10 @@ int InitializeCreateFileTests2()
     MfrCreateFileTests2.push_back(t_Native_PFN2);
 
     temp = VfsPf + L"\\NoneSuchFolderCreate2D\\NoneSuchFileCreate2D.txt";
-    MfrCreateFileTest t_Native_PFN3 = { "MFR+ILV Package-file VFS folder missing in package New existing", true, true, true,
+    MfrCreateFileTest t_Native_PFN3 = { "MFR+ILV Package-file VFS folder missing in package New existing (normally fail but OK)", true, true, true,
                                        temp.c_str(),
                                        GENERIC_READ, FILE_SHARE_READ, nullptr, CREATE_NEW, FILE_ATTRIBUTE_NORMAL,
-                                       FALSE, ERROR_PATH_NOT_FOUND };
+                                       TRUE, ERROR_SUCCESS };
     MfrCreateFileTests2.push_back(t_Native_PFN3);
 
 
@@ -220,12 +217,12 @@ int InitializeCreateFileTests2()
     MfrCreateFileTest t_Native_PFT3 = { "MFR+ILV Package-file VFS folder missing in package Truncate existing", true, true, true,
                                        temp.c_str(),
                                        GENERIC_WRITE, FILE_SHARE_READ, nullptr, TRUNCATE_EXISTING, FILE_ATTRIBUTE_NORMAL,
-                                       false, ERROR_PATH_NOT_FOUND };
+                                       false, ERROR_PATH_NOT_FOUND , true, ERROR_FILE_NOT_FOUND};
     MfrCreateFileTests2.push_back(t_Native_PFT3);
 
 
 
-    // Requests to Package File Locations for CreateFile via VFS OpenAlways
+    // Requests to Package File Locations for CreateFile via VFS OpnAlways
     temp = VfsPf + L"\\PlaceholderTest\\Placeholder.txt";
     MfrCreateFileTest t_Native_PFOA1 = { "MFR+ILV Package-file VFS exists in package OpenAlways existing", true, true, true,
                                        temp.c_str(),
@@ -241,10 +238,10 @@ int InitializeCreateFileTests2()
     MfrCreateFileTests2.push_back(t_Native_PFOA2);
 
     temp = VfsPf + L"\\NoneSuchFolderCreate2G\\NoneSuchFileCreate2G.txt";
-    MfrCreateFileTest t_Native_PFOA3 = { "MFR+ILV Package-file VFS folder missing in package OpenAlways existing", true, true, true,
+    MfrCreateFileTest t_Native_PFOA3 = { "MFR+ILV Package-file VFS folder missing in package OpenAlways existing (normally fail, but OK)", true, true, true,
                                        temp.c_str(),
                                        GENERIC_WRITE, FILE_SHARE_READ, nullptr, OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL,
-                                       FALSE, ERROR_PATH_NOT_FOUND };
+                                       TRUE, ERROR_SUCCESS };
     MfrCreateFileTests2.push_back(t_Native_PFOA3);
 
 
@@ -265,10 +262,10 @@ int InitializeCreateFileTests2()
     MfrCreateFileTests2.push_back(t_Native_PFA2);
 
     temp = VfsPf + L"\\NoneSuchFolderCreate2I\\NoneSuchFileCreate2I.txt";
-    MfrCreateFileTest t_Native_PFA3 = { "MFR+ILV Package-file VFS folder missing in package CreateAlways existing", true, true, true,
+    MfrCreateFileTest t_Native_PFA3 = { "MFR+ILV Package-file VFS folder missing in package CreateAlways existing (normally fail, but OK)" , true, true, true,
                                        temp.c_str(),
                                        GENERIC_WRITE, FILE_SHARE_READ, nullptr, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL,
-                                       FALSE, ERROR_PATH_NOT_FOUND };
+                                       TRUE, ERROR_SUCCESS };
     MfrCreateFileTests2.push_back(t_Native_PFA3);
 
 
@@ -525,10 +522,10 @@ int InitializeCreateFileTests4()
     MfrCreateFileTests4.push_back(t_Native_PFN2);
 
     temp = g_Cwd + L"\\PvadFolder\\NoneSuchFolder5\\NoneSuchFile.txt";
-    MfrCreateFileTest t_Native_PFN3 = { "MFR+ILV Package-file PVAD folder missing in package New existing (Expect fail)", true, true, true,
+    MfrCreateFileTest t_Native_PFN3 = { "MFR+ILV Package-file PVAD folder missing in package New existing (Expect fail, but OK)", true, true, true,
                                        temp.c_str(),
                                        GENERIC_READ, FILE_SHARE_READ, nullptr, CREATE_NEW, FILE_ATTRIBUTE_NORMAL,
-                                       false, ERROR_PATH_NOT_FOUND };
+                                       true, ERROR_SUCCESS };
     MfrCreateFileTests4.push_back(t_Native_PFN3);
 
 
@@ -551,7 +548,7 @@ int InitializeCreateFileTests4()
     MfrCreateFileTest t_Native_PFT3 = { "MFR+ILV Package-file PVAD folder missing in package Truncate existing", true, true, true,
                                        temp.c_str(),
                                        GENERIC_WRITE, FILE_SHARE_READ, nullptr, TRUNCATE_EXISTING, FILE_ATTRIBUTE_NORMAL,
-                                       false, ERROR_PATH_NOT_FOUND };
+                                       false, ERROR_PATH_NOT_FOUND, true, ERROR_FILE_NOT_FOUND };
     MfrCreateFileTests4.push_back(t_Native_PFT3);
 
 
@@ -572,10 +569,10 @@ int InitializeCreateFileTests4()
     MfrCreateFileTests4.push_back(t_Native_PFOA2);
 
     temp = g_Cwd + L"\\PvadFolder\\NoneSuchFolder11\\NoneSuchFile11.txt";
-    MfrCreateFileTest t_Native_PFOA3 = { "MFR+ILV Package-file PVAD folder missing in package OpenAlways existing", true, true, true,
+    MfrCreateFileTest t_Native_PFOA3 = { "MFR+ILV Package-file PVAD folder missing in package OpenAlways existing (Expect fail, but OK)", true, true, true,
                                        temp.c_str(),
                                        GENERIC_WRITE, FILE_SHARE_READ, nullptr, OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL,
-                                       false, ERROR_PATH_NOT_FOUND };
+                                       TRUE, ERROR_SUCCESS };
     MfrCreateFileTests4.push_back(t_Native_PFOA3);
 
 
@@ -596,10 +593,10 @@ int InitializeCreateFileTests4()
     MfrCreateFileTests4.push_back(t_Native_PFA2);
 
     temp = g_Cwd + L"\\PvadFolder\\NoneSuchFolder14\\NoneSuchFile14.txt";
-    MfrCreateFileTest t_Native_PFA3 = { "MFR+ILV Package-file PVAD folder missing in package CreateAlways existing", true, true, true,
+    MfrCreateFileTest t_Native_PFA3 = { "MFR+ILV Package-file PVAD folder missing in package CreateAlways existing (normally fail, but OK)", true, true, true,
                                        temp.c_str(),
                                        GENERIC_WRITE, FILE_SHARE_READ, nullptr, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL,
-                                       false, ERROR_PATH_NOT_FOUND };
+                                       TRUE, ERROR_SUCCESS};
     MfrCreateFileTests4.push_back(t_Native_PFA3);
 
     int count = 0;

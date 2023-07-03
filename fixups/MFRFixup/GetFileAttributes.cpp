@@ -112,7 +112,7 @@ DWORD __stdcall GetFileAttributesFixup(_In_ const CharT* fileName) noexcept
                             if (!cohorts.map.IsAnExclusionToRedirect)
                             {
                                 // try the request path, which must be the local redirected version by definition, and then a package equivalent = 
-                                WRAPPER_GETFILEATTRIBUTES(cohorts.WsRedirected, debug, moreDebug, L"WsRedirected");  // returns if successful.
+                                    WRAPPER_GETFILEATTRIBUTES(cohorts.WsRedirected, debug, moreDebug, L"WsRedirected");  // returns if successful.                                
                             }
                             WRAPPER_GETFILEATTRIBUTES(cohorts.WsPackage, debug, moreDebug, L"WsPackage");  // returns if successful.
 
@@ -204,8 +204,7 @@ DWORD __stdcall GetFileAttributesFixup(_In_ const CharT* fileName) noexcept
                         case mfr::mfr_redirect_flags::prefer_redirection_local:
                             if (!cohorts.map.IsAnExclusionToRedirect)
                             {
-                                // try the request path, which must be the local redirected version by definition, and then a package equivalent.
-                                WRAPPER_GETFILEATTRIBUTES(cohorts.WsRedirected, debug, moreDebug, L"WsRedirected");   // returns if successful.
+                                WRAPPER_GETFILEATTRIBUTES(cohorts.WsRedirected, debug, moreDebug, L"WsRedirected");   // returns if successful.                              
                             }
 
                             WRAPPER_GETFILEATTRIBUTES(cohorts.WsPackage, debug, moreDebug, L"WsPackage");   // returns if successful.
@@ -318,8 +317,13 @@ DWORD __stdcall GetFileAttributesFixup(_In_ const CharT* fileName) noexcept
                 // ILV
                 std::wstring UseFile = DetermineIlvPathForReadOperations(cohorts, dllInstance, moreDebug);
                 // In a redirect to local scenario, we are responsible for determing if source is local or in package
+#if _DEBUG
+                Log(L"[%d] GetFileAttributes in ILV Mode using %s", dllInstance, UseFile.c_str());
+#endif
                 UseFile = SelectLocalOrPackageForRead(UseFile, cohorts.WsPackage);
-
+#if _DEBUG
+                Log(L"[%d] GetFileAttributes in ILV Mode now using %s", dllInstance, UseFile.c_str());
+#endif
                 WRAPPER_GETFILEATTRIBUTES(UseFile, debug, moreDebug, L"IlvMode");  // returns if successful.
                 return retfinal;
             }

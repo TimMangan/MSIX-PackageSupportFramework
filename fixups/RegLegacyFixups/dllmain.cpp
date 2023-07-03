@@ -5,7 +5,7 @@
 //-------------------------------------------------------------------------------------------------------
 #include "pch.h"
 
-#define PSF_DEFINE_EXPORTS
+///#define PSF_DEFINE_EXPORTS
 #include <psf_framework.h>
 #include <psf_logging.h>
 
@@ -17,7 +17,31 @@ void InitializeFixups();
 void InitializeConfiguration();
 
 extern "C" {
+    int __stdcall PSFInitialize() noexcept try
+    {
+#if _DEBUG
+        int count = psf::attach_count_all();
+        Log(L"[0] RegLegacyFixup attaches %d fixups.", count);
+#else
+        psf::attach_all();
+#endif
+        return ERROR_SUCCESS;
+    }
+    catch (...)
+    {
+        return win32_from_caught_exception();
+    }
 
+
+    int __stdcall PSFUninitialize() noexcept try
+    {
+        psf::detach_all();
+        return ERROR_SUCCESS;
+    }
+    catch (...)
+    {
+        return win32_from_caught_exception();
+    }
 
 #ifdef _M_IX86
 #pragma comment(linker, "/EXPORT:PSFInitialize=_PSFInitialize@0")

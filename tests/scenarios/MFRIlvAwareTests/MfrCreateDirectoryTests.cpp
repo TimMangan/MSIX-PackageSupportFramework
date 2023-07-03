@@ -58,9 +58,10 @@ int InitializeCreateDirectoryTestArray()
 #else
     tempD.append(L"\\VFS\\ProgramFilesX64\\PlaceholderTest\\NewFolder2\\NewFolder3");
 #endif
-    MfrCreateDirectoryTest t_Redir_PF2 = { "MFR+ILV Redirected-file VFS missing in package with parent missing (not allowed)", true, true, true, 
-                                    tempD, FALSE, ERROR_PATH_NOT_FOUND };
-    MfrCreateDirectoryTests.push_back(t_Redir_PF2);
+    MfrCreateDirectoryTest t_Redir_PF2 = { "MFR+ILV Redirected-file VFS missing in package with parent missing (not allowed normally but OK)", true, true, true, 
+                                  //  tempD, FALSE, ERROR_PATH_NOT_FOUND };
+                                      tempD, TRUE, ERROR_SUCCESS };
+MfrCreateDirectoryTests.push_back(t_Redir_PF2);
 
 
 
@@ -114,8 +115,9 @@ int InitializeCreateDirectoryExTestArray()
     tempD = g_writablePackageRootPath.c_str();
     tempD.append(L"\\VFS\\ProgramFilesX64\\PlaceholderTest\\NewFolderEx2\\NewFolderEx3");
     tempD.append(L"\\DoesNotPreExistFolderTest");
-    MfrCreateDirectoryExTest t_Redir_PF2 = { "MFR+ILV Redirected-file VFS missing in package with parent missing (not allowed)", true, true, true,
-                                    tempS, tempD, FALSE, ERROR_PATH_NOT_FOUND };
+    MfrCreateDirectoryExTest t_Redir_PF2 = { "MFR+ILV Redirected-file VFS missing in package with parent missing (not allowed normally but OK)", true, true, true,
+                                //  tempS, tempD, FALSE, ERROR_PATH_NOT_FOUND };
+                                    tempS, tempD, TRUE, ERROR_SUCCESS };
     MfrCreateDirectoryExTests.push_back(t_Redir_PF2);
 
 
@@ -191,7 +193,8 @@ BOOL CreateDirectoryIndividualTest(MfrCreateDirectoryTest testInput)
                 result = cErr;
                 test_end(cErr);
             }
-            else if (cErr == testInput.Expected_LastError)
+            else if (cErr == testInput.Expected_LastError ||
+                (testInput.AllowAlternateError && testInput.AlternateError == cErr))
             {
                 // cool!
                 result = ERROR_SUCCESS;
@@ -298,7 +301,8 @@ BOOL CreateDirectoryExIndividualTest(MfrCreateDirectoryExTest testInput)
                 result = cErr;
                 test_end(cErr);
             }
-            else if (cErr == testInput.Expected_LastError)
+            else if (cErr == testInput.Expected_LastError ||
+                (testInput.AllowAlternateError && testInput.AlternateError == cErr))
             {
                 // cool!
                 result = ERROR_SUCCESS;

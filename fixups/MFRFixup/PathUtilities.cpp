@@ -280,6 +280,10 @@ bool PathParentExists(const wchar_t* path)
 /// <param name="filepath"></param>
 void PreCreateFolders(std::wstring filepath, [[maybe_unused]] DWORD dllInstance, [[maybe_unused]] std::wstring DebugMessage)
 {
+#if _DEBUG
+    Log(L"[%d] PreCreateFolders[%s] %s", dllInstance, DebugMessage.c_str(), filepath.c_str());
+#endif
+
     std::wstring notlongfilepath = MakeNotLongPath(filepath);
     mfr::mfr_path mfr = mfr::create_mfr_path(notlongfilepath);
 
@@ -322,7 +326,7 @@ void PreCreateFolders(std::wstring filepath, [[maybe_unused]] DWORD dllInstance,
             else if (mfr.Request_MfrPathType == mfr::mfr_path_types::in_redirection_area_writablepackageroot)
             {
                 // Skip recreating the folders below WritablePackageRoot folder (must create WritablePackageRoot to be sure).
-                if (notlongfilepath.length() > g_writablePackageRootPath.wstring().length())
+                if (notlongfilepath.length() >= g_writablePackageRootPath.wstring().length())
                 {
                     if (!PathExists(notlongfilepath.c_str()))
                     {
@@ -395,7 +399,7 @@ BOOL Cow(std::wstring from, std::wstring to, [[maybe_unused]] int dllInstance, [
         break;
     }
     // We may need to pre-create mising directories for the destination in the redirection area
-    PreCreateFolders(to, dllInstance, DebugString);
+    PreCreateFolders(to, dllInstance, DebugString.append(L" via Cow"));
 
     std::wstring RdlTo = MakeLongPath(to);
     std::wstring RdlFrom = MakeLongPath(from);

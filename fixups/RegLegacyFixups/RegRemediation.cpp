@@ -133,6 +133,7 @@ REGSAM RegFixupSam(std::string keypath, REGSAM samDesired, DWORD RegLocalInstanc
 #ifdef _DEBUG
                                             Log(L"[%d]   RegFixupSam: Full2RW\n", RegLocalInstance);
 #endif
+                                            return samModified;
                                         }
                                         break;
                                     case Modify_Key_Access_Type_Full2MaxAllowed:
@@ -148,6 +149,7 @@ REGSAM RegFixupSam(std::string keypath, REGSAM samDesired, DWORD RegLocalInstanc
 #ifdef _DEBUG
                                             Log(L"[%d]   RegFixupSam: Full2MaxAllowed\n", RegLocalInstance);
 #endif                                    
+                                            return samModified;
                                         }
                                         break;
                                     case Modify_Key_Access_Type_Full2R:
@@ -159,6 +161,7 @@ REGSAM RegFixupSam(std::string keypath, REGSAM samDesired, DWORD RegLocalInstanc
 #ifdef _DEBUG
                                             Log(L"[%d]   RegFixupSam: Full2R\n", RegLocalInstance);
 #endif
+                                            return samModified;
                                         }
                                         break;
                                     case Modify_Key_Access_Type_RW2R:
@@ -169,6 +172,7 @@ REGSAM RegFixupSam(std::string keypath, REGSAM samDesired, DWORD RegLocalInstanc
 #ifdef _DEBUG
                                             Log(L"[%d]   RegFixupSam: RW2R\n", RegLocalInstance);
 #endif
+                                            return samModified;
                                         }
                                         break;
                                     case Modify_Key_Access_Type_RW2MaxAllowed:
@@ -184,15 +188,15 @@ REGSAM RegFixupSam(std::string keypath, REGSAM samDesired, DWORD RegLocalInstanc
 #ifdef _DEBUG
                                             Log(L"[%d]   RegFixupSam: RW2MaxAllowed\n", RegLocalInstance);
 #endif                                    
+                                            return samModified;
                                         }
                                         break;
                                     default:
 #ifdef _DEBUG
-                                        Log(L"[%d]   RegFixupSam: No fixup needed.\n", RegLocalInstance);
+                                        Log(L"[%d]   RegFixupSam: Unknown rule ignored.\n", RegLocalInstance);
 #endif 
                                         break;
                                     }
-                                    return samModified;
                                 }
                             }
                             catch (...)
@@ -246,6 +250,7 @@ REGSAM RegFixupSam(std::string keypath, REGSAM samDesired, DWORD RegLocalInstanc
 #ifdef _DEBUG
                                             Log(L"[%d]   RegFixupSam: Full2RW\n", RegLocalInstance);
 #endif
+                                            return samModified;
                                         }
                                         break;
                                     case Modify_Key_Access_Type_Full2R:
@@ -257,6 +262,7 @@ REGSAM RegFixupSam(std::string keypath, REGSAM samDesired, DWORD RegLocalInstanc
 #ifdef _DEBUG
                                             Log(L"[%d]   RegFixupSam: Full2R\n", RegLocalInstance);
 #endif
+                                            return samModified;
                                         }
                                         break;
                                     case Modify_Key_Access_Type_Full2MaxAllowed:
@@ -269,6 +275,7 @@ REGSAM RegFixupSam(std::string keypath, REGSAM samDesired, DWORD RegLocalInstanc
 #ifdef _DEBUG
                                             Log(L"[%d]   RegFixupSam: Full2MaxAllowed\n", RegLocalInstance);
 #endif                                    
+                                            return samModified;
                                         }
                                         break;
                                     case Modify_Key_Access_Type_RW2R:
@@ -280,6 +287,7 @@ REGSAM RegFixupSam(std::string keypath, REGSAM samDesired, DWORD RegLocalInstanc
 #ifdef _DEBUG
                                             Log(L"[%d]   RegFixupSam: RW2R\n", RegLocalInstance);
 #endif
+                                            return samModified;
                                         }
                                         break;
                                     case Modify_Key_Access_Type_RW2MaxAllowed:
@@ -292,15 +300,15 @@ REGSAM RegFixupSam(std::string keypath, REGSAM samDesired, DWORD RegLocalInstanc
 #ifdef _DEBUG
                                             Log(L"[%d]   RegFixupSam: RW2MaxAllowed\n", RegLocalInstance);
 #endif                                    
+                                            return samModified;
                                         }
                                         break;
                                     default:
 #ifdef _DEBUG
-                                        Log(L"[%d]   RegFixupSam: No fixup needed.\n", RegLocalInstance);
+                                        Log(L"[%d]   RegFixupSam: Unknown rule ignored.\n", RegLocalInstance);
 #endif   
                                         break;
                                     }
-                                    return samModified;
                                 }
                             }
                             catch (...)

@@ -7,7 +7,7 @@
 // Microsoft documentation on this API: https://docs.microsoft.com/en-us/windows/win32/api/fileapi/nf-fileapi-createfile2
 
 #if _DEBUG
-//#define MOREDEBUG 1
+//#define MOREDEBUG 1 
 #endif
 
 #include <errno.h>
@@ -95,6 +95,8 @@ HRESULT __stdcall CopyFile2Fixup(
                     if (cohortsNew.map.Valid_mapping && !cohortsNew.map.IsAnExclusionToRedirect)
                     {
                         newFileWsRedirected = cohortsNew.WsRedirected;
+                        // TODO: CopyFile precreates folders here, why not CopyFIle2? and other cases
+                        //PreCreateFolders(newFileWsRedirected, dllInstance, L"CopyFile2Fixup");
                     }
                     else
                     {
@@ -315,6 +317,9 @@ HRESULT __stdcall CopyFile2Fixup(
             {
                 // ILV
                 std::wstring usePathNew = DetermineIlvPathForWriteOperations(cohortsNew, dllInstance, moredebug);
+#if MOREDEBUG
+                LogString(dllInstance, L"CopyFile2Fixup ILV UseTo", usePathNew.c_str());
+#endif
                 // In a redirect to local scenario, we are responsible for pre-creating the local parent folders
                 // if-and-only-if they are present in the package.
                 PreCreateLocalFoldersIfNeededForWrite(usePathNew, cohortsNew.WsPackage, dllInstance, debug, L"CopyFile2Fixup");
@@ -326,6 +331,9 @@ HRESULT __stdcall CopyFile2Fixup(
                 std::wstring usePathExisting = DetermineIlvPathForReadOperations(cohortsExisting, dllInstance, moredebug);
                 // In a redirect to local scenario, we are responsible for determing if source is local or in package
                 usePathExisting = SelectLocalOrPackageForRead(usePathExisting, cohortsExisting.WsPackage);
+#if MOREDEBUG
+                LogString(dllInstance, L"CopyFile2Fixup ILV UseFrom", usePathExisting.c_str());
+#endif
 
                 WRAPPER_COPYFILE2(usePathExisting, usePathNew, extendedParameters, debug, moredebug);
             }

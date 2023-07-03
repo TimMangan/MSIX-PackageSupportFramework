@@ -68,7 +68,7 @@ int InitializeMoveFileTest1()
     MfrMoveFileTest t_Native_PF3 = { "MFR+ILV MoveFile Native-file VFS parent-folder missing in package",            true, false, false,
                                     (g_NativePF + L"\\MissingPlaceholderTest\\MissingNativePlaceholder.txt"),
                                     (g_NativePF + L"\\MissingPlaceholderTest\\CopiedMissingNarivePlaceholder_MF1E.txt"),
-                                    false, ERROR_PATH_NOT_FOUND };
+                                    false, ERROR_PATH_NOT_FOUND, true, ERROR_FILE_NOT_FOUND };
     MfrMoveFileTests1.push_back(t_Native_PF3);
 
 

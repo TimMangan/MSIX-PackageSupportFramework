@@ -108,7 +108,7 @@ BOOL __stdcall SetFileAttributesFixup(_In_ const CharT* fileName, _In_ DWORD fil
                                     }
                                 }
                                 else if (PathParentExists(cohorts.WsPackage.c_str()))
-                                {
+                                { 
                                     PreCreateFolders(cohorts.WsRedirected.c_str(), dllInstance, L"SetFileAttributes");
                                     retfinal = WRAPPER_SETFILEATTRIBUTES(cohorts.WsRedirected, fileAttributes, dllInstance, debug);
                                     return retfinal;

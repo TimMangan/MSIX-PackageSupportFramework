@@ -87,7 +87,14 @@ LSTATUS __stdcall RegOpenKeyExFixup(
         result = RegOpenKeyExImpl(key, subKey, options, samModified, resultKey);
     }
 #ifdef _DEBUG
-    Log("[%d] RegOpenKeyEx result=%d", RegLocalInstance, result);
+    if (result != ERROR_SUCCESS)
+    {
+        Log("[%d] RegOpenKeyEx result=%d", RegLocalInstance, result);
+    }
+    else
+    {
+        Log("[%d] RegOpenKeyEx result=SUCCESS key=0x%x", RegLocalInstance,key);
+    }
 #endif
 
 #ifdef _DEBUG

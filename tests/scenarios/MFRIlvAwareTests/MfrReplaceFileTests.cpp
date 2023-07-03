@@ -68,7 +68,7 @@ int InitializeReplaceFileTest1()
                                     (g_NativePF + L"\\MissingPlaceholderTestR\\NoSuchFolder5A\\MissingNativePlaceholder5A.txt"),
                                     (g_NativePF + L"\\MissingPlaceholderTestR\\NoSuchFolder5B\\CopiedMissingNarivePlaceholder5B.txt"),
                                     NullBackup, 0,
-                                    false, ERROR_PATH_NOT_FOUND };  // Natively this would have been path not found, but this is reasonable.
+                                    false, ERROR_PATH_NOT_FOUND, true, ERROR_FILE_NOT_FOUND };  // Natively this would have been path not found, but this is reasonable.
     MfrReplaceFileTests1.push_back(t_Native_PF3);
 
 
@@ -133,7 +133,7 @@ int InitializeReplaceFileTest1()
     MfrReplaceFileTests1.push_back(t_Redir_PF2E1);
 
     MfrReplaceFileTest t_Redir_PF2E2 = { "MFR+ILV ReplaceFile Redirected Package-file VFS missing folder in package with file (not allowed)",       true, true, true,
-                                tempNoPath, tempReplacement, NullBackup, 0, false, ERROR_PATH_NOT_FOUND };
+                                tempNoPath, tempReplacement, NullBackup, 0, false, ERROR_PATH_NOT_FOUND, true, ERROR_FILE_NOT_FOUND };
     MfrReplaceFileTests1.push_back(t_Redir_PF2E2);
 
 
