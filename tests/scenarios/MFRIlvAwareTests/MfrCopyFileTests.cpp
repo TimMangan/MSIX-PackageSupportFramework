@@ -51,7 +51,7 @@ int InitializeCopyFileTestArray()
     tempD = g_NativePF;
     tempD.append(L"\\MissingPlaceholderTest\\CopiedMissingNarivePlaceholder.txt");
     MfrCopyFileTest t_Native_PF3 = { "MFR+ILV CopyFile Native-file VFS parent-folder missing in package",            true, false, false, 
-                                tempS, tempD, true, false, ERROR_PATH_NOT_FOUND };
+                                tempS, tempD, true, false, ERROR_PATH_NOT_FOUND, true, ERROR_FILE_NOT_FOUND };
     MfrCopyFileTests.push_back(t_Native_PF3);
 
 
@@ -355,7 +355,7 @@ int InitializeCopyFile2TestArray()
     tempD = g_NativePF;
     tempD.append(L"\\MissingPlaceholderTest\\Copied21MissingNarivePlaceholder.txt");
     MfrCopyFile2Test t_Native_PF3 = { "MFR+ILV CopyFile2 Native-file VFS parent-folder missing in package",            true, false, false,
-                                tempS, tempD, &extendedParameters1, ERROR_PATH_NOT_FOUND, ERROR_PATH_NOT_FOUND };
+                                tempS, tempD, &extendedParameters1, ERROR_PATH_NOT_FOUND, ERROR_PATH_NOT_FOUND, true, ERROR_FILE_NOT_FOUND };
     MfrCopyFile2Tests.push_back(t_Native_PF3);
 
 

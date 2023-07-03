@@ -7,7 +7,7 @@
 // Microsoft documentation: https://docs.microsoft.com/en-us/windows/win32/api/winbase/nf-winbase-copyfile
 
 #if _DEBUG
-//#define MOREDEBUG 1
+//#define MOREDEBUG 1 
 #endif
 
 #include <errno.h>
@@ -474,6 +474,9 @@ BOOL __stdcall CopyFileFixup(_In_ const CharT* existingFileName, _In_ const Char
             {
                 // ILV
                 std::wstring usePathNew = DetermineIlvPathForWriteOperations(cohortsNew, dllInstance, moredebug);
+#if MOREDEBUG
+                LogString(dllInstance, L"CopyFileFixup ILV UseTo", usePathNew.c_str());
+#endif                
                 // In a redirect to local scenario, we are responsible for pre-creating the local parent folders
                 // if-and-only-if they are present in the package.
                 PreCreateLocalFoldersIfNeededForWrite(usePathNew, cohortsNew.WsPackage, dllInstance, debug, L"CopyFileFixup");
@@ -483,6 +486,9 @@ BOOL __stdcall CopyFileFixup(_In_ const CharT* existingFileName, _In_ const Char
                 PreCreatePackageFoldersIfIlvNeededForWrite(usePathNew, dllInstance, debug, L"CopyFileFixup");
 
                 std::wstring usePathExisting = DetermineIlvPathForReadOperations(cohortsExisting, dllInstance, moredebug);
+#if MOREDEBUG
+                LogString(dllInstance, L"CopyFileFixup ILV UseFrom", usePathExisting.c_str());
+#endif
                 // In a redirect to local scenario, we are responsible for determing if source is local or in package
                 usePathExisting = SelectLocalOrPackageForRead(usePathExisting, cohortsExisting.WsPackage);
                 
