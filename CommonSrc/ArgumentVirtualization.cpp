@@ -296,18 +296,21 @@ std::wstring ArgumentVirtualization(const std::wstring input)
         {
             if (findStringIC(input.substr(offset,3), L"C:\\"))
             {
-
+                bool StartsWithSingleQuote = false;
+                bool StartsWithDoubleQuote = false;
                 size_t start = offset;
                 size_t len = std::wstring::npos;
-                if (offset > 0)
+                if (offset != 0)
                 {
                     if (input[offset - 1] == L'\'')
                     {
+                        StartsWithSingleQuote = true;
                         start = offset;
-                        len = input.substr(offset).find_first_of(L'\'');                      
+                        len = input.substr(offset).find_first_of(L'\'');
                     }
                     else if (input[offset - 1] == L'\"')
                     {
+                        StartsWithDoubleQuote = true;
                         start = offset;
                         len = input.substr(offset).find_first_of(L'\"');
                     }
@@ -330,6 +333,7 @@ std::wstring ArgumentVirtualization(const std::wstring input)
                         len = input.length() - start;
                     }
                 }
+
                 if (len != std::wstring::npos)
                 {
                     std::wstring replacement = CanReplaceWithVFS(input.substr(offset,len));
