@@ -46,7 +46,7 @@ HINSTANCE __stdcall ShellExecuteAFixup(_In_opt_ HWND   hwnd,
         {
             if (lpOperation)
             {
-                Log(L"[%d] ShellExecuteA intercepted without alteration. Known compatibility issues exist in certain usages!", dllInstance);
+                Log(L"[%d] ShellExecuteA intercepted, but without fixes. Known compatibility issues exist in certain usages!", dllInstance);
 
                 LogString(dllInstance, L"ShellExecuteA: verb", lpOperation);
             }
@@ -65,7 +65,7 @@ HINSTANCE __stdcall ShellExecuteAFixup(_In_opt_ HWND   hwnd,
     LogString(dllInstance, L"ShellExecuteA: verb", lpOperation);
 
 
-    retfinal = ::ShellExecuteA(hwnd,
+    retfinal = impl::ShellExecuteA(hwnd,
                             lpOperation,
                             lpFile,
                             lpParameters,
@@ -104,7 +104,7 @@ HINSTANCE __stdcall ShellExecuteWFixup(_In_opt_ HWND   hwnd,
         {
             if (lpOperation)
             {
-                Log(L"[%d] ShellExecuteW intercepted without alteration. Known compatibility issues exist in certain usages!", dllInstance);
+                Log(L"[%d] ShellExecuteW intercepted, but without fixes. Known compatibility issues exist in certain usages!", dllInstance);
 
                 LogString(dllInstance, L"ShellExecuteW: verb", lpOperation);
             }
@@ -122,7 +122,7 @@ HINSTANCE __stdcall ShellExecuteWFixup(_In_opt_ HWND   hwnd,
     Log(L"[%d] ShellExecuteW unguarded", dllInstance);
     LogString(dllInstance, L"ShellExecuteW: verb", lpOperation);
 
-    retfinal = ::ShellExecuteW(hwnd,
+    retfinal = impl::ShellExecuteW(hwnd,
         lpOperation,
         lpFile,
         lpParameters,

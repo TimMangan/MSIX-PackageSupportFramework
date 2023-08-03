@@ -50,7 +50,7 @@
             {
                 if ((pExecInfo->fMask & SEE_MASK_WAITFORINPUTIDLE) == 0)  // used at the start of some apps to signal app is ready without any real filepickers
                 {
-                    Log(L"[%d] ShellExecuteExA intercepted without alteration. Known compatibility issues exist in certain usages!", dllInstance);
+                    Log(L"[%d] ShellExecuteExA intercepted, but without fixing. Known compatibility issues exist in certain usages!", dllInstance);
 
                     LogString(dllInstance, L"ShellExecuteExA: verb", pExecInfo->lpVerb);
 #if MOREDEBUG
@@ -73,7 +73,7 @@
 
     LogString(dllInstance, L"ShellExecuteExA: unguarded verb", pExecInfo->lpVerb);
 
-    retfinal = ::ShellExecuteExA(pExecInfo);
+    retfinal = impl::ShellExecuteExA(pExecInfo);
     return retfinal;
 }
  DECLARE_FIXUP(impl::ShellExecuteExA, ShellExecuteExAFixup);
@@ -104,7 +104,7 @@
              {
                  if ((pExecInfo->fMask & SEE_MASK_WAITFORINPUTIDLE) == 0)  // used at the start of some apps to signal app is ready without any real filepickers
                  {
-                     Log(L"[%d] ShellExecuteExW intercepted without alteration. Known compatibility issues exist in certain usages!", dllInstance);
+                     Log(L"[%d] ShellExecuteExW intercepted, but without fixing. Known compatibility issues exist in certain usages!", dllInstance);
 
                      LogString(dllInstance, L"ShellExecuteExW: verb", pExecInfo->lpVerb);
 #if MOREDEBUG
