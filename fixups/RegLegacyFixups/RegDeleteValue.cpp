@@ -38,15 +38,16 @@ LSTATUS __stdcall RegDeleteValueFixup(
                 Log(L"[%d] RegDeleteValue:\n", RegLocalInstance);
 #endif
                 std::string keypath = ReplaceAppRegistrySyntax(InterpretKeyPath(key) + "\\" + InterpretStringA(subValueName));
-#ifdef MOREDEBUG
+#ifdef _DEBUG
                 Log(L"[%d] RegDeleteValue: Path=%s", RegLocalInstance, keypath.c_str());
                 if (RegFixupFakeDelete(keypath, RegLocalInstance) == true)
 #else
                 if (RegFixupFakeDelete(keypath, RegLocalInstance) == true)
 #endif
                 {
-#ifdef MOREDEBUG
+#ifdef _DEBUG
                     Log(L"[%d] RegDeleteValue:Fake Success\n", RegLocalInstance);
+                    LogCallingModule();
 #endif
                     result = 0;
                     LogCallingModule();
