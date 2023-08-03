@@ -31,12 +31,34 @@ inline thread_local psf::reentrancy_guard g_reentrancyGuard;
 namespace impl
 {
     inline auto AddDllDirectory = &::AddDllDirectory;
+    inline auto SetDefaultDllDirectories = &::SetDefaultDllDirectories;
     inline auto SetDllDirectory = psf::detoured_string_function(&::SetDllDirectoryA, &::SetDllDirectoryW);
 }
 
 DWORD g_AddSetDllDirectoryIntceptInstance = 20000;
 
 ///auto AddDllDirectoryImpl = psf::detoured_string_function(nullptr, &::AddDllDirectory);
+
+
+BOOL WINAPI SetDefaultDllDirectoriesFixup(
+    _In_ DWORD DirectoryFlags)  noexcept try
+{
+    auto guard = g_reentrancyGuard.enter();
+    if (guard)
+    {
+#ifdef _DEBUG
+        DWORD AddSetDllDirectoryInstance = ++g_AddSetDllDirectoryIntceptInstance;
+        Log(L" [%d] SetDefaultDllDirectoriesFixup: 0x%x", AddSetDllDirectoryInstance, DirectoryFlags);
+#endif
+    }
+    return impl::SetDefaultDllDirectories(DirectoryFlags);
+}
+catch (...)
+{
+    ::SetLastError(win32_from_caught_exception());
+    return FALSE;
+}
+DECLARE_FIXUP(impl::SetDefaultDllDirectories, SetDefaultDllDirectoriesFixup);
 
 
 DLL_DIRECTORY_COOKIE WINAPI AddDllDirectoryFixup(
@@ -47,7 +69,14 @@ DLL_DIRECTORY_COOKIE WINAPI AddDllDirectoryFixup(
     {
 #ifdef _DEBUG
         DWORD AddSetDllDirectoryInstance = ++g_AddSetDllDirectoryIntceptInstance;
-        LogString(AddSetDllDirectoryInstance, L"AddDllDirectoryFixup: Input path", path);
+        if (path == NULL)
+        {
+            Log(L" [%d] AddDllDirectoryFixup: Input path is null", AddSetDllDirectoryInstance);
+        }
+        else
+        {
+            LogString(AddSetDllDirectoryInstance, L"AddDllDirectoryFixup: Input path", path);
+        }
         // We may need to alter the path in some cases.  But first we need to trap an app
         // needing this.
 #endif
@@ -78,9 +107,37 @@ BOOL WINAPI SetDllDirectoryFixup(
     {
 #ifdef _DEBUG
         DWORD AddSetDllDirectoryInstance = ++g_AddSetDllDirectoryIntceptInstance;
-        LogString(AddSetDllDirectoryInstance, L"SetDllDirectoryFixup: Input path", path);
         // We may need to alter the path in some cases.  But first we need to trap an app
         // needing this.
+        if (path == NULL)
+        {
+            Log(L"\t[%d] SetDllDirectoryFixup: Input path is null (restores search order)", AddSetDllDirectoryInstance);
+        }
+        else
+        {
+            if constexpr (psf::is_ansi<CharT>)
+            {
+                if (strlen(path) == 0)
+                {
+                    Log(L"\t[%d] SetDllDirectoryFixup: Input path is empty (remove current directory from list)", AddSetDllDirectoryInstance);
+                }
+                else
+                {
+                    LogString(AddSetDllDirectoryInstance, "SetDllDirectoryFixup: Input path", path);
+                }
+            }
+            else
+            {
+                if (wcslen(path) == 0)
+                {
+                    Log(L"\t[%d] SetDllDirectoryFixup: Input path is empty (remove current directory from list)", AddSetDllDirectoryInstance);
+                }
+                else
+                {
+                    LogString(AddSetDllDirectoryInstance, L"SetDllDirectoryFixup: Input path", path);
+                }
+            }
+        }
 #endif
 
         BOOL Bret = impl::SetDllDirectory(path);

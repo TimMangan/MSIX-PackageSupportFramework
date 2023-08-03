@@ -14,6 +14,11 @@ ideas:
 	   as an extra xxx.yyy.deleted file in the redirection area.  But then all methods looking to see files would have to look for this, and anything creating a file might have to remove it.
 	   Needs more thought on finding a way to distinguish.
 
+v.next
+ * More standard level debugging (_Debug) on RegLegacyFixup for calls to Delete things.
+ * PsfRuntime: Fix to call to SetDllDirectory with null path (to restore order), added SetDefaultDllDirectories for debugging too.
+ * MfrFixup: ShellExecute was being recursive and crashing.
+
 v.2023.07.03
  * Fix to RegLegacy that caused ony first rule to be tested.
  * Fix for MFR in IlvMode when package files have been deleted.
