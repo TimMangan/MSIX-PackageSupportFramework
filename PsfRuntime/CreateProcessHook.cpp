@@ -40,7 +40,7 @@
 using namespace std::literals;
 
 #if _DEBUG
-//#define MOREDEBUG 1
+#define MOREDEBUG 1
 #endif
 
 extern wchar_t g_PsfRunTimeModulePath[];
@@ -307,6 +307,8 @@ void LogCreationFlags(DWORD Instance, DWORD CreationFlags, LPCWSTR InterceptName
         form.append(L"EXTENDED_STARTUPINFO_PRESENT ");
     if (CreationFlags & INHERIT_PARENT_AFFINITY)
         form.append(L"INHERIT_PARENT_AFFINITY ");
+    if (CreationFlags & CREATE_FORCEDOS)
+        form.append(L"CREATE_FORCEDOS ");
     Log(form.c_str(), Instance, CreationFlags);
 }
 
@@ -502,14 +504,14 @@ BOOL WINAPI CreateProcessFixup(
                 if (!si->lpAttributeList )
                 {
 #ifdef MOREDEBUG
-                    Log(L"\t[%d] CreateProcessFixup no existing attributelist, just add one", CreateProcessInstance);
+                    Log(L"\t[%d] CreateProcessFixupA no existing attributelist, just add one", CreateProcessInstance);
 #endif
                     si->lpAttributeList = partialList->get();
                 }
                 else
                 {
 #ifdef MOREDEBUG
-                    Log(L"\t[%d] CreateProcessFixup has existing attributelist, fix it up.", CreateProcessInstance);
+                    Log(L"\t[%d] CreateProcessFixupA has existing attributelist, fix it up.", CreateProcessInstance);
 #endif
                     partialList = new MyProcThreadAttributeList(si->lpAttributeList, true, true);
                     si->lpAttributeList = partialList->get();
@@ -524,14 +526,14 @@ BOOL WINAPI CreateProcessFixup(
                 if (!si->lpAttributeList)
                 {
 #ifdef MOREDEBUG
-                    Log(L"\t[%d] CreateProcessFixup no existing attributelist, just add one.", CreateProcessInstance);
+                    Log(L"\t[%d] CreateProcessFixupW no existing attributelist, just add one.", CreateProcessInstance);
 #endif
                     si->lpAttributeList = partialList->get();
                 }
                 else
                 {
 #ifdef MOREDEBUG
-                    Log(L"\t[%d] CreateProcessFixup has existing attributelist, fix it up.", CreateProcessInstance);
+                    Log(L"\t[%d] CreateProcessFixupW has existing attributelist, fix it up.", CreateProcessInstance);
 #endif
                     partialList = new MyProcThreadAttributeList(si->lpAttributeList, true, true);
                     si->lpAttributeList = partialList->get();
