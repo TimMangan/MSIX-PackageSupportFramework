@@ -326,18 +326,49 @@ BOOL WINAPI CreateProcessWithPsfRunDll(
     _In_ LPSTARTUPINFOW startupInfo,
     _Out_ LPPROCESS_INFORMATION processInformation) noexcept try
 {
-    // Detours should only be calling this function with the intent to execute "rundll32.exe"
-    assert(std::wcsstr(applicationName, L"rundll32.exe"));
-    assert(std::wcsstr(commandLine, L"rundll32.exe"));
+    // Detours should only be calling this function with the intent to execute "rundll32.exe", although we might use rundll64 
+    //assert(std::wcsstr(applicationName, L"rundll32.exe"));
+    //assert(std::wcsstr(commandLine, L"rundll32.exe"));
 
     std::wstring cmdLine = psf::wrun_dll_name;
     cmdLine += (commandLine + 12); // +12 to get to the first space after "rundll32.exe"
 
 #if _DEBUG
-    Log(L"\tCreateProcessWithPsfRunDll. \n");
+    Log(L"\t[%d] CreateProcessWithPsfRunDll. \n", g_CreateProcessIntceptInstance);
 #endif
+
+    std::wstring RunDllExePath = PackageRootPath() / psf::wrun_dll_name;
+    if (!std::filesystem::exists(RunDllExePath))
+    {
+        for (auto& dentry : std::filesystem::recursive_directory_iterator(PackageRootPath()))
+        {
+            try
+            {
+                if (dentry.path().filename().compare(psf::wrun_dll_name) == 0)
+                {
+                    static const auto altDirPathToPsfRuntime = dentry.path().filename().wstring();
+                    RunDllExePath = altDirPathToPsfRuntime.c_str();
+#if _DEBUG
+                    LogString(g_CreateProcessIntceptInstance, L"\tCreateProcessWithPsfRunDll: Found match as %s", RunDllExePath.c_str());
+#endif
+                    break;
+                }
+            }
+            catch (...)
+            {
+                Log(L"\t[%d] CreateProcessWithPsfRunDll: Non-fatal error enumerating directories while looking for PsfRunDll.", g_CreateProcessIntceptInstance);
+            }
+        }
+    }
+    else
+    {
+#if _DEBUG
+        LogString(g_CreateProcessIntceptInstance, L"\tCreateProcessWithPsfRunDll: Found match as %s", RunDllExePath.c_str());
+#endif
+    }
+
     return CreateProcessImpl(
-        (PackageRootPath() / psf::wrun_dll_name).c_str(),
+        RunDllExePath.c_str(),
         cmdLine.data(),
         processAttributes,
         threadAttributes,
@@ -1041,13 +1072,18 @@ BOOL WINAPI CreateProcessFixup(
         Log(L"\t[%d] CreateProcessFixup: Allowed Injection, so yes", CreateProcessInstance);
 #endif
         // Fix for issue #167: allow subprocess to be a different bitness than this process.
-        USHORT bitness = ProcessBitness(processInformation->hProcess);
+        USHORT bitnessTarget = ProcessBitness(processInformation->hProcess);
+        USHORT bitnessThis = ProcessBitness(GetCurrentProcess());
 #if _DEBUG
-        Log(L"\t[%d] CreateProcessFixup: Injection for PID=%d Bitness=%d", CreateProcessInstance, processInformation->dwProcessId, bitness);
+        Log(L"\t[%d] CreateProcessFixup: Injection for PID=%d Bitness=%d", CreateProcessInstance, processInformation->dwProcessId, bitnessTarget);
 #endif  
-        std::wstring wtargetDllName = FixDllBitness(std::wstring(psf::runtime_dll_name), bitness);
+        std::wstring wtargetDllName = FixDllBitness(std::wstring(psf::runtime_dll_name), bitnessTarget);
 #if _DEBUG
         Log(L"\t[%d] CreateProcessFixup: Use runtime %ls", CreateProcessInstance, wtargetDllName.c_str());
+        if (bitnessTarget != bitnessThis)
+        {
+            Log(L"\t[%d] CreateProcessFixup: Use RunDll##.exe due to cross bitness launch.", CreateProcessInstance);
+        }
 #endif
         static std::string pathToPsfRuntime;
         if (g_PsfRunTimeModulePath[0] != 0x0)
@@ -1119,12 +1155,34 @@ BOOL WINAPI CreateProcessFixup(
 
         if (targetDllPath != NULL)
         {
-            Log("\t[%d] CreateProcessFixup: Attempt injection into %d using %s", CreateProcessInstance, processInformation->dwProcessId, targetDllPath);
-            if (!::DetourUpdateProcessWithDll(processInformation->hProcess, &targetDllPath, 1))
+            if (bitnessTarget == bitnessThis)
             {
-                Log("\t[%d] CreateProcessFixup: %s unable to inject, err=0x%x.", CreateProcessInstance, targetDllPath, ::GetLastError());
-                // We failed to detour the created process. Assume that the failure was due to an architecture mis-match
-                // and try the launch using PsfRunDl
+                Log("\t[%d] CreateProcessFixup: Attempt injection into %d using %s", CreateProcessInstance, processInformation->dwProcessId, targetDllPath);
+                if (!::DetourUpdateProcessWithDll(processInformation->hProcess, &targetDllPath, 1))
+                {
+                    Log("\t[%d] CreateProcessFixup: %s unable to inject, err=0x%x.", CreateProcessInstance, targetDllPath, ::GetLastError());
+                    // We failed to detour the created process. Assume that the failure was due to an architecture mis-match
+                    // and try the launch using PsfRunDl
+                    if (!::DetourProcessViaHelperDllsW(processInformation->dwProcessId, 1, &targetDllPath, CreateProcessWithPsfRunDll))
+                    {
+                        auto err = ::GetLastError();
+                        Log("\t[%d] CreateProcessFixup: %s unable to inject with RunDll either (Skipping), err=0x%x.", CreateProcessInstance, targetDllPath, err);
+                        ::TerminateProcess(processInformation->hProcess, ~0u);
+                        ::CloseHandle(processInformation->hProcess);
+                        ::CloseHandle(processInformation->hThread);
+
+                        ::SetLastError(err);
+                        Log(L"\t[%d] CreateProcessFixup: Returns FALSE 0x%x", CreateProcessInstance, err);
+                        return FALSE;
+                    }
+                }
+                else
+                {
+                    Log(L"\t[%d] CreateProcessFixup: Injected %ls into PID=%d\n", CreateProcessInstance, wtargetDllName.c_str(), processInformation->dwProcessId);
+                }
+            }
+            else
+            {
                 if (!::DetourProcessViaHelperDllsW(processInformation->dwProcessId, 1, &targetDllPath, CreateProcessWithPsfRunDll))
                 {
                     auto err = ::GetLastError();
@@ -1137,10 +1195,6 @@ BOOL WINAPI CreateProcessFixup(
                     Log(L"\t[%d] CreateProcessFixup: Returns FALSE 0x%x", CreateProcessInstance, err);
                     return FALSE;
                 }
-            }
-            else
-            {
-                Log(L"\t[%d] CreateProcessFixup: Injected %ls into PID=%d\n", CreateProcessInstance, wtargetDllName.c_str(), processInformation->dwProcessId);
             }
         }
         else
