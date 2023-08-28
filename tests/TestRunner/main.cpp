@@ -24,10 +24,10 @@ using namespace std::literals;
 // now since the list is small and known, just declare them ahead of time. We'll just need to be careful to not treat
 // missing applications as too serious
 
-////#define DO_ARCHITECTURE_TESTS
+#define DO_ARCHITECTURE_TESTS
 //#define DO_POWERSHELL_TESTS
 //#define DO_COMPOSITION_TESTS
-#define DO_MFRILVAWARE_TESTS
+////#define DO_MFRILVAWARE_TESTS
 //#define DO_MFR_TESTS
 //#define DO_FRF_TESTS
 //#define DO_DYNDLL_TESTS
