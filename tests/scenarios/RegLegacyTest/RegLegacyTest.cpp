@@ -4,6 +4,9 @@
 #include <algorithm>
 #include <ShlObj.h>
 #include <filesystem>
+#include <conio.h>
+#include <fcntl.h>
+#include <io.h>
 
 using namespace std::literals;
 
@@ -43,14 +46,25 @@ namespace details
 #define TestKeyName_HKLM_Covered         L"SOFTWARE\\Vendor_Covered"        // Registry contains both regular and wow entries so this works.
 #define TestKeyName_HKLM_NotCovered      L"SOFTWARE\\Vendor_NotCovered"
 
+#define TestKeyName_Deletion_Allowed1      L"SOFTWARE\\Vendor_Deletion"
+#define TestKeyName_Deletion_NotAllowed1  L"SOFTWARE\\Vendor_Deletion\\SubKey"
+#define TestKeyName_Deletion_NotAllowed2  L"SOFTWARE\\Vendor_Deletion\\SubKey\\SubKey"
+
 #define TestSubSubKey L"SubKey"
 #define TestSubItem  L"SubItem"
 
+#define TestKeyName_Java_Allowed1        L"SOFTWARE\\CLASSES\\CLSID\\{CAFEEFAC-0016-0000-0001-ABCDEFFEDCBA}"
+#define TestKeyName_Java_Allowed2        L"SOFTWARE\\CLASSES\\CLSID\\{CAFEEFAC-0017-0000-0001-ABCDEFFEDCBA}"
+#define TestKeyName_Java_NotAllowed      L"SOFTWARE\\CLASSES\\CLSID\\{CAFEEFAC-0019-0000-0001-ABCDEFFEDCBA}"
+#define TestKeyName_WOW_Java_Allowed1    L"SOFTWARE\\WOW6432NODE\\CLASSES\\CLSID\\{CAFEEFAC-0016-0000-0001-ABCDEFFEDCBA}"
+#define TestKeyName_WOW_Java_Allowed2    L"SOFTWARE\\WOW6432NODE\\CLASSES\\CLSID\\{CAFEEFAC-0017-0000-0001-ABCDEFFEDCBA}"
+#define TestKeyName_WOW_Java_NotAllowed  L"SOFTWARE\\WOW6432NODE\\CLASSES\\CLSID\\{CAFEEFAC-0019-0000-0001-ABCDEFFEDCBA}"
 
 #define FULL_RIGHTS_ACCESS_REQUEST   KEY_ALL_ACCESS
 #define RW_ACCESS_REQUEST            KEY_READ | KEY_WRITE
 
 
+#pragma region Helper_Functions
 void Log(const char* fmt, ...)
 {
     va_list args;
@@ -83,10 +97,51 @@ void Log(const char* fmt, ...)
     ::OutputDebugStringA(str.c_str());
 }
 
+std::wstring FormatHelperMsg(LPCWSTR testFunction, LPCWSTR path, LSTATUS ExpectedResult, LSTATUS Result)
+{
+    std::wstring msg = testFunction;
+    msg += std::wstring(L" ") + std::wstring(path);
+    if (ExpectedResult == ERROR_SUCCESS)
+    {
+        if (ExpectedResult == Result)
+        {
+            msg += L" Expected Success";
+        }
+        else
+        {
+            WCHAR buffer[128];
+            _itow_s(Result, buffer, 128, 16);
+            msg += L" Unexpected Failure 0x" + std::wstring(buffer);
+        }
+    }
+    else
+    {
+        if (ExpectedResult == Result)
+        {
+            msg += L" Expected Failure";
+        }
+        else
+        {
+            WCHAR eBuffer[128];
+            _itow_s(ExpectedResult, eBuffer, 128, 16);
+            WCHAR rBuffer[128];
+            _itow_s(Result, rBuffer, 128, 16);
+            msg += L" Unexpected Result 0x" + std::wstring(rBuffer) + L" Expected 0x" + std::wstring(eBuffer);;
+        }
+    }
+    if (ExpectedResult == Result)
+        msg += L": Test PASSES.";
+    else
+        msg += L": Test FAILS.";
+    return msg;
+} // FormatHelperMsg()
+#pragma endregion Helper_Functions
+
+
 void NotCoveredTests()
 {
     DWORD retval = 0;
-    test_begin("RegLegacy Test without changes HKCU");
+
 
     REGSAM samFull = FULL_RIGHTS_ACCESS_REQUEST;
     REGSAM sam2R = samFull & ~(DELETE|WRITE_DAC|WRITE_OWNER|KEY_CREATE_SUB_KEY|KEY_CREATE_LINK| KEY_SET_VALUE);
@@ -95,15 +150,22 @@ void NotCoveredTests()
     DWORD Dispo;
 
 
-    HKEY HKCU_Attempt;
+    [[maybe_unused]] HKEY HKCU_Attempt;
     HKEY HKLM_Attempt;
-    HKEY HKCU_Verify;
+    [[maybe_unused]] HKEY HKCU_Verify;
     HKEY HKLM_Verify;
 
+    test_begin("RegLegacy Test without changes HKCU");
+
+
+
+
     trace_message(L"The following tests avoid using the fixup and are allowed to fail. The results are dependent on OS version you run on.", console::color::blue, true);
-    if (RegOpenKey(HKEY_CURRENT_USER, TestKeyName_HKCU_NotCovered, &HKCU_Verify) == ERROR_SUCCESS)
+
+    if (RegOpenKey(HKEY_CURRENT_USER, TestKeyName_HKCU_NotCovered, &HKCU_Attempt) == ERROR_SUCCESS)
     {
-        RegCloseKey(HKCU_Verify);
+        trace_message(L"returned success", console::color::blue, true);
+        RegCloseKey(HKCU_Attempt);
 
         if (RegOpenKeyEx(HKEY_CURRENT_USER, TestKeyName_HKCU_NotCovered, 0, samFull , &HKCU_Attempt) == ERROR_SUCCESS)
         {
@@ -138,6 +200,7 @@ void NotCoveredTests()
             trace_message(L"CreateKeyEx HKCU full rights FAIL", console::color::blue, true);
 
         }
+
         if (RegCreateKeyEx(HKEY_CURRENT_USER, TestKeyName_HKCU_NotCovered, 0, NULL, 0, sam2R, NULL, &HKCU_Attempt, &Dispo) == ERROR_SUCCESS)
         {
             trace_message(L"CreateKeyEx HKCU full rights-Delete SUCCESS", console::color::blue, true);
@@ -149,12 +212,14 @@ void NotCoveredTests()
             trace_message(L"CreateKeyEx HKCU full rights-Delete FAIL", console::color::blue, true);
 
         }
+
     }
     else
     {
         trace_message(L"Test2CU key not found", console::color::red, true);
         retval = 2;
     }
+    trace_message(L"ready for 2nd test", console::color::blue, true);
 
     if (RegOpenKey(HKEY_LOCAL_MACHINE, TestKeyName_HKLM_NotCovered, &HKLM_Verify) == ERROR_SUCCESS)
     {
@@ -214,13 +279,413 @@ void NotCoveredTests()
     test_end(retval);
 }
 
+
+
+DWORD DeletionMarkerTestHelper(HKEY hKey, LPCWSTR path, LSTATUS ExpectedResult)
+{
+    HKEY HK_Attempt;
+    DWORD retval = 0;  // number of unexpected results.
+    LSTATUS result = 0;
+    REGSAM samR = READ_CONTROL | KEY_ENUMERATE_SUB_KEYS | KEY_QUERY_VALUE;
+    std::wstring msg;
+
+    result = RegOpenKey(hKey, path, &HK_Attempt);
+    msg = FormatHelperMsg(L"RegOpenKey", path, ExpectedResult, result);
+    if (result == ExpectedResult)
+    {
+        trace_message(msg, console::color::blue, true);
+    }
+    else
+    {
+        retval++;
+        trace_message(msg, console::color::dark_red, true);
+    }
+    if (result == ERROR_SUCCESS)
+    {
+        RegCloseKey(HK_Attempt);
+    }
+
+
+    result = RegOpenKeyEx(hKey, path, 0, samR, &HK_Attempt);
+    msg = FormatHelperMsg(L"RegOpenKeyEx", path, ExpectedResult, result);
+    if (result == ExpectedResult)
+    {
+        trace_message(msg, console::color::blue, true);
+    }
+    else
+    {
+        retval++;
+        trace_message(msg, console::color::dark_red, true);
+    }
+    if (result == ERROR_SUCCESS)
+    {
+        RegCloseKey(HK_Attempt);
+    }
+
+    std::wstring longerpathEx = path;
+    longerpathEx += L"\\StupidNewNameEx";
+    DWORD options = 0;
+    result = RegCreateKeyEx(hKey, longerpathEx.c_str(), 0, NULL, options, samR, NULL, &HK_Attempt, NULL);
+    msg = FormatHelperMsg(L"RegCreateKeyEx", path, ExpectedResult, result);
+    if (result == ExpectedResult)
+    {
+        trace_message(msg, console::color::blue, true);
+    }
+    else
+    {
+        retval++;
+        trace_message(msg, console::color::dark_red, true);
+    }
+    if (result == ERROR_SUCCESS)
+    {
+        RegCloseKey(HK_Attempt);
+    }
+
+
+    std::wstring blockedKeyNameOnly = L"HideThis";
+    std::wstring blockedKeyFullPath = path;
+    if (blockedKeyFullPath.back() != L'\\')
+        blockedKeyFullPath += L"\\";
+    blockedKeyFullPath += blockedKeyNameOnly;
+    DWORD index = 0;
+    DWORD nLen = 256;
+    wchar_t subName[256];
+    //DWORD Reserved = 0;
+
+    bool found = false;
+    result = RegOpenKeyEx(hKey, path, 0, samR, &HK_Attempt);
+    if (result == ERROR_SUCCESS)
+    {
+
+        while ((result = RegEnumKeyEx(HK_Attempt, index, subName, &nLen, NULL, NULL, NULL, NULL)) == ERROR_SUCCESS)
+        {
+            //trace_message(L"Debug found subName: " + std::wstring(subName), console::color::white, true);
+            if (wcscmp(subName, blockedKeyNameOnly.c_str()) == 0)
+            {
+                if (result == ExpectedResult)
+                {
+                    trace_message(L"Deleted subkey name " + std::wstring(blockedKeyFullPath) + L" found.", console::color::blue, true);
+                }
+                else
+                {
+                    trace_message(L"Deleted subkey name " + std::wstring(blockedKeyFullPath) + L" found.", console::color::dark_red, true);
+                    retval++;
+                }
+                found = true;
+                break;
+            }
+            index++;
+            nLen = 256;  // reset for next time.
+        }
+        switch (found)
+        {
+        case true:
+            if (ExpectedResult == ERROR_SUCCESS)
+            {
+                trace_message(L"Deleted subkey name " + std::wstring(blockedKeyFullPath) + L" found.", console::color::blue, true);
+            }
+            else
+            {
+                trace_message(L"Deleted subkey name " + std::wstring(blockedKeyFullPath) + L" found.", console::color::dark_red, true);
+                retval++;
+            }
+            break;
+        case false:
+            if (ExpectedResult == ERROR_SUCCESS)
+            {
+                trace_message(L"Deleted subkey name " + std::wstring(blockedKeyFullPath) + L" not found.", console::color::dark_red, true);
+                retval++;
+            }
+            else
+            {
+                trace_message(L"Deleted subkey name " + std::wstring(blockedKeyFullPath) + L" not found.", console::color::blue, true);
+            }
+            break;
+        }
+        CloseHandle(HK_Attempt);
+    }
+    else
+    {
+        if (ExpectedResult != ERROR_SUCCESS)
+        {
+            trace_message(L"Deleted subkey name " + std::wstring(blockedKeyFullPath) + L" not not testable because parent key could not be opened.", console::color::blue, true);
+        }
+        else
+        {
+            trace_message(L"Deleted subkey name " + std::wstring(blockedKeyFullPath) + L" not found  because parent key could not be opened.", console::color::dark_red, true);
+            retval++;
+        }
+    }
+
+    return retval;
+}
+
+
+
+void DeletionMarkerTests()
+{
+    LSTATUS retval = 0;
+    LSTATUS result = 0;
+
+
+    test_begin("RegLegacy Test Deletion HKCU Allowed1");
+    retval = 0;
+    trace_message(L"The following tests avoid using the fixup and should succeed.", console::color::blue, true);
+    result = DeletionMarkerTestHelper(HKEY_CURRENT_USER, TestKeyName_Deletion_Allowed1, ERROR_SUCCESS);
+    if (result == 0)
+    {
+        retval = ERROR_SUCCESS;
+    }
+    else
+    {
+        retval = ERROR_UNIDENTIFIED_ERROR;
+    }
+    test_end(retval);
+
+
+    test_begin("RegLegacy Test Deletion HKCU NotAllowed1");
+    retval = 0;
+    trace_message(L"The following tests require using the fixup and should fail.", console::color::blue, true);
+    result = DeletionMarkerTestHelper(HKEY_CURRENT_USER, TestKeyName_Deletion_NotAllowed1, ERROR_PATH_NOT_FOUND);
+    if (result == 0)
+    {
+        retval = ERROR_SUCCESS;
+    }
+    else
+    {
+        retval = ERROR_UNIDENTIFIED_ERROR;
+    }
+    test_end(retval);
+
+
+    test_begin("RegLegacy Test Deletion HKCU NotAllowed2");
+    retval = 0;
+    trace_message(L"The following tests require using the fixup and should fail.", console::color::blue, true);
+    result = DeletionMarkerTestHelper(HKEY_CURRENT_USER, TestKeyName_Deletion_NotAllowed2, ERROR_PATH_NOT_FOUND);
+    if (result == 0)
+    {
+        retval = ERROR_SUCCESS;
+    }
+    else
+    {
+        retval = ERROR_UNIDENTIFIED_ERROR;
+    }
+    test_end(retval);
+
+}
+
+DWORD JavaMarkerTestHelper(HKEY hKey, LPCWSTR path, LSTATUS ExpectedResult)
+{
+    HKEY HK_Attempt;
+    DWORD retval = 0;  // number of unexpected results.
+    LSTATUS result = 0;
+    REGSAM samR = READ_CONTROL | KEY_ENUMERATE_SUB_KEYS | KEY_QUERY_VALUE; 
+    std::wstring msg;
+
+    result = RegOpenKey(hKey, path, &HK_Attempt);
+    msg = FormatHelperMsg(L"RegOpenKey", path, ExpectedResult, result);
+    if (result == ExpectedResult)
+    {
+        trace_message(msg, console::color::blue, true);
+    }
+    else
+    {
+        retval++;
+        trace_message(msg, console::color::dark_red, true);
+    }
+    if (result == ERROR_SUCCESS)
+    {
+        RegCloseKey(HK_Attempt);
+    }
+
+    result = RegOpenKeyEx(hKey, path, 0, samR, &HK_Attempt);
+    msg = FormatHelperMsg(L"RegOpenKeyEx", path, ExpectedResult, result);
+    if (result == ExpectedResult)
+    {
+        trace_message(msg, console::color::blue, true);
+    }
+    else
+    {
+        retval++;
+        trace_message(msg, console::color::dark_red, true);
+    }
+    if (result == ERROR_SUCCESS)
+    {
+        RegCloseKey(HK_Attempt);
+    }
+
+   
+    return retval;
+} // JavaMarkerTestHelper()
+void JavaMarkerTests()
+{
+    LSTATUS retval = 0;
+    LSTATUS result = 0;
+
+
+    test_begin("RegLegacy Test Java HKCU Allowed1");
+    retval = 0;
+    trace_message(L"The following tests avoid using the fixup and should succeed.", console::color::blue, true);
+    result = JavaMarkerTestHelper(HKEY_CURRENT_USER,TestKeyName_Java_Allowed1, ERROR_SUCCESS);
+    if (result == 0)
+    {
+        retval = ERROR_SUCCESS;
+    }
+    else
+    { 
+        retval = ERROR_UNIDENTIFIED_ERROR;
+    }
+    test_end(retval);
+
+
+
+    test_begin("RegLegacy Test Java HKCU Allowed2");
+    retval = 0;
+    trace_message(L"The following tests avoid using the fixup and should succeed.", console::color::blue, true);
+    result = JavaMarkerTestHelper(HKEY_CURRENT_USER, TestKeyName_Java_Allowed2, ERROR_SUCCESS);
+    if (result == 0)
+    {
+        retval = ERROR_SUCCESS;
+    }
+    else
+    {
+        retval = ERROR_UNIDENTIFIED_ERROR;
+    }
+    test_end(retval);
+
+
+
+    test_begin("RegLegacy Test Java HKCU NOT Allowed");
+    retval = 0; 
+    trace_message(L"The following tests require using the fixup and might fail.", console::color::blue, true);
+
+    result = JavaMarkerTestHelper(HKEY_CURRENT_USER, TestKeyName_Java_NotAllowed, ERROR_PATH_NOT_FOUND);
+    if (result == 0)
+    {
+        retval = ERROR_SUCCESS;
+    }
+    else
+    {
+        retval = ERROR_UNIDENTIFIED_ERROR;
+    }
+    test_end(retval);
+
+
+
+
+
+    test_begin("RegLegacy Test Java HKLM Allowed1");
+    retval = 0; 
+    trace_message(L"The following tests avoid using the fixup and should succeed.", console::color::blue, true);
+    result = JavaMarkerTestHelper(HKEY_LOCAL_MACHINE, TestKeyName_Java_Allowed1, ERROR_SUCCESS);
+    if (result == 0)
+    {
+        retval = ERROR_SUCCESS;
+    }
+    else
+    {
+        retval = ERROR_UNIDENTIFIED_ERROR;
+    }
+    test_end(retval);
+    
+
+    test_begin("RegLegacy Test Java HKLM Allowed2");
+    retval = 0; 
+    trace_message(L"The following tests avoid using the fixup and should succeed.", console::color::blue, true);
+    result = JavaMarkerTestHelper(HKEY_LOCAL_MACHINE, TestKeyName_Java_Allowed2, ERROR_SUCCESS);
+    if (result == 0)
+    {
+        retval = ERROR_SUCCESS;
+    }
+    else
+    {
+        retval = ERROR_UNIDENTIFIED_ERROR;
+    }
+    test_end(retval);
+
+
+    test_begin("RegLegacy Test Java HKLM NOT Allowed");
+    retval = 0; 
+    trace_message(L"The following tests require using the fixup and might fail.", console::color::blue, true);
+
+    result = JavaMarkerTestHelper(HKEY_LOCAL_MACHINE, TestKeyName_Java_NotAllowed, ERROR_PATH_NOT_FOUND);
+    if (result == 0)
+    {
+        retval = ERROR_SUCCESS;
+    }
+    else
+    {
+        retval = ERROR_UNIDENTIFIED_ERROR;
+    }
+    test_end(retval);
+
+
+
+    test_begin("RegLegacy Test Java WOW HKLM Allowed1");
+    retval = 0; 
+    trace_message(L"The following tests avoid using the fixup and should succeed.", console::color::blue, true);
+    result = JavaMarkerTestHelper(HKEY_LOCAL_MACHINE, TestKeyName_WOW_Java_Allowed1, ERROR_SUCCESS);
+    if (result == 0)
+    {
+        retval = ERROR_SUCCESS;
+    }
+    else
+    {
+        retval = ERROR_UNIDENTIFIED_ERROR;
+    }
+    test_end(retval);
+
+
+    test_begin("RegLegacy Test Java WOW HKLM Allowed2");
+    retval = 0;
+    trace_message(L"The following tests avoid using the fixup and should succeed.", console::color::blue, true);
+    result = JavaMarkerTestHelper(HKEY_LOCAL_MACHINE, TestKeyName_WOW_Java_Allowed2, ERROR_SUCCESS);
+    if (result == 0)
+    {
+        retval = ERROR_SUCCESS;
+    }
+    else
+    {
+        retval = ERROR_UNIDENTIFIED_ERROR;
+    }
+    test_end(retval);
+
+
+    test_begin("RegLegacy Test Java WOW HKLM NOT Allowed");
+    retval = 0; 
+    trace_message(L"The following tests require using the fixup and might fail.", console::color::blue, true);
+
+    result = JavaMarkerTestHelper(HKEY_LOCAL_MACHINE, TestKeyName_WOW_Java_NotAllowed, ERROR_PATH_NOT_FOUND);
+    if (result == 0)
+    {
+        retval = ERROR_SUCCESS;
+    }
+    else
+    {
+        retval = ERROR_UNIDENTIFIED_ERROR;
+    }
+    test_end(retval);
+
+
+ 
+
+}
+
 int wmain(int argc, const wchar_t** argv)
 {
+    // Display UTF-16 correctly...
+ // NOTE: The CRT will assert if we try and use 'cout' with this set
+    _setmode(_fileno(stdout), _O_U16TEXT);
+    
     auto result = parse_args(argc, argv);
     //std::wstring aumid = details::appmodel_string(&::GetCurrentApplicationUserModelId);
-    test_initialize("RegLegacy Tests", 3);
+    test_initialize("RegLegacy Tests", 15);
 
-    NotCoveredTests();
+    NotCoveredTests();   // 1 test
+
+    DeletionMarkerTests(); // 3 Tests
+
+    JavaMarkerTests();  //9 Tests
 
     test_begin("RegLegacy Test ModifyKeyAccess HKCU");
     Log("<<<<<RegLegacyTest ModifyKeyAccess HKCU");
@@ -276,7 +741,7 @@ int wmain(int argc, const wchar_t** argv)
     {
         trace_message("Unexpected error.", console::color::red, true);
         result = GetLastError();
-        print_last_error("Failed to MOdify HKCU Full Access case");
+        print_last_error("Failed to Modify HKCU Full Access case");
     }
     test_end(result);
     Log("RegLegacyTest ModifyKeyAccess HKCU>>>>>");

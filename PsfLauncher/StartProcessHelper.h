@@ -4,7 +4,7 @@
 #include "Globals.h"
 #include <wil\resource.h>
 
-HRESULT StartProcess(LPCWSTR applicationName, LPWSTR commandLine, LPCWSTR currentDirectory, int cmdShow, DWORD timeout, LPPROC_THREAD_ATTRIBUTE_LIST attributeList = nullptr)
+HRESULT StartProcess(LPCWSTR applicationName, LPWSTR commandLine, LPCWSTR currentDirectory, int cmdShow, DWORD timeout, bool inheritHandles, DWORD initialCreationFlags, LPPROC_THREAD_ATTRIBUTE_LIST attributeList = nullptr)
 {
 
     STARTUPINFOEXW startupInfoEx =
@@ -29,7 +29,7 @@ HRESULT StartProcess(LPCWSTR applicationName, LPWSTR commandLine, LPCWSTR curren
     PROCESS_INFORMATION processInfo{};
 
     startupInfoEx.lpAttributeList = attributeList;
-    DWORD CreationFlags = 0;
+    DWORD CreationFlags = initialCreationFlags; // 0;
     if (attributeList != nullptr)
     {
         CreationFlags = EXTENDED_STARTUPINFO_PRESENT;
@@ -39,7 +39,7 @@ HRESULT StartProcess(LPCWSTR applicationName, LPWSTR commandLine, LPCWSTR curren
         applicationName,
         commandLine,
         nullptr, nullptr, // Process/ThreadAttributes
-        true, // InheritHandles
+        inheritHandles, //true, // InheritHandles
         CreationFlags,
         nullptr, // Environment
         currentDirectory,
@@ -54,6 +54,66 @@ HRESULT StartProcess(LPCWSTR applicationName, LPWSTR commandLine, LPCWSTR curren
     DWORD waitResult = ::WaitForSingleObject(processInfo.hProcess, timeout);
     RETURN_LAST_ERROR_IF_MSG(waitResult != WAIT_OBJECT_0, "Waiting operation failed unexpectedly.");
    
+    DWORD exitCode;
+    GetExitCodeProcess(processInfo.hProcess, &exitCode);
+
+    CloseHandle(processInfo.hProcess);
+    CloseHandle(processInfo.hThread);
+
+    return ERROR_SUCCESS;  // Some apps return codes even when happy.
+}
+
+HRESULT StartProcessAsUser(HANDLE hUserToken, LPCWSTR applicationName, LPWSTR commandLine, LPCWSTR currentDirectory, int cmdShow, DWORD timeout, bool inheritHandles, DWORD initialCreationFlags, LPPROC_THREAD_ATTRIBUTE_LIST attributeList = nullptr)
+{
+
+    STARTUPINFOEXW startupInfoEx =
+    {
+        {
+        sizeof(startupInfoEx)
+        , nullptr // lpReserved
+        , nullptr // lpDesktop
+        , nullptr // lpTitle
+        , 0 // dwX
+        , 0 // dwY
+        , 0 // dwXSize
+        , 0 // swYSize
+        , 0 // dwXCountChar
+        , 0 // dwYCountChar
+        , 0 // dwFillAttribute
+        , STARTF_USESHOWWINDOW // dwFlags
+        , static_cast<WORD>(cmdShow) // wShowWindow
+        }
+    };
+
+    PROCESS_INFORMATION processInfo{};
+
+    startupInfoEx.lpAttributeList = attributeList;
+    DWORD CreationFlags = initialCreationFlags; // 0;
+    if (attributeList != nullptr)
+    {
+        CreationFlags = EXTENDED_STARTUPINFO_PRESENT;
+    }
+
+    BOOL bErr = ::CreateProcessAsUserW(
+        hUserToken,
+        applicationName,
+        commandLine,
+        nullptr, nullptr, // Process/ThreadAttributes
+        inheritHandles, //true, // InheritHandles
+        CreationFlags,
+        nullptr, // Environment
+        currentDirectory,
+        (LPSTARTUPINFO)&startupInfoEx,
+        &processInfo);
+    if (bErr == FALSE)
+    {
+        return GetLastError();
+    }
+
+    RETURN_HR_IF(HRESULT_FROM_WIN32(ERROR_INVALID_HANDLE), processInfo.hProcess == INVALID_HANDLE_VALUE);
+    DWORD waitResult = ::WaitForSingleObject(processInfo.hProcess, timeout);
+    RETURN_LAST_ERROR_IF_MSG(waitResult != WAIT_OBJECT_0, "Waiting operation failed unexpectedly.");
+
     DWORD exitCode;
     GetExitCodeProcess(processInfo.hProcess, &exitCode);
 

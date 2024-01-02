@@ -50,17 +50,19 @@ Each remediation array object starts with a type field:
 | --------------- | ------- |
 | `ModifyKeyAccess` | Allows for modification of access parameters in calls to open registry keys.  This remediation targets the `samDesired` parameter that specifies the permissions granted to the application when opening the key. This remediation type does not target calls for registry values.|
 | `FakeDelete`      | Returns success to the application if it attempts to delete a key or registry item and "ACCESS_DENIED" occurs.  The app may or may not depend upon the delete occuring at some later point of running the application, so significant testing of the app is suggested when attempting this fixup.|
+| `DeletionMarker`  | Returns PATH_NOT_FOUND to the application if it attempts to access a key or registry item at or below where a deletion marker is present in this configuration, even if the key/value is present in either the virtual or real registry.|
+| `JavaBlocker`     | Returns PATH_NOT_FOUND to calls to locate a Java version higher than the specified value. This is a simply configured support for apps that require a specific version of Java and we need to keep the app from seeing a newer vesion if locally deployed.|
 
 ## ModifyKeyAccess Remediation Type
 The following Windows API calls are supported for this fixup type. 
 
 > * RegCreateKeyEx
-> * RegOpenKeyEx
-> * RegOpenKeyTransacted
 > * RegDeleteKey
 > * RegDeleteKeyEx
 > * RegDeleteKeyTransacted
 > * RegDeleteValue
+> * RegOpenKeyEx
+> * RegOpenKeyTransacted
 
 ### Configuration for ModifyKeyAccess
 When the `type` is specified as `ModifyKeyAccess`, the `remediation` element is an array of remediations with a structure shown here:
@@ -109,12 +111,72 @@ The value of the `hive` element may specified as shown in this table:
 
 The value for the element `patterns` is a regex pattern string that specifies the registry paths to be affected.  This regex string is applied against the path of the key/subkey combination without the hive.
 
-NOTE: Sometimes calling code will end up with an application hive key, which looks like =\REGISTRY\USER\S-1-5... or =\REGISTRY\MACHINE\S-1-5-...
+
+## DeletionMarker Remediation Type
+The following Windows API calls are supported for this fixup type. 
+
+> * RegCreateKeyEx
+> * RegDeleteKey           [notimplemented]
+> * RegDeleteKeyEx         [notimplemented]
+> * RegDeleteKeyTransacted [notimplemented]
+> * RegDeleteTree          [notimplemented]
+> * RegDeleteValue         [notimplemented]
+> * RegEnumKeyEx           
+> * RegEnumValue           [notimplemented]
+> * RegGetValue            [notimplemented]
+> * RegOpenKey
+> * RegOpenKeyEx
+> * RegOpenKeyTransacted
+> * RegQueryInfoKey        [notimplemented]
+> * RegQueryMultipleValues [notimplemented]
+> * RegQueryValueEx        [notimplemented]
+> * RegQueryRenameKey      [notimplemented]
+> * RegSetKeyValue         [notimplemented]
+> * RegSetKeyValueEx       [notimplemented]
+
+The API calls marked as [notimplemented] are not yet implemented because they are unlikly to be used under a deletion key, but will be considered for future releases if needed.
+
+### Configuration for DeletionMarker
+When the `type` is specified as `DeletionMarker`, the `remediation` element is an array of remediations with a structure shown here:
+
+| `hive` | Specifies the registry hive targeted. |
+| `key` | Specifies a regex string pattern to match the base key being the hive targeted.  For example `Software\\\\Vendor.*`. |
+| `patterns` | An array of regex strings. The pattern will be used, alone with the key against the path of the registry key/valuename being processed. Use `.*` to be greedy. |
+
+The value of the `hive` element may specified as shown in this table:
+
+| Value | Purpose |
+| HKCU  | HKEY_CURRENT_USER |
+| HKLM  | HKEY_LOCAL_MACHINE |
+
+Note that when the call by the application specifies a regkey, subkey, and a valuename as separate items in the call, the subkey and valuename are combined to perform matching against the key and patterns.
+
+
+
+## JavaBlocker Remediation Type
+The following Windows API calls are supported for this fixup type. 
+
+> * RegOpenKey
+> * RegOpenKeyEx
+> * RegOpenKeyTransacted
+
+### Configuration for JavaBlocker
+When the `type` is specified as `JavaBlocker`, the `remediation` element is an array of remediations with a structure shown here:
+
+| `majorVersion` | Specifies the major version number of the java version to be supported.  For example, for Java 1.8U133 this is `1`.|
+| `minorVersion` | Specifies the minor version number of the java version to be supported.  For example, for Java 1.8U133 this is `8`. |
+| `updateVersion` | Specifies the update version number of the java version to be supported.  For example, for Java 1.8U133 this is `133`. Specify `999` for any. |
+
+
+# General Notes
+NOTES:
+> * All registry regex pattern matches will be done case insensitive.
+> * Sometimes calling code will end up with an application hive key, which looks like =\REGISTRY\USER\S-1-5... or =\REGISTRY\MACHINE\S-1-5-...
       The RegLegacyFixup will match these patterns against the HKCU/HKLM `hive` element, however care is cautioned on the pattern that you use.
 	  The regex pattern will match against what comes after HKEY_CURRENT_USER\ or =\REGISTRY\USER\S-1-5...\ which should be strings starting with "Software" or "System".  See examples below.
 
 # JSON Example
-Here is an example of using this fixup to address an application that contains a vendor key under the HKEY_CURRENT_USER hive and the application requests for full access control to that key. While permissible in a native installation of the application, such a request is denied by some versions of the MSIX runtime (OS version specific) because the request would allow the applicaiton make modifications. The json file shown could address this by causing a change to the requested access to give the application contol for read/write purposes only.
+Here is an example of the same fixup that adds a DeletionMarker and a JavaBlocker.
 
 ```json
 "fixups": [
@@ -135,7 +197,7 @@ Here is an example of using this fixup to address an application that contains a
 					"type": "ModifyKeyAccess",
 					"hive": "HKLM",
 					"patterns": [
-						"^[Ss][Oo][Ff][Tt][Ww][Aa][Rr][Ee]\\\\Vendor.*"
+						"^Software\\\\Vendor.*"
 					],
 					"access": "RW2MaxAllowed"
 				},
@@ -143,9 +205,24 @@ Here is an example of using this fixup to address an application that contains a
 					"type": "FakeDelete",
 					"hive": "HKCU",
 					"patterns": [
-						"^[Ss][Oo][Ff][Tt][Ww][Aa][Rr][Ee]\\\\Vendor\\\\.*"
+						"^SOftWARE\\\\Vendor\\\\.*"
 					],
-				}
+				},
+                {
+                  "type": "JavaBlocker",
+                  "majorVersion": "1",
+                  "minorVersion": "7",
+                  "updateVersion": "1"
+                },
+                {
+                  "type": "DeletionMarker",
+                  "hive": "HKCU",
+                  "key": "Software\\\\Vendor_Deletion\\\\SubKey\\\\.*",
+                  "patterns": [
+                    "HideThis.*",
+					"OrThat.*"
+                  ]
+                }
 			]
 		  }
 		]
@@ -174,7 +251,7 @@ Here is the equivalent config section when using XML to specify.
 					<type>ModifyKeyAccess</type>
 					<hive>HKLM</hive>
 					<patterns>
-						<patern>^[Ss][Oo][Ff][Tt][Ww][Aa][Rr][Ee]\\\\Vendor.*</pattern>
+						<patern>^SOFTWARE\\\\Vendor.*</pattern>
 					</patterns>
 					<access>RW2R</access>
 				</remediation>
@@ -182,7 +259,7 @@ Here is the equivalent config section when using XML to specify.
 					<type>FakeDelete</type>
 					<hive>HKCU</hive>
 					<patterns>
-						<patern>^[Ss][Oo][Ff][Tt][Ww][Aa][Rr][Ee]\\\\Vendor\\\\.*</pattern>
+						<patern>^SOftWARE\\\\Vendor\\\\.*</pattern>
 					</patterns>
 					<access>RW2R</access>
 				</remediation>

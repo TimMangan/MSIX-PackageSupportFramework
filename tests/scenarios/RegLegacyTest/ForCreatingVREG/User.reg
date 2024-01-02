@@ -1,0 +1,58 @@
+Windows Registry Editor Version 5.00
+
+[HKEY_CURRENT_USER]
+
+[HKEY_CURRENT_USER\Software]
+
+[HKEY_CURRENT_USER\Software\Classes]
+
+[HKEY_CURRENT_USER\Software\Classes\CLSID]
+
+[HKEY_CURRENT_USER\Software\Classes\CLSID\{CAFEEFAC-0016-0000-0001-ABCDEFFEDCBA}]
+@="Java 1.6 that is allowed"
+
+[HKEY_CURRENT_USER\Software\Classes\CLSID\{CAFEEFAC-0017-0000-0001-ABCDEFFEDCBA}]
+@="Java 1.7 that is expected"
+
+[HKEY_CURRENT_USER\Software\Classes\CLSID\{CAFEEFAC-0019-0000-0001-ABCDEFFEDCBA}]
+@="Java 1.9 not allowed"
+
+[HKEY_CURRENT_USER\Software\Vendor_Covered]
+@="HKCU covered primary default item"
+"SubItem"="HKCU covered primary SubItem"
+
+[HKEY_CURRENT_USER\Software\Vendor_Covered\SubKey]
+@="HKCU covered SubKey default item"
+"SubItem"="HKCU covered SubKey SubItem"
+
+[HKEY_CURRENT_USER\Software\Vendor_NotCovered]
+@="HKCU primary notcovered default item"
+"SubItem"="HKCU primary notcovered SubItem"
+
+[HKEY_CURRENT_USER\Software\Vendor_NotCovered\SubKey]
+@="HKCU notcovered SubKey default item"
+"SubItem"="HKCU notcovered SubKey SubItem"
+
+[HKEY_CURRENT_USER\Software\Vendor_Deletion]
+@="HKCU Deletion primary default item"
+"SubItem"="HKCU Deletion primary SubItem"
+
+[HKEY_CURRENT_USER\Software\Vendor_Deletion\SeeThis]
+@="HKCU Deletion primary\SeeThis default item"
+
+[HKEY_CURRENT_USER\Software\Vendor_Deletion\HideThis]
+@="HKCU Deletion primary\HideThis default item"
+
+[HKEY_CURRENT_USER\Software\Vendor_Deletion\Subkey]
+@="HKCU Deletion SubKey default item"
+"SubItem"="HKCU SubKey primary SubItem"
+
+[HKEY_CURRENT_USER\Software\Vendor_Deletion\SubKey\SeeThis]
+@="HKCU Deletion SubKey\SeeThis default item"
+
+[HKEY_CURRENT_USER\Software\Vendor_Deletion\SubKey\HideThis]
+@="HKCU Deletion SubKey\HideThis default item"
+
+[HKEY_CURRENT_USER\Software\Vendor_Deletion\Subkey\SubSubKey]
+@="HKCU Deletion SubKeySubKey default item"
+"SubItem"="HKCU SubKeySubKey primary SubItem"

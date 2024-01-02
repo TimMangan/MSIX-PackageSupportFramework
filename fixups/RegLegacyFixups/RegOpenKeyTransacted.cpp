@@ -35,11 +35,34 @@ LSTATUS __stdcall RegOpenKeyTransactedFixup(
 #if _DEBUG
     Log(L"[%d] RegOpenKeyTransacted:\n", RegLocalInstance);
 #endif
-
-    std::string keypath = InterpretKeyPath(key) + "\\" + InterpretStringA(subKey);
+    std::string keyOnlyath = InterpretStringA(subKey);
+    std::string keypath = InterpretKeyPath(key) + "\\" + keyOnlyath;
     REGSAM samModified = RegFixupSam(keypath, samDesired, RegLocalInstance);
 
-    auto result = RegOpenKeyTransactedImpl(key, subKey, options, samModified, resultKey, hTransaction, pExtendedParameter);
+    std::string sskey = narrow(subKey);
+    LSTATUS result = RegFixupDeletionMarker(keyOnlyath, sskey, RegLocalInstance);
+    if (result == ERROR_SUCCESS)
+    {
+        std::string fullpath = keypath;
+        if (subKey != NULL)
+        {
+            fullpath += "\\" + sskey;
+        }
+        if (!RegFixupJavaBlocker(fullpath, RegLocalInstance))
+        {
+            result = RegOpenKeyTransactedImpl(key, subKey, options, samModified, resultKey, hTransaction, pExtendedParameter);
+        }
+        else
+        {
+            result = ERROR_PATH_NOT_FOUND;
+            resultKey = NULL;
+        }
+    }
+    else
+    {
+        resultKey = NULL;
+    }
+
 #ifdef _DEBUG
     Log("[%d] RegOpenKeyTransacted result=%d", RegLocalInstance, result);
 #endif

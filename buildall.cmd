@@ -1,4 +1,4 @@
-@echo off
+
 echo "==================== PSF x86  DEBUG  ================================="
 msbuild CentennialFixups.sln /p:platform=x86;configuration=debug
 echo "==================== PSF x86 RELEASE ================================="

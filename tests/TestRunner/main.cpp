@@ -31,7 +31,7 @@ using namespace std::literals;
 //#define DO_MFR_TESTS
 //#define DO_FRF_TESTS
 //#define DO_DYNDLL_TESTS
-//#define DO_REGLEG_TESTS
+#define DO_REGLEG_TESTS
 //#define DO_ENVVAR_TESTS
 
 
@@ -70,8 +70,7 @@ static constexpr const wchar_t* g_applications[] =
     L"DynamicLibraryTest_8wekyb3d8bbwe!Fixed64",
 #endif
 #ifdef DO_REGLEG_TESTS
-    L"RegLegacyTest_8wekyb3d8bbwe!Fixed32",
-    L"RegLegacyTest_8wekyb3d8bbwe!Fixed64",
+    L"RegLegacyTest_8wekyb3d8bbwe!Fixed"
 #endif
 #ifdef DO_ENVVAR_TESTS
     L"EnvVarsATest_8wekyb3d8bbwe!Fixed32",

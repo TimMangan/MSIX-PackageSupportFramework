@@ -80,6 +80,12 @@
     <ClCompile Include="Logging.cpp">
       <Filter>Header Files</Filter>
     </ClCompile>
+    <ClCompile Include="RegOpenKey.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="RegEnumKeyEx.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="readme.md" />

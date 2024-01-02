@@ -13,6 +13,12 @@ ideas:
 	   situation from one where the native file exists and it was never in the package.  A possibility would be to add an additional marker in Delete file(etc) such
 	   as an extra xxx.yyy.deleted file in the redirection area.  But then all methods looking to see files would have to look for this, and anything creating a file might have to remove it.
 	   Needs more thought on finding a way to distinguish.
+
+v.2024.0102:	
+* Added Deletion_Marker to RegLegacyFixup to match the Microsoft implementation.
+* Added Java_Blocker to RegLegacyFixup as a simpler registry blocker specically for Java.
+* Removed inheritHandles from StartProcess calls for the PsfLauncher start of the primary application.
+	
 v.2023.0828
 * PsfRuntime: Cross architecture issues for injection of PsfRuntime. Modification to allow RunDll32.exe and RunDll64.exe to be located anywhere in the package.
   Foxta has an x64 process trying to launch a 32-bit process.  So RunDll32.exe must be used.  The code in CreateProcessHook, CreateProcessWithPsfRunDll, 

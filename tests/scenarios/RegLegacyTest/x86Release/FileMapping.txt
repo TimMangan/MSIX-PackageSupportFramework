@@ -5,12 +5,12 @@
 "User.dat" "User.dat"
 "UserClasses.dat" "UserClasses.dat"
 
+"..\..\win32\Release\RegLegacyTest.exe" "RegLegacyTest.exe"
 
-"..\..\Win32\Release\RegLegacyTest.exe" "RegLegacyTest.exe"
-
-"..\..\..\Win32\Release\PsfLauncher32.exe" "PsfLauncher.exe"
-"..\..\..\Win32\Release\PsfRuntime32.dll" "PsfRuntime32.dll"
-"..\..\..\Win32\Release\RegLegacyFixups32.dll" "RegLegacyFixups32.dll"
+"..\..\..\win32\Release\PsfLauncher32.exe" "PsfLauncher.exe"
+"..\..\..\win32\Release\PsfRuntime32.dll" "PsfRuntime32.dll"
+"..\..\..\win32\Release\RegLegacyFixups32.dll" "RegLegacyFixups32.dll"
+"..\..\..\win32\Debug\WaitForDebuggerFixup32.dll" "WaitForDebuggerFixup32.dll"
 
 
 "..\Assets\Logo44x44.png" "Assets\Logo44x44.png"

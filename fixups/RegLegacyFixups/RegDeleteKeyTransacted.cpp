@@ -41,7 +41,8 @@ LSTATUS __stdcall RegDeleteKeyTransactedFixup(
 #if _DEBUG
                 Log(L"[%d] RegDeleteKeyTransacted:\n", RegLocalInstance);
 #endif
-                std::string keypath = ReplaceAppRegistrySyntax(InterpretKeyPath(key) + "\\" + InterpretStringA(subKey));
+                std::string keyOnlyPath = InterpretStringA(subKey);
+                std::string keypath = ReplaceAppRegistrySyntax(InterpretKeyPath(key) + "\\" + keyOnlyPath);
 #ifdef _DEBUG
                 Log(L"[%d] RegDeleteKeyTransacted: Path=%s", RegLocalInstance, keypath.c_str());
                 if (RegFixupFakeDelete(keypath, RegLocalInstance) == true)

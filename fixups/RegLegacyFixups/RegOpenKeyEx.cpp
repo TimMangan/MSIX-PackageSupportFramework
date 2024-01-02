@@ -3,6 +3,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 //-------------------------------------------------------------------------------------------------------
 
+//#define MOREDEBUG 1
 
 #include <psf_framework.h>
 #include <psf_logging.h>
@@ -27,6 +28,7 @@ LSTATUS __stdcall RegOpenKeyExFixup(
 {
     DWORD RegLocalInstance = ++g_RegIntceptInstance;
     LSTATUS result = -1;
+    bool isBlocked = false;
 
 
 #if _DEBUG
@@ -84,8 +86,40 @@ LSTATUS __stdcall RegOpenKeyExFixup(
 
     if (!hasRedirection)
     {
-        result = RegOpenKeyExImpl(key, subKey, options, samModified, resultKey);
+        std::string sskey = narrow(subKey);
+        result = RegFixupDeletionMarker(keyonlypath, sskey, RegLocalInstance);
+        if (result == ERROR_SUCCESS)
+        {
+            
+
+#if MOREDEBUG
+            Log(L"[%d] RegOpenKeyEx:  JavaBlocker checking path=%S", RegLocalInstance, keypath.c_str());
+#endif
+
+            if (!RegFixupJavaBlocker(keypath, RegLocalInstance))
+            {
+                result = RegOpenKeyExImpl(key, subKey, options, samModified, resultKey);
+            }
+            else
+            {
+#if _DEBUG
+                Log(L"[%d] RegOpenKeyEx:  JavaBlocker Blocking path=%S", RegLocalInstance, keypath.c_str());
+#endif
+                result = ERROR_PATH_NOT_FOUND;
+                resultKey = NULL;
+                isBlocked = true;
+            }
+        }
+        else
+        {
+            result = ERROR_PATH_NOT_FOUND;
+            resultKey = NULL;
+            isBlocked = true;
+        }
     }
+
+
+
 #ifdef _DEBUG
     if (result != ERROR_SUCCESS)
     {
@@ -93,7 +127,7 @@ LSTATUS __stdcall RegOpenKeyExFixup(
     }
     else
     {
-        Log("[%d] RegOpenKeyEx result=SUCCESS key=0x%x", RegLocalInstance,key);
+        Log("[%d] RegOpenKeyEx result=SUCCESS key=0x%x", RegLocalInstance,*resultKey);
     }
 #endif
 

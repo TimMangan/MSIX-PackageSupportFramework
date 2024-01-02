@@ -80,7 +80,7 @@ function RunTest($Arch, $Config)
         write-host ""
         write-host ""
         write-host ""
-        write-host ""
+        write-host "Cleaning up..."
         write-host ""
 
         # Uninstall all packages on exit. Ideally Add-AppxPackage would give us back something that we could use here,

@@ -632,6 +632,7 @@ inline Func GetNtDllInternalFunction(const char* functionName)
     return result;
 }
 #define WINTERNL_FUNCTION(Name) (GetNtDllInternalFunction<decltype(&Name)>(#Name));
+
 namespace impl
 {
     inline auto NtQueryKey = WINTERNL_FUNCTION(winternl::NtQueryKey);

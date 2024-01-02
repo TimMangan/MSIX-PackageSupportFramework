@@ -26,6 +26,7 @@
 #include <debug.h>
 #include <shlwapi.h>
 #include <WinUser.h>
+#include <proc_helper.h>
 
 TRACELOGGING_DECLARE_PROVIDER(g_Log_ETW_ComponentProvider);
 TRACELOGGING_DEFINE_PROVIDER(
@@ -213,12 +214,27 @@ int launcher_main(PCWSTR args, int cmdShow) noexcept try
         LogString(L"Process Launch: ", exePath.c_str());
         LogString(L"     Arguments: ", fullargs.data());
         LogString(L"Working Directory: ", currentDirectory.c_str());
-
-        HRESULT hr = StartProcess(exePath.c_str(), (L"\"" + exePath.filename().native() + L"\" " + exeArgString + L" " + args).data(), currentDirectory.c_str(), cmdShow, INFINITE);
+        
+        //std::filesystem::path procmonMarker1 = packageRoot.append(L"MarkerBeforeLaunch.txt");
+        //if (std::filesystem::exists(procmonMarker1)) {} // Do nothing, file doesn't exist, just here to set a marker in ProcessMonitor.
+        HRESULT hr = StartProcess(exePath.c_str(), (L"\"" + exePath.filename().native() + L"\" " + exeArgString + L" " + args).data(), currentDirectory.c_str(), cmdShow, INFINITE,true, 0, NULL);
+        //std::filesystem::path procmonMarker2 = packageRoot.append(L"MarkerAfterLaunch.txt");
+        //if (std::filesystem::exists(procmonMarker2)) {} // Do nothing, file doesn't exist, just here to set a marker in ProcessMonitor.
         if (hr != ERROR_SUCCESS)
         {
-            Log(L"Error return from launching process 0x%x.", GetLastError());
-            LaunchInBackgroundAsAdmin(exePath.c_str(), args, true, cmdShow, currentDirectory.c_str());
+            Log(L"Error return from launching process, try again 0x%x.", GetLastError());
+
+            ProcThreadAttributeList AttributeList;
+            MyProcThreadAttributeList m_AttributeListInside = MyProcThreadAttributeList(true, true, false);
+            hr = StartProcess(exePath.c_str(), (L"\"" + exePath.filename().native() + L"\" " + exeArgString + L" " + args).data(), currentDirectory.c_str(), cmdShow, INFINITE, true, 0, AttributeList.get());
+            if (hr != ERROR_SUCCESS)
+            {
+                Log(L"Error return from launching process second try, try again 0x%x.", GetLastError());
+            }
+            if (hr != ERROR_SUCCESS)
+            {
+                LaunchInBackgroundAsAdmin(exePath.c_str(), args, true, cmdShow, currentDirectory.c_str());
+            }
         }
     }
     else
@@ -417,7 +433,7 @@ void LaunchMonitorInBackground(std::filesystem::path packageRoot, const wchar_t 
     }
     else
     {
-        THROW_IF_FAILED(StartProcess(executable, (cmd + L" " + arguments).data(), (packageRoot / dirStr).c_str(), cmdShow, INFINITE));
+        THROW_IF_FAILED(StartProcess(executable, (cmd + L" " + arguments).data(), (packageRoot / dirStr).c_str(), cmdShow, INFINITE,true,0, NULL));
     }
 }
 

@@ -1204,7 +1204,7 @@ BOOL WINAPI CreateProcessFixup(
     }
     else
     {
-        Log(L"\t[%d] CreateProcessFixup: The new process is not inside the container, so doesn't inject...", CreateProcessInstance);
+        Log(L"\t[%d] CreateProcessFixup: The new process is not inside the container, or is indicated without other fixups, so doesn't inject...", CreateProcessInstance);
     }
     if ((creationFlags & CREATE_SUSPENDED) != CREATE_SUSPENDED)
     {

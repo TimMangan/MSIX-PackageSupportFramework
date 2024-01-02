@@ -3,6 +3,8 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 //-------------------------------------------------------------------------------------------------------
 
+//#define MOREDEBUG 1
+
 #include <psf_framework.h>
 #include <psf_logging.h>
 
@@ -114,7 +116,7 @@ REGSAM RegFixupSam(std::string keypath, REGSAM samDesired, DWORD RegLocalInstanc
 #endif
                             try
                             {
-                                if (std::regex_match(widen(keypath.substr(OffsetHkcu)), std::wregex(pattern)))
+                                if (std::regex_match(widen(keypath.substr(OffsetHkcu)), std::wregex(pattern, std::regex_constants::icase)))
                                 {
 #ifdef MOREDEBUG
                                     Log(L"[%d]   RegFixupSam: is HKCU pattern match on type=0x%x.\n", RegLocalInstance, specitem.modifyKeyAccess.access);
@@ -231,7 +233,7 @@ REGSAM RegFixupSam(std::string keypath, REGSAM samDesired, DWORD RegLocalInstanc
                         {
                             try
                             {
-                                if (std::regex_match(widen(keypath.substr(OffsetHklm)), std::wregex(pattern)))
+                                if (std::regex_match(widen(keypath.substr(OffsetHklm)), std::wregex(pattern, std::regex_constants::icase)))
                                 {
 #ifdef _DEBUG
                                     Log(L"[%d]   RegFixupSam: is HKLM pattern match on type=0x%x.\n", RegLocalInstance, specitem.modifyKeyAccess.access);
@@ -408,7 +410,7 @@ bool RegFixupFakeDelete(std::string keypath, [[maybe_unused]] DWORD RegLocalInst
                         {
                             try
                             {
-                                if (std::regex_match(widen(keypath.substr(OffsetHkcu)), std::wregex(pattern)))
+                                if (std::regex_match(widen(keypath.substr(OffsetHkcu)), std::wregex(pattern, std::regex_constants::icase)))
                                 {
 #ifdef _DEBUG
                                     Log(L"[%d] RegFixupFakeDelete: match hkcu\n", RegLocalInstance);
@@ -441,7 +443,7 @@ bool RegFixupFakeDelete(std::string keypath, [[maybe_unused]] DWORD RegLocalInst
                         {
                             try
                             {
-                                if (std::regex_match(widen(keypath.substr(OffsetHklm)), std::wregex(pattern)))
+                                if (std::regex_match(widen(keypath.substr(OffsetHklm)), std::wregex(pattern, std::regex_constants::icase)))
                                 {
 #ifdef _DEBUG
                                     Log(L"[%d] RegFixupFakeDelete: match hklm\n", RegLocalInstance);
@@ -463,5 +465,289 @@ bool RegFixupFakeDelete(std::string keypath, [[maybe_unused]] DWORD RegLocalInst
             }
         }
     }
+    return false;
+}
+
+
+// helper for registry deletion marker
+// returs ERROR_SUCCESS if the path is not subject to a deletion marker
+//        otherwise appropriate error code for the match, either Path or File (aka full string).
+LSTATUS RegFixupDeletionMarker(std::string keyPath, std::string Value, [[maybe_unused]] DWORD RegLocalInstance)
+{
+#ifdef _DEBUG
+    Log("[%d] RegFixupDeletionMarker: keypath=%s value=%s\n", RegLocalInstance, keyPath.c_str(), Value.c_str());
+#endif
+    try
+    {
+        std::wstring wKeyPath = widen(keyPath);
+        std::wstring wValue = widen(Value);
+        std::wstring wKeyPathValue = wKeyPath + L"\\\\" + wValue;
+        std::wstring wRemainingKeyPathValue;
+        std::wstring wKeyString;
+        std::wstring wAltKeyString;
+        for (auto& spec : g_regRemediationSpecs)
+        {
+
+            for (auto& specitem : spec.remediationRecords)
+            {
+                if (specitem.remeditaionType == Reg_Remediation_Type_DeletionMarker)
+                {
+#ifdef MOREDEBUG
+                    Log(L"[%d] RegFixupDeletionMarker: specitem.type=%d\n", RegLocalInstance, specitem.remeditaionType);
+#endif 
+                    //TODO:  Test this
+                    switch (specitem.deletionMarker.hive)
+                    {
+                    case Modify_Key_Hive_Type_HKCU:
+#ifdef MOREDEBUG
+                        Log(L"[%d] RegFixupDeletionMarker: checking hive HKCU\n", RegLocalInstance);
+#endif 
+                        wKeyString = L"HKEY_CURRENT_USER";
+                        wAltKeyString = L"=\\REGISTRY\\USER";
+                        if (wKeyPathValue._Starts_with(wKeyString) ||
+                            wKeyPathValue._Starts_with(wAltKeyString))
+                        {
+#ifdef MOREDEBUG
+                            Log(L"[%d] RegFixupDeletionMarker: request is in hive\n", RegLocalInstance);
+#endif                        
+                            size_t OffsetHkcu = wKeyString.size() + 2;  // skip next '\' 
+                            if (wKeyPathValue._Starts_with(wAltKeyString))
+                            {
+                                // Must remove both the pattern and the S-1-5-...\ that follows.
+                                OffsetHkcu = wKeyPathValue.find_first_of(L'\\', wAltKeyString.size()) + 2;
+                            }
+                            if (OffsetHkcu < wKeyPathValue.size())
+                            {
+                                wRemainingKeyPathValue = wKeyPathValue.substr(OffsetHkcu);
+                            }
+                            else
+                            {
+                                wRemainingKeyPathValue = L"";
+                            }
+                            
+#ifdef MOREDEBUG
+                            Log(L"[%d] RegFixupDeletionMarker: wRemainingKeyPathValue=%Ls\n", RegLocalInstance, wRemainingKeyPathValue.c_str());
+                            Log(L"[%d] RegFixupDeletionMarker: regex=%Ls\n", RegLocalInstance, specitem.deletionMarker.key.c_str());
+#endif
+                            if (std::regex_match(wRemainingKeyPathValue, std::wregex(specitem.deletionMarker.key, std::regex_constants::icase)))
+                            {
+#ifdef MOREDEBUG
+                                Log(L"[%d] RegFixupDeletionMarker: regex match on key\n", RegLocalInstance);
+#endif                            
+                                if (specitem.deletionMarker.patterns.empty())
+                                {
+                                    // treat an empty values list as a match on any value
+#ifdef _DEBUG
+                                    Log("[%d] RegFixupDeletionMarker: no pattern specified return = ERROR_FILE_NOT_FOUND", RegLocalInstance);
+#endif
+                                    return ERROR_FILE_NOT_FOUND;
+                                }
+                                else if (wValue.size() == 0)
+                                {
+#ifdef _DEBUG
+                                    Log("[%d] RegFixupDeletionMarker: no value specified return = ERROR_FILE_NOT_FOUND", RegLocalInstance);
+#endif
+                                    return ERROR_FILE_NOT_FOUND;
+                                }
+                                else
+                                {
+                                    for (auto& pattern : specitem.deletionMarker.patterns)
+                                    {
+                                        std::wstring fullpattern = specitem.deletionMarker.key + L".*" + pattern;
+#ifdef MOREDEBUG
+                                        Log(L"[%d] RegFixupDeletionMarker: wRemainingKeyPathValue vs regex=%Ls\n", RegLocalInstance, fullpattern.c_str());
+#endif
+                                        if (std::regex_match(wRemainingKeyPathValue, std::wregex(fullpattern, std::regex_constants::icase)))
+                                        {
+#ifdef _DEBUG
+                                            Log("[%d] RegFixupDeletionMarker: pattern match return = ERROR_PATH_NOT_FOUND", RegLocalInstance);
+#endif
+                                            return ERROR_PATH_NOT_FOUND;
+                                        }
+                                    }
+                                }
+                            }
+#ifdef MOREDEBUG
+                            Log(L"[%d] RegFixupDeletionMarker: no match found.\n", RegLocalInstance);
+#endif 
+                        }
+                        break;
+                    case Modify_Key_Hive_Type_HKLM:
+                        wKeyString = L"HKEY_LOCAL_MACHINE";
+                        wAltKeyString = L"=\\REGISTRY\\MACHINE";
+                        if (wKeyPathValue._Starts_with(wKeyString) ||
+                            wKeyPathValue._Starts_with(wAltKeyString))
+                        {
+                            size_t OffsetHkcu = wKeyString.size() + 2;  // skip next '\' 
+                            if (wKeyPathValue._Starts_with(wAltKeyString))
+                            {
+                                // Must remove both the pattern and the S-1-5-...\ that follows.
+                                OffsetHkcu = wKeyPathValue.find_first_of(L'\\', wAltKeyString.size()) + 2;
+                            }
+                            if (OffsetHkcu < wKeyPathValue.size())
+                            {
+                                wRemainingKeyPathValue = wKeyPathValue.substr(OffsetHkcu);
+                            }
+                            else
+                            {
+                                wRemainingKeyPathValue = L"";
+                            }
+                            if (std::regex_match(wRemainingKeyPathValue, std::wregex(specitem.deletionMarker.key, std::regex_constants::icase)))
+                            {
+                                if (specitem.deletionMarker.patterns.empty())
+                                {
+                                    // treat an empty values list as a match on any value
+#ifdef _DEBUG
+                                    Log("[%d] RegFixupDeletionMarker: return = ERROR_FILE_NOT_FOUND", RegLocalInstance);
+#endif
+                                    return ERROR_FILE_NOT_FOUND;
+                                }
+                                else if (wValue.size() == 0)
+                                {
+                                    return ERROR_FILE_NOT_FOUND;
+                                }
+                                else
+                                {
+                                    for (auto& pattern : specitem.deletionMarker.patterns)
+                                    {
+                                        std::wstring fullpattern = specitem.deletionMarker.key + L".*" + pattern;
+                                        if (std::regex_match(wValue, std::wregex(fullpattern, std::regex_constants::icase)))
+                                        {
+#ifdef _DEBUG
+                                            Log("[%d] RegFixupDeletionMarker: return = ERROR_PATH_NOT_FOUND", RegLocalInstance);
+#endif
+                                            return ERROR_PATH_NOT_FOUND;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        break;
+                    default:
+                        break;
+                    }
+                }
+            }
+        }
+    }
+    catch (...)
+    {
+        Log(L"[%d] RegFixupDeletionMarker: exception caught\n", RegLocalInstance);
+    }
+    return ERROR_SUCCESS;
+}
+
+
+
+// helper for registry java blocker marker
+// true = blocked
+bool RegFixupJavaBlocker(std::string keyPath, [[maybe_unused]] DWORD RegLocalInstance)
+{
+#ifdef _DEBUG
+    Log(L"[%d] RegFixupJavaBlocker: keypath=%S\n", RegLocalInstance, keyPath.c_str());
+#endif
+    std::wstring wKeyPath = widen(keyPath);
+    std::wstring wRemainingKeyPath;
+    std::wstring check_strings[6] = {L"HKEY_CURRENT_USER\\SOFTWARE\\CLASSES\\CLSID\\{CAFEEFAC-",
+                                     L"=\\REGISTRY\\USER\\SOFTWARE\\CLASSES\\CLSID\\{CAFEEFAC-",
+                                     L"HKEY_LOCAL_MACHINE\\SOFTWARE\\CLASSES\\CLSID\\{CAFEEFAC-",
+                                     L"=\\REGISTRY\\MACHINE\\SOFTWARE\\CLASSES\\CLSID\\{CAFEEFAC-",
+                                     L"HKEY_LOCAL_MACHINE\\SOFTWARE\\WOW6432NODE\\CLASSES\\CLSID\\{CAFEEFAC-",
+                                     L"=\\REGISTRY\\MACHINE\\SOFTWARE\\WOW6432NODE\\CLASSES\\CLSID\\{CAFEEFAC-" 
+    };
+    //std::wstring wKeyStringU;
+    //std::wstring wAltKeyStringU;
+    //std::wstring wKeyStringM;
+    //std::wstring wAltKeyStringM;
+    //std::wstring wKeyStringMw;
+    //std::wstring wAltKeyStringMw;
+    //std::wstring wMaxAllowedString;
+    for (auto& spec : g_regRemediationSpecs)
+    {
+        for (auto& specitem : spec.remediationRecords)
+        {
+            if (specitem.remeditaionType == Reg_Remediation_Type_JavaBlocker)
+            {
+                std::wstring wKeyPathUpper = L"";
+                for( size_t i=0; i < wKeyPath.size(); i++)
+                {
+                    wKeyPathUpper += towupper(wKeyPath[i]);
+                }
+ 
+                bool isInRange = false;
+                size_t OffsetHkcu = 0;
+                for (size_t index = 0; index < 6; index++)
+                {
+                    if (wKeyPathUpper._Starts_with(check_strings[index]))
+                    {
+                        isInRange = true;
+                        OffsetHkcu = check_strings[index].size();
+                        break;
+                    }
+                }
+
+                if (isInRange)
+                {  
+                    if (wKeyPath.size() > OffsetHkcu)
+                    {
+                        wRemainingKeyPath = wKeyPathUpper.substr(OffsetHkcu);
+
+                        // {CAFEEFAC-0018-0000-0131-ABCDEFFEDCBA}
+                        // {CAFEEFAC-0018-0000-0131-ABCDEFFEDCBB}
+                        if (wRemainingKeyPath._Starts_with(L"00"))
+                        {
+                            try
+                            {
+                                INT32 majorVersion = _wtoi(wRemainingKeyPath.substr(2, 1).c_str());
+                                INT32 minorVersion = _wtoi(wRemainingKeyPath.substr(3, 1).c_str());
+                                INT32 buildVersion = _wtoi(wRemainingKeyPath.substr(12, 3).c_str());
+                                if (specitem.javaBlocker.majorVersion < majorVersion)
+                                {
+#ifdef MOREDEBUG
+                                    Log(L"[%d] RegFixupJavaBlocker:  matched\n", RegLocalInstance);
+#endif 
+                                    return true;
+                                }
+                                if (specitem.javaBlocker.majorVersion == majorVersion)
+                                {
+                                    if (specitem.javaBlocker.minorVersion < minorVersion)
+                                    {
+#ifdef MOREDEBUG
+                                        Log(L"[%d] RegFixupJavaBlocker:  matched\n", RegLocalInstance);
+#endif 
+                                        return true;
+                                    }
+                                    if (specitem.javaBlocker.minorVersion == minorVersion)
+                                    {
+                                        if (specitem.javaBlocker.updateVersion < buildVersion)
+                                        {
+#ifdef MOREDEBUG
+                                            Log(L"[%d] RegFixupJavaBlocker:  matched\n", RegLocalInstance);
+#endif 
+                                            return true;
+                                        }
+                                    }
+                                }
+#ifdef MOREDEBUG
+                                Log(L"[%d] RegFixupJavaBlocker:  allowed\n", RegLocalInstance);
+#endif                                return false;
+                            }
+                            catch (...)
+                            {
+                                //update version FFF marker doesn't convert, but we want to block it anyway.
+#ifdef MOREDEBUG
+                                Log(L"[%d] RegFixupJavaBlocker:  exception matched\n", RegLocalInstance);
+#endif 
+                                return true;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+#ifdef MOREDEBUG
+    Log(L"[%d] RegFixupJavaBlocker: no match\n", RegLocalInstance);
+#endif 
     return false;
 }

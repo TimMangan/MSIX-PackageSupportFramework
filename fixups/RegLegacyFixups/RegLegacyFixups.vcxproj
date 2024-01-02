@@ -140,6 +140,7 @@
       <AdditionalIncludeDirectories>$(SolutionDir)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <TreatWarningAsError>true</TreatWarningAsError>
       <LanguageStandard>stdcpp17</LanguageStandard>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -185,6 +186,7 @@
       <TreatWarningAsError>true</TreatWarningAsError>
       <LanguageStandard>stdcpp17</LanguageStandard>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -219,7 +221,9 @@
     <ClCompile Include="RegDeleteKeyEx.cpp" />
     <ClCompile Include="RegDeleteKeyTransacted.cpp" />
     <ClCompile Include="RegDeleteValue.cpp" />
+    <ClCompile Include="RegEnumKeyEx.cpp" />
     <ClCompile Include="RegistryFixups.cpp" />
+    <ClCompile Include="RegOpenKey.cpp" />
     <ClCompile Include="RegOpenKeyEx.cpp" />
     <ClCompile Include="RegOpenKeyTransacted.cpp" />
     <ClCompile Include="RegRemediation.cpp" />

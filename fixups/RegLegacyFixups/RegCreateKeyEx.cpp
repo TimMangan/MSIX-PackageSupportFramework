@@ -34,6 +34,7 @@ LSTATUS __stdcall RegCreateKeyExFixup(
 {
     DWORD RegLocalInstance = ++g_RegIntceptInstance;
     LSTATUS result = -1;
+    bool isBlocked = false;
 
 #if _DEBUG
     if constexpr (psf::is_ansi<CharT>)
@@ -91,19 +92,46 @@ LSTATUS __stdcall RegCreateKeyExFixup(
 
     if (!hasRedirection)
     {
-        result = RegCreateKeyExImpl(key, subKey, reserved, classType, options, samModified, securityAttributes, resultKey, disposition);
+        std::string sskey = narrow(subKey);
+        result = RegFixupDeletionMarker(keyonlypath, sskey, RegLocalInstance);
+        if (result == ERROR_SUCCESS)
+        {
+            std::string fullpath = keypath;
+            if (subKey != NULL)
+            {
+                fullpath += "\\" + sskey;
+            }
+            //if (!RegFixupJavaBlocker(fullpath, RegLocalInstance))
+            //{
+                result = RegCreateKeyExImpl(key, subKey, reserved, classType, options, samModified, securityAttributes, resultKey, disposition);
+            //}
+            //else
+            //{
+            //    result = ERROR_PATH_NOT_FOUND;
+            //    resultKey = NULL;
+            //    isBlocked = true;
+            //}
+        }
+        else
+        {
+            result = ERROR_PATH_NOT_FOUND;
+            resultKey = NULL;
+            isBlocked = true;
+        }
+
         if (result != ERROR_SUCCESS)
         {
 #ifdef _DEBUG
-            Log("[%d] RegCreateKeyEx result=0x%x", RegLocalInstance,result);
+            Log("[%d] RegCreateKeyEx result=0x%x", RegLocalInstance, result);
 #endif   
         }
         else
         {
 #ifdef _DEBUG
-            Log("[%d] RegCreateKeyEx result=SUCCESS key=0x%x", RegLocalInstance,key);
+            Log("[%d] RegCreateKeyEx result=SUCCESS key=0x%x", RegLocalInstance, *resultKey);
 #endif
         }
+
     }
 
 

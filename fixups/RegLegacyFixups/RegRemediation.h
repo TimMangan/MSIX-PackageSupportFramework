@@ -14,6 +14,9 @@ REGSAM RegFixupSam(std::string keypath, REGSAM samDesired, DWORD RegLocalInstanc
 
 bool RegFixupFakeDelete(std::string keypath, [[maybe_unused]] DWORD RegLocalInstance);
 
+LSTATUS RegFixupDeletionMarker(std::string keyPath,std::string Value, [[maybe_unused]] DWORD RegLocalInstance);
+
+bool RegFixupJavaBlocker(std::string keypath, [[maybe_unused]] DWORD RegLocalInstance);
 
 #if TRYHKLM2HKCU
 bool HasHKLM2HKCUSpecified();

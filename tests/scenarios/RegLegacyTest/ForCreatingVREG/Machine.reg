@@ -1,0 +1,65 @@
+Windows Registry Editor Version 5.00
+
+[HKEY_LOCAL_MACHINE]
+
+[HKEY_LOCAL_MACHINE\SOFTWARE]
+
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes]
+
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\CLSID]
+
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\CLSID\{CAFEEFAC-0016-0000-0001-ABCDEFFEDCBA}]
+@="Java 1.6 that is allowed"
+
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\CLSID\{CAFEEFAC-0017-0000-0001-ABCDEFFEDCBA}]
+@="Java 1.7 that is expected"
+
+[HKEY_LOCAL_MACHINE\SOFTWARE\Classes\CLSID\{CAFEEFAC-0019-0000-0001-ABCDEFFEDCBA}]
+@="Java 1.9 not allowed"
+
+[HKEY_LOCAL_MACHINE\SOFTWARE\Vendor_Covered]
+@="This is the HKLM covered primary default item"
+"SubItem"="This is the HKLM covered primary subItem"
+
+[HKEY_LOCAL_MACHINE\SOFTWARE\Vendor_Covered\SubKey]
+@="This is the HKLM covered SubKey default item"
+"SubItem"="This is the HKLM covered SubKey SubItem"
+
+[HKEY_LOCAL_MACHINE\SOFTWARE\Vendor_NotCovered]
+@="This is the HKLM non covered primary default item"
+"SubItem"="This is the HKLM non covered primary SubItem"
+
+[HKEY_LOCAL_MACHINE\SOFTWARE\Vendor_NotCovered\SubKey]
+@="This is the HKLM non covered SubKey default item"
+"SubItem"="This is the HKLM non covered SubKey SubItem"
+
+[HKEY_LOCAL_MACHINE\SOFTWARE\WOW6432Node]
+
+[HKEY_LOCAL_MACHINE\SOFTWARE\WOW6432Node\Classes]
+
+[HKEY_LOCAL_MACHINE\SOFTWARE\WOW6432Node\Classes\CLSID]
+
+[HKEY_LOCAL_MACHINE\SOFTWARE\WOW6432Node\Classes\CLSID\{CAFEEFAC-0016-0000-0001-ABCDEFFEDCBA}]
+@="Java 1.6 WOW that is allowed"
+
+[HKEY_LOCAL_MACHINE\SOFTWARE\WOW6432Node\Classes\CLSID\{CAFEEFAC-0017-0000-0001-ABCDEFFEDCBA}]
+@="Java 1.7 WOW that is expected"
+
+[HKEY_LOCAL_MACHINE\SOFTWARE\WOW6432Node\Classes\CLSID\{CAFEEFAC-0019-0000-0001-ABCDEFFEDCBA}]
+@="Java 1.9 WOW not allowed"
+
+[HKEY_LOCAL_MACHINE\SOFTWARE\WOW6432Node\Vendor_Covered]
+@="Wow covered primary default item"
+"SubItem"="Wow Covered primary SubItem"
+
+[HKEY_LOCAL_MACHINE\SOFTWARE\WOW6432Node\Vendor_Covered\SubKey]
+@="Wow covered SubKey default item"
+"SubItem"="Wow covered SubKey SubItem"
+
+[HKEY_LOCAL_MACHINE\SOFTWARE\WOW6432Node\Vendor_NotCovered]
+@="Wow not covered primary default item"
+"SubItem"="Wow not covered primary SubItem"
+
+[HKEY_LOCAL_MACHINE\SOFTWARE\WOW6432Node\Vendor_NotCovered\SubKey]
+@="Wow not covered SubKey default item"
+"SubItem"="Wow not covered SubKey SubItem"

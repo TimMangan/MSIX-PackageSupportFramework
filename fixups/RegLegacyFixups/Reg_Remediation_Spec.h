@@ -15,7 +15,11 @@ enum  Reg_Remediation_Types
     Reg_Remediation_Type_Unknown = 0,
     Reg_Remediation_Type_ModifyKeyAccess,
     Reg_Remediation_Type_FakeDelete,
-    Reg_Remdiaton_Type_HKLM_to_HKCU,
+#if TRYHKLM2HKCU
+    Reg_Remediation_Type_HKLM_to_HKCU,
+#endif
+    Reg_Remediation_Type_DeletionMarker,
+    Reg_Remediation_Type_JavaBlocker
 };
 
 enum Modify_Key_Access_Types
@@ -32,7 +36,7 @@ enum Modify_Key_Hive_Types
 {
     Modify_Key_Hive_Type_Unknown = 0,
     Modify_Key_Hive_Type_HKCU = 1,
-    Modify_Key_Hive_Type_HKLM = 2,
+    Modify_Key_Hive_Type_HKLM = 2
 };
 
 struct Modify_Key_Access
@@ -48,11 +52,28 @@ struct Fake_Delete_Key
     std::vector<std::wstring> patterns;
 };
 
+struct Deletion_Marker
+{
+    // NOTE: Both key and values are regex patterns; values are optional
+    Modify_Key_Hive_Types hive;
+    std::wstring key;
+    std::vector<std::wstring> patterns;
+};
+
+struct Java_Blocker
+{
+    INT32 majorVersion;     // 1
+    INT32 minorVersion;     // 8
+    INT32 updateVersion;    // 121
+};
+
 struct Reg_Remediation_Record
 {
     Reg_Remediation_Types remeditaionType;
     Modify_Key_Access modifyKeyAccess;
     Fake_Delete_Key fakeDeleteKey;
+    Deletion_Marker deletionMarker;
+    Java_Blocker javaBlocker;
 };
 
 struct Reg_Remediation_Spec

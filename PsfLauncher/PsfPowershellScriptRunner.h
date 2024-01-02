@@ -312,14 +312,14 @@ private:
 			if (inside)
 			{
 				//LogString(L"DEBUG: Starting the script (inside) and waiting to finish", script.commandString.data());
-				startScriptResult = StartProcess(script.PsPath.c_str(), script.commandString.data(), script.currentDirectory.c_str(), script.showWindowAction, script.timeout, m_AttributeListInside.get());
+				startScriptResult = StartProcess(script.PsPath.c_str(), script.commandString.data(), script.currentDirectory.c_str(), script.showWindowAction, script.timeout, true, 0, m_AttributeListInside.get());
 			}
 			else
 			{
 				//LogString(L"DEBUG: Starting the script (outside) and waiting to finish", script.commandString.data());
-				startScriptResult = StartProcess(script.PsPath.c_str(), script.commandString.data(), script.currentDirectory.c_str(), script.showWindowAction, script.timeout, m_AttributeListOutside.get());
+				startScriptResult = StartProcess(script.PsPath.c_str(), script.commandString.data(), script.currentDirectory.c_str(), script.showWindowAction, script.timeout, true, 0, m_AttributeListOutside.get());
 			}
-			//HRESULT startScriptResult = StartProcess(nullptr, script.commandString.data(), script.currentDirectory.c_str(), script.showWindowAction, script.timeout, nullptr);
+			//HRESULT startScriptResult = StartProcess(nullptr, script.commandString.data(), script.currentDirectory.c_str(), script.showWindowAction, script.timeout, true, 0, nullptr);
 			if (startScriptResult == 0xC000013A)
 			{
 				Log(L"Debug: Script process was closed by user action.");
@@ -343,13 +343,13 @@ private:
 			if (inside)
 			{
 				//LogString(L"DEBUG: Starting the script (inside) without waiting to finish", script.commandString.data());
-				std::thread pwrShellThread = std::thread(StartProcess, script.PsPath.c_str(), script.commandString.data(), script.currentDirectory.c_str(), script.showWindowAction, script.timeout, m_AttributeListInside.get());
+				std::thread pwrShellThread = std::thread(StartProcess, script.PsPath.c_str(), script.commandString.data(), script.currentDirectory.c_str(), script.showWindowAction, script.timeout, true, 0, m_AttributeListInside.get());
 				pwrShellThread.detach();
 			}
 			else
 			{
 				//LogString(L"DEBUG: Starting the script (outside) without waiting to finish", script.commandString.data());
-				std::thread pwrShellThread = std::thread(StartProcess, script.PsPath.c_str(), script.commandString.data(), script.currentDirectory.c_str(), script.showWindowAction, script.timeout, m_AttributeListOutside.get());
+				std::thread pwrShellThread = std::thread(StartProcess, script.PsPath.c_str(), script.commandString.data(), script.currentDirectory.c_str(), script.showWindowAction, script.timeout, true, 0, m_AttributeListOutside.get());
 				pwrShellThread.detach();
 			}
 		}

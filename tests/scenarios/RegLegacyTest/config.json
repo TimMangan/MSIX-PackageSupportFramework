@@ -1,17 +1,20 @@
 {
   "applications": [
     {
-      "id": "Fixed32",
-      "executable": "RegLegacyTest.exe"
-    },
-    {
-      "id": "Fixed64",
-      "executable": "RegLegacyTest.exe"
+      "id": "Fixed",
+      "executable": "RegLegacyTest.exe",
+      "workingDirectory": ""
     }
   ],
   "processes": [
     {
       "executable": "PsfLauncher.*"
+    },
+    {
+      "executable": "^[Pp]ower[Ss]hell.*"
+    },
+    {
+      "executable": "^[Cc][Mm][Dd].*"
     },
     {
       "executable": ".*",
@@ -43,6 +46,21 @@
                   "hive": "HKCU",
                   "patterns": [
                     "^SOFTWARE\\\\Vendor_Covered.*"
+                  ]
+                },
+                {
+                  "type": "JavaBlocker",
+                  "majorVersion": "1",
+                  "minorVersion": "7",
+                  "updateVersion": "1"
+                },
+                {
+                  "type": "DeletionMarker",
+                  "hive": "HKCU",
+                  "key": "Software\\\\Vendor_Deletion\\\\.*",
+                  "patterns": [
+                    "SubKey.*",
+                    "HideThis.*"
                   ]
                 }
               ]
