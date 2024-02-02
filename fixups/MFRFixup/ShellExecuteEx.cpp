@@ -18,14 +18,14 @@
 #endif
 
 #include <errno.h>
-#include "FunctionImplementations.h"
 #include <psf_logging.h>
+#include "FunctionImplementations.h"
 
 #include "ManagedPathTypes.h"
 #include "PathUtilities.h"
 #include "DetermineCohorts.h"
 
-
+#if FIXUP_ORIGINAL_SHELLEXECUTEEX
 
  BOOL __stdcall  ShellExecuteExAFixup(_Inout_ SHELLEXECUTEINFOA* pExecInfo) 
 {
@@ -50,14 +50,22 @@
             {
                 if ((pExecInfo->fMask & SEE_MASK_WAITFORINPUTIDLE) == 0)  // used at the start of some apps to signal app is ready without any real filepickers
                 {
-                    Log(L"[%d] ShellExecuteExA intercepted, but without fixing. Known compatibility issues exist in certain usages!", dllInstance);
-
+                    // Release level logging for detection
+                    bool temp = g_psf_NoLogging;
+                    g_psf_NoLogging = false;
+                    Log(L"[%d] ShellExecuteExA unguarded. Known compatibility issues exist in certain usages!", dllInstance);
+                    LogString(dllInstance, L"ShellExecuteExA: file", pExecInfo->lpFile);
                     LogString(dllInstance, L"ShellExecuteExA: verb", pExecInfo->lpVerb);
-#if MOREDEBUG
+                    LogString(dllInstance, L"ShellExecuteExA: directory", pExecInfo->lpDirectory);
+#ifdef MOREDEBUG
                     Log(L"[%d] ShellExecuteExA fMask=0x%x", dllInstance, pExecInfo->fMask);
 #endif
+                    LogCallingModule();
+                    g_psf_NoLogging = temp;
                 }
             }
+            retfinal = impl::ShellExecuteExA(pExecInfo);
+            return retfinal;
         }
     }
 #if _DEBUG
@@ -69,9 +77,6 @@
         Log(L"[%d] ShellExecuteExA Exception=0x%x", dllInstance, GetLastError());
     }
 #endif
-    Log(L"[%d] ShellExecuteExA unguarded", dllInstance);
-
-    LogString(dllInstance, L"ShellExecuteExA: unguarded verb", pExecInfo->lpVerb);
 
     retfinal = impl::ShellExecuteExA(pExecInfo);
     return retfinal;
@@ -104,14 +109,20 @@
              {
                  if ((pExecInfo->fMask & SEE_MASK_WAITFORINPUTIDLE) == 0)  // used at the start of some apps to signal app is ready without any real filepickers
                  {
-                     Log(L"[%d] ShellExecuteExW intercepted, but without fixing. Known compatibility issues exist in certain usages!", dllInstance);
-
+                     // Release level logging for detection
+                     bool temp = g_psf_NoLogging;
+                     g_psf_NoLogging = false;
+                     Log(L"[%d] ShellExecuteExW unguarded. Known compatibility issues exist in certain usages!", dllInstance);
                      LogString(dllInstance, L"ShellExecuteExW: verb", pExecInfo->lpVerb);
 #if MOREDEBUG
                      Log(L"[%d] ShellExecuteExW fMask=0x%x", dllInstance, pExecInfo->fMask);
 #endif
+                     LogCallingModule();
+                     g_psf_NoLogging = temp;
                  }
              }
+             retfinal = impl::ShellExecuteExW(pExecInfo);
+             return retfinal;
          }
      }
 #if _DEBUG
@@ -123,11 +134,10 @@
          Log(L"[%d] ShellExecuteExW Exception=0x%x", dllInstance, GetLastError());
      }
 #endif
-     Log(L"[%d] ShellExecuteExW unguarded", dllInstance);
-
-     LogString(dllInstance, L"ShellExecuteExW: unguarded verb", pExecInfo->lpVerb);
 
      retfinal = impl::ShellExecuteExW(pExecInfo);
      return retfinal;
  }
  DECLARE_FIXUP(impl::ShellExecuteExW, ShellExecuteExWFixup);
+
+#endif

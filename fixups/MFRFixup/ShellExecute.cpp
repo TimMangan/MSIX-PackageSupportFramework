@@ -11,15 +11,16 @@
 #endif
 
 #include <errno.h>
-#include "FunctionImplementations.h"
 #include <psf_logging.h>
+#include "FunctionImplementations.h"
+
 
 #include "ManagedPathTypes.h"
 #include "PathUtilities.h"
 #include "DetermineCohorts.h"
 
 
-
+#if FIXUP_ORIGINAL_SHELLEXECUTE
 HINSTANCE __stdcall ShellExecuteAFixup(_In_opt_ HWND   hwnd,
                                 _In_opt_  LPCSTR lpOperation,
                                 _In_      LPCSTR lpFile,
@@ -46,10 +47,18 @@ HINSTANCE __stdcall ShellExecuteAFixup(_In_opt_ HWND   hwnd,
         {
             if (lpOperation)
             {
-                Log(L"[%d] ShellExecuteA intercepted, but without fixes. Known compatibility issues exist in certain usages!", dllInstance);
-
+                // Release level logging for detection
+                bool temp = g_psf_NoLogging;
+                g_psf_NoLogging = false;
+                Log(L"[%d] ShellExecuteA unguarded. Known compatibility issues exist in certain usages!", dllInstance);
+                LogString(dllInstance, L"ShellExecuteA: file", lpFile);
                 LogString(dllInstance, L"ShellExecuteA: verb", lpOperation);
+                LogString(dllInstance, L"ShellExecuteA: directory", lpDirectory);
+                LogCallingModule();
+                g_psf_NoLogging = temp;
             }
+            retfinal = impl::ShellExecuteA(hwnd, lpOperation, lpFile, lpParameters, lpDirectory, nShowCmd);
+            return retfinal;
         }
     }
 #if _DEBUG
@@ -61,16 +70,9 @@ HINSTANCE __stdcall ShellExecuteAFixup(_In_opt_ HWND   hwnd,
         Log(L"[%d] ShellExecuteA Exception=0x%x", dllInstance, GetLastError());
     }
 #endif
-    Log(L"[%d] ShellExecuteA unguarded", dllInstance);
-    LogString(dllInstance, L"ShellExecuteA: verb", lpOperation);
 
 
-    retfinal = impl::ShellExecuteA(hwnd,
-                            lpOperation,
-                            lpFile,
-                            lpParameters,
-                            lpDirectory,
-                            nShowCmd);
+    retfinal = impl::ShellExecuteA(hwnd, lpOperation, lpFile, lpParameters, lpDirectory, nShowCmd);
     return retfinal;
 }
 DECLARE_FIXUP(impl::ShellExecuteA, ShellExecuteAFixup);
@@ -104,10 +106,18 @@ HINSTANCE __stdcall ShellExecuteWFixup(_In_opt_ HWND   hwnd,
         {
             if (lpOperation)
             {
-                Log(L"[%d] ShellExecuteW intercepted, but without fixes. Known compatibility issues exist in certain usages!", dllInstance);
-
+                // Release level logging for detection
+                bool temp = g_psf_NoLogging;
+                g_psf_NoLogging = false;
+                Log(L"[%d] ShellExecuteW unguarded. Known compatibility issues exist in certain usages!", dllInstance);
+                LogString(dllInstance, L"ShellExecuteW: file", lpFile);
                 LogString(dllInstance, L"ShellExecuteW: verb", lpOperation);
+                LogString(dllInstance, L"ShellExecuteW: directory", lpDirectory);
+                LogCallingModule();
+                g_psf_NoLogging = temp;
             }
+            retfinal = impl::ShellExecuteW(hwnd, lpOperation, lpFile, lpParameters, lpDirectory, nShowCmd);
+            return retfinal;
         }
     }
 #if _DEBUG
@@ -119,15 +129,9 @@ HINSTANCE __stdcall ShellExecuteWFixup(_In_opt_ HWND   hwnd,
         Log(L"[%d] ShellExecuteW Exception=0x%x", dllInstance, GetLastError());
     }
 #endif
-    Log(L"[%d] ShellExecuteW unguarded", dllInstance);
-    LogString(dllInstance, L"ShellExecuteW: verb", lpOperation);
 
-    retfinal = impl::ShellExecuteW(hwnd,
-        lpOperation,
-        lpFile,
-        lpParameters,
-        lpDirectory,
-        nShowCmd);
+    retfinal = impl::ShellExecuteW(hwnd, lpOperation, lpFile, lpParameters, lpDirectory,nShowCmd);
     return retfinal;
 }
 DECLARE_FIXUP(impl::ShellExecuteW, ShellExecuteWFixup);
+#endif

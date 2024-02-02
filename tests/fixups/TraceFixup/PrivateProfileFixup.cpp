@@ -67,7 +67,7 @@ UINT __stdcall GetPrivateProfileIntFixup(
                 LogString("Path", fileName);
                 LogString("Section", sectionName);
                 LogString("Key", key);
-                LogString("Returned",InterpretAsHex("Result", result).c_str());                
+                LogString("Returned",InterpretAsHex("Result", result).c_str());   
                 LogCallingModule();
             }
             catch (...)

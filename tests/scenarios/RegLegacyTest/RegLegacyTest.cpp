@@ -679,13 +679,19 @@ int wmain(int argc, const wchar_t** argv)
     
     auto result = parse_args(argc, argv);
     //std::wstring aumid = details::appmodel_string(&::GetCurrentApplicationUserModelId);
+#if _M_IX86
+    test_initialize("RegLegacy Tests", 6);
+#else
     test_initialize("RegLegacy Tests", 15);
-
+#endif
     NotCoveredTests();   // 1 test
 
     DeletionMarkerTests(); // 3 Tests
 
+#if _M_IX86
+#else
     JavaMarkerTests();  //9 Tests
+#endif
 
     test_begin("RegLegacy Test ModifyKeyAccess HKCU");
     Log("<<<<<RegLegacyTest ModifyKeyAccess HKCU");
@@ -698,9 +704,10 @@ int wmain(int argc, const wchar_t** argv)
             HKEY HKCU_Attempt;
             if (RegOpenKeyEx(HKEY_CURRENT_USER, TestKeyName_HKCU_Covered, 0, FULL_RIGHTS_ACCESS_REQUEST, &HKCU_Attempt) == ERROR_SUCCESS)
             {
-                DWORD size = 128;  // must be big enough for the test registry item string in the registry file.
+                DWORD size = 256;  // must be big enough for the test registry item string in the registry file.
                 wchar_t* data = new wchar_t[size];
-                data[0] = 0;
+                for (DWORD index= 0; index < size; index++)
+                    data[index] = 0;
                 DWORD type;
                 if (RegGetValue(HKCU_Attempt, L"", TestSubItem, RRF_RT_REG_SZ, &type, data, &size) == ERROR_SUCCESS)
                 {

@@ -26,7 +26,6 @@
 
 #include <errno.h>
 #include "FunctionImplementations.h"
-#include "KernelBase_FunctionalImplementations.h"
 #include <psf_logging.h>
 
 #include "ManagedPathTypes.h"
@@ -34,6 +33,7 @@
 #include "DetermineCohorts.h"
 #include "DetermineIlvPaths.h"
 
+#include "FunctionImplementations_KernelBase.h"
 
 
 #if FIXUP_FROM_KernelBase

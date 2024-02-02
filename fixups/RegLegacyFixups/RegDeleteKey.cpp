@@ -64,3 +64,4 @@ LSTATUS __stdcall RegDeleteKeyFixup(
     return result;
 }
 DECLARE_STRING_FIXUP(RegDeleteKeyImpl, RegDeleteKeyFixup);
+

@@ -474,11 +474,11 @@ bool RegFixupFakeDelete(std::string keypath, [[maybe_unused]] DWORD RegLocalInst
 //        otherwise appropriate error code for the match, either Path or File (aka full string).
 LSTATUS RegFixupDeletionMarker(std::string keyPath, std::string Value, [[maybe_unused]] DWORD RegLocalInstance)
 {
-#ifdef _DEBUG
-    Log("[%d] RegFixupDeletionMarker: keypath=%s value=%s\n", RegLocalInstance, keyPath.c_str(), Value.c_str());
-#endif
     try
     {
+#ifdef MOREDEBUG
+        Log("[%d] RegFixupDeletionMarker: keypath=%s value=%s\n", RegLocalInstance, keyPath.c_str(), Value.c_str());
+#endif
         std::wstring wKeyPath = widen(keyPath);
         std::wstring wValue = widen(Value);
         std::wstring wKeyPathValue = wKeyPath + L"\\\\" + wValue;
@@ -643,108 +643,115 @@ LSTATUS RegFixupDeletionMarker(std::string keyPath, std::string Value, [[maybe_u
 // true = blocked
 bool RegFixupJavaBlocker(std::string keyPath, [[maybe_unused]] DWORD RegLocalInstance)
 {
-#ifdef _DEBUG
-    Log(L"[%d] RegFixupJavaBlocker: keypath=%S\n", RegLocalInstance, keyPath.c_str());
-#endif
-    std::wstring wKeyPath = widen(keyPath);
-    std::wstring wRemainingKeyPath;
-    std::wstring check_strings[6] = {L"HKEY_CURRENT_USER\\SOFTWARE\\CLASSES\\CLSID\\{CAFEEFAC-",
-                                     L"=\\REGISTRY\\USER\\SOFTWARE\\CLASSES\\CLSID\\{CAFEEFAC-",
-                                     L"HKEY_LOCAL_MACHINE\\SOFTWARE\\CLASSES\\CLSID\\{CAFEEFAC-",
-                                     L"=\\REGISTRY\\MACHINE\\SOFTWARE\\CLASSES\\CLSID\\{CAFEEFAC-",
-                                     L"HKEY_LOCAL_MACHINE\\SOFTWARE\\WOW6432NODE\\CLASSES\\CLSID\\{CAFEEFAC-",
-                                     L"=\\REGISTRY\\MACHINE\\SOFTWARE\\WOW6432NODE\\CLASSES\\CLSID\\{CAFEEFAC-" 
-    };
-    //std::wstring wKeyStringU;
-    //std::wstring wAltKeyStringU;
-    //std::wstring wKeyStringM;
-    //std::wstring wAltKeyStringM;
-    //std::wstring wKeyStringMw;
-    //std::wstring wAltKeyStringMw;
-    //std::wstring wMaxAllowedString;
-    for (auto& spec : g_regRemediationSpecs)
+    try
     {
-        for (auto& specitem : spec.remediationRecords)
-        {
-            if (specitem.remeditaionType == Reg_Remediation_Type_JavaBlocker)
-            {
-                std::wstring wKeyPathUpper = L"";
-                for( size_t i=0; i < wKeyPath.size(); i++)
-                {
-                    wKeyPathUpper += towupper(wKeyPath[i]);
-                }
- 
-                bool isInRange = false;
-                size_t OffsetHkcu = 0;
-                for (size_t index = 0; index < 6; index++)
-                {
-                    if (wKeyPathUpper._Starts_with(check_strings[index]))
-                    {
-                        isInRange = true;
-                        OffsetHkcu = check_strings[index].size();
-                        break;
-                    }
-                }
-
-                if (isInRange)
-                {  
-                    if (wKeyPath.size() > OffsetHkcu)
-                    {
-                        wRemainingKeyPath = wKeyPathUpper.substr(OffsetHkcu);
-
-                        // {CAFEEFAC-0018-0000-0131-ABCDEFFEDCBA}
-                        // {CAFEEFAC-0018-0000-0131-ABCDEFFEDCBB}
-                        if (wRemainingKeyPath._Starts_with(L"00"))
-                        {
-                            try
-                            {
-                                INT32 majorVersion = _wtoi(wRemainingKeyPath.substr(2, 1).c_str());
-                                INT32 minorVersion = _wtoi(wRemainingKeyPath.substr(3, 1).c_str());
-                                INT32 buildVersion = _wtoi(wRemainingKeyPath.substr(12, 3).c_str());
-                                if (specitem.javaBlocker.majorVersion < majorVersion)
-                                {
 #ifdef MOREDEBUG
-                                    Log(L"[%d] RegFixupJavaBlocker:  matched\n", RegLocalInstance);
-#endif 
-                                    return true;
-                                }
-                                if (specitem.javaBlocker.majorVersion == majorVersion)
+        Log(L"[%d] RegFixupJavaBlocker: keypath=%S\n", RegLocalInstance, keyPath.c_str());
+#endif
+        std::wstring wKeyPath = widen(keyPath);
+        std::wstring wRemainingKeyPath;
+        std::wstring check_strings[6] = { L"HKEY_CURRENT_USER\\SOFTWARE\\CLASSES\\CLSID\\{CAFEEFAC-",
+                                         L"=\\REGISTRY\\USER\\SOFTWARE\\CLASSES\\CLSID\\{CAFEEFAC-",
+                                         L"HKEY_LOCAL_MACHINE\\SOFTWARE\\CLASSES\\CLSID\\{CAFEEFAC-",
+                                         L"=\\REGISTRY\\MACHINE\\SOFTWARE\\CLASSES\\CLSID\\{CAFEEFAC-",
+                                         L"HKEY_LOCAL_MACHINE\\SOFTWARE\\WOW6432NODE\\CLASSES\\CLSID\\{CAFEEFAC-",
+                                         L"=\\REGISTRY\\MACHINE\\SOFTWARE\\WOW6432NODE\\CLASSES\\CLSID\\{CAFEEFAC-"
+        };
+        //std::wstring wKeyStringU;
+        //std::wstring wAltKeyStringU;
+        //std::wstring wKeyStringM;
+        //std::wstring wAltKeyStringM;
+        //std::wstring wKeyStringMw;
+        //std::wstring wAltKeyStringMw;
+        //std::wstring wMaxAllowedString;
+        for (auto& spec : g_regRemediationSpecs)
+        {
+            for (auto& specitem : spec.remediationRecords)
+            {
+                if (specitem.remeditaionType == Reg_Remediation_Type_JavaBlocker)
+                {
+                    std::wstring wKeyPathUpper = L"";
+                    for (size_t i = 0; i < wKeyPath.size(); i++)
+                    {
+                        wKeyPathUpper += towupper(wKeyPath[i]);
+                    }
+
+                    bool isInRange = false;
+                    size_t OffsetHkcu = 0;
+                    for (size_t index = 0; index < 6; index++)
+                    {
+                        if (wKeyPathUpper._Starts_with(check_strings[index]))
+                        {
+                            isInRange = true;
+                            OffsetHkcu = check_strings[index].size();
+                            break;
+                        }
+                    }
+
+                    if (isInRange)
+                    {
+                        if (wKeyPath.size() > OffsetHkcu)
+                        {
+                            wRemainingKeyPath = wKeyPathUpper.substr(OffsetHkcu);
+
+                            // {CAFEEFAC-0018-0000-0131-ABCDEFFEDCBA}
+                            // {CAFEEFAC-0018-0000-0131-ABCDEFFEDCBB}
+                            if (wRemainingKeyPath._Starts_with(L"00"))
+                            {
+                                try
                                 {
-                                    if (specitem.javaBlocker.minorVersion < minorVersion)
+                                    INT32 majorVersion = _wtoi(wRemainingKeyPath.substr(2, 1).c_str());
+                                    INT32 minorVersion = _wtoi(wRemainingKeyPath.substr(3, 1).c_str());
+                                    INT32 buildVersion = _wtoi(wRemainingKeyPath.substr(12, 3).c_str());
+                                    if (specitem.javaBlocker.majorVersion < majorVersion)
                                     {
 #ifdef MOREDEBUG
                                         Log(L"[%d] RegFixupJavaBlocker:  matched\n", RegLocalInstance);
 #endif 
                                         return true;
                                     }
-                                    if (specitem.javaBlocker.minorVersion == minorVersion)
+                                    if (specitem.javaBlocker.majorVersion == majorVersion)
                                     {
-                                        if (specitem.javaBlocker.updateVersion < buildVersion)
+                                        if (specitem.javaBlocker.minorVersion < minorVersion)
                                         {
 #ifdef MOREDEBUG
                                             Log(L"[%d] RegFixupJavaBlocker:  matched\n", RegLocalInstance);
 #endif 
                                             return true;
                                         }
-                                    }
-                                }
+                                        if (specitem.javaBlocker.minorVersion == minorVersion)
+                                        {
+                                            if (specitem.javaBlocker.updateVersion < buildVersion)
+                                            {
 #ifdef MOREDEBUG
-                                Log(L"[%d] RegFixupJavaBlocker:  allowed\n", RegLocalInstance);
-#endif                                return false;
-                            }
-                            catch (...)
-                            {
-                                //update version FFF marker doesn't convert, but we want to block it anyway.
-#ifdef MOREDEBUG
-                                Log(L"[%d] RegFixupJavaBlocker:  exception matched\n", RegLocalInstance);
+                                                Log(L"[%d] RegFixupJavaBlocker:  matched\n", RegLocalInstance);
 #endif 
-                                return true;
+                                                return true;
+                                            }
+                                        }
+                                    }
+#ifdef MOREDEBUG
+                                    Log(L"[%d] RegFixupJavaBlocker:  allowed\n", RegLocalInstance);
+#endif                                return false;
+                                }
+                                catch (...)
+                                {
+                                    //update version FFF marker doesn't convert, but we want to block it anyway.
+#ifdef MOREDEBUG
+                                    Log(L"[%d] RegFixupJavaBlocker:  exception matched\n", RegLocalInstance);
+#endif 
+                                    return true;
+                                }
                             }
                         }
                     }
                 }
             }
         }
+    }
+    catch (...)
+    {
+        Log(L"[%d] RegFixupJavaBlocker: exception caught\n", RegLocalInstance);
     }
 #ifdef MOREDEBUG
     Log(L"[%d] RegFixupJavaBlocker: no match\n", RegLocalInstance);

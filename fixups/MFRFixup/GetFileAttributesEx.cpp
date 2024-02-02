@@ -97,7 +97,7 @@ BOOL __stdcall GetFileAttributesExFixup(
             dllInstance = ++g_InterceptInstance;
             std::wstring wfileName = widen(fileName);
             wfileName = AdjustSlashes(wfileName);
-
+            
 #if _DEBUG
             Log(L"[%d] GetFileAttributesExFixup level 0x%x for fileName '%s' ", dllInstance, infoLevelId, wfileName.c_str());
 #endif

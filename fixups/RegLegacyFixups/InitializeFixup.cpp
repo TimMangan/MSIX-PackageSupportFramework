@@ -58,7 +58,7 @@ void InitializeConfiguration()
                 if (auto regItems = specObject.try_get("remediation"))
                 {
 #if _DEBUG
-                    Log("RegLegacyFixups:  remediation array:\n");
+                    Log(L"RegLegacyFixups:  remediation array:\n");
 #endif
                     const psf::json_array& remediationArray = regItems->as_array();
                     for (auto& regItem : remediationArray)

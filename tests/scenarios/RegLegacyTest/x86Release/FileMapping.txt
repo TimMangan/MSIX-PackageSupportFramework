@@ -12,6 +12,11 @@
 "..\..\..\win32\Release\RegLegacyFixups32.dll" "RegLegacyFixups32.dll"
 "..\..\..\win32\Debug\WaitForDebuggerFixup32.dll" "WaitForDebuggerFixup32.dll"
 
+"..\..\..\win32\Debug\Obsolete\msvcp140d.dll" "msvcp140d.dll"
+"..\..\..\win32\Debug\Obsolete\vcruntime140d.dll" "vcruntime140d.dll"
+"..\..\..\win32\Debug\Obsolete\ucrtbased.dll" "ucrtbased.dll"
+
+
 
 "..\Assets\Logo44x44.png" "Assets\Logo44x44.png"
 "..\Assets\Logo150x150.png" "Assets\Logo150x150.png"

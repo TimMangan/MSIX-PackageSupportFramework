@@ -15,8 +15,6 @@
 #include <regex>
 #include "RegRemediation.h"
 
-
-
 auto RegOpenKeyImpl = psf::detoured_string_function(&::RegOpenKeyA, &::RegOpenKeyW);
 template <typename CharT>
 LSTATUS __stdcall RegOpenKeyFixup(

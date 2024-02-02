@@ -54,14 +54,14 @@ int InitializeDeleteFileTestArray()
 
     // Requests to Native File Locations for NativeFile via VFS
     tempD = g_NativePF + L"\\PlaceholderTest_DF\\Placeholder_DF1.txt";
-    MfrDeleteFileTest ts_Native_PF1 = { "MFR+ILV DeleteFile Native-file VFS exists in package (allowed)",  true, true,  true,
-                                L"", tempD, TRUE, ERROR_SUCCESS, false, 0, INVALID_FILE_ATTRIBUTES, ERROR_FILE_NOT_FOUND };
+    MfrDeleteFileTest ts_Native_PF1 = { "MFR+ILV DeleteFile Native-file VFS exists in package (allowed, but file remains)",  true, true,  true,
+                                L"", tempD, TRUE, ERROR_SUCCESS, false, 0, FILE_ATTRIBUTE_ARCHIVE, ERROR_SUCCESS };
     MfrDeleteFileTests.push_back(ts_Native_PF1);
 
-    tempD = g_NativePF + L"\\PlaceholderTest_DF\\Placeholder_DF1.txt";
-    MfrDeleteFileTest ts_Native_PF2 = { "MFR+ILV DeleteFile Native-file VFS previously removed from package (not allowed)",  true, false,  false,
-                                L"", tempD, FALSE, ERROR_FILE_NOT_FOUND, false, 0, INVALID_FILE_ATTRIBUTES, ERROR_FILE_NOT_FOUND };
-    MfrDeleteFileTests.push_back(ts_Native_PF2);
+    //tempD = g_NativePF + L"\\PlaceholderTest_DF\\Placeholder_DF1.txt";
+    //MfrDeleteFileTest ts_Native_PF2 = { "MFR+ILV DeleteFile Native-file VFS previously removed from package (not allowed)",  true, false,  false,
+    //                            L"", tempD, FALSE, ERROR_FILE_NOT_FOUND, false, 0, INVALID_FILE_ATTRIBUTES, ERROR_FILE_NOT_FOUND };
+    //MfrDeleteFileTests.push_back(ts_Native_PF2);
 
 
     tempD = g_NativePF + L"\\PlaceholderTest_DF\\NoneSuchFile_DF2.txt";

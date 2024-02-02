@@ -3,6 +3,12 @@
 // Copyright (C) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 //-------------------------------------------------------------------------------------------------------
+#if _DEBUG
+//#define _ManualDebug 1
+#include <thread>
+#include <windows.h>
+#endif
+
 #include "pch.h"
 
 ///#define PSF_DEFINE_EXPORTS
@@ -17,11 +23,48 @@ void InitializeFixups();
 void InitializeConfiguration();
 
 extern "C" {
+
+#if _ManualDebug
+    void manual_LogWFD(const wchar_t* msg)
+    {
+        ::OutputDebugStringW(msg);
+    }
+    void manual_wait_for_debugger()
+    {
+        manual_LogWFD(L"Start WFD");
+        // If a debugger is already attached, ignore as they have likely already set all breakpoints, etc. they need
+        if (!::IsDebuggerPresent())
+        {
+            manual_LogWFD(L"WFD: not yet.");
+            while (!::IsDebuggerPresent())
+            {
+                manual_LogWFD(L"WFD: still not yet.");
+                ::Sleep(1000);
+            }
+            manual_LogWFD(L"WFD: Yes.");
+            // NOTE: When a debugger attaches (invasively), it will inject a DebugBreak in a new thread. Unfortunately,
+            //       that does not synchronize with, and may occur _after_ IsDebuggerPresent returns true, allowing
+            //       execution to continue for a short period of time. In order to get around this, we'll insert our own
+            //       DebugBreak call here. We also add a short(-ish) sleep so that this is likely to be the second break
+            //       seen, so that the injected DebugBreak doesn't preempt us in the middle of debugging. This is of
+            //       course best effort
+            ::Sleep(5000);
+            std::this_thread::yield();
+            ::DebugBreak();
+        }
+        manual_LogWFD(L"WFD: Done.");
+    }
+#endif
+
     int __stdcall PSFInitialize() noexcept try
     {
 #if _DEBUG
-        int count = psf::attach_count_all();
-        Log(L"[0] RegLegacyFixup attaches %d fixups.", count);
+        //int count = psf::attach_count_all();
+        psf::attach_count_all_debug();
+        //Log(L"[0] RegLegacyFixup debug attaches %d fixups.", 0, count);
+#if _ManualDebug
+        manual_wait_for_debugger();
+#endif
 #else
         psf::attach_all();
 #endif

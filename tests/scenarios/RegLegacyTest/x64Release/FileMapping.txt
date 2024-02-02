@@ -13,5 +13,9 @@
 "..\..\..\x64\Debug\WaitForDebuggerFixup64.dll" "WaitForDebuggerFixup64.dll"
 
 
+"..\..\..\x64\Release\Obsolete\msvcp140.dll" "msvcp140.dll"
+"..\..\..\x64\Release\Obsolete\vcruntime140.dll" "vcruntime140.dll"
+"..\..\..\x64\Release\Obsolete\vcruntime140_1.dll" "vcruntime140_1.dll"
+
 "..\Assets\Logo44x44.png" "Assets\Logo44x44.png"
 "..\Assets\Logo150x150.png" "Assets\Logo150x150.png"

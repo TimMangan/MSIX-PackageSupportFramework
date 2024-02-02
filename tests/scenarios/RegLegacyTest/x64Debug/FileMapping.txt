@@ -13,5 +13,10 @@
 "..\..\..\x64\Debug\WaitForDebuggerFixup64.dll" "WaitForDebuggerFixup64.dll"
 
 
+"..\..\..\x64\Debug\Obsolete\msvcp140d.dll" "msvcp140d.dll"
+"..\..\..\x64\Debug\Obsolete\vcruntime140d.dll" "vcruntime140d.dll"
+"..\..\..\x64\Debug\Obsolete\vcruntime140_1d.dll" "vcruntime140_1d.dll"
+"..\..\..\x64\Debug\Obsolete\ucrtbased.dll" "ucrtbased.dll"
+
 "..\Assets\Logo44x44.png" "Assets\Logo44x44.png"
 "..\Assets\Logo150x150.png" "Assets\Logo150x150.png"

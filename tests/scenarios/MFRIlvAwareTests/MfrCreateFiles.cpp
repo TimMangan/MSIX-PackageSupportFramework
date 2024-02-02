@@ -410,7 +410,7 @@ int InitializeCreateFileTests3()
 
     temp = g_writablePackageRootPath.c_str();
 #if _M_IX86
-    temp.append(L"\\VFS\\ProgramFilesX86\\PlaceholderTest\\NoneSuchFile.txt");
+    temp.append(L"\\VFS\\ProgramFilesX86\\PlaceholderTest\\NoneSuchFileCreate3G.txt");
 #else
     temp.append(L"\\VFS\\ProgramFilesX64\\PlaceholderTest\\NoneSuchFileCreate3G.txt");
 #endif
@@ -422,9 +422,9 @@ int InitializeCreateFileTests3()
 
     temp = g_writablePackageRootPath.c_str();
 #if _M_IX86
-    temp.append(L"\\VFS\\ProgramFilesX86\\NoneSuchFolder\\NoneSuchFile.txt");
+    temp.append(L"\\VFS\\ProgramFilesX86\\NoneSuchFolderCreate3H\\NoneSuchFileCreate3H.txt");
 #else
-    temp.append(L"\\VFS\\ProgramFilesX64\\NoneSuchFolderCreate3G\\NoneSuchFileCreate3G.txt");
+    temp.append(L"\\VFS\\ProgramFilesX64\\NoneSuchFolderCreate3H\\NoneSuchFileCreate3H.txt");
 #endif
     MfrCreateFileTest t_Native_PFOA3 = { "MFR+ILV Redirected-file VFS folder missing in package OpenAlways existing", true, true, true,
                                        temp.c_str(),
@@ -450,9 +450,9 @@ int InitializeCreateFileTests3()
 
     temp = g_writablePackageRootPath.c_str();
 #if _M_IX86
-    temp.append(L"\\VFS\\ProgramFilesX86\\PlaceholderTest\\NoneSuchFile.txt");
+    temp.append(L"\\VFS\\ProgramFilesX86\\PlaceholderTest\\NoneSuchFileCreate3I.txt");
 #else
-    temp.append(L"\\VFS\\ProgramFilesX64\\PlaceholderTest\\NoneSuchFileCreate3H.txt");
+    temp.append(L"\\VFS\\ProgramFilesX64\\PlaceholderTest\\NoneSuchFileCreate3I.txt");
 #endif
     MfrCreateFileTest t_Native_PFA2 = { "MFR+ILV Redirected-file VFS missing in package CreateAlways existing", true, true, true,
                                        temp.c_str(),
@@ -462,9 +462,9 @@ int InitializeCreateFileTests3()
 
     temp = g_writablePackageRootPath.c_str();
 #if _M_IX86
-    temp.append(L"\\VFS\\ProgramFilesX86\\NoneSuchFolder\\NoneSuchFile.txt");
+    temp.append(L"\\VFS\\ProgramFilesX86\\NoneSuchFolderCreate3J\\NoneSuchFileCreate3J.txt");
 #else
-    temp.append(L"\\VFS\\ProgramFilesX64\\NoneSuchFolderCreate3I\\NoneSuchFileCreate3I.txt");
+    temp.append(L"\\VFS\\ProgramFilesX64\\NoneSuchFolderCreate3J\\NoneSuchFileCreate3J.txt");
 #endif
     MfrCreateFileTest t_Native_PFA3 = { "MFR+ILV Redirected-file VFS folder missing in package CreateAlways existing", true, true, true,
                                        temp.c_str(),

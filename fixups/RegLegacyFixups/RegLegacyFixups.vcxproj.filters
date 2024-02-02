@@ -86,6 +86,18 @@
     <ClCompile Include="RegEnumKeyEx.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="RegDeleteKeyValue.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="RegEnumValue.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="RegGetValue.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="RegQueryValueEx.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="readme.md" />

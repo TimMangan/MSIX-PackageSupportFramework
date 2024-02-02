@@ -7,7 +7,7 @@
 
 "..\..\Win32\Release\MFRTests.exe" "MFRTests.exe"
 "..\..\..\Win32\Release\PsfLauncher32.exe" "PsfLauncher.exe"
-"..\..\..\Win32\Release\PsfRuntime32.dll" "PsfRuntim$32.dll"
+"..\..\..\Win32\Release\PsfRuntime32.dll" "PsfRuntime32.dll"
 "..\..\..\Win32\Release\MFRFixup32.dll" "MFRFixup32.dll"
 "..\..\..\Win32\Release\WaitForDebuggerFixup32.dll" "WaitForDebuggerFixup32.dll"
 

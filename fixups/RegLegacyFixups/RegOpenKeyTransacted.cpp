@@ -15,8 +15,6 @@
 #include "RegRemediation.h"
 
 
-
-
 auto RegOpenKeyTransactedImpl = psf::detoured_string_function(&::RegOpenKeyTransactedA, &::RegOpenKeyTransactedW);
 template <typename CharT>
 LSTATUS __stdcall RegOpenKeyTransactedFixup(
@@ -97,4 +95,3 @@ LSTATUS __stdcall RegOpenKeyTransactedFixup(
     return result;
 }
 DECLARE_STRING_FIXUP(RegOpenKeyTransactedImpl, RegOpenKeyTransactedFixup);
-

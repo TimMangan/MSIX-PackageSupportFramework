@@ -136,6 +136,7 @@ namespace winternl
         UCHAR Data[1];
     } KEY_VALUE_PARTIAL_INFORMATION, PKEY_VALUE_PARTIAL_INFORMATION;
 
+
     // Function declarations not present in winternl.h
     NTSTATUS __stdcall NtQueryInformationFile(
         HANDLE FileHandle,
@@ -163,13 +164,14 @@ namespace winternl
         HANDLE hKey,
         PUNICODE_STRING lpSubKey
     );
-
+#ifndef INTERCEPT_KERNELBASE
     NTSTATUS __stdcall RegDeleteKeyEx(
         HANDLE hKey,
         PUNICODE_STRING lpSubKey,
         DWORD viewDesired, // 32/64
         DWORD Reserved
     );
+#endif
 
     NTSTATUS __stdcall RegDeleteKeyTransacted(
         HANDLE hKey,
@@ -179,11 +181,162 @@ namespace winternl
         HANDLE hTransaction,
         PVOID  pExtendedParameter
     );
-
+#ifndef INTERCEPT_KERNELBASE
     NTSTATUS __stdcall RegDeleteValue(
         HANDLE hKey,
         PUNICODE_STRING lpValueName
     );
+#endif
+
+
+#ifdef INTERCEPT_NTLL
+
+#endif
+
+#ifdef INTERCEPT_KERNELBASE
+    // There are system dlls that call directly into kernelbase.dll, bypassing our detours which hook into Kernel32. We need to fix those too.
+    // An example is the Winsock2 library ws2_32.dll, which calls RegOpenKeyExW directly in kernelbase.dll.  This dll is used by Bloomberg Terminal, for example.
+    
+    LSTATUS __stdcall RegCreateKeyExA(
+        _In_ HKEY key,
+        _In_ const char* subKey,
+        _Reserved_ DWORD reserved,
+        _In_opt_ char* classType,
+        _In_ DWORD options,
+        _In_ REGSAM samDesired,
+        _In_opt_ CONST LPSECURITY_ATTRIBUTES securityAttributes,
+        _Out_ PHKEY resultKey,
+        _Out_opt_ LPDWORD disposition);
+
+    LSTATUS __stdcall RegCreateKeyExW(
+        _In_ HKEY key,
+        _In_ const wchar_t* subKey,
+        _Reserved_ DWORD reserved,
+        _In_opt_ wchar_t* classType,
+        _In_ DWORD options,
+        _In_ REGSAM samDesired,
+        _In_opt_ CONST LPSECURITY_ATTRIBUTES securityAttributes,
+        _Out_ PHKEY resultKey,
+        _Out_opt_ LPDWORD disposition);
+
+    
+    NTSTATUS __stdcall RegOpenKeyExA(
+        _In_ HKEY key,
+        _In_ const char* subKey,
+        _In_ DWORD options,
+        _In_ REGSAM samDesired,
+        _Out_ PHKEY resultKey
+    );
+    NTSTATUS __stdcall RegOpenKeyExW(
+        _In_ HKEY key,
+        _In_ const wchar_t* subKey,
+        _In_ DWORD options,
+        _In_ REGSAM samDesired,
+        _Out_ PHKEY resultKey
+    );
+
+    LSTATUS __stdcall RegDeleteKeyExA(
+        _In_ HKEY key,
+        _In_ const char* subKey,
+        _In_ REGSAM samDesired,
+        _Reserved_ DWORD reserved
+    );
+    LSTATUS __stdcall RegDeleteKeyExW(
+        _In_ HKEY key,
+        _In_ const wchar_t* subKey,
+        _In_ REGSAM samDesired,
+        _Reserved_ DWORD reserved
+    );
+
+    LSTATUS __stdcall RegDeleteKeyValueA(
+        _In_ HKEY key,
+        _In_ const char* subKey,
+        _In_ const char* subValueName);
+    LSTATUS __stdcall RegDeleteKeyValueW(
+        _In_ HKEY key,
+        _In_ const wchar_t* subKey, 
+        _In_ const wchar_t* subValueName);
+
+    LSTATUS __stdcall RegDeleteValueA(
+        _In_ HKEY key,
+        _In_ const char* subValueName);
+    LSTATUS __stdcall RegDeleteValueW(
+        _In_ HKEY key,
+        _In_ const wchar_t* subValueName);
+
+    LSTATUS __stdcall RegEnumKeyExA(
+        _In_ HKEY key,
+        _In_ DWORD dwIndex,
+        _Out_ LPSTR lpName,
+        _In_ _Out_ LPDWORD lpcchName,
+        _Reserved_ LPDWORD lpReserved,
+        _In_ _Out_ LPSTR lpClass,
+        _In_opt_ _Out_opt_  LPDWORD lpcchClass,
+        _Out_opt_ PFILETIME lpftLastWriteTime);
+    LSTATUS __stdcall RegEnumKeyExW(
+        _In_ HKEY key,
+        _In_ DWORD dwIndex,
+        _Out_ LPWSTR lpName,
+        _In_ _Out_ LPDWORD lpcchName,
+        _Reserved_ LPDWORD lpReserved,
+        _In_ _Out_ LPWSTR lpClass,
+        _In_opt_ _Out_opt_  LPDWORD lpcchClass,
+        _Out_opt_ PFILETIME lpftLastWriteTime);
+
+    LSTATUS __stdcall RegEnumValueA(
+        _In_ HKEY key,
+        _In_ DWORD dwIndex,
+        _Out_ LPSTR lpName,
+        _In_ _Out_ LPDWORD lpcchName,
+        _Reserved_ LPDWORD lpReserved,
+        _Out_opt_ LPDWORD lpType,
+        _Out_opt_ LPBYTE   lpData,
+        _In_opt_ _Out_opt_ LPDWORD lpcbData);
+    LSTATUS __stdcall RegEnumValueW(
+        _In_ HKEY key,
+        _In_ DWORD dwIndex,
+        _Out_ LPWSTR lpName,
+        _In_ _Out_ LPDWORD lpcchName,
+        _Reserved_ LPDWORD lpReserved,
+        _Out_opt_ LPDWORD lpType,
+        _Out_opt_ LPBYTE lpData,
+        _In_opt_ _Out_opt_ LPDWORD lpcbData);
+#ifdef INTERCEPT_KERNELBASE_PlusRegGetValue
+    LSTATUS __stdcall RegGetValueA(
+        _In_ HKEY key,
+        _In_opt_ LPCSTR lpSubKey,
+        _In_opt_ LPCSTR lpValue,
+        _In_opt_ DWORD dwFlags,
+        _Out_opt_ LPDWORD lpDwType,
+        _Out_opt_ PVOID lpData,
+        _In_opt_ _Out_opt_ LPDWORD lpcbData);
+    LSTATUS __stdcall RegGetValueW(
+        _In_ HKEY key,
+        _In_opt_ LPCWSTR lpSubKey,
+        _In_opt_ LPCWSTR lpValue,
+        _In_opt_ DWORD dwFlags,
+        _Out_opt_ LPDWORD lpDwType,
+        _Out_opt_ PVOID lpData,
+        _In_opt_ _Out_opt_ LPDWORD lpcbData);
+#endif
+
+    LSTATUS __stdcall RegQueryValueExA(
+        _In_ HKEY key,
+        _In_opt_ LPCSTR lpValueName,
+                 LPDWORD lpReservered,
+        _Out_opt_ LPDWORD lpDwType,
+        _Out_opt_ PVOID lpData,
+        _In_opt_ _Out_opt_ LPDWORD lpcbData);
+    LSTATUS __stdcall RegQueryValueExW(
+        _In_ HKEY key,
+        _In_opt_ LPCWSTR lpValueName,
+        LPDWORD lpReservered,
+        _Out_opt_ LPDWORD lpDwType,
+        _Out_opt_ PVOID lpData,
+        _In_opt_ _Out_opt_ LPDWORD lpcbData);
+
+#endif
+
 }
 
 
@@ -207,21 +360,77 @@ namespace winternl
         }
 
         auto result = reinterpret_cast<Func>(::GetProcAddress(mod, functionName));
+        //Log(L">>>NtDll Fixup loaded name=%S 0x%x", functionName, result);
         assert(result);
         return result;
     }
+
+#ifdef  INTERCEPT_KERNELBASE
+    template <typename Func>
+    inline Func GetKernelBaseInternalFunction(const char* functionName)
+    {
+        static auto mod = ::LoadLibraryW(L"kernelbase.dll");
+        assert(mod);
+
+        // Ignore namespaces
+        for (auto ptr = functionName; *ptr; ++ptr)
+        {
+            if (*ptr == ':')
+            {
+                functionName = ptr + 1;
+            }
+        }
+
+        auto result = reinterpret_cast<Func>(::GetProcAddress(mod, functionName));
+        //Log(L">>>KernelBase Fixup loaded name=%S 0x%x", functionName, result);
+        assert(result);
+        return result;
+    }
+#endif
 }
 
 
+
 #define WINTERNL_FUNCTION(Name) (winternl::GetNtDllInternalFunction<decltype(&Name)>(#Name));
+#define KERNELBASEINTERNL_FUNCTION(Name) (winternl::GetKernelBaseInternalFunction<decltype(&Name)>(#Name));
 
 namespace impl
 {
 
     inline auto NtQueryKey = WINTERNL_FUNCTION(winternl::NtQueryKey);
 
-}
+#ifdef INTERCEPT_KERNELBASE
+    inline auto KernelBaseRegCreateKeyExA = KERNELBASEINTERNL_FUNCTION(winternl::RegCreateKeyExA);
+    inline auto KernelBaseRegCreateKeyExW = KERNELBASEINTERNL_FUNCTION(winternl::RegCreateKeyExW);
 
+    inline auto KernelBaseRegOpenKeyExA = KERNELBASEINTERNL_FUNCTION(winternl::RegOpenKeyExA);
+    inline auto KernelBaseRegOpenKeyExW = KERNELBASEINTERNL_FUNCTION(winternl::RegOpenKeyExW);
+
+    inline auto KernelBaseRegDeleteKeyExA = KERNELBASEINTERNL_FUNCTION(winternl::RegDeleteKeyExA);
+    inline auto KernelBaseRegDeleteKeyExW = KERNELBASEINTERNL_FUNCTION(winternl::RegDeleteKeyExW);
+
+    inline auto KernelBaseRegDeleteKeyValueA = KERNELBASEINTERNL_FUNCTION(winternl::RegDeleteKeyValueA);
+    inline auto KernelBaseRegDeleteKeyValueW = KERNELBASEINTERNL_FUNCTION(winternl::RegDeleteKeyValueW);
+
+    inline auto KernelBaseRegDeleteValueA = KERNELBASEINTERNL_FUNCTION(winternl::RegDeleteValueA);
+    inline auto KernelBaseRegDeleteValueW = KERNELBASEINTERNL_FUNCTION(winternl::RegDeleteValueW);
+
+    inline auto KernelBaseRegEnumKeyExA = KERNELBASEINTERNL_FUNCTION(winternl::RegEnumKeyExA);
+    inline auto KernelBaseRegEnumKeyExW = KERNELBASEINTERNL_FUNCTION(winternl::RegEnumKeyExW);
+
+    inline auto KernelBaseRegEnumValueA = KERNELBASEINTERNL_FUNCTION(winternl::RegEnumValueA);
+    inline auto KernelBaseRegEnumValueW = KERNELBASEINTERNL_FUNCTION(winternl::RegEnumValueW);
+
+#ifdef INTERCEPT_KERNELBASE_PlusRegGetValue
+    inline auto KernelBaseRegGetValueA = KERNELBASEINTERNL_FUNCTION(winternl::RegGetValueA);
+    inline auto KernelBaseRegGetValueW = KERNELBASEINTERNL_FUNCTION(winternl::RegGetValueW);
+#endif
+
+    inline auto KernelBaseRegQueryValueExA = KERNELBASEINTERNL_FUNCTION(winternl::RegQueryValueExA);
+    inline auto KernelBaseRegQueryValueExW = KERNELBASEINTERNL_FUNCTION(winternl::RegQueryValueExW);
+#endif
+
+}
 
 
 

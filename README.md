@@ -30,6 +30,9 @@ The following additional resources provide additional information about specific
 * [Package Support Framework NuGet package install](https://www.nuget.org/packages/Microsoft.PackageSupportFramework)
 * [Instructions for authoring your own fixup DLL](Authoring.md)
 
+## Developer Note:
+If you wish to build the PSF from source, you will need to install the Windows Driver Kit (WDK) in order to build the MfrFixup.
+
 ## Get the pre-built Package Support Framework binaries
 Look for a versioned folder in the Develop branch code starting with "ZipRelease-v" that will contain pre-built release and debug builds of the PSF in a zip format.  We are unable to use the GitHub "release" mechanism without breaking your ability to compare sources here to the original Microsoft sources.
 

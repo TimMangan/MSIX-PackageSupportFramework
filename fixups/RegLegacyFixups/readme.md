@@ -95,7 +95,11 @@ The following Windows API calls are supported for this fixup type.
 > * RegDeleteKey
 > * RegDeleteKeyEx
 > * RegDeleteKeyTransacted
+> * RegDeleteKeyValue
 > * RegDeleteValue
+> * RegEnumValue
+> * RegGetValue
+> * RegQueryValueEx
 
 ### Configuration for FakeDelete
 When the `type` is specified as `FakeDelete`, the `remediation` element is an array of remediations with a structure shown here:
@@ -116,20 +120,20 @@ The value for the element `patterns` is a regex pattern string that specifies th
 The following Windows API calls are supported for this fixup type. 
 
 > * RegCreateKeyEx
-> * RegDeleteKey           [notimplemented]
-> * RegDeleteKeyEx         [notimplemented]
-> * RegDeleteKeyTransacted [notimplemented]
+> * RegDeleteKey           
+> * RegDeleteKeyEx         
+> * RegDeleteKeyTransacted 
 > * RegDeleteTree          [notimplemented]
-> * RegDeleteValue         [notimplemented]
+> * RegDeleteValue         
 > * RegEnumKeyEx           
 > * RegEnumValue           [notimplemented]
-> * RegGetValue            [notimplemented]
+> * RegGetValue            [notimplemented, handled by ReqQueryValueEx which is called by this]
 > * RegOpenKey
 > * RegOpenKeyEx
 > * RegOpenKeyTransacted
 > * RegQueryInfoKey        [notimplemented]
 > * RegQueryMultipleValues [notimplemented]
-> * RegQueryValueEx        [notimplemented]
+> * RegQueryValueEx        
 > * RegQueryRenameKey      [notimplemented]
 > * RegSetKeyValue         [notimplemented]
 > * RegSetKeyValueEx       [notimplemented]

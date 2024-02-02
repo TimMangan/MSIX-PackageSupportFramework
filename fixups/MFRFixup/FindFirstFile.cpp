@@ -75,7 +75,7 @@ HANDLE __stdcall FindFirstFileFixup(_In_ const CharT* fileName, _Out_ win32_find
 #if _DEBUG
         LogString(dllInstance, L"FindFirstFileFixup: for fileName", fileName);
 #endif
-
+       
         // Determine possible paths involved
         Cohorts cohorts; 
         DetermineCohorts(wfileName, &cohorts, moreDebug, dllInstance, L"FindFirstFileFixup");

@@ -13,8 +13,16 @@
 #include <reentrancy_guard.h>
 #include <psf_framework.h>
 #include <shellapi.h>
+#include "Logging.h"
 
 //#define FIXUP_UCRTMOVE 1
+#define FIXUP_ORIGINAL_SHELLEXECUTE 1
+#define FIXUP_ORIGINAL_SHELLEXECUTEEX 1
+
+
+
+
+
 
 extern DWORD g_InterceptInstance;
 
@@ -25,8 +33,8 @@ inline thread_local psf::reentrancy_guard g_reentrancyGuard;
 namespace impl
 {
     inline auto CopyFile = psf::detoured_string_function(&::CopyFileA, &::CopyFileW);
-    inline auto CopyFileEx = psf::detoured_string_function(&::CopyFileExA, &::CopyFileExW);
     inline auto CopyFile2 = &::CopyFile2;
+    inline auto CopyFileEx = psf::detoured_string_function(&::CopyFileExA, &::CopyFileExW);
 
     inline auto CreateDirectory = psf::detoured_string_function(&::CreateDirectoryA, &::CreateDirectoryW);
     inline auto CreateDirectoryEx = psf::detoured_string_function(&::CreateDirectoryExA, &::CreateDirectoryExW);
@@ -63,21 +71,25 @@ namespace impl
 
     inline auto SetFileAttributes = psf::detoured_string_function(&::SetFileAttributesA, &::SetFileAttributesW);
 
-    inline auto GetCurrentDirectory = psf::detoured_string_function(&::GetCurrentDirectoryA, &::GetCurrentDirectoryW);
+    //inline auto GetCurrentDirectory = psf::detoured_string_function(&::GetCurrentDirectoryA, &::GetCurrentDirectoryW);
     inline auto SetCurrentDirectory = psf::detoured_string_function(&::SetCurrentDirectoryA, &::SetCurrentDirectoryW);
 
     inline auto WritePrivateProfileSection = psf::detoured_string_function(&::WritePrivateProfileSectionA, &::WritePrivateProfileSectionW);
     inline auto WritePrivateProfileString = psf::detoured_string_function(&::WritePrivateProfileStringA, &::WritePrivateProfileStringW);
     inline auto WritePrivateProfileStruct = psf::detoured_string_function(&::WritePrivateProfileStructA, &::WritePrivateProfileStructW);
 
-    inline auto SearchPath = psf::detoured_string_function(&::SearchPathA, &::SearchPathW);
+    //inline auto SearchPath = psf::detoured_string_function(&::SearchPathA, &::SearchPathW);
 
+#if FIXUP_ORIGINAL_SHELLEXECUTE
     //inline auto ShellExecute = psf::detoured_string_function(&::ShellExecuteA, &::ShellExecuteW);
-    //inline auto ShellExecuteEx = psf::detoured_string_function(&::ShellExecuteExA, &::ShellExecuteExW);
     inline auto ShellExecuteA = &::ShellExecuteA;
     inline auto ShellExecuteW = &::ShellExecuteW;
+#endif
+#if FIXUP_ORIGINAL_SHELLEXECUTEEX
+    //inline auto ShellExecuteEx = psf::detoured_string_function(&::ShellExecuteExA, &::ShellExecuteExW);
     inline auto ShellExecuteExA = &::ShellExecuteExA;
     inline auto ShellExecuteExW = &::ShellExecuteExW;
+#endif
 
 #if FIXUP_UCRTMOVE
     // ucrtbased.dll function declarations

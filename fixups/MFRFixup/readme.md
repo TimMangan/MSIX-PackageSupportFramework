@@ -7,12 +7,8 @@ The goals of this alternative are:
 > * Inheirent support for Copy-On-Write rather than Copy-On-Access.
 > * An empty configuration for the fixup should handle most application needs.
 > * The configuration supports specifying changes to the internal configuration rather than needing to specify every little thing.
+> * To leverage the InstalledLocationVirtualization feature of the MSIX runtime to avoid unnecessary redirection.
 
-| NOTICE |
-| --------------------------------------------------------------------------------------- |
-| ** THIS IS A NEW FIXUP WITH LIMITED FIELD EXPERIENCE. ** |
-| You should anticipate that there may be early-life issues with this fixup on some applications. If you experience this, you should try the FileRedirectionFixup instead.  Otherwise, using the debug build may help you determine a file based override that can be applied to fix some of the issues that might occur. |
-| CURRENT STATUS: All necessary known intercepts have been completed and unit tested, and testing against an initial suite of known applications is complete. A list of API intercepts used by this fixup and their staus is given in a table at the bottom of this readme. |
 
 ## Features
 When injected into a process, the MFRFixup supports the ability to:
@@ -97,7 +93,7 @@ This `config` element contains an array with possible override elements named be
 
 ### ilvAware
 By default this value is set to `false`. Set to `true` to enable. The MFR and ILV solve some of the same issues for applications, but there are things that each do that are unique.  
-Generally, you can use both, but this setting exists so that you can inform the MFR that ILV is present.  
+Generally, you should set this value to true, but this setting exists so that you can try the MFR without ILV present.  
 When set to `true`, the MFR will avoid known conflicts and try to avoid duplication of effort.
 
 
@@ -257,7 +253,7 @@ To apply a configuration to assume InstalledLocationVirtualization and override 
 ```
 
 ## Intercepts Supported
-The following APIs are expected to be targeted.  The current status for this work-in-progress is shown in the table below.  Most of these APIs have A/W variants for ansi/wide(Unicode) character variants in arguments.  These APIs represent the active list in the FileRedirectionFixup; those marked as `may not be needed` provide no functional changes in the intercepts in the FileRedirectionFixup but merely log that they were called.  This fixup might follow suit.
+The following APIs from Kernel32 are targeted.  The current status for this work-in-progress is shown in the table below.  Most of these APIs have A/W variants for ansi/wide(Unicode) character variants in arguments.  These APIs represent the active list in the FileRedirectionFixup; those marked as `may not be needed` provide no functional changes in the intercepts in the FileRedirectionFixup but merely log that they were called.  This fixup might follow suit.
 
 | API | Status |
 | --- | ------ |
@@ -298,6 +294,17 @@ The following APIs are expected to be targeted.  The current status for this wor
 | WritePrivateProfileSection | Complete |
 | WritePrivateProfileString | Complete |
 | WritePrivateProfileStruct | Complete |
+
+The following APIs are intercepted but only for logging purposes at this time.  
+There are known instances of Microsoft dlls that skip past Kernel32/KernelBase and go directly to NtDll. They may be implemented in the future as we find the need.
+| Dll | API | Status |
+| --- | --- | ------ |
+| Windows.Storage | ShellExecute | Intercept for logging only at this time |
+| Windows.Storage | ShellExecuteEx | Intercept for logging only at this time |
+| NtDll | ZwCreateFile | Intercept for logging only at this time |
+| NtDll | ZwOpenFile | Intercept for logging only at this time |
+| NtDll | ZwQueryDirectoryFile | Intercept for logging only at this time |
+| NtDll | ZwQueryDirectoryFileEx | Intercept for logging only at this time |
 
 Additionally, there are numberous "Transacted" API calls that are generally not used and are ignored.
 Also currently ignored is FindFirstFileName/Next as it deals only with hard links and probably has little usage.

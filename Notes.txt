@@ -7,12 +7,22 @@ ideas:
 *  Psf FRF/MFR make assumptions that it can use the package path if the file looks like it is in the package path 
        using PathExits.  FindFile works also.  GetFileAttributes and CreateFile, however, need the call to use the native path.
 	   This might be a bug, and we might be able to work around it for the folders that map like Program Files, but not
-	   for non-mapped native folders.
+	   for non-mapped native folders.  Addressed through use of MFR+ILV for now.
 * MFR+ILV: The delete using native path test deletes the file, but then checking the attribute using that native path doesn't return with invalid attributes.
 	   This indicates that the check for the deletion marker only is in place when the package path is requested.  There appears no way to determine this
 	   situation from one where the native file exists and it was never in the package.  A possibility would be to add an additional marker in Delete file(etc) such
 	   as an extra xxx.yyy.deleted file in the redirection area.  But then all methods looking to see files would have to look for this, and anything creating a file might have to remove it.
 	   Needs more thought on finding a way to distinguish.
+
+v.2024.Next:
+* RegLegacy: Moved certain intercepts from the Kernel32.dll to KernelBase.dll.  This is because some apps bypass the Kernel32.dll and go directly to KernelBase.dll.
+			 An example of this is any application that uses the Microsoft Winsoc2 library, which results in an access denied error when accessing HKCU.
+             These intercepts are functional.
+* MfrFixup:  Added a number of new intercepts in Ntdll.dll.  A number of microsoft libraries bypass the Kernel32.dll and go directly to Ntdll.dll.  
+             An example of this include any application that is WinForms or .Net Framework and has a "file picker" dialog based out of the Microsoft User32 library.
+			 These intercepts are not yet functional, but will produce logging (even in release builds) to the console port (DebugView) if triggered by a call that was
+			 not handled at a higher level API.  This will help us to identify which calls are being made and which ones we need to handle in the future.
+* Mfr/FRF:	 Added detection and handling of filepaths using the Windows Storage Namespace syntax of \\?\\STORAGE#.
 
 v.2024.0102:	
 * Added Deletion_Marker to RegLegacyFixup to match the Microsoft implementation.
