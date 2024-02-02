@@ -51,6 +51,12 @@
     <Filter Include="Source Files\Intercepts\FindsAndSearches">
       <UniqueIdentifier>{a7870d12-0486-40da-add7-29f0358262e8}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\Intercepts\WindowsStorage">
+      <UniqueIdentifier>{22aea31c-05a4-469b-a3de-94234707a7d0}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Intercepts\NtDll">
+      <UniqueIdentifier>{949fe105-cbc9-4743-b55c-6faa9886d2b9}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="framework.h">
@@ -86,13 +92,25 @@
     <ClInclude Include="DetermineCohorts.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="KernelBase_FunctionalImplementations.h">
+    <ClInclude Include="FunctionImplementations_KernelBase.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Detect_Pipe.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="DetermineIlvPaths.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="FunctionImplementations_WindowsStorage.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="FunctionImplementations_ntdll.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="CKernelIf_FileInformation.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Logging.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
@@ -240,6 +258,24 @@
     </ClCompile>
     <ClCompile Include="DetermineILVpaths.cpp">
       <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="WS_ShellExecute.cpp">
+      <Filter>Source Files\Intercepts\WindowsStorage</Filter>
+    </ClCompile>
+    <ClCompile Include="WS_ShellExecuteEx.cpp">
+      <Filter>Source Files\Intercepts\WindowsStorage</Filter>
+    </ClCompile>
+    <ClCompile Include="ZwQueryDirectoryFile.cpp">
+      <Filter>Source Files\Intercepts\NtDll</Filter>
+    </ClCompile>
+    <ClCompile Include="ZwQueryDirectoryFileEx.cpp">
+      <Filter>Source Files\Intercepts\NtDll</Filter>
+    </ClCompile>
+    <ClCompile Include="ZwCreateFile.cpp">
+      <Filter>Source Files\Intercepts\NtDll</Filter>
+    </ClCompile>
+    <ClCompile Include="ZwOpenFile.cpp">
+      <Filter>Source Files\Intercepts\NtDll</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

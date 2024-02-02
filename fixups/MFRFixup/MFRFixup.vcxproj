@@ -35,6 +35,7 @@
     <SubSystem>Windows</SubSystem>
     <UseDebugLibraries>true</UseDebugLibraries>
     <PlatformToolset>v142</PlatformToolset>
+    <UseOfMfc>false</UseOfMfc>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
     <ConfigurationType>DynamicLibrary</ConfigurationType>
@@ -103,14 +104,14 @@
       <WarningLevel>Level4</WarningLevel>
       <SDLCheck>
       </SDLCheck>
-      <PreprocessorDefinitions>_WINDOWS;%(PreprocessorDefinitions);_DEBUG;</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_WINDOWS;_DEBUG;%(PreprocessorDefinitions);</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <LanguageStandard>stdcpp17</LanguageStandard>
-      <AdditionalIncludeDirectories>$(MSBuildThisFileDirectory)\include;%(AdditionalIncludeDirectories);$(SolutionDir)\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(MSBuildThisFileDirectory)\include;%(AdditionalIncludeDirectories);$(SolutionDir)\include;C:\Program Files (x86)\Windows Kits\10\Include\10.0.22621.0\km</AdditionalIncludeDirectories>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <TreatWarningAsError>true</TreatWarningAsError>
-      <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
+      <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -120,7 +121,8 @@
       </ModuleDefinitionFile>
       <Version>
       </Version>
-      <AdditionalDependencies>kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;ntdll.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>C:\Program Files (x86)\Windows Kits\10\Lib\10.0.22621.0\um\$(PlatformTarget)</AdditionalLibraryDirectories>
     </Link>
     <PostBuildEvent>
       <Command>powershell.exe -ExecutionPolicy Bypass -File "$(SolutionDir)Set-DllVersionByDate.ps1" -FilePathDll "$(OutDir)$(TargetName)$(TargetExt)" </Command>
@@ -139,10 +141,10 @@
       <ConformanceMode>true</ConformanceMode>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <LanguageStandard>stdcpp17</LanguageStandard>
-      <AdditionalIncludeDirectories>$(MSBuildThisFileDirectory)\include;%(AdditionalIncludeDirectories);$(SolutionDir)\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(MSBuildThisFileDirectory)\include;%(AdditionalIncludeDirectories);$(SolutionDir)\include;C:\Program Files (x86)\Windows Kits\10\Include\10.0.22621.0\km</AdditionalIncludeDirectories>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <TreatWarningAsError>true</TreatWarningAsError>
-      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <FloatingPointModel>Precise</FloatingPointModel>
     </ClCompile>
     <Link>
@@ -155,7 +157,8 @@
       </ModuleDefinitionFile>
       <Version>
       </Version>
-      <AdditionalDependencies>kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;ntdll.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>C:\Program Files (x86)\Windows Kits\10\Lib\10.0.22621.0\um\$(PlatformTarget)</AdditionalLibraryDirectories>
     </Link>
     <PostBuildEvent>
       <Command>powershell.exe -ExecutionPolicy Bypass -File "$(SolutionDir)Set-DllVersionByDate.ps1" -FilePathDll "$(OutDir)$(TargetName)$(TargetExt)" </Command>
@@ -168,14 +171,14 @@
       <WarningLevel>Level4</WarningLevel>
       <SDLCheck>
       </SDLCheck>
-      <PreprocessorDefinitions>_WINDOWS;%(PreprocessorDefinitions);_DEBUG;</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_WINDOWS;_DEBUG;%(PreprocessorDefinitions);</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <LanguageStandard>stdcpp17</LanguageStandard>
-      <AdditionalIncludeDirectories>$(MSBuildThisFileDirectory)\include;%(AdditionalIncludeDirectories);$(SolutionDir)\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(MSBuildThisFileDirectory)\include;%(AdditionalIncludeDirectories);$(SolutionDir)\include;C:\Program Files (x86)\Windows Kits\10\Include\10.0.22621.0\km</AdditionalIncludeDirectories>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <TreatWarningAsError>true</TreatWarningAsError>
-      <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
+      <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -185,7 +188,8 @@
       </ModuleDefinitionFile>
       <Version>
       </Version>
-      <AdditionalDependencies>kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;ntdll.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>C:\Program Files (x86)\Windows Kits\10\Lib\10.0.22621.0\um\$(PlatformTarget)</AdditionalLibraryDirectories>
     </Link>
     <PostBuildEvent>
       <Command>powershell.exe -ExecutionPolicy Bypass -File "$(SolutionDir)Set-DllVersionByDate.ps1" -FilePathDll "$(OutDir)$(TargetName)$(TargetExt)" </Command>
@@ -204,11 +208,11 @@
       <ConformanceMode>true</ConformanceMode>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <LanguageStandard>stdcpp17</LanguageStandard>
-      <AdditionalIncludeDirectories>$(MSBuildThisFileDirectory)\include;%(AdditionalIncludeDirectories);$(SolutionDir)\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(MSBuildThisFileDirectory)\include;%(AdditionalIncludeDirectories);$(SolutionDir)\include;C:\Program Files (x86)\Windows Kits\10\Include\10.0.22621.0\km</AdditionalIncludeDirectories>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <TreatWarningAsError>true</TreatWarningAsError>
       <WholeProgramOptimization>true</WholeProgramOptimization>
-      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <FloatingPointModel>Precise</FloatingPointModel>
     </ClCompile>
     <Link>
@@ -216,11 +220,12 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;ntdll.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <ModuleDefinitionFile>
       </ModuleDefinitionFile>
       <Version>
       </Version>
+      <AdditionalLibraryDirectories>C:\Program Files (x86)\Windows Kits\10\Lib\10.0.22621.0\um\$(PlatformTarget)</AdditionalLibraryDirectories>
     </Link>
     <PostBuildEvent>
       <Command>powershell.exe -ExecutionPolicy Bypass -File "$(SolutionDir)Set-DllVersionByDate.ps1" -FilePathDll "$(OutDir)$(TargetName)$(TargetExt)" </Command>
@@ -229,6 +234,7 @@
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="CKernelIf_FileInformation.h" />
     <ClInclude Include="Detect_Pipe.h" />
     <ClInclude Include="DetermineCohorts.h" />
     <ClInclude Include="DebugPathTesting.h" />
@@ -236,13 +242,16 @@
     <ClInclude Include="FID.h" />
     <ClInclude Include="FindData3.h" />
     <ClInclude Include="FindFirstHelpers.h" />
-    <ClInclude Include="KernelBase_FunctionalImplementations.h" />
+    <ClInclude Include="FunctionImplementations_KernelBase.h" />
+    <ClInclude Include="FunctionImplementations_ntdll.h" />
+    <ClInclude Include="Logging.h" />
     <ClInclude Include="MFRConfiguration.h" />
     <ClInclude Include="framework.h" />
     <ClInclude Include="FunctionImplementations.h" />
     <ClInclude Include="ManagedFileMappings.h" />
     <ClInclude Include="ManagedPathTypes.h" />
     <ClInclude Include="PathUtilities.h" />
+    <ClInclude Include="FunctionImplementations_WindowsStorage.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\CommonSrc\psf_logging.cpp" />
@@ -293,6 +302,12 @@
     <ClCompile Include="WritePrivateProfileSection.cpp" />
     <ClCompile Include="WritePrivateProfileString.cpp" />
     <ClCompile Include="WritePrivateProfileStruct.cpp" />
+    <ClCompile Include="WS_ShellExecuteEx.cpp" />
+    <ClCompile Include="WS_ShellExecute.cpp" />
+    <ClCompile Include="ZwCreateFile.cpp" />
+    <ClCompile Include="ZwOpenFile.cpp" />
+    <ClCompile Include="ZwQueryDirectoryFile.cpp" />
+    <ClCompile Include="ZwQueryDirectoryFileEx.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="readme.md" />
