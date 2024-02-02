@@ -234,6 +234,7 @@ HANDLE __stdcall FindFirstFileExFixupV2(
     std::wstring pathVirtualized = L"";
     if (pathAsRequestedNormalized.path_type != psf::dos_path_type::unknown &&
         pathAsRequestedNormalized.path_type != psf::dos_path_type::unc_absolute &&
+        pathAsRequestedNormalized.path_type != psf::dos_path_type::storage_namespace &&
         !IsUnderPackageRoot(pathAsRequestedNormalized.drive_absolute_path.c_str()) &&
         !IsUnderUserPackageWritablePackageRoot(pathAsRequestedNormalized.drive_absolute_path.c_str()))
     {
@@ -654,6 +655,7 @@ HANDLE __stdcall FindFirstFileFixupV2(_In_ const CharT* fileName, _Out_ win32_fi
     std::wstring pathVirtualized = L"";
     if (pathAsRequestedNormalized.path_type != psf::dos_path_type::unknown &&
         pathAsRequestedNormalized.path_type != psf::dos_path_type::unc_absolute &&
+        pathAsRequestedNormalized.path_type != psf::dos_path_type::storage_namespace &&
         !IsUnderPackageRoot(pathAsRequestedNormalized.drive_absolute_path.c_str()) &&
         !IsUnderUserPackageWritablePackageRoot(pathAsRequestedNormalized.drive_absolute_path.c_str()))
     {

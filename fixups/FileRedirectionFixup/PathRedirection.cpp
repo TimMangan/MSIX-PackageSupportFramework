@@ -552,6 +552,11 @@ normalized_path NormalizePathImpl(const CharT* path, DWORD inst)
         ///Log(L"[%d]\t\tNormalizePathImpl: drive_absolute",inst);
         result.full_path = widen(path);
     }
+    else if (result.path_type != psf::dos_path_type::storage_namespace)
+    {
+        ///Log(L"[%d]\t\tNormalizePathImpl: storage_namespace",inst);
+        result.full_path = widen(psf::full_path(path));
+    }
     else if (result.path_type != psf::dos_path_type::unknown)
     {
         ///Log(L"[%d]\t\tNormalizePathImpl: other",inst);
@@ -581,6 +586,10 @@ normalized_path NormalizePathImpl(const CharT* path, DWORD inst)
 #ifdef MOREDEBUG
         Log(L"[%d]***\t\t\tNormalizePathImpl: dap set",inst);
 #endif
+    }
+    else if (result.path_type == psf::dos_path_type::storage_namespace)
+    {
+        return result;
     }
     else if (result.path_type == psf::dos_path_type::unc_absolute)
     {

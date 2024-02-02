@@ -82,6 +82,19 @@ HANDLE __stdcall CreateFileFixup(_In_ const CharT* pathName,
             wPathName = AdjustLocalPipeName(wPathName);
 
 #if _DEBUG
+            if (wPathName._Starts_with(L"STORAGE#") ||
+                wPathName._Starts_with(L"\\\\?\\STORAGE#"))
+            {
+                Log(L"[%d] CreateFileFixup Storage Namespace", dllInstance);
+            }
+            else if (wPathName.size() == 3)
+            {
+                if (wPathName.compare(L"C:\\") ||
+                    wPathName.compare(L"c:\\"))
+                {
+                    Log(L"[%d] CreateFileFixup AppVPackageDrive", dllInstance);
+                }
+            }
             LogString(dllInstance, L"CreateFileFixup for path", pathName);
 #if MOREDEBUG
             Log(L"[%d]        DesiredAccess %s", dllInstance, Log_DesiredAccess(desiredAccess).c_str());

@@ -41,6 +41,7 @@ namespace psf
         rooted,             // E.g. "\path\to\file"
         relative,           // E.g. "path\to\file"
         local_device,       // E.g. "\\.\C:\path\to\file" (ex: namedpipes)
+        storage_namespace,  // E.g. "\\?\\STORAGE#Volume 
         root_local_device,  // E.g. "\\?\C:\path\to\file"
         DosSpecial,         // E.g. "CON4:"
         protocol,           // E.g. "ftp:\\..."
@@ -83,6 +84,14 @@ namespace psf
         {
             return dos_path_type::DosSpecial;
         }
+        if (Comp((wchar_t*)L"\\\\?\\STORAGE#Volume", 18, path) ||
+            Comp((wchar_t*)L"STORAGE#Volume", 14, path))
+        {
+            // This seems to be a reference to a storage namespace.
+            // Generally we think we want to just pass these through, but we may want to do some special handling
+            return dos_path_type::storage_namespace; 
+        }
+
         // NOTE: Root-local device paths don't get normalized and therefore do not allow forward slashes
         constexpr wchar_t root_local_device_prefix[] = LR"(\\?\)";
         if (std::equal(root_local_device_prefix, root_local_device_prefix + 4, path))
@@ -158,6 +167,8 @@ namespace psf
             return L"relative";
         case psf::dos_path_type::local_device:
             return L"local_device";
+        case psf::dos_path_type::storage_namespace:
+            return L"storage_namespace";
         case psf::dos_path_type::root_local_device:
             return L"root_local_device";
         case psf::dos_path_type::shell:

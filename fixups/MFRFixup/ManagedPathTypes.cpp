@@ -124,6 +124,10 @@ namespace mfr
             outputPath.Request_NormalizedPath = rooted_relative_to_normal(inputPath);
             outputPath.Request_MfrPathType = mfr::Get_ManagedPathTypeForDriveAbsolute(outputPath.Request_NormalizedPath);
             break;
+        case psf::dos_path_type::storage_namespace: // E.g. "\\?\STORAGE#Volume..."
+            outputPath.Request_NormalizedPath = inputPath;
+            outputPath.Request_MfrPathType = mfr::mfr_path_types::unsupported_for_intercepts;
+            break;
         case psf::dos_path_type::root_local_device: // E.g. "\\?\C:\path\to\file"
             outputPath.Request_NormalizedPath = root_local_relative_to_normal(inputPath);
             outputPath.Request_MfrPathType = mfr::Get_ManagedPathTypeForDriveAbsolute(outputPath.Request_NormalizedPath);

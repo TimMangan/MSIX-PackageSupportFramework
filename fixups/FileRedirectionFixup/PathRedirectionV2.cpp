@@ -100,6 +100,9 @@ normalized_pathV2 NormalizePathV2Impl(const wchar_t* path, [[maybe_unused]] DWOR
     case psf::dos_path_type::local_device:  // E.g. "\\.\C:\path\to\file"
         result.drive_absolute_path = result.full_path.substr(4); 
         break;
+    case psf::dos_path_type::storage_namespace:  // E.g. "\\?\STORAGE#Volume..."
+        result.drive_absolute_path = result.full_path.data();
+        break;
     case psf::dos_path_type::root_local_device:   // E.g. "\\?\C:\path\to\file"
         result.drive_absolute_path = result.full_path.substr(4);
         break;
@@ -220,7 +223,8 @@ std::wstring DeVirtualizePathV2(normalized_pathV2 path)
     std::wstring dvPath = L"";
 
     if (path.path_type == psf::dos_path_type::unknown ||
-        path.path_type == psf::dos_path_type::unc_absolute)
+        path.path_type == psf::dos_path_type::unc_absolute ||
+        path.path_type == psf::dos_path_type::storage_namespace)
     {
         ///Log(L"[%d]\t\tDeVirtualizePath: unknown input type, not devirtualizable.", impl);
     }
@@ -289,6 +293,12 @@ std::wstring VirtualizePathV2(normalized_pathV2 path, [[maybe_unused]] DWORD imp
     {
 #ifdef MOREDEBUG
         Log(L"[%d]\t\tVirtualizePathV2: unknown input type, not virtualizable.", impl);
+#endif
+    }
+    else if (path.path_type == psf::dos_path_type::storage_namespace)
+    {
+#ifdef MOREDEBUG
+        Log(L"[%d]\t\tVirtualizePathV2: storage_namespace input type, not virtualizable.", impl);
 #endif
     }
     else
@@ -438,7 +448,8 @@ std::wstring RedirectedPathV2(const normalized_pathV2& pathAsRequestedNormalized
 #endif
         //if ( _wcsicmp(deVirtualizedFullPath.substr(0,2).c_str(), L"\\\\")==0)   this test was incorrect ue to local_device and root_local_device cases
         auto pathType = psf::path_type(deVirtualizedFullPath.c_str());
-        if (pathType == psf::dos_path_type::unc_absolute)
+        if (pathType == psf::dos_path_type::unc_absolute ||
+            pathType == psf::dos_path_type::storage_namespace)
         {
             // Clearly we should never redirect files from a share
 #if _DEBUG
@@ -622,7 +633,8 @@ static path_redirect_info ShouldRedirectV2Impl(const CharT* path, redirect_flags
 
         std::filesystem::path destinationTargetBase;
 
-        if (normalizedPathV2.path_type == psf::dos_path_type::local_device)
+        if (normalizedPathV2.path_type == psf::dos_path_type::local_device ||
+            normalizedPathV2.path_type == psf::dos_path_type::storage_namespace)
         {
 #if _DEBUG
             LogString(inst,L" \tFRFShouldRedirectV2: Path is of type local device so FRF should ignore.", widen(path).c_str());
