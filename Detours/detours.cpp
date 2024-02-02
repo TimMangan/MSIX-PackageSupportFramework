@@ -225,6 +225,16 @@ inline void detour_find_jmp_bounds(PBYTE pbCode,
 
 inline BOOL detour_does_code_end_function(PBYTE pbCode)
 {
+    BYTE first = *pbCode;
+    [[maybe_unused]] BYTE second = *(pbCode + 1);
+    [[maybe_unused]] BYTE third = *(pbCode + 2);
+    [[maybe_unused]] BYTE fourth = *(pbCode + 3);
+    if ((first == 0x8b || first == 0xcc) && second == 0xff && third == 0x55 && fourth == 0x8b)
+    {
+        // We are having an issue where this code sees [0] as value 0xcc when it is really 0x8b, but only on a few intercepts.
+        // This was debugged to the assmebler level.  This is a hack to just ignore the problem, which hopefully is safe.
+        return FALSE;
+    }
     if (pbCode[0] == 0xeb ||    // jmp +imm8
         pbCode[0] == 0xe9 ||    // jmp +imm32
         pbCode[0] == 0xe0 ||    // jmp eax
@@ -450,6 +460,16 @@ inline void detour_find_jmp_bounds(PBYTE pbCode,
 
 inline BOOL detour_does_code_end_function(PBYTE pbCode)
 {
+    BYTE first = *pbCode;
+    [[maybe_unused]] BYTE second = *(pbCode + 1);
+    [[maybe_unused]] BYTE third = *(pbCode + 2);
+    [[maybe_unused]] BYTE fourth = *(pbCode + 3);
+    if ((first == 0x8b || first == 0xcc) && second == 0xff && third == 0x55 && fourth == 0x8b)
+    {
+        // We are having an issue where this code sees [0] as value 0xcc when it is really 0x8b, but only on a few intercepts.
+        // This was debugged to the assmebler level.  This is a hack to just ignore the problem, which hopefully is safe.
+        return FALSE;
+    }
     if (pbCode[0] == 0xeb ||    // jmp +imm8
         pbCode[0] == 0xe9 ||    // jmp +imm32
         pbCode[0] == 0xe0 ||    // jmp eax
