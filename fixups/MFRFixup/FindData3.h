@@ -19,7 +19,13 @@ struct find_deleter
         if (findHandle)
         {
             [[maybe_unused]] auto result = impl::FindClose(findHandle);
-            assert(result);
+            if (result)
+            {
+                // removing assert as the condition has been seen to occur afteas part of an application where the app
+                // has already crashed and we are cleaning up.  We don't need to announce the crash more than once.
+                //assert(result);
+                ;
+            }
         }
     }
 };
