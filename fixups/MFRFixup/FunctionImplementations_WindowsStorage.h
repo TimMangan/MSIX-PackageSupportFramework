@@ -42,6 +42,7 @@ inline Func GetWindowsStorageDllInternalFunction(const char* functionName)
     }
 
     auto result = reinterpret_cast<Func>(::GetProcAddress(mod, functionName));
+#if _DEBUG
     if (functionName != NULL)
     {
         Log(L">>>WindowsStorage Fixup loaded name=%S from 0x%x", functionName, result);
@@ -50,7 +51,7 @@ inline Func GetWindowsStorageDllInternalFunction(const char* functionName)
     {
         Log(L">>>WindowsStorage Fixup mistaken loaded name=??? 0x%x",  result);
     }
-   
+#endif
     assert(result);
     return result;
 }

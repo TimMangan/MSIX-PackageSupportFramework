@@ -40,6 +40,7 @@ inline Func GetKernelBaseDllInternalFunction(const char* functionName)
     }
 
     auto result = reinterpret_cast<Func>(::GetProcAddress(mod, functionName));
+#if _DEBUG
     if (functionName != NULL)
     {
         Log(L">>>KernelBase Fixup loaded name=%S from 0x%x", functionName, result);
@@ -48,6 +49,7 @@ inline Func GetKernelBaseDllInternalFunction(const char* functionName)
     {
         Log(L">>>KernelBase Fixup mistaken loaded name=??? 0x%x", result);
     }
+#endif
     assert(result);
     return result;
 }
