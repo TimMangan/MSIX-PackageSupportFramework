@@ -250,7 +250,7 @@
     <ClCompile Include="UCRT_wrename.cpp">
       <Filter>Source Files\Intercepts\Moves</Filter>
     </ClCompile>
-    <ClCompile Include="KernelBase_MoveFileEx.cpp">
+    <ClCompile Include="KernelBase_MoveFileExW.cpp">
       <Filter>Source Files\Intercepts\Moves</Filter>
     </ClCompile>
     <ClCompile Include="Detect_Pipe.cpp">

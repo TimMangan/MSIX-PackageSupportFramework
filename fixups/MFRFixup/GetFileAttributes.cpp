@@ -74,16 +74,22 @@ DWORD __stdcall GetFileAttributesFixup(_In_ const CharT* fileName) noexcept
             std::wstring wfileName = widen(fileName);
             wfileName = AdjustSlashes(wfileName);
 
-#if _DEBUG
+
             if constexpr (psf::is_ansi<CharT>)
             {
+#if _DEBUG
                 LogString(dllInstance, L"GetFileAttributesFixupA for fileName", wfileName.c_str());
+#endif
             }
             else
             {
+#if _DEBUG
                 LogString(dllInstance, L"GetFileAttributesFixupW for fileName", wfileName.c_str());
-            }
 #endif
+            }
+
+            wfileName = AdjustBadUNC(wfileName, dllInstance, L"GetFileAttributesFixup");
+            
 
 #if DEBUGPATHTESTING
             if (wfileName.compare(L"C:\\Program Files\\PlaceholderTest\\Placeholder.txt") == 0)

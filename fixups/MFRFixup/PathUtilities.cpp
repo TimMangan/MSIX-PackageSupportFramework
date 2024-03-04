@@ -209,6 +209,27 @@ std::wstring AdjustSlashes(std::wstring path)
 }
 
 
+/// 
+/// There are situations when MFR in ILV mode where, because UI file picker dialogs can skip our intercepts, 
+/// the ILV will cause the app to think it is working with a unc path that is in the form of \\?\UNC\server\share\file.  
+/// This is not a valid UNC path and when the app uses it in subsequent calls, this call will fail.
+/// So if this shows up in a subsequent call, we need to adjust it to \\server\share\file.
+std::wstring AdjustBadUNC(std::wstring path, [[maybe_unused]] DWORD dllInstance, [[maybe_unused]] std::wstring CallerName)
+{
+    std::wstring wPathName = path;
+    if (!wPathName.empty())
+    {
+        if (wPathName._Starts_with(L"\\\\?\\UNC"))
+        {
+            wPathName = L"\\" + wPathName.substr(7);
+#if _DEBUG
+            Log(L"[%d] %s adjustment to existingFileName", dllInstance, CallerName.c_str(), wPathName.c_str());
+#endif
+        }
+    }
+    return wPathName;
+}
+
 /// <summary>
 /// Given a file path, return a path that in the long path form
 /// </summary>

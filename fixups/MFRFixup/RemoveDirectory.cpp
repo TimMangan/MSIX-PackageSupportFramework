@@ -70,6 +70,8 @@ BOOL __stdcall RemoveDirectoryFixup(_In_ const CharT* pathName) noexcept
             LogString(dllInstance, L"RemoveDirectoryFixup for pathName", wPathName.c_str());
 #endif
 
+            wPathName = AdjustBadUNC(wPathName, dllInstance, L"RemoveDirectoryFixup");
+
             Cohorts cohorts;
             DetermineCohorts(wPathName, &cohorts, moredebug, dllInstance, L"RemoveDirectoryFixup");
 

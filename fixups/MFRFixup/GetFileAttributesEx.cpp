@@ -101,6 +101,9 @@ BOOL __stdcall GetFileAttributesExFixup(
 #if _DEBUG
             Log(L"[%d] GetFileAttributesExFixup level 0x%x for fileName '%s' ", dllInstance, infoLevelId, wfileName.c_str());
 #endif
+            wfileName = AdjustBadUNC(wfileName, dllInstance, L"GetFileAttributesExFixup");
+            
+
             Cohorts cohorts;
             DetermineCohorts(wfileName, &cohorts, moreDebug, dllInstance, L"GetFileAttributesExFixup");
             bool anyFileNotFound = false;

@@ -52,6 +52,8 @@ BOOL __stdcall MoveFileFixup(_In_ const CharT* existingFileName, _In_ const Char
             wNewFileName = AdjustSlashes(wNewFileName);
             wExistingFileName = AdjustSlashes(wExistingFileName);
 
+            wExistingFileName = AdjustBadUNC(wExistingFileName, dllInstance, L"MoveFileFixup (existing)");
+            wNewFileName = AdjustBadUNC(wNewFileName, dllInstance, L"MoveFileFixup (new)");
 
             Cohorts cohortsExisting;
             DetermineCohorts(wExistingFileName, &cohortsExisting, moredebug, dllInstance, L"MoveFileFixup (existingFile)");

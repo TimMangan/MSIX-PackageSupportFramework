@@ -76,6 +76,8 @@ HANDLE __stdcall FindFirstFileFixup(_In_ const CharT* fileName, _Out_ win32_find
         LogString(dllInstance, L"FindFirstFileFixup: for fileName", fileName);
 #endif
        
+        wfileName = AdjustBadUNC(wfileName, dllInstance, L"FindFirstFileFixup");
+
         // Determine possible paths involved
         Cohorts cohorts; 
         DetermineCohorts(wfileName, &cohorts, moreDebug, dllInstance, L"FindFirstFileFixup");

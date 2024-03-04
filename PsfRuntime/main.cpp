@@ -14,7 +14,7 @@
 #include "Config.h"
 
 #if _DEBUG
-//#define MOREDEBUG 1
+#define MOREDEBUG 1
 #endif 
 
 struct loaded_fixup
@@ -227,7 +227,9 @@ using EntryPoint_t = int(__stdcall*)();
 EntryPoint_t ApplicationEntryPoint = nullptr;
 static int __stdcall FixupEntryPoint() noexcept try
 {
-
+#if _DEBUG
+    Log("PsfRuntime FixupEntryPoint in App Pid=%d Tid=%d", GetCurrentProcessId(), GetCurrentThreadId());
+#endif
     load_fixups();
     return ApplicationEntryPoint();
 }

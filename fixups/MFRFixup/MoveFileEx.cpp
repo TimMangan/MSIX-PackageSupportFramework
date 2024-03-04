@@ -62,6 +62,9 @@ BOOL __stdcall MoveFileExFixup(
             wNewFileName = AdjustSlashes(wNewFileName);
             wExistingFileName = AdjustSlashes(wExistingFileName);
 
+            wExistingFileName = AdjustBadUNC(wExistingFileName, dllInstance, L"MoveFileExFixup (existing)");
+            wNewFileName = AdjustBadUNC(wNewFileName, dllInstance, L"MoveFileExFixup (new)");
+
 
             Cohorts cohortsExisting;
             DetermineCohorts(wExistingFileName, &cohortsExisting, moredebug, dllInstance, L"MoveFileExFixup (existingFileName)");

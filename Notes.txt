@@ -14,7 +14,14 @@ ideas:
 	   as an extra xxx.yyy.deleted file in the redirection area.  But then all methods looking to see files would have to look for this, and anything creating a file might have to remove it.
 	   Needs more thought on finding a way to distinguish.
 
-v.2024.Next:
+v.2024.03.04:
+* MFR: Add support for SetCurrentDirectory ILV-Aware mode to force path to be a
+		package path when appropriate. When an app uses a file-picker dialog (which currently bypasses MFR), it might cause the app
+		to request a file in the \\?\\UNC\server\share\path format.  We now convert this to the normal form of \\server\share\path 
+		before processing the request.
+* RegLegacy: Don't let staterepository requests get into the container registry.
+
+v.2024.02.04:
 * RegLegacy: Moved certain intercepts from the Kernel32.dll to KernelBase.dll.  This is because some apps bypass the Kernel32.dll and go directly to KernelBase.dll.
 			 An example of this is any application that uses the Microsoft Winsoc2 library, which results in an access denied error when accessing HKCU.
              These intercepts are functional.
@@ -23,6 +30,7 @@ v.2024.Next:
 			 These intercepts are not yet functional, but will produce logging (even in release builds) to the console port (DebugView) if triggered by a call that was
 			 not handled at a higher level API.  This will help us to identify which calls are being made and which ones we need to handle in the future.
 * Mfr/FRF:	 Added detection and handling of filepaths using the Windows Storage Namespace syntax of \\?\\STORAGE#.
+* Mfr:		 Added detection and handling of filepaths with bad paths like \\?\UNC\.
 
 v.2024.0102:	
 * Added Deletion_Marker to RegLegacyFixup to match the Microsoft implementation.

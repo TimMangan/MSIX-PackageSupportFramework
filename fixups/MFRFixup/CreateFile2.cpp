@@ -88,6 +88,11 @@ HANDLE __stdcall CreateFile2Fixup(
             }
 #endif
 #endif
+
+
+            wPathName = AdjustBadUNC(wPathName, dllInstance, L"CreateFile2Fixup");
+            
+
             bool IsAWriteCase;
             if (createExParams)
             {

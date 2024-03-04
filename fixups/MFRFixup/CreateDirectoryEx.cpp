@@ -81,6 +81,10 @@ BOOL __stdcall CreateDirectoryExFixup(
             WtemplateDirectory = AdjustSlashes(WtemplateDirectory);
             WnewDirectory = AdjustSlashes(WnewDirectory);
 
+            WtemplateDirectory = AdjustBadUNC(WtemplateDirectory, dllInstance, L"CreateDirectoryExFixup (template)");
+            WnewDirectory = AdjustBadUNC(WnewDirectory, dllInstance, L"CreateDirectoryExFixup (new)");
+            
+
             // This get is inheirently a write operation in all cases.
             // We will always want the redirected location for the new directory.
             Cohorts cohortsTemplate;

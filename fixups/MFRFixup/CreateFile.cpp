@@ -33,6 +33,7 @@ HANDLE  WRAPPER_CREATEFILE(std::wstring theDestinationFile,
 {
     HANDLE retfinal;
     std::wstring LongDestinationFile = MakeLongPath(theDestinationFile);
+
     retfinal = impl::CreateFileW(LongDestinationFile.c_str(), desiredAccess, shareMode, securityAttributes, creationDisposition, flagsAndAttributes, templateFile);
 
     if (debug)
@@ -81,6 +82,14 @@ HANDLE __stdcall CreateFileFixup(_In_ const CharT* pathName,
             wPathName = AdjustSlashes(wPathName);
             wPathName = AdjustLocalPipeName(wPathName);
 
+            if (wPathName._Starts_with(L"\\\\?\\UNC"))
+            {
+                wPathName = L"\\" + wPathName.substr(7);
+#if _DEBUG
+                LogString(dllInstance, L"CreateFile adjustment to fileName", wPathName.c_str());
+#endif
+            }
+
 #if _DEBUG
             if (wPathName._Starts_with(L"STORAGE#") ||
                 wPathName._Starts_with(L"\\\\?\\STORAGE#"))
@@ -105,6 +114,9 @@ HANDLE __stdcall CreateFileFixup(_In_ const CharT* pathName,
 #endif
             bool IsAWriteCase = IsCreateForChange(desiredAccess, creationDisposition, flagsAndAttributes);
             bool IsADirectoryCase = IsCreateForDirectory(desiredAccess, creationDisposition, flagsAndAttributes);
+
+            wPathName = AdjustBadUNC(wPathName, dllInstance, L"CreateFile");
+            
 
 #if NOTOBSOLETE
             if (!IsAWriteCase && !IsADirectoryCase)

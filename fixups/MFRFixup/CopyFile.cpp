@@ -155,6 +155,10 @@ BOOL __stdcall CopyFileFixup(_In_ const CharT* existingFileName, _In_ const Char
             wExistingFileName = AdjustSlashes(wExistingFileName);
             wNewFileName = AdjustSlashes(wNewFileName);
 
+            wExistingFileName = AdjustBadUNC(wExistingFileName, dllInstance, L"CopyFileFixup (existing)");
+            wNewFileName = AdjustBadUNC(wNewFileName, dllInstance, L"CopyFileFixup (new)");
+            
+
             // This get is inheirently a write operation in all cases.
             // We will always want the redirected location for the new file name.
             Cohorts cohortsExisting;

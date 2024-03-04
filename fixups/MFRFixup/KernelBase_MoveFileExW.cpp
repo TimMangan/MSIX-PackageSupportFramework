@@ -68,6 +68,9 @@ BOOL __stdcall Kb_MoveFileExWFixup(
             std::wstring wNewFileName = AdjustSlashes(newFileName);
             std::wstring wExistingFileName = AdjustSlashes(existingFileName);
 
+            wExistingFileName = AdjustBadUNC(wExistingFileName, dllInstance, L"Kb_MoveFileExWFixup (existing)");
+            wNewFileName = AdjustBadUNC(wNewFileName, dllInstance, L"Kb_MoveFileExWFixup (new)");
+
 
             Cohorts cohortsNew;
             DetermineCohorts(wNewFileName, &cohortsNew, moredebug, dllInstance, L"Kb_MoveFileExWFixup (newFileName)");

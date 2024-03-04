@@ -100,6 +100,9 @@ BOOL __stdcall CreateDirectoryFixup(_In_ const CharT* pathName, _In_opt_ LPSECUR
             LogString(dllInstance, L"CreateDirectoryFixup for path", pathName);
 #endif
             
+            wPathName = AdjustBadUNC(wPathName, dllInstance, L"CreateDirectoryFixup");
+            
+
             // This get is inheirently a write operation in all cases.
             // There is no need to COW, just create the redirected folder, but may need to create parent folders first.
             Cohorts cohorts;

@@ -443,6 +443,9 @@ BOOL __stdcall ReplaceFileFixup(
             wReplacedFileName = AdjustSlashes(wReplacedFileName);
             wReplacementFileName = AdjustSlashes(wReplacementFileName);
 
+            wReplacedFileName = AdjustBadUNC(wReplacedFileName, dllInstance, L"ReplaceFileFixup (replaced)");
+            wReplacementFileName = AdjustBadUNC(wReplacementFileName, dllInstance, L"ReplaceFileFixup (replacement)");
+
             Cohorts cohortsReplaced;
             DetermineCohorts(wReplacedFileName, &cohortsReplaced, moredebug, dllInstance, L"ReplaceFileFixup (replacedFile)");
 

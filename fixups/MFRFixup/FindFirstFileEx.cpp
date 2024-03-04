@@ -127,6 +127,7 @@ HANDLE __stdcall FindFirstFileExFixup(_In_ const CharT* fileName,
             break;
         }
 #endif
+        wfileName = AdjustBadUNC(wfileName, dllInstance, L"FindFirstFileExFixup");
 
         // Determine possible paths involved
         Cohorts cohorts;

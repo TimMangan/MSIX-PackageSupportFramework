@@ -74,6 +74,7 @@ BOOL __stdcall WritePrivateProfileStructFixup(
 // We prefer to use the redirecton case, if present.
                 std::wstring wfileName = widen(fileName);
                 wfileName = AdjustSlashes(wfileName);
+                wfileName = AdjustBadUNC(wfileName, dllInstance, L"WritePrivateProfileStructFixup");
 
                 Cohorts cohorts;
                 DetermineCohorts(wfileName, &cohorts, moredebug, dllInstance, L"WritePrivateProfileStructFixup");

@@ -63,6 +63,21 @@ BOOL __stdcall MoveFileWithProgressFixup(
             wNewFileName = AdjustSlashes(wNewFileName);
             wExistingFileName = AdjustSlashes(wExistingFileName);
 
+            if (wExistingFileName._Starts_with(L"\\\\?\\UNC"))
+            {
+                wExistingFileName = L"\\" + wExistingFileName.substr(7);
+#if _DEBUG
+                LogString(dllInstance, L"MoveFileWithProgressFixup adjustment to existingFileName", wExistingFileName.c_str());
+#endif
+            }
+            if (wNewFileName._Starts_with(L"\\\\?\\UNC"))
+            {
+                wNewFileName = L"\\" + wNewFileName.substr(7);
+#if _DEBUG
+                LogString(dllInstance, L"MoveFileWithProgressFixup adjustment to newFileName", wNewFileName.c_str());
+#endif
+            }
+
 
             Cohorts cohortsNew;
             DetermineCohorts(wNewFileName, &cohortsNew, moredebug, dllInstance, L"MoveFileWithProgressFixup (newFile)");

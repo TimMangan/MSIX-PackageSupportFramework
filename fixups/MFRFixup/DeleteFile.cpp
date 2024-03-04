@@ -65,6 +65,8 @@ BOOL __stdcall DeleteFileFixup(_In_ const CharT* pathName) noexcept
             LogString(dllInstance, L"DeleteFileFixup for pathName", wPathName.c_str());
 #endif
 
+            wPathName = AdjustBadUNC(wPathName, dllInstance, L"DeleteFileFixup");
+
             Cohorts cohorts;
             DetermineCohorts(wPathName, &cohorts, moredebug, dllInstance, L"DeleteFileFixup");
 

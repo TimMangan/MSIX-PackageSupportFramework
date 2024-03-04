@@ -71,6 +71,10 @@ BOOL __stdcall SetFileAttributesFixup(_In_ const CharT* fileName, _In_ DWORD fil
 #if _DEBUG
             LogString(dllInstance, L"SetFileAttributesFixup for fileName", wfileName.c_str());
 #endif
+
+            wfileName = AdjustBadUNC(wfileName, dllInstance, L"SetFileAttributesFixup");
+            
+
             // This get is inheirently a write operation in all cases.
             // We may need to copy the file first.
             Cohorts cohorts;

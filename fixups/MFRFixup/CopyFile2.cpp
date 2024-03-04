@@ -75,6 +75,10 @@ HRESULT __stdcall CopyFile2Fixup(
             wExistingFileName = AdjustSlashes(wExistingFileName);
             wNewFileName = AdjustSlashes(wNewFileName);
 
+            wExistingFileName = AdjustBadUNC(wExistingFileName, dllInstance, L"CopyFile2Fixup (existing)");
+            wNewFileName = AdjustBadUNC(wNewFileName, dllInstance, L"CopyFile2Fixup (new)");
+
+
 
             // This get is inheirently a write operation in all cases.
             // We will always want the redirected location for the new file name.

@@ -20,8 +20,8 @@
 using namespace std::literals;
 
 #if _DEBUG
-#define MOREDEBUG 1
-#define EVENMOREDEBUG 1
+//#define MOREDEBUG 1
+//#define EVENMOREDEBUG 1
 #endif
 
 TRACELOGGING_DECLARE_PROVIDER(g_Log_ETW_ComponentProvider);

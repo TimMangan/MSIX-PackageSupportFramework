@@ -58,6 +58,9 @@ BOOL __stdcall CreateHardLinkFixup(
             wNewFileName = AdjustSlashes(wNewFileName);
             wExistingFileName = AdjustSlashes(wExistingFileName);
 
+            wExistingFileName = AdjustBadUNC(wExistingFileName, dllInstance, L"CreateHardLinkFixup (existing)");
+            wNewFileName = AdjustBadUNC(wNewFileName, dllInstance, L"CreateHardLinkFixup (new link)");
+
             Cohorts cohortsNew;
             DetermineCohorts(wNewFileName, &cohortsNew, moredebug, dllInstance, L"CreateHardLinkFixup");
 

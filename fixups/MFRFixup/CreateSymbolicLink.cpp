@@ -70,6 +70,9 @@ BOOLEAN __stdcall CreateSymbolicLinkFixup(
             wSymlinkFileName = AdjustSlashes(wSymlinkFileName);
             wTargetFileName = AdjustSlashes(wTargetFileName);
 
+            wSymlinkFileName = AdjustBadUNC(wSymlinkFileName, dllInstance, L"CreateSymbolicLinkFixup (new link)");
+            wTargetFileName = AdjustBadUNC(wTargetFileName, dllInstance, L"CreateSymbolicLinkFixup (existing)");
+
             Cohorts cohortsSymlink;
             DetermineCohorts(wSymlinkFileName, &cohortsSymlink, moredebug, dllInstance, L"CreateSymbolicLinkFixup");
 

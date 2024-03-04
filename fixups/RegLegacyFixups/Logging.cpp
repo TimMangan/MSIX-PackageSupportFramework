@@ -342,6 +342,13 @@ std::string InterpretKeyPath(HKEY key)
     {
         Log(L"InterpretKeyPath failure.");
     }
+
+    // Let's keep these out of the container registry
+    if (sret._Starts_with("=\\REGISTRY\\MACHINE\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\AppModel"))
+    {
+        sret = "HKEY_LOCAL_MACHINE" + sret.substr(10);
+    }
+
     return sret;
 }
 

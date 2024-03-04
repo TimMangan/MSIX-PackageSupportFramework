@@ -81,6 +81,7 @@ DWORD __stdcall GetPrivateProfileSectionNamesFixup(
                 // We prefer to use the redirecton case, if present.
                 std::wstring wfileName = widen(fileName);
                 wfileName = AdjustSlashes(wfileName);
+                wfileName = AdjustBadUNC(wfileName, dllInstance, L"GetPrivateProfileNamesFixup");
 
                 Cohorts cohorts;
                 DetermineCohorts(wfileName, &cohorts, moredebug, dllInstance, L"GetPrivateProfileNamesFixup");
