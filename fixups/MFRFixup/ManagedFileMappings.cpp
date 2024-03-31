@@ -437,9 +437,10 @@ namespace mfr
     {
         for (mfr_folder_mapping map : g_MfrFolderMappings)
         {
+            // 4.2.0.0: Restoring the check against local explicitly.  Not sure why it was changed.
             if (map.RedirectionFlags != mfr_redirect_flags::disabled &&
-                map.RedirectionFlags != mfr_redirect_flags::prefer_redirection_none
-                //map.RedirectionFlags == mfr_redirect_flags::prefer_redirection_local
+                //map.RedirectionFlags != mfr_redirect_flags::prefer_redirection_none
+                map.RedirectionFlags == mfr_redirect_flags::prefer_redirection_local
                )
             {
                 if (path_isSubsetOf_String(map.NativePathBase, WsPath.c_str()))
@@ -459,9 +460,10 @@ namespace mfr
 
         for (mfr_folder_mapping map : g_MfrFolderMappings)
         {
+            // 4.2.0.0: Restoring the check against local explicitly.  Not sure why it was changed.
             if (map.RedirectionFlags != mfr_redirect_flags::disabled &&
-                map.RedirectionFlags != mfr_redirect_flags::prefer_redirection_none
-                //map.RedirectionFlags == mfr_redirect_flags::prefer_redirection_local
+                //map.RedirectionFlags != mfr_redirect_flags::prefer_redirection_none
+                map.RedirectionFlags == mfr_redirect_flags::prefer_redirection_local
                 )
             {
                 if (path_isSubsetOf_String(map.PackagePathBase, WsPath.c_str()))
