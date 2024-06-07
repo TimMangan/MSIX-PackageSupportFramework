@@ -33,7 +33,7 @@ std::filesystem::path g_short_finalPackageRootPath;
 
 
 #if _DEBUG
-//#define MOREDEBUG 1
+#define MOREDEBUG 1
 #endif
 
 DWORD g_InterceptInstance = 60000;

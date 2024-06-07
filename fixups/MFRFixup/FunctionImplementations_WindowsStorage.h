@@ -52,7 +52,17 @@ inline Func GetWindowsStorageDllInternalFunction(const char* functionName)
         Log(L">>>WindowsStorage Fixup mistaken loaded name=??? 0x%x",  result);
     }
 #endif
-    assert(result);
+    /////assert(result);
+    if (result == NULL)
+    {
+        Log(L"Failed to locate exported function name=%S from WindowsStorage.dll, possibly not supported on this OS.", functionName);
+    }
+    else
+    {
+#if _DEBUG
+        Log(L"Located exported function name=%S from WindowsStorage.dll at 0x%x", functionName, result);
+#endif
+    }
     return result;
 }
 #define WINDOWSSTORAGE_FUNCTION(Name) (GetWindowsStorageDllInternalFunction<decltype(&Name)>(#Name));

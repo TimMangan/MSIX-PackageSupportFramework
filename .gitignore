@@ -324,3 +324,4 @@ tests/scenarios/Appx/MFRIlvAwareTests.appx.signtool.txt
 tests/scenarios/Appx/MFRIlvAwareTests.appx.makeappx.txt
 tests/scenarios/Appx/MFRTests.appx.makeappx.txt
 .gitignore
+/.VSCodeCounter/2024-03-24_08-46-39

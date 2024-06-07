@@ -260,12 +260,12 @@ void attach()
             check_win32(::DetourUpdateThread(::GetCurrentThread()));
 
 #if _DEBUG
-            //Log("Debug: PsfRuntime before attach all");
+            Log("Debug: PsfRuntime before attach all");
 #endif
     // Call DetourAttach for all APIs that PsfRuntime detours
             psf::attach_all();
 #if _DEBUG
-            //Log("DEBUG: PsfRuntime after attach all");
+            Log("DEBUG: PsfRuntime after attach all");
 #endif
     // We can't call LoadLibrary in DllMain, so hook the application's entry point and do initialization then
             ApplicationEntryPoint = reinterpret_cast<EntryPoint_t>(::DetourGetEntryPoint(nullptr));

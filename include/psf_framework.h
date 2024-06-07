@@ -4,6 +4,12 @@
 //-------------------------------------------------------------------------------------------------------
 #pragma once
 
+#if _DEBUG
+#define MOREDEBUG 1
+#else
+//#define MOREDEBUG 1
+#endif
+
 #define DEBUG_NEW_FIXUPS 1
 
 #include <algorithm>
@@ -66,13 +72,21 @@ namespace psf
         {
             if (target && !target->Registered)
             {
-                check_win32(::PSFRegister(&target->Target, target->Detour));
-                target->Registered = true;
+                if (target->Target != nullptr)
+                {
+                    check_win32(::PSFRegister(&target->Target, target->Detour));
+                   target->Registered = true;
+                }
+                else
+                {
+                    ;
+                }
             }
         });
     }
 
-#if _DEBUG
+//#if _DEBUG
+#if MOREDEBUG
     inline int attach_count_all()
     {
         int count = 0;
@@ -127,34 +141,45 @@ namespace psf
         {
             if (target && !target->Registered)
             {
-#if _DEBUG
-#if DEBUG_NEW_FIXUPS
-                pvtLog(L">>>>>Register FIXUP from 0x0%x to 0x0%x", target->Target, target->Detour);
-                if (target->Target == (void*)0x743d77a0)   //ws_ShellExecuteExW
+                if (target->Target != nullptr)
                 {
+#if MOREDEBUG
+#if DEBUG_NEW_FIXUPS
+                    pvtLog(L">>>>>Register FIXUP from 0x0%x to 0x0%x", target->Target, target->Detour);
+                    if (target->Target == (void*)0x743d77a0)   //ws_ShellExecuteExW
+                    {
                         pvtLog(L">>>>>Registering (WS)ShellExecuteExW");
-                }
-                if (target->Target == (void*)0x743d78e0)   //ws_ShellExecuteW
-                {
-                    pvtLog(L">>>>>Registering (WS)ShellExecuteW");
-                }
-                if (target->Target == (void*)0x75cac880)    // KernelBase MoveFileExW
-                {
-                    pvtLog(L">>>>>Registering (KernelBase)MoveFileExW");
-                }
-                if (target->Target == (void*)0x77306a40)    // ntdll ZwQueryDirectoryFile
-                {
-                    pvtLog(L">>>>>Registering (ntdll)ZwQueryDirectoryFile");
-                }
+                    }
+                    if (target->Target == (void*)0x743d78e0)   //ws_ShellExecuteW
+                    {
+                        pvtLog(L">>>>>Registering (WS)ShellExecuteW");
+                    }
+                    if (target->Target == (void*)0x75cac880)    // KernelBase MoveFileExW
+                    {
+                        pvtLog(L">>>>>Registering (KernelBase)MoveFileExW");
+                    }
+                    if (target->Target == (void*)0x77306a40)    // ntdll ZwQueryDirectoryFile
+                    {
+                        pvtLog(L">>>>>Registering (ntdll)ZwQueryDirectoryFile");
+                    }
 #endif
 #endif
-                check_win32(::PSFRegister(&target->Target, target->Detour));
-                target->Registered = true;
-#if _DEBUG
+                    check_win32(::PSFRegister(&target->Target, target->Detour));
+                    target->Registered = true;
+#if MOREDEBUG
 #if DEBUG_NEW_FIXUPS
-                pvtLog(L"<<<<<Registered FIXUP Complete.\n");
+                    pvtLog(L"<<<<<Registered FIXUP Complete.\n");
 #endif
 #endif
+                }
+                else
+                {
+#if MOREDEBUG
+#if DEBUG_NEW_FIXUPS
+                    pvtLog(L">>>>>Register FIXUP was null target, skipped.\n");
+#endif
+#endif
+                }
             }
         });
         return;
@@ -246,9 +271,16 @@ namespace psf
     template <typename AnsiFunc, typename WideFunc>
     inline auto detoured_string_function(AnsiFunc ansi, WideFunc wide)
     {
-#if _DEBUG
+#if MOREDEBUG
 #if DEBUG_NEW_FIXUPS
-        pvtLog(L">>>>>Define FIXUP pair Ansi=0x0%p Wide=0x0%p\n", ansi, wide);
+        if (ansi != nullptr && wide != nullptr)
+        {
+            pvtLog(L">>>>>Define FIXUP pair Ansi=0x0%p Wide=0x0%p\n", ansi, wide);
+        }
+        else
+        {
+            pvtLog(L">>>>>Define FIXUP null pair\n");
+        }
 #endif
 #endif
         return detoured_string_function_t<AnsiFunc, WideFunc>{ ansi, wide };

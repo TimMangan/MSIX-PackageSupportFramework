@@ -8,6 +8,7 @@
 #include <windows.h>
 #endif
 
+/////#define PSF_DEFINE_EXPORTS
 #include <psf_framework.h>
 #include <psf_logging.h>
 
@@ -19,6 +20,9 @@
 #if DEBUG_NEW_FIXUPS
 #define DEBUG_NEW_FIXUPS_MFR 1
 #endif
+#else
+//#define MOREDEBUG 1
+#define DEBUG_NEW_FIXUPS_MFR 1
 #endif
 
 bool trace_function_entry = false;
@@ -31,7 +35,7 @@ void InitializeConfiguration();
 
 extern "C" {
 
-#if _DEBUG
+#if MOREDEBUG
 #if DEBUG_NEW_FIXUPS_MFR
     void PrintDebugAddrs()
     {
@@ -87,18 +91,30 @@ extern "C" {
 
 #if Intercept_WindowsStorage
 #if DO_WS_Shex_A
-        Log("(windows.storage)ShellExecute to  Ansi=%p\n", windowsstorageimpl::ShellExecuteAImpl);
+        if (windowsstorageimpl::ShellExecuteAImpl == nullptr)
+            Log("(windows.storage)ShellExecuteA to  Ansi=NULL\n");
+        else
+            Log("(windows.storage)ShellExecuteA to  Ansi=%p\n", windowsstorageimpl::ShellExecuteAImpl);
 #endif
 #if DO_WS_Shex_W
-        Log("(windows.storage)ShellExecute to  Wide=%p\n",  windowsstorageimpl::ShellExecuteWImpl);
+        if (windowsstorageimpl::ShellExecuteWImpl == nullptr)
+            Log("(windows.storage)ShellExecuteW to  Wide=NULL\n");
+        else
+            Log("(windows.storage)ShellExecuteW to  Wide=%p\n",  windowsstorageimpl::ShellExecuteWImpl);
 #endif
 #if DO_WS_ShexEx_A
-        Log("(windows.storage)ShellExecuteExA  Ansi=%p\n", &windowsstorageimpl::ShellExecuteExAImpl);
+        if (windowsstorageimpl::ShellExecuteExAImpl == nullptr)
+            Log("(windows.storage)ShellExecuteExA to  Ansi=NULL\n");
+        else
+            Log("(windows.storage)ShellExecuteExA  Ansi=%p\n", &windowsstorageimpl::ShellExecuteExAImpl);
 #endif
 #if DO_WS_ShexEx_W
-        Log("(windows.storage)ShellExecuteExW  Wide=%p\n", &windowsstorageimpl::ShellExecuteExWImpl);
+        if (windowsstorageimpl::ShellExecuteExWImpl == nullptr)
+            Log("(windows.storage)ShellExecuteExW to  Wide=NULL\n");
+        else
+            Log("(windows.storage)ShellExecuteExW  Wide=%p\n", &windowsstorageimpl::ShellExecuteExWImpl);
 #endif
-
+        Log("WindowsStorage Fixups loaded.\n");
 #endif
     }
 #endif
@@ -143,7 +159,7 @@ extern "C" {
         manual_wait_for_debugger();
 #endif
 
-#if _DEBUG
+#if MOREDEBUG
         PrintDebugAddrs();
         psf::attach_count_all_debug();
         //Log(L"[0] MFRFixup attaches %d fixups.", count);
