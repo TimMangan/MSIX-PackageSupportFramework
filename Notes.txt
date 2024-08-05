@@ -14,8 +14,11 @@ ideas:
 	   as an extra xxx.yyy.deleted file in the redirection area.  But then all methods looking to see files would have to look for this, and anything creating a file might have to remove it.
 	   Needs more thought on finding a way to distinguish.
 
-v.2024.next:
+
+v.2024.08.05:
 * Prevent crash due to downrev Windows.storage.dll Detouring.
+* Added new launcher component, PsfFtaCom to handle FTA, Shell Extension, and Application COM components.
+* Fix for PsfLauncher with argument virtualization.
 
 
 v.2024.03.04:

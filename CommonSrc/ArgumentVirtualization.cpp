@@ -289,6 +289,9 @@ std::wstring CanReplaceWithVFS(const std::wstring input)
 std::wstring ArgumentVirtualization(const std::wstring input)
 {
     std::wstring output = L"";
+
+    
+
     if (findStringIC(input, L"C:\\"))
     {
         size_t offset = 0;
