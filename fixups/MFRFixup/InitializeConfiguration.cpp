@@ -156,7 +156,9 @@ void InitializeConfiguration()
 #if MOREDEBUG
                                Log(L"\t\t\tTraditioal: %s", folderid.c_str());
 #endif
-                               map.Valid_mapping = false;
+                               mfr::mfr_folder_mapping newMap = mfr::CloneFolderMapping(map);
+                               newMap.Valid_mapping = false;
+                               mfr::g_MfrFolderMappings[MapIndex] = newMap;
                            }
                            else if (std::equal(mode.begin(), mode.end(), L"default", psf::path_compare{}))
                            {
