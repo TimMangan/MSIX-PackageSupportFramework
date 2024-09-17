@@ -123,6 +123,15 @@ inline std::wstring widen(std::string_view str, UINT codePage = CP_UTF8)
         assert(static_cast<std::size_t>(size) <= result.length());
         result.resize(size);
     }
+    else if (auto size2 = ::MultiByteToWideChar(
+        CP_ACP,
+        MB_ERR_INVALID_CHARS,
+        str.data(), static_cast<int>(str.length()),
+        result.data(), static_cast<int>(result.length())))
+    {
+        assert(static_cast<std::size_t>(size2) <= result.length());
+        result.resize(size2);
+    }
     else
     {
         throw_last_error();
@@ -171,7 +180,30 @@ inline std::string narrow(std::wstring_view str, UINT codePage = CP_UTF8)
         }
         else
         {
-            throw_last_error();
+            // NOTE: Since we call WideCharToMultiByte with a non-negative input string size, the resulting string is not
+            //       null terminated, so we don't need to '+1' the size on input and '-1' the size on resize
+            size = ::WideCharToMultiByte(
+                CP_ACP,
+                0,
+                str.data(), static_cast<int>(str.length()),
+                result.data(), static_cast<int>(result.length()),
+                nullptr, nullptr);
+
+            if (size > 0)
+            {
+                auto finished = (static_cast<std::size_t>(size) <= result.length());
+                assert(finished ^ (result.length() == 0));
+                result.resize(size);
+
+                if (finished)
+                {
+                    break;
+                }
+            }
+            else
+            {
+                throw_last_error();
+            }
         }
     }
 
