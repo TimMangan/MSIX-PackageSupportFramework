@@ -234,6 +234,7 @@
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="..\..\include\utilities.h" />
     <ClInclude Include="CKernelIf_FileInformation.h" />
     <ClInclude Include="Detect_Pipe.h" />
     <ClInclude Include="DetermineCohorts.h" />
