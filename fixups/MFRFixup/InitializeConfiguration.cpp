@@ -85,9 +85,7 @@ void InitializeConfiguration()
 
             if (auto overrideCOWValue = rootObject.try_get("overrideCOW"))
             {
-                ///o& overrideCOWObject = overrideCOWValue->as_object();
-                auto CowAsWstringView = overrideCOWValue->as_string().wstring();
-                std::wstring CowAsWstring = CowAsWstringView.data();
+               std::wstring CowAsWstring = overrideCOWValue->as_string().wstring().data(); //CowAsWstringView.data();
 #if MOREDEBUG
                 Log(L"\t\tMFR CONFIG: Has overideCOW mode=%s", CowAsWstring.c_str());
 #endif 
@@ -156,7 +154,10 @@ void InitializeConfiguration()
 #if MOREDEBUG
                                Log(L"\t\t\tTraditioal: %s", folderid.c_str());
 #endif
-                               map.Valid_mapping = false;
+                               mfr::mfr_folder_mapping newMap = mfr::CloneFolderMapping(map);
+                               //map.Valid_mapping = false;
+                               newMap.RedirectionFlags = mfr::mfr_redirect_flags::prefer_redirection_if_package_vfs;
+                               mfr::g_MfrFolderMappings[MapIndex] = newMap;
                            }
                            else if (std::equal(mode.begin(), mode.end(), L"default", psf::path_compare{}))
                            {
