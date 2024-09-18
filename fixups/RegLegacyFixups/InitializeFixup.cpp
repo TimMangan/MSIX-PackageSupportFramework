@@ -79,13 +79,18 @@ void InitializeConfiguration()
                             Log(L"RegLegacyFixups:      is ModifyKeyAccess\n");
 #endif
                             recordItem.remeditaionType = Reg_Remediation_Type_ModifyKeyAccess;
+                            
                             try
                             {
-                                auto hiveType = regItemObject.try_get("hive")->as_string().wstring();
+                                std::wstring hiveType = regItemObject.try_get("hive")->as_string().wstring().data();
+                                std::transform(
+                                    hiveType.begin(), hiveType.end(),
+                                    hiveType.begin(),
+                                    [](wchar_t wc) { return (wchar_t)std::toupper(wc); });
 #if _DEBUG
                                 Log(L"RegLegacyFixups:      Hive: %Ls\n", hiveType.data());
 #endif
-                                if (hiveType.compare(L"HKCU") == 0)
+                                if (hiveType.compare(L"HKCU") == 0 )
                                 {
                                     recordItem.modifyKeyAccess.hive = Modify_Key_Hive_Type_HKCU;
                                 }
@@ -166,7 +171,11 @@ void InitializeConfiguration()
                             recordItem.remeditaionType = Reg_Remediation_Type_FakeDelete;
                             try
                             {
-                                auto hiveType = regItemObject.try_get("hive")->as_string().wstring();
+                                std::wstring hiveType = regItemObject.try_get("hive")->as_string().wstring().data();
+                                std::transform(
+                                    hiveType.begin(), hiveType.end(),
+                                    hiveType.begin(),
+                                    [](wchar_t wc) { return (wchar_t)std::toupper(wc); });
                                 if (hiveType.compare(L"HKCU") == 0)
                                 {
                                     recordItem.fakeDeleteKey.hive = Modify_Key_Hive_Type_HKCU;
@@ -223,7 +232,11 @@ void InitializeConfiguration()
                             recordItem.remeditaionType = Reg_Remediation_Type_DeletionMarker;
                             try
                             {
-                                auto hiveType = regItemObject.try_get("hive")->as_string().wstring();
+                                std::wstring hiveType = regItemObject.try_get("hive")->as_string().wstring().data();
+                                std::transform(
+                                    hiveType.begin(), hiveType.end(),
+                                    hiveType.begin(),
+                                    [](wchar_t wc) { return (wchar_t)std::toupper(wc); });
                                 if (hiveType.compare(L"HKCU") == 0)
                                 {
                                     recordItem.deletionMarker.hive = Modify_Key_Hive_Type_HKCU;
