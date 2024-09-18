@@ -446,7 +446,7 @@ bool RegFixupFakeDelete(std::string keypath, [[maybe_unused]] DWORD RegLocalInst
                                 if (std::regex_match(widen(keypath.substr(OffsetHklm)), std::wregex(pattern, std::regex_constants::icase)))
                                 {
 #ifdef _DEBUG
-                                    Log(L"[%d] RegFixupFakeDelete: match hklm\n", RegLocalInstance);
+                                    Log(L"[%d] RegFixupFakeDelete: match HKLM\n", RegLocalInstance);
 #endif                            
                                     return true;
                                 }
