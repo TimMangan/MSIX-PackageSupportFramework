@@ -3,7 +3,6 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 //-------------------------------------------------------------------------------------------------------
 
-
 #include <filesystem>
 #include <fstream>
 #include <string>
@@ -93,8 +92,15 @@ int launcher_main(PCWSTR args, int cmdShow) noexcept try
 
     LogApplicationAndProcessesCollection();
 
-    auto dirPtr = appConfig->try_get("workingDirectory");
-    auto dirStr = dirPtr ? dirPtr->as_string().wide() : L"";
+    const wchar_t* dirStr;
+    try
+    {
+        auto dirPtr = appConfig->try_get("workingDirectory");
+        dirStr = dirPtr ? dirPtr->as_string().wide() : L"";
+    } catch (...)
+    {
+        dirStr = L"";
+    }
 
     // At least for now, configured launch paths are relative to the package root
     std::filesystem::path packageRoot = PSFQueryPackageRootPath();
@@ -211,13 +217,16 @@ int launcher_main(PCWSTR args, int cmdShow) noexcept try
         {
             fullargs = args;
         }
+        std::wstring fullCommandLine = L"\"" + exePath.filename().native() + L"\" " + fullargs;
+
         LogString(L"Process Launch: ", exePath.c_str());
         LogString(L"     Arguments: ", fullargs.data());
         LogString(L"Working Directory: ", currentDirectory.c_str());
-        
+        LogString(L"Full Command Line: ", fullCommandLine.c_str());
+
         //std::filesystem::path procmonMarker1 = packageRoot.append(L"MarkerBeforeLaunch.txt");
         //if (std::filesystem::exists(procmonMarker1)) {} // Do nothing, file doesn't exist, just here to set a marker in ProcessMonitor.
-        HRESULT hr = StartProcess(exePath.c_str(), (L"\"" + exePath.filename().native() + L"\" " + exeArgString + L" " + args).data(), currentDirectory.c_str(), cmdShow, INFINITE,true, 0, NULL);
+        HRESULT hr = StartProcess(exePath.c_str(), fullCommandLine.data(), currentDirectory.c_str(), cmdShow, INFINITE,true, 0, NULL);
         //std::filesystem::path procmonMarker2 = packageRoot.append(L"MarkerAfterLaunch.txt");
         //if (std::filesystem::exists(procmonMarker2)) {} // Do nothing, file doesn't exist, just here to set a marker in ProcessMonitor.
         if (hr != ERROR_SUCCESS)
@@ -226,7 +235,7 @@ int launcher_main(PCWSTR args, int cmdShow) noexcept try
 
             ProcThreadAttributeList AttributeList;
             MyProcThreadAttributeList m_AttributeListInside = MyProcThreadAttributeList(true, true, false);
-            hr = StartProcess(exePath.c_str(), (L"\"" + exePath.filename().native() + L"\" " + exeArgString + L" " + args).data(), currentDirectory.c_str(), cmdShow, INFINITE, true, 0, AttributeList.get());
+            hr = StartProcess(exePath.c_str(), fullCommandLine.data(), currentDirectory.c_str(), cmdShow, INFINITE, true, 0, AttributeList.get());
             if (hr != ERROR_SUCCESS)
             {
                 Log(L"Error return from launching process second try, try again 0x%x.", GetLastError());
@@ -651,16 +660,39 @@ void LogApplicationAndProcessesCollection()
     {
         for (auto& applicationsConfig : applications->as_array())
         {
-            auto exeStr = applicationsConfig.as_object().try_get("executable")->as_string().wide();
-            auto idStr = applicationsConfig.as_object().try_get("id")->as_string().wide();
-            TraceLoggingWrite(
-                g_Log_ETW_ComponentProvider,
-                "ApplicationsConfigdata",
-                TraceLoggingWideString(exeStr, "applications_executable"),
-                TraceLoggingWideString(idStr, "applications_id"),
-                TraceLoggingBoolean(TRUE, "UTCReplace_AppSessionGuid"),
-                TelemetryPrivacyDataTag(PDT_ProductAndServiceUsage),
-                TraceLoggingKeyword(MICROSOFT_KEYWORD_CRITICAL_DATA));
+            const wchar_t* exeStr = NULL;
+            const wchar_t* idStr = NULL;
+            const wchar_t* hasShellVerbsStr = NULL;
+            try 
+            { 
+                auto exeObj = applicationsConfig.as_object().try_get("executable");
+                if (exeObj != NULL)
+                    exeStr = exeObj->as_string().wide();
+            }
+            catch (...) {}
+            try 
+            { 
+                auto idObj = applicationsConfig.as_object().try_get("id");
+                if (idObj != NULL)
+                    idStr = idObj->as_string().wide(); 
+            } catch (...) {}
+            try 
+            { 
+                auto  hasShellVerbsObj = applicationsConfig.as_object().try_get("shellVerbs");
+                if (hasShellVerbsObj != NULL)
+                    hasShellVerbsStr = hasShellVerbsObj->as_string().wide();
+            }  catch (...) {}
+            if (exeStr != NULL && idStr != NULL)
+            {
+                TraceLoggingWrite(
+                    g_Log_ETW_ComponentProvider,
+                    "ApplicationsConfigdata",
+                    TraceLoggingWideString(exeStr, "applications_executable"),
+                    TraceLoggingWideString(idStr, "applications_id"),
+                    TraceLoggingBoolean(TRUE, "UTCReplace_AppSessionGuid"),
+                    TelemetryPrivacyDataTag(PDT_ProductAndServiceUsage),
+                    TraceLoggingKeyword(MICROSOFT_KEYWORD_CRITICAL_DATA));
+            }
         }
     }
 
