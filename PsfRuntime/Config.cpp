@@ -328,6 +328,11 @@ void load_json()
             throw std::runtime_error("config.json has no contents");
         }
     }
+    else
+    {
+        Log(L"Config.json not found in package %ls", g_PackageRootPath.c_str());
+        PSFReportError(L"Config.json not found in package. Unable to configure the PSF.");
+    }
     assert(g_JsonHandler.state_stack.empty());
 
     // Cache a pointer to the current executable's config, as we are most likely to reference that later
