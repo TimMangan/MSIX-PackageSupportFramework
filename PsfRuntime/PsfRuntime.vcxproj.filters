@@ -51,5 +51,9 @@
     <ClInclude Include="..\CommonSrc\findStringIC.h">
       <Filter>CommonSrc</Filter>
     </ClInclude>
+    <ClInclude Include="resource.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="PsfRuntime.rc" />
   </ItemGroup>
 </Project>

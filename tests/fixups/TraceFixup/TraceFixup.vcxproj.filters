@@ -47,5 +47,9 @@
     <ClInclude Include="FunctionImplementations.h">
       <Filter>inc</Filter>
     </ClInclude>
+    <ClInclude Include="resource.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="TraceFixup.rc" />
   </ItemGroup>
 </Project>

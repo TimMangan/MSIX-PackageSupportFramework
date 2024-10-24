@@ -10,4 +10,10 @@
       <Filter>src</Filter>
     </ClCompile>
   </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="resource.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="WaitForDebuggerFixup.rc" />
+  </ItemGroup>
 </Project>

@@ -46,11 +46,15 @@
     <ClInclude Include="..\CommonSrc\findStringIC.h">
       <Filter>CommonSrc</Filter>
     </ClInclude>
+    <ClInclude Include="resource.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="StartingScriptWrapper.ps1" />
     <None Include="StartMenuCmdScriptWrapper.ps1" />
     <None Include="StartMenuShellLaunchWrapperScript.ps1" />
     <None Include="Readme.md" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="PsfLauncher.rc" />
   </ItemGroup>
 </Project>

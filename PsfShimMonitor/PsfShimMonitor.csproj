@@ -178,8 +178,11 @@
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
     <PostBuildEvent>erase /S $(TargetName)$(PlatformName)$(TargetExt)
+
 echo copying $(TargetPath) to $(TargetName)$(PlatformName)$(TargetExt)
-copy $(TargetPath) $(TargetName)$(PlatformName)$(TargetExt)</PostBuildEvent>
+
+copy $(TargetPath) $(TargetName)$(PlatformName)$(TargetExt)
+rem powershell.exe /f $(SolutionDir)Set-DllVersionByDate.ps1  $(TargetDir)$(TargetName)$(PlatformName)$(TargetExt)</PostBuildEvent>
   </PropertyGroup>
   <PropertyGroup>
     <PreBuildEvent>
