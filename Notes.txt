@@ -1,6 +1,6 @@
 ideas:
  * Consider hidden/system file marker in redirection for deletion, similar to what ILV does.
- * Check out CreateFile on C:\CONOUT$ in Calibre.  Returns with invalid handle? MVR.
+ * Check out CreateFile on C:\CONOUT$ in Calibre.  Returns with invalid handle? MFR.
  * Psf is unaware of SPC.  This means that FRF/MFR determine redirection area on package level of
        the launched app rather than container folder for redirection.  Not breaking anything currently, but ugh!
 *  SPC seems to immedietly fail PsfLauncher if Ilv is set in package.
@@ -14,8 +14,19 @@ ideas:
 	   as an extra xxx.yyy.deleted file in the redirection area.  But then all methods looking to see files would have to look for this, and anything creating a file might have to remove it.
 	   Needs more thought on finding a way to distinguish.
 
+v.2024.10.26:
+ * Added new option for PsfLaucher and PsfFtaCom to prevent MultipleInstances to prevent multiple instances of the same application from running in the user session.
+ * Return of support for RunInVirtualEnvironment for scripts.  Default remains true. 
+ * Fix for different powershell versions when used in PsfLauncher.
+ * Added a date oriented versioning to Psf build components except PsfLauncher.
 
-v.2024.08.05:
+
+v.2024.09.05:
+ * RegLegacyFixup: (Issue #247). Allow Json entries for HKLM/HKCU hive types to have alternative case.  Yeah, it isn't normally done for Json and we are NOT going to make all of the json entries case insisitive, but this seems OK.
+ * PsfRuntime: (ISSUE #200) Detect and issue error message when a config.Json file is not found in the package .
+ * MfrFixup: (PR #28) Fallback to machine codepage when unicode fails.
+
+v.2024.08.05: 
 * Prevent crash due to downrev Windows.storage.dll Detouring.
 * Added new launcher component, PsfFtaCom to handle FTA, Shell Extension, and Application COM components.
 * Fix for PsfLauncher with argument virtualization.
