@@ -27,6 +27,8 @@
 #include <WinUser.h>
 #include <proc_helper.h>
 
+#include <TlHelp32.h>
+
 TRACELOGGING_DECLARE_PROVIDER(g_Log_ETW_ComponentProvider);
 TRACELOGGING_DEFINE_PROVIDER(
     g_Log_ETW_ComponentProvider,
@@ -46,6 +48,7 @@ bool IsCurrentOSRS2OrGreater();
 std::wstring ReplaceMisleadingSlashVFS(std::wstring inputString);
 std::wstring ReplaceVariablesInString(std::wstring inputString, bool ReplaceEnvironmentVars, bool ReplacePseudoVars);
 std::wstring ArgumentVirtualization(const std::wstring input);
+bool IsProcessRunningForThisUser(const std::filesystem::path path);
 
 static inline bool check_suffix_if(iwstring_view str, iwstring_view suffix) noexcept;
 
@@ -204,6 +207,32 @@ int launcher_main(PCWSTR args, int cmdShow) noexcept try
     LogString(L"Arguments Devariablized", exeArgString.c_str());
     exeArgString = ArgumentVirtualization(exeArgString);
     LogString(L"Arguments after ArgumentVirtualization", exeArgString.c_str());
+
+    bool preventMultiple = false;
+    auto preventMultipleObject = appConfig->try_get("preventMultipleInstances");
+    if (preventMultipleObject)
+    {
+        preventMultiple = preventMultipleObject->as_boolean().get();
+    }
+
+    if (preventMultiple)
+    {
+        if (isHttp)
+        {
+            Log(L"Prevent multiple instances is not supported for http(s) links.");
+        }
+        else
+        {
+            Log(L"Checking for existing instances of %ls", exePath.c_str());
+            if (IsProcessRunningForThisUser(exePath.c_str()))
+            {
+                Log(L"Existing instance found, prompting user and exiting.");
+                MessageBox(NULL, L"An instance of this application is already running.", L"Multiple Instances Not Allowed", MB_OK | MB_ICONINFORMATION);
+                return 0;
+            }
+            Log(L"No existing instance found, continuing.");
+        }
+    }
 
     // Keep these quotes here.  StartProcess assumes there are quotes around the exe file name
     if (check_suffix_if(exeName, L".exe"_isv))
@@ -594,6 +623,94 @@ void LaunchInBackgroundAsAdmin( const wchar_t executable[], const wchar_t argume
     }
  
 }
+
+
+// Determine if the named process is already running for the current user.
+bool IsProcessRunningForThisUser( const std::filesystem::path path)
+{
+    bool isRunning = false;
+    std::wstring procName = path;
+    procName = procName.substr(procName.find_last_of(L"\\") + 1);
+
+    HANDLE snapshot = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
+    if (snapshot == INVALID_HANDLE_VALUE) {
+        return false;
+    }
+
+    PROCESSENTRY32 entry;
+    entry.dwSize = sizeof(PROCESSENTRY32);
+
+    size_t num = 0;
+    wchar_t* thisUserName;;
+    errno_t result = _wdupenv_s(&thisUserName, &num, L"USERNAME");
+    if (result == ENOMEM)
+        return false; // should never happen
+
+    if (Process32First(snapshot, &entry)) {
+        do {
+            if (_wcsicmp(entry.szExeFile, procName.c_str()) == 0) {
+                bool sameUser = false;
+
+                // TODO: Use the entry.th32ProcessID to do this somehow.
+                HANDLE processHandle = OpenProcess(PROCESS_QUERY_INFORMATION, FALSE, entry.th32ProcessID);
+                if (!processHandle) {
+                    // We can't open other user handles (unless we are elevated), so assume it is another user.
+                    continue;
+                }
+                else
+                {
+                    HANDLE tokenHandle;
+                    if (OpenProcessToken(processHandle, TOKEN_QUERY, &tokenHandle))
+                    {
+                        DWORD tokenUserSize = 0;
+                        GetTokenInformation(tokenHandle, TokenUser, NULL, 0, &tokenUserSize);
+                        if (GetLastError() == ERROR_INSUFFICIENT_BUFFER)
+                        {
+                            std::vector<BYTE> tokenUserBuffer(tokenUserSize);
+                            if (GetTokenInformation(tokenHandle, TokenUser, tokenUserBuffer.data(), tokenUserSize, &tokenUserSize))
+                            {
+                                TOKEN_USER* tokenUser = reinterpret_cast<TOKEN_USER*>(tokenUserBuffer.data());
+                                DWORD userNameSize = 0;
+                                DWORD domainNameSize = 0;
+                                SID_NAME_USE sidNameUse;
+                                LookupAccountSid(NULL, tokenUser->User.Sid, NULL, &userNameSize, NULL, &domainNameSize, &sidNameUse);
+                                if (GetLastError() == ERROR_INSUFFICIENT_BUFFER)
+                                {
+                                    std::vector<wchar_t> userNameBuffer(userNameSize);
+                                    std::vector<wchar_t> domainNameBuffer(domainNameSize);
+                                    if (LookupAccountSid(NULL, tokenUser->User.Sid, userNameBuffer.data(), &userNameSize, domainNameBuffer.data(), &domainNameSize, &sidNameUse))
+                                    {
+                                        std::wstring userName = userNameBuffer.data();
+                                        //std::wstring domainName = domainNameBuffer.data();  // Let's not worry about the domain.                                        
+                                        if (userName._Equal(thisUserName))
+                                        {
+                                            sameUser = true;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        CloseHandle(tokenHandle);
+                    }
+                    CloseHandle(processHandle);
+                }
+
+                if (sameUser)
+                {
+                    CloseHandle(snapshot);
+                    return true;
+                }
+            }
+        } while (Process32Next(snapshot, &entry));
+    }
+
+    free(thisUserName);
+    CloseHandle(snapshot);
+
+    return isRunning;
+} // IsProcessRunningForThisUser()
+
+
 
 
 // Drop the mistaken first slash in \VFS.

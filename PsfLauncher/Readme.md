@@ -79,6 +79,7 @@ Should an application happen to also have a file named config.json, a syntax che
 
 
 ### Example 1 - Package using FileRedirectionFixup
+Note: THe MfrFixup is now preferred over the FileRedirectionFixup.
 Given an application package with an `AppxManifest.xml` file containing the following:
 
 ```xml
@@ -368,7 +369,7 @@ We should note that there may be reasons to force a particular program (as is do
     {
       "id": "Sample5",
       "executable": "VFS\\Windows\\Notepad.exe",
-      "arguments" : "VFS\\ProgramFilesX64\\Sample5\\Readme.txt"
+      "arguments" : "VFS\\ProgramFilesX64\\Sample5\\Readme.txt",
       "workingDirectory": ""
     }
   ],
@@ -386,6 +387,30 @@ In the case of the arguments field, the executable will be passed the argument a
 intercept any file open call to redirect as appropriate.  In our case, we expect that the text file is part of the package and notepad will open the file from the package, 
 or the user-redirected area for the package if previously altered.
 
+
+### Example 6
+This example shows how the launcher may be used to start restrict an executable from starting a second copy of the target executble.
+
+UWP Applications are normally restricted to a single instance by the operating system, and there is an AppXManifest schema extension to override that behavior.  
+But for FullTrust applications there is no such restriction and the AppXManifest cannot help.  
+So if it is important to restrict a user from running multiple copies of a FullTrust target, you may restrict the additional launches as shown in this example.
+
+
+```json
+  "applications": [
+    {
+      "id": "Sample6",
+      "executpable": "VFS\\Windows\\Notepad.exe",
+      "preventMultipleInstances": true
+    }
+  ],
+  "processes": [
+    ...(taken out for brevity)
+  ]
+}
+```
+
+
 ### Json Schema
 
 | Array | key | Value |
@@ -395,6 +420,7 @@ or the user-redirected area for the package if previously altered.
 | applications | executable | The path to the executable that you want to start. This path is typically specified relative to the package root folder. In most cases, you can get this value from your package manifest file before you modify it. It's the value of the `Executable` attribute of the `Application` element. Pseudo-variables and Environment variables are supported for this path. |
 | applications | arguments | (Optional) Command line arguments for the executable.  If the PsfLauncher.exe receives any arguments, these will be appended to the command line after those from the config.json file. Pseudo-variables and Environment variables are supported in the arguments. |
 | applications | workingDirectory | (Optional) A path to use as the working directory of the application that starts. This is typically a relative path of the package root folder, however full paths may be specified. If you don't set this value, the operating system uses the `System32` directory as the application's working directory. If you supply a value in the form of an empty string, it will use the directory of the referenced executable. Pseudo-variables and Environment variables are supported in the workingDirectory. |
+| applications | preventMultipleInstances | (Optional) Boolean. When set to true, the launcher will check if another copy of the target application is already running. When prevented, the user will see a popup dialog notification. Not specifying this entry or setting it to false will have no effect on the launcher. |
 | applications | monitor | (Optional) If present, the monitor identifies a secondary program that is to be launched prior to starting the primary application.  A good example might be `PsfMonitor.exe`.  The monitor configuration consists of the following items: |
 | | |   `'executable'` - This is the name of the executable relative to the root of the package. |
 | | |   `'arguments'`  - This is a string containing any command line arguments that the monitor executable requires. Any use of the string "%MsixPackageRoot%" in the arguments will be replaced by the a string containing the actual package root folder at runtime. |
@@ -406,11 +432,13 @@ or the user-redirected area for the package if previously altered.
 | | |  `'waitForScriptToFinish'` - (Optional, default=false) Boolean. When true, PsfLauncher will wait for the script to complete or timeout before running the application executable. |
 | | | `'timeout'` - (Optional, default is none) Expressed in ms.  Only applicable if waitForScriptToFinish is true.  If a timeout occurs it is treated as an error for the purpose of `'stopOnScriptError'`. The value 0 means an immediate timeout, if you do not want a timeout do not specify a value. |
 | | | `'runOnce'` - (Optional, default=false) Boolean. When true, the script will only be run the first time the user runs the application. |
+| | | `'runInVirtualEnvironment'` - (Optional, default=true) Boolean. When false, the script will run outside of the container.  NOT_IMPLEMENTED |
 | | | `'showWindow'` - (Optional, default=true). Boolean. When false, the PowerShell window is hidden. |
 | | | `'scriptPath'` - Relative or full path to a ps1 file. May be in package or on a network share. Use of pseudo-variables or environment variables are supported. |
 | | | `'scriptArguments'` - (Optional) Arguments for the `'scriptPath'` PowerShell file.  Use of pseudo-variables or environment variables are supported. |
 | applications | endScript | (Optional) If present, used to define a PowerShell script that will be run after completion of the application executable. |
 | | | `'runOnce'` - (Optional, default=false) Boolean. When true, the script will only be run the first time the user runs the application. |
+| | | `'runInVirtualEnvironment'` - (Optional, default=true) Boolean. When false, the script will run outside of the container.  NOT_IMPLEMENTED |
 | | | `'showWindow'` - (Optional, default=true). Boolean. When false, the PowerShell window is hidden. |
 | | | `'scriptPath'` - Relative or full path to a ps1 file. May be in package or on a network share. Use of pseudo-variables or environment variables are supported. |
 | | | `'scriptArguments'` - (Optional) Arguments for the `'scriptPath'` PowerShell file.  Use of pseudo-variables or environment variables are supported. |
@@ -436,7 +464,7 @@ PsfLauncher will expect to find, under certain conditions, additional script fil
 * [StartMenuCmdScriptWrapper.ps1] This script file is required if the `executable` file listed for an application entry of the `config.json` file references a file with a "`.cmd`" or "`.bat`" file extension.
 * [StartMenuCmdShellLaunchWrapperScript.ps1] This script file is required if the `executable` file listed for an application entry of the `config.json` file references a file that does NOT end in one of these file extensions: "`.exe`", "`.cmd`", or "`.bat`".
 
-These script wrapper files may be placed anywhere in the package, although traditionally they are placed either in the root folder of the package or in the same folder as the executable file listed in the config.json application.
+These script wrapper files may be placed anywhere in the package or on a network share available to all users, although traditionally they are placed either in the root folder of the package or in the same folder as the executable file listed in the config.json application.
 
 ### Will Launched Processes run in the container?
 By default, processes created by the existance of an application entry of the `config.json` file with an application executable value that is an `.exe` file type, and it's child processes, all run inside the container. (This is a change in 2021.11.02 release, previously exe files not located inside the package ran outside of the container).

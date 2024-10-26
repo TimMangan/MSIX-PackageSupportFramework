@@ -95,7 +95,7 @@ public:
 			{
 				Log(L"StartingScript waitForScriptToFinish=false");
 			}
-			RunScript(this->m_startingScriptInformation, true);
+			RunScript(this->m_startingScriptInformation, this->m_startingScriptInformation.runInVirtualEnvironment); // true);
 		}
 	}
 
@@ -105,7 +105,7 @@ public:
 		{
 			LogString(L"EndingScript commandString", this->m_endingScriptInformation.commandString.c_str());
 			LogString(L"EndingScript currentDirectory", this->m_endingScriptInformation.currentDirectory.c_str());
-			RunScript(this->m_endingScriptInformation, true);
+			RunScript(this->m_endingScriptInformation, this->m_endingScriptInformation.runInVirtualEnvironment); // true);
 		}
 	}
 
@@ -278,6 +278,7 @@ private:
 		int showWindowAction = SW_HIDE;
 		bool waitForScriptToFinish = true;
 		bool stopOnScriptError = false;
+		bool runInVirtualEnvironment = true;
 		std::filesystem::path currentDirectory;
 		std::filesystem::path packageRoot;
 		bool doesScriptExistInConfig = false;
@@ -368,6 +369,12 @@ private:
 		scriptStruct.stopOnScriptError = stopOnScriptError;
 		scriptStruct.currentDirectory = currentDirectory;
 		scriptStruct.packageRoot = packageRoot;
+
+		scriptStruct.runInVirtualEnvironment = true;
+		if (auto inOutValue = scriptInformation->try_get("runInVirtualEnvironment"))
+		{
+			scriptStruct.runInVirtualEnvironment = inOutValue->as_boolean().get();
+		}
 
 		//Async script run with a termination on failure is not a supported scenario.
 		//Supporting this scenario would mean force terminating an executing user process
@@ -631,31 +638,29 @@ private:
 	{
 		wil::unique_hkey registryHandle;
 		LSTATUS createResult = RegCreateKeyExW(HKEY_LOCAL_MACHINE, L"SOFTWARE\\Microsoft\\PowerShell\\1", 0, nullptr, REG_OPTION_NON_VOLATILE, KEY_READ, nullptr, &registryHandle, nullptr);
-
+		if (createResult != ERROR_SUCCESS)
+		{
+			// Certain systems lack the 1 key but have the 2 or 3 key (both point to same path when both are present)
+			RegCreateKeyExW(HKEY_LOCAL_MACHINE, L"SOFTWARE\\Microsoft\\PowerShell\\2", 0, nullptr, REG_OPTION_NON_VOLATILE, KEY_READ, nullptr, &registryHandle, nullptr);
+		}
+		if (createResult != ERROR_SUCCESS)
+		{
+			RegCreateKeyExW(HKEY_LOCAL_MACHINE, L"SOFTWARE\\Microsoft\\PowerShell\\3", 0, nullptr, REG_OPTION_NON_VOLATILE, KEY_READ, nullptr, &registryHandle, nullptr);
+		}
 		if (createResult == ERROR_FILE_NOT_FOUND)
 		{
 			// If the key cannot be found, powershell is not installed
 			return false;
 		}
-		else if (createResult != ERROR_SUCCESS)
-		{
-			// Certain systems lack the 1 key but have the 3 key (both point to same path)
-			createResult = RegCreateKeyExW(HKEY_LOCAL_MACHINE, L"SOFTWARE\\Microsoft\\PowerShell\\3", 0, nullptr, REG_OPTION_NON_VOLATILE, KEY_READ, nullptr, &registryHandle, nullptr);
-			if (createResult == ERROR_FILE_NOT_FOUND)
-			{
-				return false;
-			}
-			else if (createResult != ERROR_SUCCESS)
-			{
-				THROW_HR_MSG(HRESULT_FROM_WIN32(createResult), "Error with getting the key to see if PowerShell is installed.");
-			}
-		}
+		
 
 		DWORD valueFromRegistry = 0;
 		DWORD bufferSize = sizeof(DWORD);
 		DWORD type = REG_DWORD;
 		THROW_IF_WIN32_ERROR_MSG(RegQueryValueExW(registryHandle.get(), L"Install", nullptr, &type, reinterpret_cast<BYTE*>(&valueFromRegistry), &bufferSize),
 			"Error with querying the key to see if PowerShell is installed.");
+
+		RegCloseKey(registryHandle.get());
 
 		if (valueFromRegistry != 1)
 		{
@@ -666,8 +671,30 @@ private:
 	}
 	std::wstring PathToPowershell()
 	{
-		// TODO: Use registry search like in CheckIfPowershellIsInstalled()
 		std::wstring path = L"C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe";
+		wil::unique_hkey registryHandle;
+		LSTATUS createResult = RegCreateKeyExW(HKEY_LOCAL_MACHINE, L"SOFTWARE\\Microsoft\\PowerShell\\1", 0, nullptr, REG_OPTION_NON_VOLATILE, KEY_READ, nullptr, &registryHandle, nullptr);
+		if (createResult != ERROR_SUCCESS)
+		{
+			// Certain systems lack the 1 key but have the 2 or 3 key (both point to same path when both are present)
+			RegCreateKeyExW(HKEY_LOCAL_MACHINE, L"SOFTWARE\\Microsoft\\PowerShell\\2", 0, nullptr, REG_OPTION_NON_VOLATILE, KEY_READ, nullptr, &registryHandle, nullptr);
+		}
+		if (createResult != ERROR_SUCCESS)
+		{
+			RegCreateKeyExW(HKEY_LOCAL_MACHINE, L"SOFTWARE\\Microsoft\\PowerShell\\3", 0, nullptr, REG_OPTION_NON_VOLATILE, KEY_READ, nullptr, &registryHandle, nullptr);
+		}
+		if (createResult == ERROR_FILE_NOT_FOUND)
+		{
+			return path;
+		}
+		wil::unique_hkey registrySubKey;
+		createResult = RegCreateKeyExW(registryHandle.get(), L"PoweerShellEngine", 0, nullptr, REG_OPTION_NON_VOLATILE, KEY_READ, nullptr, &registrySubKey, nullptr);
+		if (createResult == ERROR_SUCCESS)
+		{
+			RegQueryValueW(registrySubKey.get(), nullptr, path.data(), nullptr);
+			RegCloseKey(registrySubKey.get());
+		}
+		RegCloseKey(registrySubKey.get());
 		return path;
 	}
 };

@@ -95,7 +95,8 @@ public:
 			{
 				Log(L"StartingScript waitForScriptToFinish=false");
 			}
-			RunScript(this->m_startingScriptInformation, true);
+			//RunScript(this->m_startingScriptInformation, true);
+			RunScript(this->m_startingScriptInformation, this->m_startingScriptInformation.runInVirtualEnvironment);
 		}
 	}
 
@@ -105,7 +106,8 @@ public:
 		{
 			LogString(L"EndingScript commandString", this->m_endingScriptInformation.commandString.c_str());
 			LogString(L"EndingScript currentDirectory", this->m_endingScriptInformation.currentDirectory.c_str());
-			RunScript(this->m_endingScriptInformation, true);
+			//RunScript(this->m_endingScriptInformation, true);			
+			RunScript(this->m_endingScriptInformation, this->m_endingScriptInformation.runInVirtualEnvironment);
 		}
 	}
 
@@ -275,6 +277,7 @@ private:
 		std::wstring commandString;
 		DWORD timeout = INFINITE;
 		bool shouldRunOnce = true;
+		bool runInVirtualEnvironment = true;
 		int showWindowAction = SW_HIDE;
 		bool waitForScriptToFinish = true;
 		bool stopOnScriptError = false;
@@ -363,6 +366,7 @@ private:
 		scriptStruct.commandString = ReplacePsuedoRootVariables(MakeCommandString(*scriptInformation, scriptStruct.PsPath, scriptExecutionMode, scriptStruct.scriptPath, packageRoot), packageRoot, packageWritableRoot);
 		scriptStruct.timeout = GetTimeout(*scriptInformation);
 		scriptStruct.shouldRunOnce = GetRunOnce(*scriptInformation);
+		scriptStruct.runInVirtualEnvironment = GetRunInVirtualEnvironment(*scriptInformation);
 		scriptStruct.showWindowAction = GetShowWindowAction(*scriptInformation);
 		scriptStruct.waitForScriptToFinish = GetWaitForScriptToFinish(*scriptInformation);
 		scriptStruct.stopOnScriptError = stopOnScriptError;
@@ -572,6 +576,16 @@ private:
 
 		return true;
 	}
+	bool GetRunInVirtualEnvironment(const psf::json_object& scriptInformation)
+	{
+		auto runIVEObject = scriptInformation.try_get("runInVirtualEnvironment");
+		if (runIVEObject)
+		{
+			return runIVEObject->as_boolean().get();
+		}
+		return true;
+	}
+	
 
 	int GetShowWindowAction(const psf::json_object& scriptInformation)
 	{
