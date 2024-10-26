@@ -30,6 +30,8 @@
 #include <proc_helper.h>
 #include <psf_logging.h>
 
+#include <TlHelp32.h>
+
 using namespace std::literals;
 
 // Forward declarations
@@ -37,6 +39,7 @@ extern void LogApplicationAndProcessesCollection();
 extern bool IsCurrentOSRS2OrGreater();
 extern std::wstring ReplaceMisleadingSlashVFS(std::wstring inputString);
 extern std::wstring ReplaceVariablesInString(std::wstring inputString, bool ReplaceEnvironmentVars, bool ReplacePseudoVars);
+extern bool IsProcessRunningForThisUser(const std::filesystem::path path);
 
 int launcher_main(PCWSTR wargs, int cmdShow) noexcept try
 {
@@ -149,6 +152,27 @@ int launcher_main(PCWSTR wargs, int cmdShow) noexcept try
         targetFilePath = packageRoot / targetFilePath;
     }
 
+    bool preventMultiple = false;
+    auto preventMultipleObject = appConfig->try_get("preventMultipleInstances");
+    if (preventMultipleObject)
+    {
+        preventMultiple = preventMultipleObject->as_boolean().get();
+    }
+
+    if (preventMultiple)
+    {
+        Log(L"Checking for existing instances of %ls", targetFilePath.c_str());
+        if (IsProcessRunningForThisUser(targetFilePath.c_str()))
+        {
+            Log(L"Existing instance found, prompting user and exiting.");
+            MessageBox(NULL, L"An instance of this application is already running.", L"Multiple Instances Not Allowed", MB_OK | MB_ICONINFORMATION);
+            return 0;
+        }
+        Log(L"No existing instance found, continuing.");
+    }
+
+
+
     LogString(L"TargetFilePath", targetFilePath.c_str());
     LogString(L"TargetArgs", targetArgs.c_str());
     std::wstring quotedFullLine = L"\"" + targetFilePath + L"\" " + targetArgs.c_str();
@@ -180,6 +204,94 @@ int __stdcall wWinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ PWSTR args, _In_
 /// ///////////////////////////////////////////////////////
 /// ///// REGION: UTIITIES
 /// ///////////////////////////////////////////////////////
+
+
+// Determine if the named process is already running for the current user.
+bool IsProcessRunningForThisUser(const std::filesystem::path path)
+{
+    bool isRunning = false;
+    std::wstring procName = path;
+    procName = procName.substr(procName.find_last_of(L"\\") + 1);
+
+    HANDLE snapshot = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
+    if (snapshot == INVALID_HANDLE_VALUE) {
+        return false;
+    }
+
+    PROCESSENTRY32 entry;
+    entry.dwSize = sizeof(PROCESSENTRY32);
+
+    size_t num = 0;
+    wchar_t* thisUserName;
+    errno_t result = _wdupenv_s(&thisUserName, &num, L"USERNAME");
+    if (result == ENOMEM)
+        return false; // should never happen
+
+
+    if (Process32First(snapshot, &entry)) {
+        do {
+            if (_wcsicmp(entry.szExeFile, procName.c_str()) == 0) {
+                bool sameUser = false;
+
+                // TODO: Use the entry.th32ProcessID to do this somehow.
+                HANDLE processHandle = OpenProcess(PROCESS_QUERY_INFORMATION, FALSE, entry.th32ProcessID);
+                if (!processHandle) {
+                    // We can't open other user handles (unless we are elevated), so assume it is another user.
+                    continue;
+                }
+                else
+                {
+                    HANDLE tokenHandle;
+                    if (OpenProcessToken(processHandle, TOKEN_QUERY, &tokenHandle))
+                    {
+                        DWORD tokenUserSize = 0;
+                        GetTokenInformation(tokenHandle, TokenUser, NULL, 0, &tokenUserSize);
+                        if (GetLastError() == ERROR_INSUFFICIENT_BUFFER)
+                        {
+                            std::vector<BYTE> tokenUserBuffer(tokenUserSize);
+                            if (GetTokenInformation(tokenHandle, TokenUser, tokenUserBuffer.data(), tokenUserSize, &tokenUserSize))
+                            {
+                                TOKEN_USER* tokenUser = reinterpret_cast<TOKEN_USER*>(tokenUserBuffer.data());
+                                DWORD userNameSize = 0;
+                                DWORD domainNameSize = 0;
+                                SID_NAME_USE sidNameUse;
+                                LookupAccountSid(NULL, tokenUser->User.Sid, NULL, &userNameSize, NULL, &domainNameSize, &sidNameUse);
+                                if (GetLastError() == ERROR_INSUFFICIENT_BUFFER)
+                                {
+                                    std::vector<wchar_t> userNameBuffer(userNameSize);
+                                    std::vector<wchar_t> domainNameBuffer(domainNameSize);
+                                    if (LookupAccountSid(NULL, tokenUser->User.Sid, userNameBuffer.data(), &userNameSize, domainNameBuffer.data(), &domainNameSize, &sidNameUse))
+                                    {
+                                        std::wstring userName = userNameBuffer.data();
+                                        //std::wstring domainName = domainNameBuffer.data();  // Let's not worry about the domain.                                        
+                                        if (userName._Equal(thisUserName))
+                                        {
+                                            sameUser = true;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        CloseHandle(tokenHandle);
+                    }
+                    CloseHandle(processHandle);
+                }
+
+                if (sameUser)
+                {
+                    CloseHandle(snapshot);
+                    return true;
+                }
+            }
+        } while (Process32Next(snapshot, &entry));
+    }
+
+    free(thisUserName);
+    CloseHandle(snapshot);
+
+    return isRunning;
+} // IsProcessRunningForThisUser()
+
 
 
 void LogApplicationAndProcessesCollection()
