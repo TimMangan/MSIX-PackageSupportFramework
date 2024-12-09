@@ -10,6 +10,8 @@ In essence, this fixup allows you to specify what would natively be a system or 
 ### Detecting the need for this fixup
 A static detection is possible by installing the native product and looking for new/updated environment variables.
 
+### Dependencies for EnvVarFixup
+This fixup does not require any VCRuntime components.
 
 ## About Debugging this fixup
 The Release build of this fixup produces no output to the debug console port for performance reasons.
