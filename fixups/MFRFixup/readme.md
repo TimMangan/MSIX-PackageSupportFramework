@@ -37,6 +37,23 @@ The Release build of this fixup produces no output to the debug console port for
 Use of the Debug build will enable you to see the intercepts and what the fixup did.
 That output is easily seen using the Sysinternals "DebugView" tool.
 
+### Dependencies for MfrFixup
+When using this fixup, you must also supply the following dependencies.  The fixup uses version 14032 of the runtimes.
+
+It is recommended that these be placed in the VFS\SystemX64 and VFS\SystemX86 folders of the package, such that if the
+application uses a different version of these dlls, the app specific version will be found.
+
+It may be possible to exclude these files from the package, and use a package dependency for the Microsoft package of VCRuntimes 2015-2022, but only if the release build of the PSF is used.  Keep in mind that the target application may also be adding VCRuntimes into the package.
+
+| Release Build | Debug Build | Notes
+| --- | --- | --- |
+| msvcp140.dll | msvcp140d.dll | x86 and x64 |
+| vcruntime140.dll | vcruntime140d.dll | x86 and x64 |
+| vcruntime140_1.dll | vcruntime140_1d.dll | x64 only |
+| | ucrtbased.dll | x86 and x64 |
+
+A copy of these may be found in the OBSOLETE folder of the PSF release.
+
 ## About the Layering Models
 Applications will often request a file assuming the typical traditional file locations are used and we need to adjust the request so that the app finds the file.  
 When an application wants to modify or create a file, package and or some native system locations are read-only, so it becomes appropriate to redirect the request to use a different location via COW.
