@@ -17,12 +17,8 @@ A static analysis of the files in the package is often all that is needed:
 
 At runtime this can sometimes be detected as ACCESS_DENIED results to file operations, however File and Path not found may also indicate the need.
 
-## About Debugging this fixup
-The Release build of this fixup produces no output to the debug console port for performance reasons.
-Use of the Debug build will enable you to see the intercepts and what the fixup did.
-That output is easily seen using the Sysinternals "DebugView" tool.
 
-### Dependencies for RegLegacyFixups
+### Dependencies for FileRedirectionFixup
 When using this fixup, you must also supply the following dependencies.  The fixup uses version 14032 of the runtimes.
 
 It is recommended that these be placed in the VFS\SystemX64 and VFS\SystemX86 folders of the package, such that if the
@@ -38,6 +34,11 @@ It may be possible to exclude these files from the package, and use a package de
 | | ucrtbased.dll | x86 and x64 |
 
 A copy of these may be found in the OBSOLETE folder of the PSF release.
+## About Debugging this fixup
+The Release build of this fixup produces no output to the debug console port for performance reasons.
+Use of the Debug build will enable you to see the intercepts and what the fixup did.
+That output is easily seen using the Sysinternals "DebugView" tool.
+
 ## Configuration
 This configuration is specified in the `processes` section of the config.jason file.
 
