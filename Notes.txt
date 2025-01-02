@@ -14,6 +14,10 @@ ideas:
 	   as an extra xxx.yyy.deleted file in the redirection area.  But then all methods looking to see files would have to look for this, and anything creating a file might have to remove it.
 	   Needs more thought on finding a way to distinguish.
 
+v.2025.01.02:
+ * Improvements in DynamicLibraryFixup for situations where ILV seems to interfere with the fixup.
+ * Changes for debug output on RegOpenKeyEx and RegQueryValueEx.
+
 v.2024.10.26:
  * Added new option for PsfLaucher and PsfFtaCom to prevent MultipleInstances to prevent multiple instances of the same application from running in the user session.
  * Return of support for RunInVirtualEnvironment for scripts.  Default remains true. 

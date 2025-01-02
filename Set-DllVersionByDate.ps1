@@ -2,6 +2,7 @@
 #  Set-DllVersionByDate  FilePathDll
 #
 #  Purpose: Used as a dll library post build action, it sets the version of the dll file using today's date.
+#  or just manually set in rc files before build
 
 
 Param( 

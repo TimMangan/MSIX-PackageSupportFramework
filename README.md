@@ -19,6 +19,10 @@ Here are some common examples where you can find the Package Support Framework (
 
 You can learn more about how to identify compatibility issues [here](https://docs.microsoft.com/windows/msix/psf/package-support-framework#identify-packaged-application-compatibility-issues). If you have feedback, please create [an issue](https://github.com/Microsoft/MSIX-PackageSupportFramework/issues) or post a message in our [tech community](https://techcommunity.microsoft.com/t5/Package-Support-Framework/bd-p/Package-Support).
 
+## Version 
+Although the original versions of the Microsoft fork, or earlier versions of this fork did not mark any version information on the output binaries, we now version the PsfLauncher.exe file with a release date based scheme.
+
+
 ## Documentation
 See these articles for core documentation about using the Package Support Framework:
 
