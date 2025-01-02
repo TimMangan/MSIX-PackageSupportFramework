@@ -20,6 +20,25 @@ extern std::vector<dll_location_spec> g_dynf_dllSpecs;
 
 DWORD g_LoadLibraryIntceptInstance = 30000;
 
+
+
+
+typedef struct _UNICODE_STRING
+{
+    USHORT Length;
+    USHORT MaximumLength;
+    _Field_size_bytes_part_opt_(MaximumLength, Length) PWCH Buffer;
+} UNICODE_STRING, * PUNICODE_STRING;
+
+
+typedef DWORD(__stdcall* _LdrLoadDll)(
+    wchar_t* PathToFile,
+    unsigned long Flags,
+    PUNICODE_STRING ModuleFileName,
+    PHANDLE* ModuleHandle
+    );
+_LdrLoadDll LdrLoadDll;
+
 // Utility to perform a case independent comparison with or without the dll in the spec.
 int compare_dllname(std::wstring Requested, std::wstring Locationspec)
 {
@@ -33,6 +52,7 @@ int compare_dllname(std::wstring Requested, std::wstring Locationspec)
     {
         return 0;
     }
+    // The caller is allowed to leave off the .dll extension, so we will check for that also.
     return requested.compare(locationspec.append(L".dll"));
 }
 
@@ -166,6 +186,30 @@ HMODULE __stdcall LoadLibraryFixup(_In_ const CharT* libFileName)
                         if (useThis)
                         {
                             result = LoadLibraryImpl(spec.full_filepath.c_str());
+#if TRY_LDRLOADDLL
+                            if (result == 0)
+                            {
+#if _DEBUG
+                                DWORD err = GetLastError();
+                                Log(L"[%d] LoadLibraryFixup: Dll not found(0x%x), try LdrLoadDll", LoadLibraryInstance,err);  
+#endif
+                                if (LdrLoadDll == NULL)
+                                    LdrLoadDll = (_LdrLoadDll)GetProcAddress(GetModuleHandleA("ntdll.dll"), "LdrLoadDll");
+                                UNICODE_STRING name; 
+                                name.Buffer = (PWCH)spec.filename.data();
+                                name.Length = (USHORT)( wcslen(name.Buffer) * sizeof(wchar_t));
+                                name.MaximumLength = (USHORT)(name.Length + sizeof(wchar_t));
+                                PHANDLE ModuleHandle = NULL;
+                                // Maybe flag should be LOAD_WITH_ALTERED_SEARCH_PATH = 0x8?
+#if _DEBUG
+                                DWORD ns = LdrLoadDll(spec.full_filepath.parent_path().wstring().data(), 0, &name, &ModuleHandle);
+                                Log(L"[%d] LdrLoadDll: returns 0x%x Handle 0x%x", LoadLibraryInstance,ns, ModuleHandle);
+#else
+                                LdrLoadDll(spec.full_filepath.parent_path().wstring().data(), 0, &name, &ModuleHandle);
+#endif
+                                result = (HMODULE)ModuleHandle;
+                            }
+#endif
 #if _DEBUG
                             Log(L"[%d] LoadLibraryFixup: returns 0x%x using %s", LoadLibraryInstance, result, spec.full_filepath.c_str());
 #endif
@@ -201,6 +245,10 @@ HMODULE __stdcall LoadLibraryExFixup(_In_ const CharT* libFileName, _Reserved_ H
 
 #if _DEBUG
     LogString(LoadLibraryExInstance, L"LoadLibraryExFixup called on",libFileName);
+    if (flags != 0)
+    {
+        Log(L" [%d] LoadLibraryExFixup flags=0x%x", LoadLibraryExInstance, flags);
+    }
 #endif
     auto guard = g_reentrancyGuard.enter();
     HMODULE result;
@@ -321,6 +369,29 @@ HMODULE __stdcall LoadLibraryExFixup(_In_ const CharT* libFileName, _Reserved_ H
                         if (useThis)
                         {
                             result = LoadLibraryExImpl(spec.full_filepath.c_str(), file, flags);
+#if TRY_LDRLOADDLL
+                            if (result == 0)
+                            {
+#if _DEBUG
+                                DWORD err = GetLastError();
+                                Log(L"[%d] LoadLibraryExFixup: Dll not found(0x%x), try LdrLoadDll", LoadLibraryExInstance,err);
+#endif
+                                if (LdrLoadDll == NULL)
+                                    LdrLoadDll = (_LdrLoadDll)GetProcAddress(GetModuleHandleA("ntdll.dll"), "LdrLoadDll");
+                                UNICODE_STRING name;
+                                name.Buffer = (PWCH)spec.filename.data();
+                                name.Length = (USHORT)(wcslen(name.Buffer) * sizeof(wchar_t));
+                                name.MaximumLength = (USHORT)(name.Length + sizeof(wchar_t));
+                                PHANDLE ModuleHandle = NULL;
+#if _DEBUG
+                                DWORD ns = LdrLoadDll(spec.full_filepath.parent_path().wstring().data(), flags, &name, &ModuleHandle);
+                                Log(L"[%d] LdrLoadDll: returns 0x%x hmodule 0x%x", LoadLibraryExInstance, ns, ModuleHandle);
+#else
+                                LdrLoadDll(spec.full_filepath.parent_path().wstring().data(), flags, &name, &ModuleHandle);     
+#endif
+                                result = (HMODULE)ModuleHandle;
+                            }
+#endif
 #if _DEBUG
                             Log(L"[%d] LoadLibraryExFixup: returns 0x%x using %s", LoadLibraryExInstance, result, spec.full_filepath.c_str());
 #endif
