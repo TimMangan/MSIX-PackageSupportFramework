@@ -12,6 +12,8 @@ It can also happen due to a change in Working Directory.
 
 At runtime within the container, the symptom showing the need will be a dll not found issue for a dll that is in the package.
 
+### Dependencies for DynamicLibraryFixup
+This fixup does not require any VCRuntime components.
 
 ## About Debugging this fixup
 The Release build of this fixup produces no output to the debug console port for performance reasons.

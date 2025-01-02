@@ -32,6 +32,22 @@ A static analysis of the files in the package is often all that is needed:
 
 At runtime this can sometimes be detected as ACCESS_DENIED results to file operations, however File and Path not found may also indicate the need.
 
+### Dependencies for MfrFixup
+When using this fixup, you must also supply the following dependencies.  The fixup uses version 14032 of the runtimes.
+
+It is recommended that these be placed in the VFS\SystemX64 and VFS\SystemX86 folders of the package, such that if the
+application uses a different version of these dlls, the app specific version will be found.
+
+It may be possible to exclude these files from the package, and use a package dependency for the Microsoft package of VCRuntimes 2015-2022, but only if the release build of the PSF is used.  Keep in mind that the target application may also be adding VCRuntimes into the package.
+
+| Release Build | Debug Build | Notes
+| --- | --- | --- |
+| msvcp140.dll | msvcp140d.dll | x86 and x64 |
+| vcruntime140.dll | vcruntime140d.dll | x86 and x64 |
+| vcruntime140_1.dll | vcruntime140_1d.dll | x64 only |
+| | ucrtbased.dll | x86 and x64 |
+
+A copy of these may be found in the OBSOLETE folder of the PSF release.
 ## About Debugging this fixup
 The Release build of this fixup produces no output to the debug console port for performance reasons.
 Use of the Debug build will enable you to see the intercepts and what the fixup did.
