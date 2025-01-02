@@ -126,7 +126,7 @@ LSTATUS __stdcall RegOpenKeyExAFixup(
                     LogWin32Error(result);
                 }
                 LogCallingModule();
-                Log("[%d] This error often indicates that the key must be added to the original package.", RegLocalInstance);
+                Log("[%d] If an error, this error often indicates that the key must be added to the original package.", RegLocalInstance);
             }
             catch (...)
             {
@@ -183,7 +183,7 @@ LSTATUS __stdcall RegOpenKeyExWFixup(
 
 
 #if MOREDEBUG
-            Log(L"[%d] RegOpenKeyExA:  JavaBlocker checking path=%S", RegLocalInstance, keypath.c_str());
+            Log(L"[%d] RegOpenKeyExW:  JavaBlocker checking path=%S", RegLocalInstance, keypath.c_str());
 #endif
 
             if (!RegFixupJavaBlocker(keypath, RegLocalInstance))
@@ -247,7 +247,7 @@ LSTATUS __stdcall RegOpenKeyExWFixup(
                     LogWin32Error(result);
                 }
                 LogCallingModule();
-                Log("[%d] This error often indicates that the key must be added to the original package.", RegLocalInstance);
+                Log("[%d] If an error, this error often indicates that the key must be added to the original package.", RegLocalInstance);
             }
             catch (...)
             {
@@ -402,7 +402,7 @@ LSTATUS __stdcall RegOpenKeyExFixup(
                     LogWin32Error(result);
                 }
                 LogCallingModule();
-                Log("[%d] This error often indicates that the key must be added to the original package.", RegLocalInstance);
+                Log("[%d] If an error, this error often indicates that the key must be added to the original package.", RegLocalInstance);
             }
             catch (...)
             {

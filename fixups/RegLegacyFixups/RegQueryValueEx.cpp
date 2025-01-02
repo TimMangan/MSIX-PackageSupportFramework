@@ -106,7 +106,7 @@ LSTATUS __stdcall RegQueryValueExWFixup(
             if (result == ERROR_SUCCESS)
             {
 #if _DEBUG
-                Log(L"[%d] RegQueryValueEx:  Returning success", RegLocalInstance);
+                Log(L"[%d] RegQueryValueExW:  Returning success", RegLocalInstance);
 #endif                
             }
             else
@@ -115,7 +115,7 @@ LSTATUS __stdcall RegQueryValueExWFixup(
                 // When we return this value, a subsequent call by the app might ask for this new index, but we can probably assume it's OK to return it twice
                 // because we do not have a way to remember this, like done in FindFirstFile.
 #if _DEBUG
-                Log(L"[%d] RegQueryValueEx:  DeletionMarker Blocking this call.", RegLocalInstance);
+                Log(L"[%d] RegQueryValueExW:  DeletionMarker Blocking this call.", RegLocalInstance);
 #endif                
 
             }
@@ -123,7 +123,7 @@ LSTATUS __stdcall RegQueryValueExWFixup(
         else
         {
 #if _DEBUG
-            Log(L"[%d] RegQueryValueEx:  Returning normal failure 0x%x.", RegLocalInstance, result);
+            Log(L"[%d] RegQueryValueExW:  Returning normal failure 0x%x.", RegLocalInstance, result);
 #endif                
         }
     }
