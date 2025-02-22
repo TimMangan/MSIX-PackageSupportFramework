@@ -62,6 +62,11 @@ void InitializeMFRFixup()
     auto finalPackageRootPath = std::wstring(::PSFQueryFinalPackageRootPath());
     g_finalPackageRootPath = psf::remove_trailing_path_separators(finalPackageRootPath);  // has \\?\ prepended to PackageRootPath
 
+#if MOREDEBUG
+    Log(L"\t\t\tMFRFixup g_packageRootPath =      %s", g_packageRootPath.wstring().c_str());
+    Log(L"\t\t\tMFRFixup g_packageVfsRootPath =   %s", g_packageVfsRootPath.wstring().c_str());
+    //Log(L"\t\t\tMFRFixup g_finalPackageRootPath = %s", g_finalPackageRootPath.wstring().c_str());
+#endif 
     // Ensure that the redirected root path exists
     // We see some issues with multiple processes starting up and making the create_directories call simultaniously causing the second one to hit an exception.
     // We can ignore those issues.

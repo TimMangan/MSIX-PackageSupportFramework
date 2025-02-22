@@ -2,8 +2,12 @@
 // Copyright (C) Tim Mangan. All rights reserved
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 //-------------------------------------------------------------------------------------------------------
-#ifdef _DEBUG
-//#define MOREDEBUG
+#if _DEBUG
+//#define _ManualDebug 1
+#define MOREDEBUG 1
+#define DEBUG_NEW_FIXUPS 1
+#include <thread>
+#include <windows.h>
 #endif
 
 #include <psf_framework.h>
@@ -125,6 +129,28 @@ LSTATUS __stdcall RegCreateKeyExGeneric(
             //    resultKey = NULL;
             //    isBlocked = true;
             //}
+            if (result == ERROR_ACCESS_DENIED)
+            {
+                // Help awareness of the issue.
+                bool savedLogging = g_psf_NoLogging;
+                g_psf_NoLogging = true;
+                std::string subkeystring = InterpretStringA(subKey);
+                Log("[%d] RegCreateKeyEx result=0x%x, key=%s, name=%s; may need to precreate key in package", RegLocalInstance, result, keyonlypath.c_str(), subkeystring.c_str());
+                g_psf_NoLogging = savedLogging;
+
+                if (keypath._Starts_with("HKEY_CURRENT_USER"))
+                {
+                    ;
+                    // Known issue: Cannot create subkey of a package virtual key created by the app at runtime and not in the original package.
+                    // Workaround: Try creating from the root of the hive.
+                }
+                if (keypath._Starts_with("\\REGISTRY\\WC\\Silo"))
+                {
+                    ;
+                    // Known issue: Cannot create subkey of a package virtual key created by the app at runtime and not in the original package.
+                    // Workaround: Try creating from the root of the hive.
+                }
+            }
         }
         else
         {

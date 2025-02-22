@@ -15,19 +15,64 @@
 /// Utility functions to determine if a given file path is relative to a (w)char string, as in the path starts the same.
 /// Comparison is perfomed case insensitive.
 /// </summary>
+/////template <typename CharT>
+/////bool path_isSubsetOf_StringImpl( std::filesystem::path& basePath, const CharT* pathstring)
+/////{
+/////    // Compare using case insesitive matching
+/////    return std::equal(basePath.native().begin(), basePath.native().end(), pathstring, psf::path_compare{});
+/////}
+bool path_isSubsetOf_String( std::filesystem::path& basePath, const wchar_t* pathstring)
+{
+    ///Log(L"path_isExactMatchOf_String basePath=%s len=%d pathstring=%s len=%d", basePath.c_str(), basePath.native().length(), pathstring, wcslen(pathstring));
+    if (wcsncmp(basePath.wstring().c_str(), pathstring, basePath.wstring().length()) == 0)
+    {
+        return true;
+    }
+    else
+    {
+        return false;
+    }
+    /////return path_isSubsetOf_StringImpl(basePath, pathstring);
+}
+bool path_isSubsetOf_String( std::filesystem::path& basePath, const char* pathstring)
+{
+    if (strncmp(basePath.string().c_str(), pathstring, basePath.string().length()) == 0)
+    {
+        return true;
+    }
+    else
+    {
+        return false;
+    }
+    /////return path_isSubsetOf_StringImpl(basePath, pathstring);
+}
+
+/// <summary>
+/// Utility functions to determine if a given file path is the same.
+/// Comparison is perfomed case insensitive.
+/// </summary>
 template <typename CharT>
-bool path_isSubsetOf_StringImpl( std::filesystem::path& basePath, const CharT* pathstring)
+bool path_isExactMatchOf_StringImpl(std::filesystem::path& basePath, const CharT* pathstring)
 {
     // Compare using case insesitive matching
     return std::equal(basePath.native().begin(), basePath.native().end(), pathstring, psf::path_compare{});
 }
-bool path_isSubsetOf_String( std::filesystem::path& basePath, const wchar_t* pathstring)
+bool path_isExactMatchOf_String(std::filesystem::path& basePath, const wchar_t* pathstring)
 {
-    return path_isSubsetOf_StringImpl(basePath, pathstring);
+    ///Log(L"path_isExactMatchOf_String basePath=%s len=%d pathstring=%s len=%d", basePath.c_str(), basePath.native().length(), pathstring, wcslen(pathstring));
+    if (basePath.native().length() != wcslen(pathstring))
+    {
+        return false;
+    }
+    return path_isExactMatchOf_StringImpl(basePath, pathstring);
 }
-bool path_isSubsetOf_String( std::filesystem::path& basePath, const char* pathstring)
+bool path_isExactMatchOf_String(std::filesystem::path& basePath, const char* pathstring)
 {
-    return path_isSubsetOf_StringImpl(basePath, pathstring);
+    if (basePath.native().length() != strlen(pathstring))
+    {
+        return false;
+    }
+    return path_isExactMatchOf_StringImpl(basePath, pathstring);
 }
 
 
@@ -35,15 +80,55 @@ bool path_isSubsetOf_String( std::filesystem::path& basePath, const char* pathst
 /// Utility functions to determine if a given file (w)string is relative to a path, as in the string starts the same.
 /// Comparison is perfomed case insensitive.
 /// </summary>
-bool pathString_isSubsetOf_Path(const wchar_t* pathstring, std::filesystem::path& Path)
+bool pathString_isExatMatchtOf_Path(const wchar_t* pathstring, std::filesystem::path& Path)
 {
-    std::filesystem::path wpathpart = pathstring;
+    if (Path.native().length() != wcslen(pathstring))
+    {
+        return false;
+    }
+    std::filesystem::path wpathpart = pathstring; 
     return std::equal(wpathpart.native().begin(), wpathpart.native().end(), Path.generic_wstring().c_str(), psf::path_compare{});
 }
-bool pathString_isSubsetOf_Path(const char* pathstring, std::filesystem::path& Path)
+bool pathString_isExactMatchOf_Path(const char* pathstring, std::filesystem::path& Path)
 {    
+    if (Path.native().length() != strlen(pathstring))
+    {
+        return false;
+    }
     std::filesystem::path wpathpart = widen(pathstring);
     return std::equal(wpathpart.native().begin(), wpathpart.native().end(), Path.generic_wstring().c_str(), psf::path_compare{});
+}
+
+
+/// <summary>
+/// Utility functions to determine if a given file (w)string is the same.
+/// Comparison is perfomed case insensitive.
+/// </summary>
+bool pathString_isSubsetOf_Path(const wchar_t* pathstring, std::filesystem::path& Path)
+{
+    if (wcsncmp(pathstring, Path.wstring().c_str(), wcslen(pathstring)) == 0)  
+    {
+        return true;
+    }
+    else
+    {
+        return false;
+    }
+    /////std::filesystem::path wpathpart = pathstring;
+    /////return std::equal(wpathpart.native().begin(), wpathpart.native().end(), Path.generic_wstring().c_str(), psf::path_compare{});
+}
+bool pathString_isSubsetOf_Path(const char* pathstring, std::filesystem::path& Path)
+{
+    if (strncmp(pathstring, Path.string().c_str(), strlen(pathstring)) == 0)
+    {
+        return true;
+    }
+    else
+    {
+        return false;
+    }
+    /////std::filesystem::path wpathpart = widen(pathstring);
+    /////return std::equal(wpathpart.native().begin(), wpathpart.native().end(), Path.generic_wstring().c_str(), psf::path_compare{});
 }
 
 /// <summary>
@@ -61,6 +146,11 @@ std::wstring ReplacePathPart(std::wstring inputWstring, std::filesystem::path fr
     if (removecount < wcslen(inputWstring.c_str()))
     {
         outputWstring.append(inputWstring.substr(removecount));
+        return outputWstring;
+    }
+    else if (removecount == wcslen(inputWstring.c_str()))
+    {
+        // input string was just the VFS folder name size!
         return outputWstring;
     }
     return inputWstring;

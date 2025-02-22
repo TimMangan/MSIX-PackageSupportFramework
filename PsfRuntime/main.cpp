@@ -231,6 +231,14 @@ static int __stdcall FixupEntryPoint() noexcept try
     Log("PsfRuntime FixupEntryPoint in App Pid=%d Tid=%d", GetCurrentProcessId(), GetCurrentThreadId());
 #endif
     load_fixups();
+
+    // Try to open this nonexistent (we hope) key to make a marker in ProcessMonitor Traces
+    HKEY dummy;
+    LSTATUS res = RegOpenKey(HKEY_CURRENT_USER, L"PSF_READY_MARKER", &dummy);
+    if (res == ERROR_SUCCESS)
+    {
+        RegCloseKey(dummy);
+    }
     return ApplicationEntryPoint();
 }
 catch (...)

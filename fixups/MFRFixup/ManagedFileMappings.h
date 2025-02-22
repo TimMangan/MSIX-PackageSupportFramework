@@ -6,11 +6,37 @@
 
 #include <filesystem>
 #include <dos_paths.h>
+#include <winternl.h>
+#include <minwindef.h>
 
 
 namespace mfr
 {
+    // Allows us to temporarily disable a mapping, meaning that the entry should be ignored.
+    enum class mfr_enabled_types
+    {
+        disabled = false,
+        enabled = true
+    };
+    DEFINE_ENUM_FLAG_OPERATORS(mfr_enabled_types);
 
+    // An excluded mapping means that if a match happens, we should only consider the native path, and not the package or redirected paths.
+    enum class mfr_exclusion_types
+    {
+        not_excluded = false,
+        excluded = true
+    };
+    DEFINE_ENUM_FLAG_OPERATORS(mfr_exclusion_types);
+
+    // Defines if the match is partial, or requires an exact match.  Exact matches are used to cover situations where a mapping is a subpath of another mapping.
+    enum class mfr_exactmatchonly_types
+    {
+        not_exactmatchonly = false,
+        exactmatchonly = true
+    };
+    DEFINE_ENUM_FLAG_OPERATORS(mfr_exactmatchonly_types);
+
+    // Defines the redirection behavior for the mapping.
     enum class mfr_redirect_flags
     {
         disabled = 0x0000,   // Pre-initialized value           
@@ -46,33 +72,51 @@ namespace mfr
     // Defines a mapping between Native, Package, and Redirected locations
     struct mfr_folder_mapping
     {
-        bool                    Valid_mapping; // = false;  // used in place of a null mapping.
-        bool                    IsAnExclusionToRedirect; // = false;
-        std::filesystem::path   NativePathBase;
-        std::wstring            FolderId;
-        std::wstring            VFSFolderName;
-        std::filesystem::path   PackagePathBase;
-        bool                    DoesRuntimeMapNativeToVFS; // = false;   // Indicates that this is a path that is handled by MSIX runtime for redirection to the package.
-        std::filesystem::path   RedirectedPathBase;
+        mfr_enabled_types        Valid_mapping; // = false;  // used in place of a null mapping.
+        mfr_exactmatchonly_types IsExactMatchOnly; // = false;
+        mfr_exclusion_types      IsAnExclusionToRedirect; // = false;
+        mfr_redirect_flags       RedirectionFlags = mfr_redirect_flags::disabled;
 
-        mfr_redirect_flags      RedirectionFlags = mfr_redirect_flags::disabled;
+        std::filesystem::path    NativePathBase;
+        std::wstring             FolderId;
+        std::wstring             VFSFolderName;
+        std::filesystem::path    PackagePathBase;
+        bool                     DoesRuntimeMapNativeToVFS; // = false;   // Indicates that this is a path that is handled by MSIX runtime for redirection to the package.
+        std::filesystem::path    RedirectedPathBase;
+
 
     };
+
+    struct mfr_vfs_remapping
+    {
+        // Used for when combining things that should be different
+        std::wstring OrigPath;
+        std::wstring SubPath;
+        std::wstring  RetargetedPath;
+        std::wstring RetargetedSubPath;
+    };
+
     extern mfr_folder_mapping CloneFolderMapping(mfr_folder_mapping);
 
     extern std::vector<mfr_folder_mapping> g_MfrFolderMappings;
+    extern std::vector<mfr_vfs_remapping> g_MfrVfsRemappings;
 
     extern void Initialize_MFR_Mappings();
 
     extern mfr_folder_mapping  MakeInvalidMapping();
-    extern mfr_folder_mapping  Find_LocalRedirMapping_FromNativePath_ForwardSearch(std::wstring WsPath);
-    extern mfr_folder_mapping  Find_LocalRedirMapping_FromPackagePath_ForwardSearch(std::wstring WsPath);
+    extern mfr_folder_mapping  Find_LocalRedirMapping_FromNativePath_ForwardSearch(std::wstring WsPath, DWORD dllInstance);
+    extern mfr_folder_mapping  Find_LocalRedirMapping_FromPackagePath_ForwardSearch(std::wstring WsPath, DWORD dllInstance);
 
-    extern mfr_folder_mapping  Find_TraditionalRedirMapping_FromNativePath_ForwardSearch(std::wstring WsPath);
-    extern mfr_folder_mapping  Find_TraditionalRedirMapping_FromPackagePath_ForwardSearch(std::wstring WsPath);
-    extern mfr_folder_mapping  Find_TraditionalRedirMapping_FromRedirectedPath_ForwardSearch(std::wstring WsPath);
+    extern mfr_folder_mapping  Find_TraditionalRedirMapping_FromNativePath_ForwardSearch(std::wstring WsPath, DWORD dllInstance);
+    extern mfr_folder_mapping  Find_TraditionalRedirMapping_FromPackagePath_ForwardSearch(std::wstring WsPath, DWORD dllInstance);
+    extern mfr_folder_mapping  Find_TraditionalRedirMapping_FromRedirectedPath_ForwardSearch(std::wstring WsPath, DWORD dllInstance);
 
 #if DEAD2ME
-    extern mfr_folder_mapping  Find_TraditionalRedirMapping_FromRedirPath_BackwardSearch(std::wstring WsPath);
+    extern mfr_folder_mapping  Find_TraditionalRedirMapping_FromRedirPath_BackwardSearch(std::wstring WsPath DWORD dllInstance,);
 #endif
+
+    extern bool FindCohortVfsRemapping(IN std::wstring cohort, IN std::wstring nextLevel, OUT std::wstring returnCohort, OUT std::wstring returnNextLevel);
+
+    extern void ToUnicodeString(std::wstring source, IN OUT UNICODE_STRING dest);
+
 }

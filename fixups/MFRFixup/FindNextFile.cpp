@@ -23,6 +23,13 @@
 template <typename CharT>
 using win32_find_data_t = std::conditional_t<psf::is_ansi<CharT>, WIN32_FIND_DATAA, WIN32_FIND_DATAW>;
 
+#ifdef _M_IX86
+#pragma comment(linker, "/EXPORT:FindNextFileFixupAnsi_Fixup=impl::FindNextFileW.ansi")  // A test to see if exporting these names helps ProcessMonitor stack traces.
+#pragma comment(linker, "/EXPORT:FindNextFileFixupWide_Fixup=impl::FindNextFileW.wide")  // A test to see if exporting these names helps ProcessMonitor stack traces.
+#else
+#pragma comment(linker, "/EXPORT:FindNextFileFixupAnsi_Fixup=impl::FindNextFileW.ansi")  // A test to see if exporting these names helps ProcessMonitor stack traces.
+#pragma comment(linker, "/EXPORT:FindNextFileFixupWide_Fixup=impl::FindNextFileW.wide")  // A test to see if exporting these names helps ProcessMonitor stack traces.
+#endif
 
 template <typename CharT>
 BOOL __stdcall FindNextFileFixup(_In_ HANDLE findFile, _Out_ win32_find_data_t<CharT>* findFileData) noexcept try

@@ -269,47 +269,46 @@ To apply a configuration to assume InstalledLocationVirtualization and override 
 ```
 
 ## Intercepts Supported
-The following APIs from Kernel32 are targeted.  The current status for this work-in-progress is shown in the table below.  Most of these APIs have A/W variants for ansi/wide(Unicode) character variants in arguments.  These APIs represent the active list in the FileRedirectionFixup; those marked as `may not be needed` provide no functional changes in the intercepts in the FileRedirectionFixup but merely log that they were called.  This fixup might follow suit.
+The following APIs from Kernel32 and lower level are targeted.  Those from Kernel32 often have ansi and wide varients.  The current status for this work-in-progress is shown in the table below.  Most of these APIs have A/W variants for ansi/wide(Unicode) character variants in arguments.  These APIs represent the active list in the FileRedirectionFixup; those marked as `may not be needed` provide no functional changes in the intercepts in the FileRedirectionFixup but merely log that they were called.  This fixup might follow suit.
 
-| API | Status |
-| --- | ------ |
-| CopyFile | Complete |
-| CopyFileEx | Complete |
-| CopyFile2  | Complete |
-| CreateFile | Complete |
-| CreateFile2 | Complete |
-| CreateDirectory | Complete |
-| CreateDirectoryEx | Complete |
-| CreateHardLink | Complete |
-| CreateSymbolicLink | Complete |
-| DeleteFile | Complete |
-| FindFirstFile | Complete |
-| FindFirstFileEx | Complete |
-| FindNextFile | Complete |
-| FindClose | Complete |
-| GetCurrentDirectory | not started, may not be needed |
-| GetFileAttributes | Complete |
-| GetFileAttributesEx | Complete |
-| GetPrivateProfileSectionNames | Complete |
-| GetPrivateProfileSection | Complete |
-| GetPrivateProfileString | Complete |
-| GetPrivateProfileInt | Complete |
-| GetPrivateProfileStruct | Complete |
-| MoveFile | Complete |
-| MoveFileEx | Complete |
-| MoveFileWithProgress | Complete |
-| ReadDirectoryChangesW | not started, may not be needed |
-| ReadDirectoryChangesExW | not started, may not be needed |
-| RemoveDirectory | Complete |
-| ReplaceFile | Complete |
-| SearchPath | not started, may not be needed |
-| SetCurrentDirectory | started, afects only IlvAware |
-| SetFileAttributes | Complete |
-| ShellExecute | Intercept for logging only at this time |
-| ShellExecuteEx | Intercept for logging only at this time |
-| WritePrivateProfileSection | Complete |
-| WritePrivateProfileString | Complete |
-| WritePrivateProfileStruct | Complete |
+| Dll | API | Status |
+| --- | --- | ------ |
+| Kernel32 | CopyFile | Complete |
+| Kernel32 | CopyFileEx | Complete |
+| Kernel32 | CopyFile2  | Complete |
+| Kernel32 | CreateDirectory | Complete |
+| Kernel32 | CreateDirectoryEx | Complete |
+| Kernel32 | CreateFile | Complete |
+| Kernel32 | CreateFile2 | Complete |
+| Kernel32 | CreateHardLink | Complete |
+| Kernel32 | CreateSymbolicLink | Complete |
+| Kernel32 | DeleteFile | Complete |
+| Kernel32 | FindClose | Complete |
+| Kernel32 | FindFirstFile | Complete |
+| Kernel32 | FindFirstFileEx | Complete |
+| Kernel32 | FindNextFile | Complete |
+| Kernel32 | GetFileAttributes | Complete |
+| Kernel32 | GetFileAttributesEx | Complete |
+| Kernel32 | GetPrivateProfileInt | Complete |
+| Kernel32 | GetPrivateProfileSection | Complete |
+| Kernel32 | GetPrivateProfileSectionNames | Complete |
+| Kernel32 | GetPrivateProfileString | Complete |
+| Kernel32 | GetPrivateProfileStruct | Complete |
+| Kernel32 | MoveFile | Complete |
+| Kernel32Ex | MoveFileEx | Complete |
+| KernelBase | MoveFileExW | Complete |
+| Kernel32 | MoveFileWithProgress | Complete |
+| NtDll | NtQueryDirectoryFile | Complete |
+| Kernel32 | RemoveDirectory | Complete |
+| Kernel32 | ReplaceFile | Complete |
+| Kernel32 | SetCurrentDirectory | Complete |
+| Kernel32 | SetFileAttributes | Complete |
+| Kernel32 | ShellExecute | Complete |
+| Kernel32 | ShellExecuteEx | Complete |
+| Kernel32 | WritePrivateProfileSection | Complete |
+| Kernel32 | WritePrivateProfileString | Complete |
+| Kernel32 | WritePrivateProfileStruct | Complete |
+
 
 The following APIs are intercepted but only for logging purposes at this time.  
 There are known instances of Microsoft dlls that skip past Kernel32/KernelBase and go directly to NtDll. They may be implemented in the future as we find the need.
@@ -317,10 +316,17 @@ There are known instances of Microsoft dlls that skip past Kernel32/KernelBase a
 | --- | --- | ------ |
 | Windows.Storage | ShellExecute | Intercept for logging only at this time |
 | Windows.Storage | ShellExecuteEx | Intercept for logging only at this time |
-| NtDll | ZwCreateFile | Intercept for logging only at this time |
-| NtDll | ZwOpenFile | Intercept for logging only at this time |
-| NtDll | ZwQueryDirectoryFile | Intercept for logging only at this time |
-| NtDll | ZwQueryDirectoryFileEx | Intercept for logging only at this time |
+| Ntdll | NtQueryDirectoryFileEx | Intercept for logging only at this time |
+
+The following APIs have been investigated but are intentionally not intercepted:
+| Dll | API | Status |
+| --- | --- | ------ |
+| Kernel32 | GetCurrentDirectory | not needed |
+| Kernel32 | ReadDirectoryChangesW | not supported |
+| Kernel32 | ReadDirectoryChangesExW | not supported |
+| Kernel32 | SearchPath | not  needed |
+| NtDll | ZwCreateFile | not supported at this time |
+| NtDll | ZwOpenFile | not supported at this time |
 
 Additionally, there are numberous "Transacted" API calls that are generally not used and are ignored.
 Also currently ignored is FindFirstFileName/Next as it deals only with hard links and probably has little usage.

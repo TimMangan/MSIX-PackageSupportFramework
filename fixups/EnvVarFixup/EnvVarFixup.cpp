@@ -212,6 +212,9 @@ DWORD __stdcall GetEnvironmentVariableFixup(_In_ const CharC* lpName, _Inout_ Ch
                         {
 
                             std::string sval = narrow(spec.variablevalue);
+
+                            // TOCONSIDER: If the value has a {[RegistryVar}] in it, we should replace with relative VFS\Var or native equivalent
+
 #if _DEBUG
                             LogString(GetEnvVarInstance, L"GetEnvironmentVariableFixup:(A) HKCU value is ", sval.c_str());
 #endif
@@ -228,6 +231,9 @@ DWORD __stdcall GetEnvironmentVariableFixup(_In_ const CharC* lpName, _Inout_ Ch
 #if _DEBUG
                             LogString(GetEnvVarInstance, L"GetEnvironmentVariableFixup:(W) HKCU value is ", spec.variablevalue.data());
 #endif
+
+                            // TOCONSIDER: If the value has a {[RegistryVar}] in it, we should replace with relative VFS\Var or native equivalent
+
                             ZeroMemory(lpValue, lenBuf);
                             spec.variablevalue.copy(lpValue, lenBuf, 0);
 #if _DEBUG

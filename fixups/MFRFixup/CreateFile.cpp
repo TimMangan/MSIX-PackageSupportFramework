@@ -20,7 +20,15 @@
 #include "DetermineCohorts.h"
 #include "DetermineIlvPaths.h"
 #include "Detect_Pipe.h"
+#include "..\CommonSrc\findStringIC.h"
 
+#ifdef _M_IX86
+#pragma comment(linker, "/EXPORT:CreateFileFixupAnsi_Fixup=impl::_CreateFileW.ansi")  // A test to see if exporting these names helps ProcessMonitor stack traces.
+#pragma comment(linker, "/EXPORT:CreateFileFixupWide_Fixup=impl::_CreateFileW.wide")  // A test to see if exporting these names helps ProcessMonitor stack traces.
+#else
+#pragma comment(linker, "/EXPORT:CreateFileFixupAnsi_Fixup=impl::CreateFileW.ansi")  // A test to see if exporting these names helps ProcessMonitor stack traces.
+#pragma comment(linker, "/EXPORT:CreateFileFixupWide_Fixup=impl::CreateFileW.wide")  // A test to see if exporting these names helps ProcessMonitor stack traces.
+#endif
 
 HANDLE  WRAPPER_CREATEFILE(std::wstring theDestinationFile,
     _In_ DWORD desiredAccess,
@@ -101,7 +109,7 @@ HANDLE __stdcall CreateFileFixup(_In_ const CharT* pathName,
                 if (wPathName.compare(L"C:\\") ||
                     wPathName.compare(L"c:\\"))
                 {
-                    Log(L"[%d] CreateFileFixup AppVPackageDrive", dllInstance);
+                    Log(L"[%d] CreateFileFixup for native equivelent of AppVPackageDrive", dllInstance);
                 }
             }
             LogString(dllInstance, L"CreateFileFixup for path", pathName);
@@ -139,11 +147,14 @@ HANDLE __stdcall CreateFileFixup(_In_ const CharT* pathName,
             // This get is may or may not be a write operation.
             // There may be a need to COW, and may need to create parent folders in redirection area first.
             Cohorts cohorts;
+            //DetermineCohorts(wPathName, &cohorts, moredebug, dllInstance, L"CreateFileFixup");
             DetermineCohorts(wPathName, &cohorts, moredebug, dllInstance, L"CreateFileFixup");
+            
 #if MOREDEBUG
-            //LogString(dllInstance, L"CreateFileFixup: Cohort redirection", cohorts.WsRedirected.c_str());
-            //LogString(dllInstance, L"CreateFileFixup: Cohort package", cohorts.WsPackage.c_str());
-            //LogString(dllInstance, L"CreateFileFixup: Cohort native", cohorts.WsNative.c_str());
+            LogString(dllInstance, L"CreateFileFixup: Cohort requested", cohorts.WsRequested.c_str());
+            LogString(dllInstance, L"CreateFileFixup: Cohort redirection", cohorts.WsRedirected.c_str());
+            LogString(dllInstance, L"CreateFileFixup: Cohort package", cohorts.WsPackage.c_str());
+            LogString(dllInstance, L"CreateFileFixup: Cohort native", cohorts.WsNative.c_str());
             Log(L"[%d] CreateFileFixup: MfrPathType=%s", dllInstance, MfrFlagTypesString(cohorts.file_mfr.Request_MfrPathType));
 #endif
             if (!MFRConfiguration.Ilv_Aware)
@@ -153,11 +164,12 @@ HANDLE __stdcall CreateFileFixup(_In_ const CharT* pathName,
                 case mfr::mfr_path_types::in_native_area:
                     if (!IsADirectoryCase)
                     {
-                        if (cohorts.map.Valid_mapping &&
+                        if (cohorts.map.Valid_mapping == mfr::mfr_enabled_types::enabled  &&
                             cohorts.map.RedirectionFlags == mfr::mfr_redirect_flags::prefer_redirection_local)
                         {
                             // try the request path, which must be the local redirected version by definition, and then a package equivalent
-                            if (!cohorts.map.IsAnExclusionToRedirect && PathExists(cohorts.WsRedirected.c_str()))
+                            if (cohorts.map.IsAnExclusionToRedirect == mfr::mfr_exclusion_types::not_excluded && 
+                                PathExists(cohorts.WsRedirected.c_str()))
                             {
                                 retfinal = WRAPPER_CREATEFILE(cohorts.WsRedirected, desiredAccess, shareMode, securityAttributes, creationDisposition, flagsAndAttributes, templateFile, dllInstance, debug);
                                 return retfinal;
@@ -190,7 +202,7 @@ HANDLE __stdcall CreateFileFixup(_In_ const CharT* pathName,
                             retfinal = WRAPPER_CREATEFILE(cohorts.WsRedirected, desiredAccess, shareMode, securityAttributes, creationDisposition, flagsAndAttributes, templateFile, dllInstance, debug);
                             return retfinal;
                         }
-                        if (cohorts.map.Valid_mapping &&
+                        if (cohorts.map.Valid_mapping == mfr::mfr_enabled_types::enabled &&
                             (cohorts.map.RedirectionFlags == mfr::mfr_redirect_flags::prefer_redirection_containerized ||
                                 cohorts.map.RedirectionFlags == mfr::mfr_redirect_flags::prefer_redirection_if_package_vfs))
                         {
@@ -198,7 +210,8 @@ HANDLE __stdcall CreateFileFixup(_In_ const CharT* pathName,
                             Log(L"[%d] CreateFileFixup: traditional redirection mapping.", dllInstance);
 #endif
                             // try the redirected path, then package (via COW), then native (possibly via COW).
-                            if (!cohorts.map.IsAnExclusionToRedirect && PathExists(cohorts.WsRedirected.c_str()))
+                            if (cohorts.map.IsAnExclusionToRedirect == mfr::mfr_exclusion_types::not_excluded && 
+                                PathExists(cohorts.WsRedirected.c_str()))
                             {
 #if MOREDEBUG
                                 Log(L"[%d] CreateFileFixup: use redirected.", dllInstance);
@@ -269,7 +282,7 @@ HANDLE __stdcall CreateFileFixup(_In_ const CharT* pathName,
                     }
                     else
                     {
-                        if (cohorts.map.Valid_mapping &&
+                        if (cohorts.map.Valid_mapping == mfr::mfr_enabled_types::enabled &&
                             cohorts.map.RedirectionFlags == mfr::mfr_redirect_flags::prefer_redirection_local)
                         {
                             // try the request path, which must be the local redirected version by definition, and then a package equivalent
@@ -278,7 +291,8 @@ HANDLE __stdcall CreateFileFixup(_In_ const CharT* pathName,
                                 retfinal = WRAPPER_CREATEFILE(cohorts.WsRedirected, desiredAccess, shareMode, securityAttributes, creationDisposition, flagsAndAttributes, templateFile, dllInstance, debug);
                                 return retfinal;
                             }
-                            if (!cohorts.map.IsAnExclusionToRedirect && PathExists(cohorts.WsPackage.c_str()))
+                            if (cohorts.map.IsAnExclusionToRedirect == mfr::mfr_exclusion_types::not_excluded && 
+                                PathExists(cohorts.WsPackage.c_str()))
                             {
                                 if (IsAWriteCase)
                                 {
@@ -306,17 +320,19 @@ HANDLE __stdcall CreateFileFixup(_In_ const CharT* pathName,
                             retfinal = WRAPPER_CREATEFILE(cohorts.WsRedirected, desiredAccess, shareMode, securityAttributes, creationDisposition, flagsAndAttributes, templateFile, dllInstance, debug);
                             return retfinal;
                         }
-                        else if (cohorts.map.Valid_mapping &&
+                        else if (cohorts.map.Valid_mapping == mfr::mfr_enabled_types::enabled &&
                             (cohorts.map.RedirectionFlags == mfr::mfr_redirect_flags::prefer_redirection_containerized ||
                                 cohorts.map.RedirectionFlags == mfr::mfr_redirect_flags::prefer_redirection_if_package_vfs))
                         {
                             // try the redirected path, then package (via COW), then native (possibly via COW).
-                            if (!cohorts.map.IsAnExclusionToRedirect && PathExists(cohorts.WsRedirected.c_str()))
+                            if (cohorts.map.IsAnExclusionToRedirect == mfr::mfr_exclusion_types::not_excluded && 
+                                PathExists(cohorts.WsRedirected.c_str()))
                             {
                                 retfinal = WRAPPER_CREATEFILE(cohorts.WsRedirected, desiredAccess, shareMode, securityAttributes, creationDisposition, flagsAndAttributes, templateFile, dllInstance, debug);
                                 return retfinal;
                             }
-                            if (!cohorts.map.IsAnExclusionToRedirect && PathExists(cohorts.WsPackage.c_str()))
+                            if (cohorts.map.IsAnExclusionToRedirect == mfr::mfr_exclusion_types::not_excluded && 
+                                PathExists(cohorts.WsPackage.c_str()))
                             {
                                 if (IsAWriteCase)
                                 {
@@ -369,7 +385,7 @@ HANDLE __stdcall CreateFileFixup(_In_ const CharT* pathName,
                     }
                     break;
                 case mfr::mfr_path_types::in_package_pvad_area:
-                    if (cohorts.map.Valid_mapping)
+                    if (cohorts.map.Valid_mapping == mfr::mfr_enabled_types::enabled)
                     {
                         if (PathExists(cohorts.WsPackage.c_str()))
                         {
@@ -381,7 +397,8 @@ HANDLE __stdcall CreateFileFixup(_In_ const CharT* pathName,
                             else
                             {
                                 //// try the redirected path, then package (COW), then don't need native.
-                                if (!cohorts.map.IsAnExclusionToRedirect && PathExists(cohorts.WsRedirected.c_str()))
+                                if (cohorts.map.IsAnExclusionToRedirect == mfr::mfr_exclusion_types::not_excluded && 
+                                    PathExists(cohorts.WsRedirected.c_str()))
                                 {
                                     retfinal = WRAPPER_CREATEFILE(cohorts.WsRedirected, desiredAccess, shareMode, securityAttributes, creationDisposition, flagsAndAttributes, templateFile, dllInstance, debug);
                                     return retfinal;
@@ -424,7 +441,8 @@ HANDLE __stdcall CreateFileFixup(_In_ const CharT* pathName,
                             else
                             {
                                 //// try the redirected path, then package (COW), then don't need native.
-                                if (!cohorts.map.IsAnExclusionToRedirect && PathExists(cohorts.WsRedirected.c_str()))
+                                if (cohorts.map.IsAnExclusionToRedirect == mfr::mfr_exclusion_types::not_excluded && 
+                                    PathExists(cohorts.WsRedirected.c_str()))
                                 {
                                     retfinal = WRAPPER_CREATEFILE(cohorts.WsRedirected, desiredAccess, shareMode, securityAttributes, creationDisposition, flagsAndAttributes, templateFile, dllInstance, debug);
                                     return retfinal;
@@ -440,13 +458,14 @@ HANDLE __stdcall CreateFileFixup(_In_ const CharT* pathName,
                     break;
                 case mfr::mfr_path_types::in_package_vfs_area:
                     if (cohorts.map.RedirectionFlags == mfr::mfr_redirect_flags::prefer_redirection_local &&
-                        cohorts.map.Valid_mapping)
+                        cohorts.map.Valid_mapping == mfr::mfr_enabled_types::enabled)
                     {
 #if EVENMOREDEBUG
                         Log(L"[%d] CreateFileFixup: Package VFS with local redirection case.", dllInstance);
 #endif
                         // try the redirection path, then the package (COW).
-                        if (!cohorts.map.IsAnExclusionToRedirect && PathExists(cohorts.WsRedirected.c_str()))
+                        if (cohorts.map.IsAnExclusionToRedirect == mfr::mfr_exclusion_types::not_excluded && 
+                            PathExists(cohorts.WsRedirected.c_str()))
                         {
                             retfinal = WRAPPER_CREATEFILE(cohorts.WsRedirected, desiredAccess, shareMode, securityAttributes, creationDisposition, flagsAndAttributes, templateFile, dllInstance, debug);
                             return retfinal;
@@ -478,7 +497,7 @@ HANDLE __stdcall CreateFileFixup(_In_ const CharT* pathName,
                         retfinal = WRAPPER_CREATEFILE(cohorts.WsRedirected, desiredAccess, shareMode, securityAttributes, creationDisposition, flagsAndAttributes, templateFile, dllInstance, debug);
                         return retfinal;
                     }
-                    else if (cohorts.map.Valid_mapping &&
+                    else if (cohorts.map.Valid_mapping == mfr::mfr_enabled_types::enabled &&
                         (cohorts.map.RedirectionFlags == mfr::mfr_redirect_flags::prefer_redirection_containerized ||
                             cohorts.map.RedirectionFlags == mfr::mfr_redirect_flags::prefer_redirection_if_package_vfs))
                     {
@@ -511,7 +530,8 @@ HANDLE __stdcall CreateFileFixup(_In_ const CharT* pathName,
                                     Log(L"[%d] CreateFileFixup: NOT directory case.", dllInstance);
 #endif
                                     // try the redirection path, then the package (COW), then native (possibly COW)
-                                    if (!cohorts.map.IsAnExclusionToRedirect && PathExists(cohorts.WsRedirected.c_str()))
+                                    if (cohorts.map.IsAnExclusionToRedirect == mfr::mfr_exclusion_types::not_excluded && 
+                                        PathExists(cohorts.WsRedirected.c_str()))
                                     {
 #if MOREDEBUG
                                         Log(L"[%d] CreateFileFixup: Read only Package VFS but exists in redir, ready to create in redirected area", dllInstance);
@@ -585,7 +605,8 @@ HANDLE __stdcall CreateFileFixup(_In_ const CharT* pathName,
                                             }
 #endif
                                             // Return the most appropriate error code
-                                            if (!cohorts.map.IsAnExclusionToRedirect && PathParentExists(cohorts.WsRedirected.c_str()) && !PathExists(cohorts.WsRedirected.c_str()))
+                                            if (cohorts.map.IsAnExclusionToRedirect == mfr::mfr_exclusion_types::not_excluded && 
+                                                PathParentExists(cohorts.WsRedirected.c_str()) && !PathExists(cohorts.WsRedirected.c_str()))
                                             {
 #if _DEBUG
                                                 Log(L"[%d] CreateFileFixup: Reset error to File not found.", dllInstance);
@@ -743,15 +764,17 @@ HANDLE __stdcall CreateFileFixup(_In_ const CharT* pathName,
                     }
                     break;
                 case mfr::mfr_path_types::in_redirection_area_writablepackageroot:
-                    if (cohorts.map.Valid_mapping)
+                    if (cohorts.map.Valid_mapping == mfr::mfr_enabled_types::enabled)
                     {
                         // try the redirected path, then package (COW), then possibly native (Possibly COW).
-                        if (!cohorts.map.IsAnExclusionToRedirect && PathExists(cohorts.WsRedirected.c_str()))
+                        if (cohorts.map.IsAnExclusionToRedirect == mfr::mfr_exclusion_types::not_excluded && 
+                            PathExists(cohorts.WsRedirected.c_str()))
                         {
                             retfinal = WRAPPER_CREATEFILE(cohorts.WsRedirected, desiredAccess, shareMode, securityAttributes, creationDisposition, flagsAndAttributes, templateFile, dllInstance, debug);
                             return retfinal;
                         }
-                        if (PathExists(cohorts.WsPackage.c_str()))
+                        if (cohorts.WsPackage.compare(cohorts.WsRedirected) != 0 &&
+                            PathExists(cohorts.WsPackage.c_str()))
                         {
                             if (MFRConfiguration.Ilv_Aware)
                             {
@@ -846,7 +869,24 @@ HANDLE __stdcall CreateFileFixup(_In_ const CharT* pathName,
                         // In a redirect to local scenario, we are responsible for determing if source is local or in package
                         usePath = SelectLocalOrPackageForRead(usePath, cohorts.WsPackage);
                     }
+
                     retfinal = WRAPPER_CREATEFILE(usePath, desiredAccess, shareMode, securityAttributes, creationDisposition, flagsAndAttributes, templateFile, dllInstance, debug);
+
+                    // Special case to keep app from getting confused by giving them VFS\AppVPackageRoot instead of C:\.
+                    // We still want to precreate that folder in case they are going to add to it.
+                    if (retfinal != INVALID_HANDLE_VALUE &&
+                        pathName != nullptr)
+                    {
+                        std::wstring wpath = widen(pathName);
+                        if (wStringToLower(wpath) == L"\\?\\c:" ||
+                            wStringToLower(wpath) == L"\\?\\c:\\" ||
+                            wStringToLower(wpath) == L"c:" ||
+                            wStringToLower(wpath) == L"c:\\")
+                        {
+                            CloseHandle(retfinal);
+                            retfinal = WRAPPER_CREATEFILE(wpath, desiredAccess, shareMode, securityAttributes, creationDisposition, flagsAndAttributes, templateFile, dllInstance, debug);
+                        }
+                    }
                     return retfinal;
                 }
                 // else fall through

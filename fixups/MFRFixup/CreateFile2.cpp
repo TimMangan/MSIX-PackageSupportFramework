@@ -7,7 +7,7 @@
 // Microsoft Documentation on this API: https://docs.microsoft.com/en-us/windows/win32/api/fileapi/nf-fileapi-createfile2
 
 #if _DEBUG
-#define MOREDEBUG 1
+//#define MOREDEBUG 1
 #endif
 
 #include <errno.h>
@@ -19,7 +19,14 @@
 #include "DetermineCohorts.h"
 #include "DetermineIlvPaths.h"
 #include "Detect_Pipe.h"
+#include "..\CommonSrc\findStringIC.h"
 
+
+#ifdef _M_IX86
+#pragma comment(linker, "/EXPORT:CreateFile2Fixup_Fixup=_CreateFile2Fixup_Fixup_v")  // A test to see if exporting these names helps ProcessMonitor stack traces.
+#else
+#pragma comment(linker, "/EXPORT:CreateFile2Fixup_Fixup=CreateFile2Fixup_Fixup_v")  // A test to see if exporting these names helps ProcessMonitor stack traces.
+#endif
 
 HANDLE  WRAPPER_CREATEFILE2(std::wstring theDestinationFile,
     _In_ DWORD desiredAccess,
@@ -135,16 +142,18 @@ HANDLE __stdcall CreateFile2Fixup(
                 switch (cohorts.file_mfr.Request_MfrPathType)
                 {
                 case mfr::mfr_path_types::in_native_area:
-                    if (cohorts.map.Valid_mapping &&
+                    if (cohorts.map.Valid_mapping == mfr::mfr_enabled_types::enabled &&
                         cohorts.map.RedirectionFlags == mfr::mfr_redirect_flags::prefer_redirection_local)
                     {
                         // try the request path, which must be the local redirected version by definition, and then a package equivalent
-                        if (!cohorts.map.IsAnExclusionToRedirect && PathExists(cohorts.WsRedirected.c_str()))
+                        if (cohorts.map.IsAnExclusionToRedirect == mfr::mfr_exclusion_types::not_excluded && 
+                            PathExists(cohorts.WsRedirected.c_str()))
                         {
                             retfinal = WRAPPER_CREATEFILE2(cohorts.WsRedirected, desiredAccess, shareMode, creationDisposition, createExParams, dllInstance, debug);
                             return retfinal;
                         }
-                        if (PathExists(cohorts.WsPackage.c_str()))
+                        if (cohorts.WsPackage.compare(cohorts.WsRedirected) != 0 &&
+                            PathExists(cohorts.WsPackage.c_str()))
                         {
                             if (IsAWriteCase)
                             {
@@ -172,17 +181,19 @@ HANDLE __stdcall CreateFile2Fixup(
                         retfinal = WRAPPER_CREATEFILE2(cohorts.WsRedirected, desiredAccess, shareMode, creationDisposition, createExParams, dllInstance, debug);
                         return retfinal;
                     }
-                    else if (cohorts.map.Valid_mapping &&
+                    else if (cohorts.map.Valid_mapping == mfr::mfr_enabled_types::enabled &&
                         (cohorts.map.RedirectionFlags == mfr::mfr_redirect_flags::prefer_redirection_containerized ||
                             cohorts.map.RedirectionFlags == mfr::mfr_redirect_flags::prefer_redirection_if_package_vfs))
                     {
                         // try the redirected path, then package (via COW), then native (possibly via COW).
-                        if (!cohorts.map.IsAnExclusionToRedirect && PathExists(cohorts.WsRedirected.c_str()))
+                        if (cohorts.map.IsAnExclusionToRedirect == mfr::mfr_exclusion_types::not_excluded && 
+                            PathExists(cohorts.WsRedirected.c_str()))
                         {
                             retfinal = WRAPPER_CREATEFILE2(cohorts.WsRedirected, desiredAccess, shareMode, creationDisposition, createExParams, dllInstance, debug);
                             return retfinal;
                         }
-                        if (PathExists(cohorts.WsPackage.c_str()))
+                        if (cohorts.WsPackage.compare(cohorts.WsRedirected) != 0 &&
+                            PathExists(cohorts.WsPackage.c_str()))
                         {
                             if (IsAWriteCase)
                             {
@@ -235,7 +246,7 @@ HANDLE __stdcall CreateFile2Fixup(
                     }
                     break;
                 case mfr::mfr_path_types::in_package_pvad_area:
-                    if (cohorts.map.Valid_mapping)
+                    if (cohorts.map.Valid_mapping == mfr::mfr_enabled_types::enabled)
                     {
                         if (PathExists(cohorts.WsPackage.c_str()))
                         {
@@ -247,7 +258,9 @@ HANDLE __stdcall CreateFile2Fixup(
                             else
                             {
                                 //// try the redirected path, then package (COW), then don't need native.
-                                if (!cohorts.map.IsAnExclusionToRedirect && PathExists(cohorts.WsRedirected.c_str()))
+                                if (cohorts.map.IsAnExclusionToRedirect == mfr::mfr_exclusion_types::not_excluded && 
+                                    cohorts.WsRedirected.compare(cohorts.WsPackage) != 0 &&
+                                    PathExists(cohorts.WsRedirected.c_str()))
                                 {
                                     retfinal = WRAPPER_CREATEFILE2(cohorts.WsRedirected, desiredAccess, shareMode, creationDisposition, createExParams, dllInstance, debug);
                                     return retfinal;
@@ -283,10 +296,11 @@ HANDLE __stdcall CreateFile2Fixup(
                     break;
                 case mfr::mfr_path_types::in_package_vfs_area:
                     if (cohorts.map.RedirectionFlags == mfr::mfr_redirect_flags::prefer_redirection_local &&
-                        cohorts.map.Valid_mapping)
+                        cohorts.map.Valid_mapping == mfr::mfr_enabled_types::enabled)
                     {
                         // try the redirection path, then the package (COW).
-                        if (!cohorts.map.IsAnExclusionToRedirect && PathExists(cohorts.WsRedirected.c_str()))
+                        if (cohorts.map.IsAnExclusionToRedirect == mfr::mfr_exclusion_types::not_excluded && 
+                            PathExists(cohorts.WsRedirected.c_str()))
                         {
                             retfinal = WRAPPER_CREATEFILE2(cohorts.WsRedirected, desiredAccess, shareMode, creationDisposition, createExParams, dllInstance, debug);
                             return retfinal;
@@ -318,7 +332,7 @@ HANDLE __stdcall CreateFile2Fixup(
                         retfinal = WRAPPER_CREATEFILE2(cohorts.WsRedirected, desiredAccess, shareMode, creationDisposition, createExParams, dllInstance, debug);
                         return retfinal;
                     }
-                    else if (cohorts.map.Valid_mapping &&
+                    else if (cohorts.map.Valid_mapping == mfr::mfr_enabled_types::enabled &&
                         (cohorts.map.RedirectionFlags == mfr::mfr_redirect_flags::prefer_redirection_containerized ||
                             cohorts.map.RedirectionFlags == mfr::mfr_redirect_flags::prefer_redirection_if_package_vfs))
                     {
@@ -332,7 +346,9 @@ HANDLE __stdcall CreateFile2Fixup(
                             }
                             else
                             {
-                                if (!cohorts.map.IsAnExclusionToRedirect && PathExists(cohorts.WsRedirected.c_str()))
+                                if (cohorts.map.IsAnExclusionToRedirect == mfr::mfr_exclusion_types::not_excluded && 
+                                    cohorts.WsRedirected.compare(cohorts.WsPackage) != 0 &&
+                                    PathExists(cohorts.WsRedirected.c_str()))
                                 {
                                     retfinal = WRAPPER_CREATEFILE2(cohorts.WsRedirected, desiredAccess, shareMode, creationDisposition, createExParams, dllInstance, debug);
                                     return retfinal;
@@ -388,10 +404,11 @@ HANDLE __stdcall CreateFile2Fixup(
                     }
                     break;
                 case mfr::mfr_path_types::in_redirection_area_writablepackageroot:
-                    if (cohorts.map.Valid_mapping)
+                    if (cohorts.map.Valid_mapping == mfr::mfr_enabled_types::enabled)
                     {
                         // try the redirected path, then package (COW), then possibly native (Possibly COW).
-                        if (!cohorts.map.IsAnExclusionToRedirect && PathExists(cohorts.WsRedirected.c_str()))
+                        if (cohorts.map.IsAnExclusionToRedirect == mfr::mfr_exclusion_types::not_excluded && 
+                            PathExists(cohorts.WsRedirected.c_str()))
                         {
                             retfinal = WRAPPER_CREATEFILE2(cohorts.WsRedirected, desiredAccess, shareMode, creationDisposition, createExParams, dllInstance, debug);
                             return retfinal;
@@ -484,6 +501,22 @@ HANDLE __stdcall CreateFile2Fixup(
                         usePath = SelectLocalOrPackageForRead(usePath, cohorts.WsPackage);
                     }
                     retfinal = WRAPPER_CREATEFILE2(usePath, desiredAccess, shareMode, creationDisposition, createExParams, dllInstance, debug);
+
+                    // Special case to keep app from getting confused by giving them VFS\AppVPackageRoot instead of C:\.
+                    // We still want to precreate that folder in case they are going to add to it.
+                    if (retfinal != INVALID_HANDLE_VALUE &&
+                        fileName != nullptr)
+                    {
+                        std::wstring wpath = fileName;
+                        if (wStringToLower(wpath) ==  L"\\?\\c:" ||
+                            wStringToLower(wpath) == L"\\?\\c:\\" ||
+                            wStringToLower(wpath) == L"c:" ||
+                            wStringToLower(wpath) == L"c:\\" )
+                        {
+                            CloseHandle(retfinal);
+                            retfinal = WRAPPER_CREATEFILE2(fileName, desiredAccess, shareMode, creationDisposition, createExParams, dllInstance, debug);
+                        }
+                    }
                     return retfinal;
                 }
                 // else fall through

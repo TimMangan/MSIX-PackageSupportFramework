@@ -86,13 +86,14 @@ BOOL __stdcall GetPrivateProfileStructFixup(
                     switch (cohorts.file_mfr.Request_MfrPathType)
                     {
                     case mfr::mfr_path_types::in_native_area:
-                        if (cohorts.map.Valid_mapping)
+                        if (cohorts.map.Valid_mapping == mfr::mfr_enabled_types::enabled)
                         {
                             switch (cohorts.map.RedirectionFlags)
                             {
                             case mfr::mfr_redirect_flags::prefer_redirection_local:
                                 // try the request path, which must be the local redirected version by definition, and then a package equivalent, then default 
-                                if (!cohorts.map.IsAnExclusionToRedirect && PathExists(cohorts.WsRedirected.c_str()))
+                                if (cohorts.map.IsAnExclusionToRedirect == mfr::mfr_exclusion_types::not_excluded && 
+                                    PathExists(cohorts.WsRedirected.c_str()))
                                 {
                                     WRAPPER_GETPRIVATEPROFILESTRUCT(cohorts.WsRedirected, debug);
                                 }
@@ -109,7 +110,8 @@ BOOL __stdcall GetPrivateProfileStructFixup(
                             case mfr::mfr_redirect_flags::prefer_redirection_containerized:
                             case mfr::mfr_redirect_flags::prefer_redirection_if_package_vfs:
                                 // try the redirected path, then package, then native, then default
-                                if (!cohorts.map.IsAnExclusionToRedirect && PathExists(cohorts.WsRedirected.c_str()))
+                                if (cohorts.map.IsAnExclusionToRedirect == mfr::mfr_exclusion_types::not_excluded && 
+                                    PathExists(cohorts.WsRedirected.c_str()))
                                 {
                                     WRAPPER_GETPRIVATEPROFILESTRUCT(cohorts.WsRedirected, debug);
                                 }
@@ -137,7 +139,7 @@ BOOL __stdcall GetPrivateProfileStructFixup(
                         }
                         break;
                     case mfr::mfr_path_types::in_package_pvad_area:
-                        if (cohorts.map.Valid_mapping)
+                        if (cohorts.map.Valid_mapping == mfr::mfr_enabled_types::enabled)
                         {
                             switch (cohorts.map.RedirectionFlags)
                             {
@@ -147,7 +149,8 @@ BOOL __stdcall GetPrivateProfileStructFixup(
                             case mfr::mfr_redirect_flags::prefer_redirection_containerized:
                             case mfr::mfr_redirect_flags::prefer_redirection_if_package_vfs:
                                 //// try the redirected path, then package, then don't need native, so default
-                                if (!cohorts.map.IsAnExclusionToRedirect && PathExists(cohorts.WsRedirected.c_str()))
+                                if (cohorts.map.IsAnExclusionToRedirect == mfr::mfr_exclusion_types::not_excluded && 
+                                    PathExists(cohorts.WsRedirected.c_str()))
                                 {
                                     WRAPPER_GETPRIVATEPROFILESTRUCT(cohorts.WsRedirected, debug);
                                 }
@@ -170,13 +173,14 @@ BOOL __stdcall GetPrivateProfileStructFixup(
                         }
                         break;
                     case mfr::mfr_path_types::in_package_vfs_area:
-                        if (cohorts.map.Valid_mapping)
+                        if (cohorts.map.Valid_mapping == mfr::mfr_enabled_types::enabled)
                         {
                             switch (cohorts.map.RedirectionFlags)
                             {
                             case mfr::mfr_redirect_flags::prefer_redirection_local:
                                 // try the redirected path, then package path,  then default.
-                                if (!cohorts.map.IsAnExclusionToRedirect && PathExists(cohorts.WsRedirected.c_str()))
+                                if (cohorts.map.IsAnExclusionToRedirect == mfr::mfr_exclusion_types::not_excluded && 
+                                    PathExists(cohorts.WsRedirected.c_str()))
                                 {
                                     WRAPPER_GETPRIVATEPROFILESTRUCT(cohorts.WsRedirected, debug);
                                 }
@@ -193,7 +197,8 @@ BOOL __stdcall GetPrivateProfileStructFixup(
                             case mfr::mfr_redirect_flags::prefer_redirection_containerized:
                             case mfr::mfr_redirect_flags::prefer_redirection_if_package_vfs:
                                 // try the redirected path, then package, then native, then default
-                                if (!cohorts.map.IsAnExclusionToRedirect && PathExists(cohorts.WsRedirected.c_str()))
+                                if (cohorts.map.IsAnExclusionToRedirect == mfr::mfr_exclusion_types::not_excluded && 
+                                    PathExists(cohorts.WsRedirected.c_str()))
                                 {
                                     WRAPPER_GETPRIVATEPROFILESTRUCT(cohorts.WsRedirected, debug);
                                 }
@@ -221,7 +226,7 @@ BOOL __stdcall GetPrivateProfileStructFixup(
                         }
                         break;
                     case mfr::mfr_path_types::in_redirection_area_writablepackageroot:
-                        if (cohorts.map.Valid_mapping)
+                        if (cohorts.map.Valid_mapping == mfr::mfr_enabled_types::enabled)
                         {
                             switch (cohorts.map.RedirectionFlags)
                             {
@@ -231,7 +236,8 @@ BOOL __stdcall GetPrivateProfileStructFixup(
                             case mfr::mfr_redirect_flags::prefer_redirection_containerized:
                             case mfr::mfr_redirect_flags::prefer_redirection_if_package_vfs:
                                 // try the redirected path, then package, then possibly native, then default.
-                                if (!cohorts.map.IsAnExclusionToRedirect && PathExists(cohorts.WsRedirected.c_str()))
+                                if (cohorts.map.IsAnExclusionToRedirect == mfr::mfr_exclusion_types::not_excluded && 
+                                    PathExists(cohorts.WsRedirected.c_str()))
                                 {
                                     WRAPPER_GETPRIVATEPROFILESTRUCT(cohorts.WsRedirected, debug);
                                 }

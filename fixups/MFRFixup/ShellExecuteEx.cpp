@@ -27,7 +27,7 @@
 
 #if FIXUP_ORIGINAL_SHELLEXECUTEEX
 
- BOOL __stdcall  ShellExecuteExAFixup(_Inout_ SHELLEXECUTEINFOA* pExecInfo) 
+BOOL __stdcall  ShellExecuteExAFixup(_Inout_ SHELLEXECUTEINFOA* pExecInfo)
 {
     DWORD dllInstance = g_InterceptInstance;
     [[maybe_unused]] bool debug = false;

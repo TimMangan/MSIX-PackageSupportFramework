@@ -101,7 +101,8 @@ BOOL __stdcall CopyFileExFixup(
                 switch (cohortsNew.file_mfr.Request_MfrPathType)
                 {
                 case mfr::mfr_path_types::in_native_area:
-                    if (cohortsNew.map.Valid_mapping && !cohortsNew.map.IsAnExclusionToRedirect)
+                    if (cohortsNew.map.Valid_mapping == mfr::mfr_enabled_types::enabled && 
+                        cohortsNew.map.IsAnExclusionToRedirect == mfr::mfr_exclusion_types::not_excluded)
                     {
                         newFileWsRedirected = cohortsNew.WsRedirected;
                     }
@@ -111,7 +112,8 @@ BOOL __stdcall CopyFileExFixup(
                     }
                     break;
                 case mfr::mfr_path_types::in_package_pvad_area:
-                    if (cohortsNew.map.Valid_mapping && !cohortsNew.map.IsAnExclusionToRedirect)
+                    if (cohortsNew.map.Valid_mapping == mfr::mfr_enabled_types::enabled && 
+                        cohortsNew.map.IsAnExclusionToRedirect == mfr::mfr_exclusion_types::not_excluded)
                     {
                         newFileWsRedirected = cohortsNew.WsRedirected;
                     }
@@ -121,7 +123,7 @@ BOOL __stdcall CopyFileExFixup(
                     }
                     break;
                 case mfr::mfr_path_types::in_package_vfs_area:
-                    if (cohortsNew.map.Valid_mapping && !cohortsNew.map.IsAnExclusionToRedirect)
+                    if (cohortsNew.map.Valid_mapping == mfr::mfr_enabled_types::enabled && cohortsNew.map.IsAnExclusionToRedirect == mfr::mfr_exclusion_types::not_excluded)
                     {
                         newFileWsRedirected = cohortsNew.WsRedirected;
                         // TODO: CopyFile precreates folders here, why not CopyFileEx? and other cases
@@ -133,7 +135,7 @@ BOOL __stdcall CopyFileExFixup(
                     }
                     break;
                 case mfr::mfr_path_types::in_redirection_area_writablepackageroot:
-                    if (cohortsNew.map.Valid_mapping && !cohortsNew.map.IsAnExclusionToRedirect)
+                    if (cohortsNew.map.Valid_mapping == mfr::mfr_enabled_types::enabled && cohortsNew.map.IsAnExclusionToRedirect == mfr::mfr_exclusion_types::not_excluded)
                     {
                         newFileWsRedirected = cohortsNew.WsRedirected;
                     }
@@ -164,10 +166,11 @@ BOOL __stdcall CopyFileExFixup(
                 {
                 case mfr::mfr_path_types::in_native_area:
                     if (cohortsExisting.map.RedirectionFlags == mfr::mfr_redirect_flags::prefer_redirection_local &&
-                        cohortsExisting.map.Valid_mapping)
+                        cohortsExisting.map.Valid_mapping == mfr::mfr_enabled_types::enabled)
                     {
                         // try the request path, which must be the local redirected version by definition, and then a package equivalent, or make original call to fail.
-                        if (!cohortsExisting.map.IsAnExclusionToRedirect && PathExists(cohortsExisting.WsRedirected.c_str()))
+                        if (cohortsExisting.map.IsAnExclusionToRedirect == mfr::mfr_exclusion_types::not_excluded && 
+                            PathExists(cohortsExisting.WsRedirected.c_str()))
                         {
                             PreCreateFolders(newFileWsRedirected.c_str(), dllInstance, L"CopyFileExFixup");
                             WRAPPER_COPYFILEEX(cohortsExisting.WsRedirected, newFileWsRedirected, copyFlags, debug, moredebug);
@@ -186,10 +189,11 @@ BOOL __stdcall CopyFileExFixup(
                     }
                     else if ((cohortsExisting.map.RedirectionFlags == mfr::mfr_redirect_flags::prefer_redirection_containerized ||
                         cohortsExisting.map.RedirectionFlags == mfr::mfr_redirect_flags::prefer_redirection_if_package_vfs) &&
-                        cohortsExisting.map.Valid_mapping)
+                        cohortsExisting.map.Valid_mapping == mfr::mfr_enabled_types::enabled)
                     {
                         // try the redirected path, then package, then native, or let fail using original.
-                        if (!cohortsExisting.map.IsAnExclusionToRedirect && PathExists(cohortsExisting.WsRedirected.c_str()))
+                        if (cohortsExisting.map.IsAnExclusionToRedirect == mfr::mfr_exclusion_types::not_excluded && 
+                            PathExists(cohortsExisting.WsRedirected.c_str()))
                         {
                             PreCreateFolders(newFileWsRedirected.c_str(), dllInstance, L"CopyFileExFixup");
                             WRAPPER_COPYFILEEX(cohortsExisting.WsRedirected, newFileWsRedirected, copyFlags, debug, moredebug);
@@ -213,10 +217,11 @@ BOOL __stdcall CopyFileExFixup(
                     }
                     break;
                 case mfr::mfr_path_types::in_package_pvad_area:
-                    if (cohortsExisting.map.Valid_mapping)
+                    if (cohortsExisting.map.Valid_mapping == mfr::mfr_enabled_types::enabled)
                     {
                         //// try the redirected path, then package (COW), then don't need native.
-                        if (!cohortsExisting.map.IsAnExclusionToRedirect && PathExists(cohortsExisting.WsRedirected.c_str()))
+                        if (cohortsExisting.map.IsAnExclusionToRedirect == mfr::mfr_exclusion_types::not_excluded && 
+                            PathExists(cohortsExisting.WsRedirected.c_str()))
                         {
                             PreCreateFolders(newFileWsRedirected.c_str(), dllInstance, L"CopyFileExFixup");
                             WRAPPER_COPYFILEEX(cohortsExisting.WsRedirected, newFileWsRedirected, copyFlags, debug, moredebug);
@@ -235,10 +240,11 @@ BOOL __stdcall CopyFileExFixup(
                     break;
                 case mfr::mfr_path_types::in_package_vfs_area:
                     if (cohortsExisting.map.RedirectionFlags == mfr::mfr_redirect_flags::prefer_redirection_local &&
-                        cohortsExisting.map.Valid_mapping)
+                        cohortsExisting.map.Valid_mapping == mfr::mfr_enabled_types::enabled)
                     {
                         // try the redirection path, then the package (COW).
-                        if (!cohortsExisting.map.IsAnExclusionToRedirect && PathExists(cohortsExisting.WsRedirected.c_str()))
+                        if (cohortsExisting.map.IsAnExclusionToRedirect == mfr::mfr_exclusion_types::not_excluded && 
+                            PathExists(cohortsExisting.WsRedirected.c_str()))
                         {
                             PreCreateFolders(newFileWsRedirected.c_str(), dllInstance, L"CopyFileExFixup");
                             WRAPPER_COPYFILEEX(cohortsExisting.WsRedirected, newFileWsRedirected, copyFlags, debug, moredebug);
@@ -256,10 +262,11 @@ BOOL __stdcall CopyFileExFixup(
                     }
                     else if ((cohortsExisting.map.RedirectionFlags == mfr::mfr_redirect_flags::prefer_redirection_containerized ||
                         cohortsExisting.map.RedirectionFlags == mfr::mfr_redirect_flags::prefer_redirection_if_package_vfs) &&
-                        cohortsExisting.map.Valid_mapping)
+                        cohortsExisting.map.Valid_mapping == mfr::mfr_enabled_types::enabled)
                     {
                         // try the redirection path, then the package (COW), then native (possibly COW)
-                        if (!cohortsExisting.map.IsAnExclusionToRedirect && PathExists(cohortsExisting.WsRedirected.c_str()))
+                        if (cohortsExisting.map.IsAnExclusionToRedirect == mfr::mfr_exclusion_types::not_excluded && 
+                            PathExists(cohortsExisting.WsRedirected.c_str()))
                         {
                             PreCreateFolders(newFileWsRedirected.c_str(), dllInstance, L"CopyFileExFixup");
                             WRAPPER_COPYFILEEX(cohortsExisting.WsRedirected, newFileWsRedirected, copyFlags, debug, moredebug);
@@ -283,10 +290,11 @@ BOOL __stdcall CopyFileExFixup(
                     }
                     break;
                 case mfr::mfr_path_types::in_redirection_area_writablepackageroot:
-                    if (cohortsExisting.map.Valid_mapping)
+                    if (cohortsExisting.map.Valid_mapping == mfr::mfr_enabled_types::enabled)
                     {
                         // try the redirected path, then package (COW), then possibly native (Possibly COW).
-                        if (!cohortsExisting.map.IsAnExclusionToRedirect && PathExists(cohortsExisting.WsRedirected.c_str()))
+                        if (cohortsExisting.map.IsAnExclusionToRedirect == mfr::mfr_exclusion_types::not_excluded && 
+                            PathExists(cohortsExisting.WsRedirected.c_str()))
                         {
                             PreCreateFolders(newFileWsRedirected.c_str(), dllInstance, L"CopyExFileFixup");
                             WRAPPER_COPYFILEEX(cohortsExisting.WsRedirected, newFileWsRedirected, copyFlags, debug, moredebug);

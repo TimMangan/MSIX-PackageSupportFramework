@@ -86,25 +86,25 @@
       <PreprocessorDefinitions>_WIN32_WINNT=0x501;%(PreprocessorDefinitions);</PreprocessorDefinitions>
     </ClCompile>
     <PostBuildEvent>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">powershell.exe /f $(SolutionDir)Set-DllVersionByDate.ps1  $(TargetName)$(PlatformName)$(TargetExt)</Command>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">powershell.exe /f $(SolutionDir)Set-DllVersionByDate.ps1  $(SolutionDir)verpatch\verpatch.exe  $(TargetName)$(PlatformName)$(TargetExt)</Command>
     </PostBuildEvent>
     <PostBuildEvent>
       <Message Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Set the build</Message>
     </PostBuildEvent>
     <PostBuildEvent>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">powershell.exe /f $(SolutionDir)Set-DllVersionByDate.ps1  $(TargetName)$(PlatformName)$(TargetExt)</Command>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">powershell.exe /f $(SolutionDir)Set-DllVersionByDate.ps1  $(SolutionDir)verpatch\verpatch.exe  $(TargetName)$(PlatformName)$(TargetExt)</Command>
     </PostBuildEvent>
     <PostBuildEvent>
       <Message Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Set the build</Message>
     </PostBuildEvent>
     <PostBuildEvent>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">powershell.exe /f $(SolutionDir)Set-DllVersionByDate.ps1  $(TargetName)$(PlatformName)$(TargetExt)</Command>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">powershell.exe /f $(SolutionDir)Set-DllVersionByDate.ps1  $(SolutionDir)verpatch\verpatch.exe  $(TargetName)$(PlatformName)$(TargetExt)</Command>
     </PostBuildEvent>
     <PostBuildEvent>
       <Message Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Set the build</Message>
     </PostBuildEvent>
     <PostBuildEvent>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">powershell.exe /f $(SolutionDir)Set-DllVersionByDate.ps1  $(TargetName)$(PlatformName)$(TargetExt)</Command>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">powershell.exe /f $(SolutionDir)Set-DllVersionByDate.ps1  $(SolutionDir)verpatch\verpatch.exe  $(TargetName)$(PlatformName)$(TargetExt)</Command>
     </PostBuildEvent>
     <PostBuildEvent>
       <Message Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Set the build</Message>

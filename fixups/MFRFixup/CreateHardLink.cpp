@@ -102,10 +102,10 @@ BOOL __stdcall CreateHardLinkFixup(
 
 
 
-            if (cohortsExisting.map.Valid_mapping && cohortsNew.map.Valid_mapping)
+            if (cohortsExisting.map.Valid_mapping == mfr::mfr_enabled_types::enabled)
             {
                 std::wstring rldNewFileNameRedirected;
-                if (!cohortsNew.map.IsAnExclusionToRedirect)
+                if (cohortsNew.map.IsAnExclusionToRedirect == mfr::mfr_exclusion_types::not_excluded)
                 {
                     rldNewFileNameRedirected = MakeLongPath(cohortsNew.WsRedirected);
                 }

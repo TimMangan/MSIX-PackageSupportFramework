@@ -14,19 +14,23 @@ std::filesystem::path FID_ProgramFilesX86;
 std::filesystem::path FID_ProgramFilesCommonX64;
 std::filesystem::path FID_ProgramFilesX64;
 #endif
-std::filesystem::path FID_UserProgramFiles;
 std::filesystem::path FID_Fonts;
 std::filesystem::path FID_ProgramData;
+std::filesystem::path FID_CommonPrograms;
+
+std::filesystem::path FID_UserProfiles;      // aka c:\users                        [{UserProfiles}]
+std::filesystem::path FID_UserFolder;          // aka c:\users\username               [{Profile}]
+std::filesystem::path FID_Profile;           // aka c:\users\username\appdata       [{Profile}]\AppData
 std::filesystem::path FID_LocalAppDataLow;
 std::filesystem::path FID_LocalAppData;
 std::filesystem::path FID_RoamingAppData;
-std::filesystem::path FID_CommonPrograms;
+std::filesystem::path FID_UserProgramFiles;
 std::filesystem::path FID_Desktop;
 std::filesystem::path FID_Documents;
-std::filesystem::path FID_Profile;
 std::filesystem::path FID_PublicDesktop;
 std::filesystem::path FID_PublicDocuments;
-std::filesystem::path FID_RootDrive;
+
+std::filesystem::path FID_RootDrive;        // aka C:\                              [{AppVPackageDrive}]
 
 void FID_Initialize()
 {
@@ -53,15 +57,19 @@ void FID_Initialize()
     }
     FID_Fonts =                 psf::known_folder(FOLDERID_ProgramFilesX86);
     FID_ProgramData =           psf::known_folder(FOLDERID_ProgramData);
+    FID_CommonPrograms = psf::known_folder(FOLDERID_CommonPrograms);
+
+    FID_UserProfiles =          psf::known_folder(FOLDERID_UserProfiles);
+    FID_UserFolder =            psf::known_folder(FOLDERID_Profile);
+    FID_Profile =               psf::known_folder(FOLDERID_Profile) / L"AppData";
     FID_LocalAppDataLow =       psf::known_folder(FOLDERID_LocalAppDataLow);
     FID_LocalAppData =          psf::known_folder(FOLDERID_LocalAppData);
     FID_RoamingAppData =        psf::known_folder(FOLDERID_RoamingAppData);
-    FID_CommonPrograms =        psf::known_folder(FOLDERID_CommonPrograms);
     FID_Desktop =               psf::known_folder(FOLDERID_Desktop);
     FID_Documents =             psf::known_folder(FOLDERID_Documents);
-    FID_Profile =               psf::known_folder(FOLDERID_Profile);
     FID_PublicDesktop =         psf::known_folder(FOLDERID_PublicDesktop);
     FID_PublicDocuments =       psf::known_folder(FOLDERID_PublicDocuments);
+
     FID_RootDrive =             FID_Windows.root_name();
 
 }

@@ -2,7 +2,13 @@
 // Copyright (C) Tim Mangan. All rights reserved
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 //-------------------------------------------------------------------------------------------------------
-
+#if _DEBUG
+//#define _ManualDebug 1
+#define MOREDEBUG 1
+#define DEBUG_NEW_FIXUPS 1
+#include <thread>
+#include <windows.h>
+#endif
 
 #include <psf_framework.h>
 #include <psf_logging.h>

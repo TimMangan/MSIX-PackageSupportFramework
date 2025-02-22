@@ -5,6 +5,8 @@
 //-------------------------------------------------------------------------------------------------------
 #if _DEBUG
 //#define _ManualDebug 1
+#define MOREDEBUG 1
+#define DEBUG_NEW_FIXUPS 1
 #include <thread>
 #include <windows.h>
 #endif

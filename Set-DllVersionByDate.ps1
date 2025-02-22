@@ -20,8 +20,23 @@ Param(
 	$curMins = (($fullDate.Hour) * 60) + $fullDate.Minute
 
 	Write-output "Set version $($curYear).$($curMonth).$($curDay).$($CurMins) on file $($FilePathDll)"
-	#Write-output "cmd:Start-Process $($PathToStampVer) -ArgumentList" "-o4" "," "-f`"$($curYear).$($curMonth).$($curDay).$($curMins)`"" ","  "$($FilePathDll)"
-	Start-Process $PathToStampVer -ArgumentList "-o4", "-f`"$($curYear).$($curMonth).$($curDay).$($curMins)`"", "-p`"$($curYear).$($curMonth).$($curDay).$($curMins)`"", "$($FilePathDll)"
-	Write-output "Done."
+
+	$pinfo = New-Object System.Diagnostics.ProcessStartInfo
+    $pinfo.FileName = "$($PathToStampVer)"
+    $pinfo.RedirectStandardError = $true
+    $pinfo.RedirectStandardOutput = $true
+    $pinfo.UseShellExecute = $false
+    $pinfo.Arguments = "$($FilePathDll) $($curYear).$($curMonth).$($curDay).$($curMins) /pv $($curYear).$($curMonth).$($curDay).$($fullDate.Hour) /s CompanyName `"TMurgent Technologies, LLP`" /s LegalCopyright `"(c) $($curYear)`"" 
+    $p = New-Object System.Diagnostics.Process
+    $p.StartInfo = $pinfo
+    $p.Start() | Out-Null
+    $p.WaitForExit()
+    $stdout = $p.StandardOutput.ReadToEnd()
+    $stderr = $p.StandardError.ReadToEnd()
+    Write-output "stdout: $stdout"
+    Write-output "stderr: $stderr"
+    Write-output "exit code: " $p.ExitCode
+
+	Write-output "Done Set version."
 	
 

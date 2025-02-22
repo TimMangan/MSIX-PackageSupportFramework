@@ -121,10 +121,10 @@ BOOLEAN __stdcall CreateSymbolicLinkFixup(
             }
 
  
-            if (cohortsTarget.map.Valid_mapping && cohortsSymlink.map.Valid_mapping)
+            if (cohortsTarget.map.Valid_mapping == mfr::mfr_enabled_types::enabled && cohortsTarget.map.IsAnExclusionToRedirect == mfr::mfr_exclusion_types::not_excluded)
             {
                 std::wstring rldSymlinkFileNameRedirected;
-                if (!cohortsSymlink.map.IsAnExclusionToRedirect)
+                if (cohortsSymlink.map.IsAnExclusionToRedirect == mfr::mfr_exclusion_types::not_excluded)
                 {
                     rldSymlinkFileNameRedirected = MakeLongPath(cohortsSymlink.WsRedirected);
                 }

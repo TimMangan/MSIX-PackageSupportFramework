@@ -50,7 +50,7 @@ void InitializeConfiguration()
     if (auto rootConfig = ::PSFQueryCurrentDllConfig())
     {
 #if MOREDEBUG
-        Log("\t\tMFRFixup CONFIG: Has config");
+        Log("\t\t\tMFRFixup CONFIG: Has config");
 #endif            
         auto& rootObject = rootConfig->as_object();
         traceDataStream << " config:\n";
@@ -66,7 +66,7 @@ void InitializeConfiguration()
                     {
                         MFRConfiguration.Ilv_Aware = true;
 #if MOREDEBUG
-                        Log(L"\t\tMFR CONFIG: Has ilv-aware enabled");
+                        Log(L"\t\t\tMFR CONFIG: Has ilv-aware enabled");
 #endif 
                     }
                 }
@@ -77,7 +77,7 @@ void InitializeConfiguration()
                     {
                         MFRConfiguration.Ilv_Aware = true;
 #if MOREDEBUG
-                        Log(L"\t\tMFR CONFIG: Has ilv-aware enabled");
+                        Log(L"\t\t\tMFR CONFIG: Has ilv-aware enabled");
 #endif 
                     }
                 }
@@ -87,7 +87,7 @@ void InitializeConfiguration()
             {
                std::wstring CowAsWstring = overrideCOWValue->as_string().wstring().data(); //CowAsWstringView.data();
 #if MOREDEBUG
-                Log(L"\t\tMFR CONFIG: Has overideCOW mode=%s", CowAsWstring.c_str());
+                Log(L"\t\t\tMFR CONFIG: Has overideCOW mode=%s", CowAsWstring.c_str());
 #endif 
                 if (CowAsWstring.compare(L"enablePe") == 0)
                 {
@@ -118,7 +118,7 @@ void InitializeConfiguration()
             if (auto ovValue = rootObject.try_get("overrideLocalRedirections"))
             {
 #if MOREDEBUG
-                Log("\t\tMFR CONFIG: Has overrideLocalRedirections");
+                Log("\t\t\tMFR CONFIG: Has overrideLocalRedirections");
 #endif 
                 const psf::json_array& ovArray = ovValue->as_array();
 
@@ -130,7 +130,7 @@ void InitializeConfiguration()
                     std::wstring mode = ovMemberObj.get("mode").as_string().wstring().data();
 
 #if MOREDEBUG
-                    Log(L"\t\t\tProcessing FolderId: %s mode:%s", folderid.c_str(), mode.c_str());
+                    Log(L"\t\t\t\tProcessing FolderId: %s mode:%s", folderid.c_str(), mode.c_str());
 #endif
                     int MapIndex = 0;
                    for (mfr::mfr_folder_mapping map : mfr::g_MfrFolderMappings)
@@ -143,16 +143,16 @@ void InitializeConfiguration()
                            if (std::equal(mode.begin(), mode.end(), L"disabled", psf::path_compare{}))
                            {
 #if MOREDEBUG
-                               Log(L"\t\t\tDisabled: %s=%s", folderid.c_str(), map.FolderId.c_str());
+                               Log(L"\t\t\t\tDisabled: %s=%s", folderid.c_str(), map.FolderId.c_str());
 #endif
                                mfr::mfr_folder_mapping newMap = mfr::CloneFolderMapping(map);
-                               newMap.IsAnExclusionToRedirect = true;
+                               newMap.IsAnExclusionToRedirect = mfr::mfr_exclusion_types::excluded;
                                mfr::g_MfrFolderMappings[MapIndex] = newMap;
                            }
                            else if (std::equal(mode.begin(), mode.end(), L"traditional", psf::path_compare{}))
                            {
 #if MOREDEBUG
-                               Log(L"\t\t\tTraditioal: %s", folderid.c_str());
+                               Log(L"\t\t\t\tTraditioal: %s", folderid.c_str());
 #endif
                                mfr::mfr_folder_mapping newMap = mfr::CloneFolderMapping(map);
                                //map.Valid_mapping = false;
@@ -163,7 +163,7 @@ void InitializeConfiguration()
                            {
 
 #if MOREDEBUG
-                               Log(L"\t\t\tDefault: %s", folderid.c_str());
+                               Log(L"\t\t\t\tDefault: %s", folderid.c_str());
 #endif
                                // Do nothing
                            }
@@ -188,7 +188,7 @@ void InitializeConfiguration()
             if (auto ovValue = rootObject.try_get("overrideTraditionalRedirections"))
             {
 #if MOREDEBUG
-                Log("\t\tMFR CONFIG: Has overrideTraditionalRedirections");
+                Log("\t\t\tMFR CONFIG: Has overrideTraditionalRedirections");
 #endif 
                 const psf::json_array& ovArray = ovValue->as_array();
 
@@ -200,7 +200,7 @@ void InitializeConfiguration()
                     std::wstring mode = ovMemberObj.get("mode").as_string().wstring().data();
 
 #if MOREDEBUG
-                    Log(L"\t\t\tProcessing FolderId: %s mode:%s", folderid.c_str(), mode.c_str());
+                    Log(L"\t\t\t\tProcessing FolderId: %s mode:%s", folderid.c_str(), mode.c_str());
 #endif
 
                     int MapIndex = 0;
@@ -213,16 +213,16 @@ void InitializeConfiguration()
                             if (std::equal(mode.begin(), mode.end(), L"disabled", psf::path_compare{}))
                             {
 #if MOREDEBUG
-                                Log(L"\t\t\tDisabled: %s=%s", folderid.c_str(), map.FolderId.c_str());
+                                Log(L"\t\t\t\tDisabled: %s=%s", folderid.c_str(), map.FolderId.c_str());
 #endif
                                 mfr::mfr_folder_mapping newMap = mfr::CloneFolderMapping(map);
-                                newMap.IsAnExclusionToRedirect = true;
+                                newMap.IsAnExclusionToRedirect = mfr::mfr_exclusion_types::excluded;
                                 mfr::g_MfrFolderMappings[MapIndex] = newMap;
                             }
                             else if (std::equal(mode.begin(), mode.end(), L"default", psf::path_compare{}))
                             {
 #if MOREDEBUG
-                                Log(L"\t\t\tDefault: %s", folderid.c_str());
+                                Log(L"\t\t\t\tDefault: %s", folderid.c_str());
 #endif
                                 // Do nothing
                             }
@@ -265,8 +265,13 @@ void InitializeConfiguration()
             TraceLoggingBoolean(TRUE, "UTCReplace_AppSessionGuid"),
             TelemetryPrivacyDataTag(PDT_ProductAndServiceUsage),
             TraceLoggingKeyword(MICROSOFT_KEYWORD_CRITICAL_DATA));
+
     }
 
     TraceLoggingUnregister(g_Log_ETW_ComponentProvider);
+
+#if MOREDEBUG
+    Log("\t\tMFRFixup CONFIG: Done processing.");
+#endif            
 
 }

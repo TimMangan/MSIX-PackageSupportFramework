@@ -2,8 +2,13 @@
 // Copyright (C) Tim Mangan. All rights reserved
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 //-------------------------------------------------------------------------------------------------------
-
-//#define MOREDEBUG 1
+#if _DEBUG
+//#define _ManualDebug 1
+#define MOREDEBUG 1
+#define DEBUG_NEW_FIXUPS 1
+#include <thread>
+#include <windows.h>
+#endif
 
 #include <psf_framework.h>
 #include <psf_logging.h>
@@ -126,7 +131,7 @@ LSTATUS __stdcall RegOpenKeyExAFixup(
                     LogWin32Error(result);
                 }
                 LogCallingModule();
-                Log("[%d] If an error, this error often indicates that the key must be added to the original package.", RegLocalInstance);
+                Log("[%d] If a ACCESS DENIED error, this error often indicates that the key must be added to the original package.", RegLocalInstance);
             }
             catch (...)
             {
@@ -247,7 +252,7 @@ LSTATUS __stdcall RegOpenKeyExWFixup(
                     LogWin32Error(result);
                 }
                 LogCallingModule();
-                Log("[%d] If an error, this error often indicates that the key must be added to the original package.", RegLocalInstance);
+                Log("[%d] If a ACCESS DENIED error, this error often indicates that the key must be added to the original package.", RegLocalInstance);
             }
             catch (...)
             {
@@ -402,7 +407,7 @@ LSTATUS __stdcall RegOpenKeyExFixup(
                     LogWin32Error(result);
                 }
                 LogCallingModule();
-                Log("[%d] If an error, this error often indicates that the key must be added to the original package.", RegLocalInstance);
+                Log("[%d] If a ACCESS DENIED error, this error often indicates that the key must be added to the original package.", RegLocalInstance);
             }
             catch (...)
             {

@@ -13,10 +13,8 @@
 #pragma once
 
 #define Intercept_NTDLL 1
-//#define DO_Intercept_ZwCreateFile 1
-//#define DO_Intercept_ZwOpenFile 1
-#define DO_Intercept_ZwQueryDirectoryFile 1
-#define DO_Intercept_ZwQueryDirectoryFileEx 1
+#define DO_Intercept_NtQueryDirectoryFile 1
+#define DO_Intercept_NtQueryDirectoryFileEx 1
 #if Intercept_NTDLL
 
 
@@ -41,52 +39,10 @@ VOID
 #ifdef __cplusplus
 extern "C" {
 #endif
-// Most of the functions in NTDll that appear file/directory based take handles as input, so we don't need to worry about intercepting those.
-// These are the ones that seem most interesting.
 
-#ifdef DO_Intercept_ZwCreateFile
-NTSTATUS __stdcall ZwCreateFile(
-    _Out_          PHANDLE            FileHandle,
-    _In_           ACCESS_MASK        DesiredAccess,
-    _In_           POBJECT_ATTRIBUTES ObjectAttributes,
-    _Out_          PIO_STATUS_BLOCK   IoStatusBlock,
-    _In_opt_       PLARGE_INTEGER     AllocationSize,
-    _In_           ULONG              FileAttributes,
-    _In_           ULONG              ShareAccess,
-    _In_           ULONG              CreateDisposition,
-    _In_           ULONG              CreateOptions,
-    _In_opt_       PVOID              EaBuffer,
-    _In_           ULONG              EaLength
-    );
-#endif
+    // Most of the functions in NTDll that appear file/directory based take handles as input, so we don't need to worry about intercepting those.
+    // These are the ones that seem most interesting.
 
-#if DO_Intercept_ZwOpenFile
-NTSTATUS __stdcall ZwOpenFile(
-    _Out_          PHANDLE            FileHandle,
-    _In_           ACCESS_MASK        DesiredAccess,
-    _In_           POBJECT_ATTRIBUTES ObjectAttributes,
-    _Out_          PIO_STATUS_BLOCK   IoStatusBlock,
-    _In_           ULONG              ShareAccess,
-    _In_           ULONG              OpenOptions
-    );
-#endif
-
-#ifdef DO_Intercept_ZwQueryDirectoryFile
-// This one may be needed anyway, in which case we'd have to determine the location of the file associated with the handle and try other places similar to FindFirstFile???
-NTSTATUS __stdcall ZwQueryDirectoryFile(
-    _In_           HANDLE                 FileHandle,
-    _In_opt_       HANDLE                 Event,
-    _In_opt_       PIO_APC_ROUTINE        ApcRoutine,
-    _In_opt_       PVOID                  ApcContext,
-    _Out_          PIO_STATUS_BLOCK       IoStatusBlock,
-    _Out_          PVOID                  FileInformation,
-    _In_           ULONG                  Length,
-    _In_           FILE_INFORMATION_CLASS FileInformationClass,
-    _In_           BOOLEAN                ReturnSingleEntry,
-    _In_opt_       PUNICODE_STRING        FileName,
-    _In_           BOOLEAN                RestartScan
-);
-#endif
 
  #ifdef DO_Intercept_NtQueryDirectoryFile
 // This call ends up calling Zw.  But we find we need to trap at Zw because, well Microsoft sometimes calls the Zw version directly.
@@ -106,25 +62,7 @@ NTSTATUS __stdcall   NtQueryDirectoryFile(
 );
 #endif
 
-
-#ifdef DO_Intercept_ZwQueryDirectoryFileEx
-NTSTATUS __stdcall ZwQueryDirectoryFileEx(
-        _In_           HANDLE                 FileHandle,
-        _In_opt_       HANDLE                 Event,
-        _In_opt_       PIO_APC_ROUTINE        ApcRoutine,
-        _In_opt_       PVOID                  ApcContext,
-        _Out_          PIO_STATUS_BLOCK       IoStatusBlock,
-        _Out_          PVOID                  FileInformation,
-        _In_           ULONG                  Length,
-        _In_           FILE_INFORMATION_CLASS FileInformationClass,
-        _In_           ULONG                  QueryFlags,
-        _In_opt_       PUNICODE_STRING        FileName
-    );
-#endif
-
 #ifdef DO_Intercept_NtQueryDirectoryFileEx
-// This call ends up calling Zw.  But we find we need to trap at Zw because, well Microsoft sometimes calls the Zw version directly.
-// So this is really here for documentation in case we find a future need to trap at Nt.
 NTSTATUS __stdcall  NtQueryDirectoryFileEx(
         _In_        HANDLE                  FileHandle,
         _In_opt_    HANDLE                  Event,
@@ -178,21 +116,13 @@ inline Func GetNtDllInternalFunction(const char* functionName)
 
 namespace ntdllimpl
 {
-#if DO_Intercept_ZwCreateFile
-    inline auto ZwCreateFileImpl = NTDLL_FUNCTION(ZwCreateFile);
+
+#ifdef DO_Intercept_NtQueryDirectoryFile
+    inline auto NtQueryDirectoryFileImpl = NTDLL_FUNCTION(NtQueryDirectoryFile);
 #endif
 
-#if DO_Intercept_ZwOpenFile
-    inline auto ZwOpenFileImpl = NTDLL_FUNCTION(ZwOpenFile);
-#endif
-
-
-#ifdef DO_Intercept_ZwQueryDirectoryFile
-    inline auto ZwQueryDirectoryFileImpl = NTDLL_FUNCTION(ZwQueryDirectoryFile);
-#endif
-
-#ifdef DO_Intercept_ZwQueryDirectoryFileEx
-    inline auto ZwQueryDirectoryFileExImpl = NTDLL_FUNCTION(ZwQueryDirectoryFileEx);
+#ifdef DO_Intercept_NtQueryDirectoryFileEx
+    inline auto NtQueryDirectoryFileExImpl = NTDLL_FUNCTION(NtQueryDirectoryFileEx);
 #endif
 
 }

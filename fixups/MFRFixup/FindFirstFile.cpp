@@ -33,7 +33,7 @@
 
 
 #if _DEBUG
-//#define MOREDEBUG 1
+#define MOREDEBUG 1
 #endif
 
 #include <errno.h>
@@ -49,6 +49,13 @@
 #include "FindFirstHelpers.h"
 #include "DetermineCohorts.h"
 
+//#ifdef _M_IX86
+#pragma comment(linker, "/EXPORT:FindFirstFileFixupAnsi_Fixup=impl::FindFirstFileW.ansi")  // A test to see if exporting these names helps ProcessMonitor stack traces.
+#pragma comment(linker, "/EXPORT:FindFirstFileFixupWide_Fixup=impl::FindFirstFileW.wide")  // A test to see if exporting these names helps ProcessMonitor stack traces.
+//#else
+#pragma comment(linker, "/EXPORT:FindFirstFileFixupAnsi_Fixup=impl::FindFirstFileW.ansi")  // A test to see if exporting these names helps ProcessMonitor stack traces.
+#pragma comment(linker, "/EXPORT:FindFirstFileFixupWide_Fixup=impl::FindFirstFileW.wide")  // A test to see if exporting these names helps ProcessMonitor stack traces.
+//#endif
 
 template <typename CharT>
 HANDLE __stdcall FindFirstFileFixup(_In_ const CharT* fileName, _Out_ win32_find_data_t<CharT>* findFileData) noexcept try
@@ -61,7 +68,7 @@ HANDLE __stdcall FindFirstFileFixup(_In_ const CharT* fileName, _Out_ win32_find
     debug = true;
 #endif
 #if MOREDEBUG
-    //moreDebug = true;
+    moreDebug = true;
 #endif
 
     if (guard)

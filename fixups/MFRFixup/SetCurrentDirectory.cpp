@@ -79,7 +79,7 @@ BOOL __stdcall SetCurrentDirectoryFixup(_In_ const CharT* pathName) noexcept
                 switch (cohorts.file_mfr.Request_MfrPathType)
                 {
                 case mfr::mfr_path_types::in_native_area:
-                    if (cohorts.map.Valid_mapping &&
+                    if (cohorts.map.Valid_mapping == mfr::mfr_enabled_types::enabled &&
                         cohorts.map.RedirectionFlags == mfr::mfr_redirect_flags::prefer_redirection_local)
                     {
                         // treat as is; don't redirect

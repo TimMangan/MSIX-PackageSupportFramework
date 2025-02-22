@@ -26,6 +26,14 @@
 #include "DetermineIlvPaths.h"
 
 
+#ifdef _M_IX86
+#pragma comment(linker, "/EXPORT:MoveFileWithProgressFixupAnsi_Fixup=impl::_MoveFileWithProgressW.ansi")  // A test to see if exporting these names helps ProcessMonitor stack traces.
+#pragma comment(linker, "/EXPORT:MoveFileWithProgressFixupWide_Fixup=impl::_MoveFileWithProgressW.wide")  // A test to see if exporting these names helps ProcessMonitor stack traces.
+#else
+#pragma comment(linker, "/EXPORT:MoveFileWithProgressFixupAnsi_Fixup=impl::MoveFileWithProgressW.ansi")  // A test to see if exporting these names helps ProcessMonitor stack traces.
+#pragma comment(linker, "/EXPORT:MoveFileWithProgressFixupWide_Fixup=impl::MoveFileWithProgressW.wide")  // A test to see if exporting these names helps ProcessMonitor stack traces.
+#endif
+
 
 
 template <typename CharT>
@@ -95,10 +103,11 @@ BOOL __stdcall MoveFileWithProgressFixup(
                 switch (cohortsExisting.file_mfr.Request_MfrPathType)
                 {
                 case mfr::mfr_path_types::in_native_area:
-                    if (cohortsExisting.map.Valid_mapping &&
+                    if (cohortsExisting.map.Valid_mapping == mfr::mfr_enabled_types::enabled &&
                         cohortsExisting.map.RedirectionFlags == mfr::mfr_redirect_flags::prefer_redirection_local)
                     {
-                        if (!cohortsExisting.map.IsAnExclusionToRedirect && PathExists(cohortsExisting.WsRedirected.c_str()))
+                        if (cohortsExisting.map.IsAnExclusionToRedirect == mfr::mfr_exclusion_types::not_excluded && 
+                            PathExists(cohortsExisting.WsRedirected.c_str()))
                         {
                             UseExistingFile = cohortsExisting.WsRedirected;
                         }
@@ -113,11 +122,12 @@ BOOL __stdcall MoveFileWithProgressFixup(
                         }
                         break;
                     }
-                    else if (cohortsExisting.map.Valid_mapping &&
+                    else if (cohortsExisting.map.Valid_mapping == mfr::mfr_enabled_types::enabled &&
                         (cohortsExisting.map.RedirectionFlags == mfr::mfr_redirect_flags::prefer_redirection_containerized ||
                             cohortsExisting.map.RedirectionFlags == mfr::mfr_redirect_flags::prefer_redirection_if_package_vfs))
                     {
-                        if (!cohortsExisting.map.IsAnExclusionToRedirect && PathExists(cohortsExisting.WsRedirected.c_str()))
+                        if (cohortsExisting.map.IsAnExclusionToRedirect == mfr::mfr_exclusion_types::not_excluded && 
+                            PathExists(cohortsExisting.WsRedirected.c_str()))
                         {
                             UseExistingFile = cohortsExisting.WsRedirected;
                         }
@@ -134,9 +144,10 @@ BOOL __stdcall MoveFileWithProgressFixup(
                     }
                     break;
                 case mfr::mfr_path_types::in_package_pvad_area:
-                    if (cohortsExisting.map.Valid_mapping)
+                    if (cohortsExisting.map.Valid_mapping == mfr::mfr_enabled_types::enabled)
                     {
-                        if (!cohortsExisting.map.IsAnExclusionToRedirect && PathExists(cohortsExisting.WsRedirected.c_str()))
+                        if (cohortsExisting.map.IsAnExclusionToRedirect == mfr::mfr_exclusion_types::not_excluded && 
+                            PathExists(cohortsExisting.WsRedirected.c_str()))
                         {
                             UseExistingFile = cohortsExisting.WsRedirected;
                         }
@@ -149,10 +160,11 @@ BOOL __stdcall MoveFileWithProgressFixup(
                     }
                     break;
                 case mfr::mfr_path_types::in_package_vfs_area:
-                    if (cohortsExisting.map.Valid_mapping &&
+                    if (cohortsExisting.map.Valid_mapping == mfr::mfr_enabled_types::enabled &&
                         cohortsExisting.map.RedirectionFlags == mfr::mfr_redirect_flags::prefer_redirection_local)
                     {
-                        if (!cohortsExisting.map.IsAnExclusionToRedirect && PathExists(cohortsExisting.WsRedirected.c_str()))
+                        if (cohortsExisting.map.IsAnExclusionToRedirect == mfr::mfr_exclusion_types::not_excluded && 
+                            PathExists(cohortsExisting.WsRedirected.c_str()))
                         {
                             UseExistingFile = cohortsExisting.WsRedirected;
                         }
@@ -163,11 +175,12 @@ BOOL __stdcall MoveFileWithProgressFixup(
                         }
                         break;
                     }
-                    else if (cohortsExisting.map.Valid_mapping &&
+                    else if (cohortsExisting.map.Valid_mapping == mfr::mfr_enabled_types::enabled &&
                         (cohortsExisting.map.RedirectionFlags == mfr::mfr_redirect_flags::prefer_redirection_containerized ||
                             cohortsExisting.map.RedirectionFlags == mfr::mfr_redirect_flags::prefer_redirection_if_package_vfs))
                     {
-                        if (!cohortsExisting.map.IsAnExclusionToRedirect && PathExists(cohortsExisting.WsRedirected.c_str()))
+                        if (cohortsExisting.map.IsAnExclusionToRedirect == mfr::mfr_exclusion_types::not_excluded && 
+                            PathExists(cohortsExisting.WsRedirected.c_str()))
                         {
                             UseExistingFile = cohortsExisting.WsRedirected;
                         }
@@ -190,9 +203,10 @@ BOOL __stdcall MoveFileWithProgressFixup(
                     }
                     break;
                 case mfr::mfr_path_types::in_redirection_area_writablepackageroot:
-                    if (cohortsExisting.map.Valid_mapping)
+                    if (cohortsExisting.map.Valid_mapping == mfr::mfr_enabled_types::enabled)
                     {
-                        if (!cohortsExisting.map.IsAnExclusionToRedirect && PathExists(cohortsExisting.WsRedirected.c_str()))
+                        if (cohortsExisting.map.IsAnExclusionToRedirect == mfr::mfr_exclusion_types::not_excluded && 
+                            PathExists(cohortsExisting.WsRedirected.c_str()))
                         {
                             UseExistingFile = cohortsExisting.WsRedirected;
                         }
@@ -232,44 +246,50 @@ BOOL __stdcall MoveFileWithProgressFixup(
                 switch (cohortsNew.file_mfr.Request_MfrPathType)
                 {
                 case mfr::mfr_path_types::in_native_area:
-                    if (cohortsNew.map.Valid_mapping && !cohortsNew.map.IsAnExclusionToRedirect &&
+                    if (cohortsNew.map.Valid_mapping == mfr::mfr_enabled_types::enabled && 
+                        cohortsNew.map.IsAnExclusionToRedirect == mfr::mfr_exclusion_types::not_excluded &&
                         cohortsNew.map.RedirectionFlags == mfr::mfr_redirect_flags::prefer_redirection_local)
                     {
                         UseNewFile = cohortsNew.WsRequested;
                         break;
                     }
-                    else if (cohortsNew.map.Valid_mapping && !cohortsNew.map.IsAnExclusionToRedirect &&
-                        (cohortsNew.map.RedirectionFlags == mfr::mfr_redirect_flags::prefer_redirection_containerized ||
-                            cohortsNew.map.RedirectionFlags == mfr::mfr_redirect_flags::prefer_redirection_if_package_vfs))
+                    else if (cohortsNew.map.Valid_mapping == mfr::mfr_enabled_types::enabled && 
+                            cohortsNew.map.IsAnExclusionToRedirect == mfr::mfr_exclusion_types::not_excluded &&
+                            (cohortsNew.map.RedirectionFlags == mfr::mfr_redirect_flags::prefer_redirection_containerized ||
+                             cohortsNew.map.RedirectionFlags == mfr::mfr_redirect_flags::prefer_redirection_if_package_vfs))
                     {
                         UseNewFile = cohortsNew.WsRedirected;
                         break;
                     }
                     break;
                 case mfr::mfr_path_types::in_package_pvad_area:
-                    if (cohortsNew.map.Valid_mapping && !cohortsNew.map.IsAnExclusionToRedirect)
+                    if (cohortsNew.map.Valid_mapping == mfr::mfr_enabled_types::enabled && 
+                        cohortsNew.map.IsAnExclusionToRedirect == mfr::mfr_exclusion_types::not_excluded)
                     {
                         UseNewFile = cohortsNew.WsRedirected;
                         break;
                     }
                     break;
                 case mfr::mfr_path_types::in_package_vfs_area:
-                    if (cohortsNew.map.Valid_mapping && !cohortsNew.map.IsAnExclusionToRedirect &&
+                    if (cohortsNew.map.Valid_mapping == mfr::mfr_enabled_types::enabled && 
+                        cohortsNew.map.IsAnExclusionToRedirect == mfr::mfr_exclusion_types::not_excluded &&
                         cohortsNew.map.RedirectionFlags == mfr::mfr_redirect_flags::prefer_redirection_local)
                     {
                         UseNewFile = cohortsNew.WsRequested;
                         break;
                     }
-                    else if (cohortsNew.map.Valid_mapping && !cohortsNew.map.IsAnExclusionToRedirect &&
-                        (cohortsNew.map.RedirectionFlags == mfr::mfr_redirect_flags::prefer_redirection_containerized ||
-                            cohortsNew.map.RedirectionFlags == mfr::mfr_redirect_flags::prefer_redirection_if_package_vfs))
+                    else if (cohortsNew.map.Valid_mapping == mfr::mfr_enabled_types::enabled && 
+                            cohortsNew.map.IsAnExclusionToRedirect == mfr::mfr_exclusion_types::not_excluded &&
+                            (cohortsNew.map.RedirectionFlags == mfr::mfr_redirect_flags::prefer_redirection_containerized ||
+                             cohortsNew.map.RedirectionFlags == mfr::mfr_redirect_flags::prefer_redirection_if_package_vfs))
                     {
                         UseNewFile = cohortsNew.WsRedirected;
                         break;
                     }
                     break;
                 case mfr::mfr_path_types::in_redirection_area_writablepackageroot:
-                    if (cohortsNew.map.Valid_mapping && !cohortsNew.map.IsAnExclusionToRedirect)
+                    if (cohortsNew.map.Valid_mapping == mfr::mfr_enabled_types::enabled && 
+                        cohortsNew.map.IsAnExclusionToRedirect == mfr::mfr_exclusion_types::not_excluded)
                     {
                         UseNewFile = cohortsNew.WsRequested;
                         break;

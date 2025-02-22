@@ -53,7 +53,8 @@
     <ConfigurationType>DynamicLibrary</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
     <PlatformToolset>v142</PlatformToolset>
-    <WholeProgramOptimization>false</WholeProgramOptimization>
+    <WholeProgramOptimization>
+    </WholeProgramOptimization>
     <CharacterSet>Unicode</CharacterSet>
     <UseOfMfc>false</UseOfMfc>
   </PropertyGroup>
@@ -135,7 +136,7 @@
       <EnableUAC>true</EnableUAC>
     </Link>
     <PostBuildEvent>
-      <Command>powershell.exe /f $(SolutionDir)Set-DllVersionByDate.ps1 $(SolutionDir)SetVersionInfo\StampVer.exe  $(OutputPath)$(TargetName)$(TargetExt)</Command>
+      <Command>powershell.exe /f $(SolutionDir)Set-DllVersionByDate.ps1 $(SolutionDir)verpatch\verpatch.exe  $(OutputPath)$(TargetName)$(TargetExt)</Command>
     </PostBuildEvent>
     <PostBuildEvent>
       <Message>Set the build</Message>
@@ -165,7 +166,7 @@
       <EnableUAC>true</EnableUAC>
     </Link>
     <PostBuildEvent>
-      <Command>powershell.exe /f $(SolutionDir)Set-DllVersionByDate.ps1 $(SolutionDir)SetVersionInfo\StampVer.exe  $(OutputPath)$(TargetName)$(TargetExt)</Command>
+      <Command>powershell.exe /f $(SolutionDir)Set-DllVersionByDate.ps1 $(SolutionDir)verpatch\verpatch.exe  $(OutputPath)$(TargetName)$(TargetExt)</Command>
     </PostBuildEvent>
     <PostBuildEvent>
       <Message>Set the build</Message>
@@ -191,7 +192,7 @@
       <EnableUAC>true</EnableUAC>
     </Link>
     <PostBuildEvent>
-      <Command>powershell.exe /f $(SolutionDir)Set-DllVersionByDate.ps1 $(SolutionDir)SetVersionInfo\StampVer.exe  $(OutputPath)$(TargetName)$(TargetExt)</Command>
+      <Command>powershell.exe /f $(SolutionDir)Set-DllVersionByDate.ps1 $(SolutionDir)verpatch\verpatch.exe  $(OutputPath)$(TargetName)$(TargetExt)</Command>
     </PostBuildEvent>
     <PostBuildEvent>
       <Message>Set the build</Message>
@@ -221,7 +222,7 @@
       <EnableUAC>true</EnableUAC>
     </Link>
     <PostBuildEvent>
-      <Command>powershell.exe /f $(SolutionDir)Set-DllVersionByDate.ps1 $(SolutionDir)SetVersionInfo\StampVer.exe  $(OutputPath)$(TargetName)$(TargetExt)</Command>
+      <Command>powershell.exe /f $(SolutionDir)Set-DllVersionByDate.ps1 $(SolutionDir)verpatch\verpatch.exe  $(OutputPath)$(TargetName)$(TargetExt)</Command>
     </PostBuildEvent>
     <PostBuildEvent>
       <Message>Set the build</Message>

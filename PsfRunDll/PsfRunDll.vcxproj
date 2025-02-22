@@ -71,7 +71,7 @@
     <!-- For some reason Visual Studio ignores ItemDefinitionGroup settings from props files if there's no
          ItemDefinitionGroup in the vcxproj, even if it's empty... -->
     <PostBuildEvent>
-      <Command>powershell.exe /f $(SolutionDir)Set-DllVersionByDate.ps1 $(SolutionDir)SetVersionInfo\StampVer.exe  $(OutputPath)$(TargetName)$(TargetExt)</Command>
+      <Command>powershell.exe /f $(SolutionDir)Set-DllVersionByDate.ps1 $(SolutionDir)verpatch\verpatch.exe  $(OutputPath)$(TargetName)$(TargetExt)</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
@@ -81,7 +81,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <PostBuildEvent>
-      <Command>powershell.exe /f $(SolutionDir)Set-DllVersionByDate.ps1 $(SolutionDir)SetVersionInfo\StampVer.exe  $(OutputPath)$(TargetName)$(TargetExt)</Command>
+      <Command>powershell.exe /f $(SolutionDir)Set-DllVersionByDate.ps1 $(SolutionDir)verpatch\verpatch.exe  $(OutputPath)$(TargetName)$(TargetExt)</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -91,7 +91,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <PostBuildEvent>
-      <Command>powershell.exe /f $(SolutionDir)Set-DllVersionByDate.ps1 $(SolutionDir)SetVersionInfo\StampVer.exe  $(OutputPath)$(TargetName)$(TargetExt)</Command>
+      <Command>powershell.exe /f $(SolutionDir)Set-DllVersionByDate.ps1 $(SolutionDir)verpatch\verpatch.exe  $(OutputPath)$(TargetName)$(TargetExt)</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -101,7 +101,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <PostBuildEvent>
-      <Command>powershell.exe /f $(SolutionDir)Set-DllVersionByDate.ps1 $(SolutionDir)SetVersionInfo\StampVer.exe  $(OutputPath)$(TargetName)$(TargetExt)</Command>
+      <Command>powershell.exe /f $(SolutionDir)Set-DllVersionByDate.ps1 $(SolutionDir)verpatch\verpatch.exe  $(OutputPath)$(TargetName)$(TargetExt)</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">

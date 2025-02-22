@@ -51,7 +51,13 @@
 #include "FindFirstHelpers.h"
 #include "DetermineCohorts.h"
 
-
+#ifdef _M_IX86
+#pragma comment(linker, "/EXPORT:FindFirstFileExFixupAnsi_Fixup=impl::FindFirstFileExW.ansi")  // A test to see if exporting these names helps ProcessMonitor stack traces.
+#pragma comment(linker, "/EXPORT:FindFirstFileExFixupWide_Fixup=impl::FindFirstFileExW.wide")  // A test to see if exporting these names helps ProcessMonitor stack traces.
+#else
+#pragma comment(linker, "/EXPORT:FindFirstFileExFixupAnsi_Fixup=impl::FindFirstFileExW.ansi")  // A test to see if exporting these names helps ProcessMonitor stack traces.
+#pragma comment(linker, "/EXPORT:FindFirstFileExFixupWide_Fixup=impl::FindFirstFileExW.wide")  // A test to see if exporting these names helps ProcessMonitor stack traces.
+#endif
 
 
 template <typename CharT>

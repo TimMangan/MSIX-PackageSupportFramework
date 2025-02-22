@@ -85,7 +85,7 @@ BOOL __stdcall SetFileAttributesFixup(_In_ const CharT* fileName, _In_ DWORD fil
                 switch (cohorts.file_mfr.Request_MfrPathType)
                 {
                 case mfr::mfr_path_types::in_native_area:
-                    if (cohorts.map.Valid_mapping)
+                    if (cohorts.map.Valid_mapping == mfr::mfr_enabled_types::enabled)
                     {
                         switch (cohorts.map.RedirectionFlags)
                         {
@@ -93,7 +93,7 @@ BOOL __stdcall SetFileAttributesFixup(_In_ const CharT* fileName, _In_ DWORD fil
                             if (!MFRConfiguration.Ilv_Aware)
                             {
                                 // try the request path, which must be the local redirected version by definition, and then a package equivalent using COW
-                                if (!cohorts.map.IsAnExclusionToRedirect && PathExists(cohorts.WsRedirected.c_str()))
+                                if (cohorts.map.IsAnExclusionToRedirect == mfr::mfr_exclusion_types::not_excluded && PathExists(cohorts.WsRedirected.c_str()))
                                 {
                                     retfinal = WRAPPER_SETFILEATTRIBUTES(cohorts.WsRedirected, fileAttributes, dllInstance, debug);
                                     return retfinal;
@@ -130,7 +130,7 @@ BOOL __stdcall SetFileAttributesFixup(_In_ const CharT* fileName, _In_ DWORD fil
 #if MOREDEBUG
                                 Log(L"[%d] SetFileAttributesFixup: Native Local with ILV", dllInstance);
 #endif
-                                if (!cohorts.map.IsAnExclusionToRedirect && PathExists(cohorts.WsPackage.c_str()))
+                                if (cohorts.map.IsAnExclusionToRedirect == mfr::mfr_exclusion_types::not_excluded && PathExists(cohorts.WsPackage.c_str()))
                                 {
                                     retfinal = WRAPPER_SETFILEATTRIBUTES(cohorts.WsRequested, fileAttributes, dllInstance, debug);
                                     if (!retfinal && GetLastError() == ERROR_CANT_ACCESS_FILE)
@@ -171,7 +171,7 @@ BOOL __stdcall SetFileAttributesFixup(_In_ const CharT* fileName, _In_ DWORD fil
                             if (!MFRConfiguration.Ilv_Aware)
                             {
                                 // try the redirected path, then package (via COW), then native (possibly via COW).
-                                if (!cohorts.map.IsAnExclusionToRedirect && PathExists(cohorts.WsRedirected.c_str()))
+                                if (cohorts.map.IsAnExclusionToRedirect == mfr::mfr_exclusion_types::not_excluded && PathExists(cohorts.WsRedirected.c_str()))
                                 {
                                     retfinal = WRAPPER_SETFILEATTRIBUTES(cohorts.WsRedirected, fileAttributes, dllInstance, debug);
                                     return retfinal;
@@ -227,7 +227,7 @@ BOOL __stdcall SetFileAttributesFixup(_In_ const CharT* fileName, _In_ DWORD fil
                                 Log(L"[%d] SetFileAttributeFixups: Native Traditional with ILV", dllInstance);
 #endif
                                 // WIth IlvAware, we can't set the attribute and get this specific error if the file is in the package.
-                                if (!cohorts.map.IsAnExclusionToRedirect && PathExists(cohorts.WsRedirected.c_str()))
+                                if (cohorts.map.IsAnExclusionToRedirect == mfr::mfr_exclusion_types::not_excluded && PathExists(cohorts.WsRedirected.c_str()))
                                 {
                                     retfinal = WRAPPER_SETFILEATTRIBUTES(cohorts.WsRedirected, fileAttributes, dllInstance, debug);
                                 }
@@ -259,7 +259,7 @@ BOOL __stdcall SetFileAttributesFixup(_In_ const CharT* fileName, _In_ DWORD fil
                     }
                     break;
                 case mfr::mfr_path_types::in_package_pvad_area:
-                    if (cohorts.map.Valid_mapping)
+                    if (cohorts.map.Valid_mapping == mfr::mfr_enabled_types::enabled)
                     {
                         switch (cohorts.map.RedirectionFlags)
                         {
@@ -271,7 +271,7 @@ BOOL __stdcall SetFileAttributesFixup(_In_ const CharT* fileName, _In_ DWORD fil
                             if (!MFRConfiguration.Ilv_Aware)
                             {
                                 //// try the redirected path, then package (COW), then don't need native.
-                                if (!cohorts.map.IsAnExclusionToRedirect && PathExists(cohorts.WsRedirected.c_str()))
+                                if (cohorts.map.IsAnExclusionToRedirect == mfr::mfr_exclusion_types::not_excluded && PathExists(cohorts.WsRedirected.c_str()))
                                 {
                                     retfinal = WRAPPER_SETFILEATTRIBUTES(cohorts.WsRedirected, fileAttributes, dllInstance, debug);
                                     return retfinal;
@@ -327,14 +327,14 @@ BOOL __stdcall SetFileAttributesFixup(_In_ const CharT* fileName, _In_ DWORD fil
                     }
                     break;
                 case mfr::mfr_path_types::in_package_vfs_area:
-                    if (cohorts.map.Valid_mapping)
+                    if (cohorts.map.Valid_mapping == mfr::mfr_enabled_types::enabled)
                     {
                         switch (cohorts.map.RedirectionFlags)
                         {
                         case mfr::mfr_redirect_flags::prefer_redirection_local:
                             if (!MFRConfiguration.Ilv_Aware)
                             {
-                                if (!cohorts.map.IsAnExclusionToRedirect && PathExists(cohorts.WsRedirected.c_str()))
+                                if (cohorts.map.IsAnExclusionToRedirect == mfr::mfr_exclusion_types::not_excluded && PathExists(cohorts.WsRedirected.c_str()))
                                 {
                                     retfinal = WRAPPER_SETFILEATTRIBUTES(cohorts.WsRedirected, fileAttributes, dllInstance, debug);
                                     return retfinal;
@@ -406,7 +406,7 @@ BOOL __stdcall SetFileAttributesFixup(_In_ const CharT* fileName, _In_ DWORD fil
                             if (!MFRConfiguration.Ilv_Aware)
                             {
                                 // try the redirection path, then the package (COW), then native (possibly COW)
-                                if (!cohorts.map.IsAnExclusionToRedirect && PathExists(cohorts.WsRedirected.c_str()))
+                                if (cohorts.map.IsAnExclusionToRedirect == mfr::mfr_exclusion_types::not_excluded && PathExists(cohorts.WsRedirected.c_str()))
                                 {
                                     retfinal = WRAPPER_SETFILEATTRIBUTES(cohorts.WsRedirected, fileAttributes, dllInstance, debug);
                                     return retfinal;
@@ -488,12 +488,12 @@ BOOL __stdcall SetFileAttributesFixup(_In_ const CharT* fileName, _In_ DWORD fil
                     }
                     break;
                 case mfr::mfr_path_types::in_redirection_area_writablepackageroot:
-                    if (cohorts.map.Valid_mapping)
+                    if (cohorts.map.Valid_mapping == mfr::mfr_enabled_types::enabled)
                     {
                         if (!MFRConfiguration.Ilv_Aware)
                         {
                             // try the redirected path, then package (COW), then possibly native (Possibly COW).
-                            if (!cohorts.map.IsAnExclusionToRedirect && PathExists(cohorts.WsRedirected.c_str()))
+                            if (cohorts.map.IsAnExclusionToRedirect == mfr::mfr_exclusion_types::not_excluded && PathExists(cohorts.WsRedirected.c_str()))
                             {
                                 retfinal = WRAPPER_SETFILEATTRIBUTES(cohorts.WsRedirected, fileAttributes, dllInstance, debug);
                                 return retfinal;

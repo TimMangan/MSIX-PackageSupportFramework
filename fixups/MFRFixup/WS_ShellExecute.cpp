@@ -85,7 +85,8 @@ HINSTANCE __stdcall WS_ShellExecuteAFixup(
             {
                 // Release level logging for detection
                 bool temp = g_psf_NoLogging;
-                g_psf_NoLogging = false; Log(L"[%d] (Windows.Storage)ShellExecute(%ls, %ls, %ls, %ls, %d)", dllInstance, wcOperation, wcFile, wcParameters, wcDirectory, nShowCmd);
+                g_psf_NoLogging = false; 
+                Log(L"[%d] (Windows.Storage)ShellExecute(%ls, %ls, %ls, %ls, %d)", dllInstance, wcOperation, wcFile, wcParameters, wcDirectory, nShowCmd);
                 LogCallingModule();
                 g_psf_NoLogging = temp;
             }

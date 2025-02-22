@@ -23,6 +23,14 @@
 //#define MOREDEBUG 1
 #endif
 
+#ifdef _M_IX86
+#pragma comment(linker, "/EXPORT:GetFileAttributesFixupAnsi_Fixup=impl::_GetFileAttributesFixupW.ansi")  // A test to see if exporting these names helps ProcessMonitor stack traces.
+#pragma comment(linker, "/EXPORT:GetFileAttributesFixupWide_Fixup=impl::_GetFileAttributesFixupW.wide")  // A test to see if exporting these names helps ProcessMonitor stack traces.
+#else
+#pragma comment(linker, "/EXPORT:GetFileAttributesFixupAnsi_Fixup=impl::GetFileAttributesFixupW.ansi")  // A test to see if exporting these names helps ProcessMonitor stack traces.
+#pragma comment(linker, "/EXPORT:GetFileAttributesFixupWide_Fixup=impl::GetFileAttributesFixupW.wide")  // A test to see if exporting these names helps ProcessMonitor stack traces.
+#endif
+
 
 #define WRAPPER_GETFILEATTRIBUTES(theDestinationFilename, debug, moredebug, wsWhich) \
     { \
@@ -110,21 +118,35 @@ DWORD __stdcall GetFileAttributesFixup(_In_ const CharT* fileName) noexcept
                 switch (cohorts.file_mfr.Request_MfrPathType)
                 {
                 case mfr::mfr_path_types::in_native_area:
-                    if (cohorts.map.Valid_mapping)
+                    if (cohorts.map.Valid_mapping == mfr::mfr_enabled_types::enabled)
                     {
                         switch (cohorts.map.RedirectionFlags)
                         {
                         case mfr::mfr_redirect_flags::prefer_redirection_local:
-                            if (!cohorts.map.IsAnExclusionToRedirect)
+                            if (cohorts.map.IsAnExclusionToRedirect == mfr::mfr_exclusion_types::not_excluded)
                             {
-                                // try the request path, which must be the local redirected version by definition, and then a package equivalent = 
-                                    WRAPPER_GETFILEATTRIBUTES(cohorts.WsRedirected, debug, moreDebug, L"WsRedirected");  // returns if successful.                                
+                                // try the request path, which must be the local redirected version by definition, and then a package equivalent
+                                // This wrapper is a macro returns if successful; we try to avoid checking the same path twice.
+                                WRAPPER_GETFILEATTRIBUTES(cohorts.WsRedirected, debug, moreDebug, L"WsRedirected");  // returns if successful.                                
+                            
+                                if (!cohorts.WsPackage.compare(cohorts.WsRedirected))
+                                {
+                                    WRAPPER_GETFILEATTRIBUTES(cohorts.WsPackage, debug, moreDebug, L"WsPackage");  // returns if successful.
+                                }
+                                if (!cohorts.WsRequested.compare(cohorts.WsRedirected) &&
+                                    !cohorts.WsRequested.compare(cohorts.WsPackage))
+                                {
+                                    WRAPPER_GETFILEATTRIBUTES(cohorts.WsRequested, debug, moreDebug, L"WsRequested");   // returns if successful.
+                                }
                             }
-                            WRAPPER_GETFILEATTRIBUTES(cohorts.WsPackage, debug, moreDebug, L"WsPackage");  // returns if successful.
-
-                            if (!cohorts.WsPackage.compare(cohorts.WsRequested))
+                            else
                             {
-                                WRAPPER_GETFILEATTRIBUTES(cohorts.WsRequested, debug, moreDebug, L"WsRequested");   // returns if successful.
+                                WRAPPER_GETFILEATTRIBUTES(cohorts.WsPackage, debug, moreDebug, L"WsPackage");  // returns if successful.
+
+                                if (cohorts.WsRequested.compare(cohorts.WsPackage)!= 0)
+                                {
+                                    WRAPPER_GETFILEATTRIBUTES(cohorts.WsRequested, debug, moreDebug, L"WsRequested");   // returns if successful.
+                                }
                             }
 
                             // Everything failed if here
@@ -137,20 +159,35 @@ DWORD __stdcall GetFileAttributesFixup(_In_ const CharT* fileName) noexcept
                                 SetLastError(ERROR_PATH_NOT_FOUND);
                             }
 #if _DEBUG
-                            Log(L"[%d] GetFileAttributes returns with result 0x%x and error =0x%x", dllInstance, retfinal, GetLastError());
+                            Log(L"[%d] GetFileAttributes: returns with result 0x%x and error =0x%x", dllInstance, retfinal, GetLastError());
 #endif
                             return retfinal;
                         case mfr::mfr_redirect_flags::prefer_redirection_containerized:
                         case mfr::mfr_redirect_flags::prefer_redirection_if_package_vfs:
-                            if (!cohorts.map.IsAnExclusionToRedirect)
+                            if (cohorts.map.IsAnExclusionToRedirect == mfr::mfr_exclusion_types::not_excluded)
                             {
                                 // try the redirected path, then package, then native.
                                 WRAPPER_GETFILEATTRIBUTES(cohorts.WsRedirected, debug, moreDebug, L"WsRedirected");   // returns if successful.
+                            
+                                if (cohorts.WsPackage.compare(cohorts.WsRedirected) != 0)
+                                {
+                                    WRAPPER_GETFILEATTRIBUTES(cohorts.WsPackage, debug, moreDebug, L"WsPackage");   // returns if successful.
+                                }
+                                if (cohorts.WsNative.compare(cohorts.WsRedirected) != 0 &&
+                                    cohorts.WsNative.compare(cohorts.WsPackage) != 0)
+                                {
+                                    WRAPPER_GETFILEATTRIBUTES(cohorts.WsNative, debug, moreDebug, L"WsNative");   // returns if successful.
+                                }
                             }
+                            else
+                            {
+                                WRAPPER_GETFILEATTRIBUTES(cohorts.WsPackage, debug, moreDebug, L"WsPackage");   // returns if successful.
 
-                            WRAPPER_GETFILEATTRIBUTES(cohorts.WsPackage, debug, moreDebug, L"WsPackage");   // returns if successful.
-
-                            WRAPPER_GETFILEATTRIBUTES(cohorts.WsNative, debug, moreDebug, L"WsNative");   // returns if successful.
+                                if (cohorts.WsNative.compare(cohorts.WsPackage) != 0)
+                                {
+                                    WRAPPER_GETFILEATTRIBUTES(cohorts.WsNative, debug, moreDebug, L"WsNative");   // returns if successful.
+                                }
+                            }
 
                             // All failed if here
                             if (anyFileNotFound)
@@ -162,7 +199,7 @@ DWORD __stdcall GetFileAttributesFixup(_In_ const CharT* fileName) noexcept
                                 SetLastError(ERROR_PATH_NOT_FOUND);
                             }
 #if _DEBUG
-                            Log(L"[%d] GetFileAttributes returns with result 0x%x and error =0x%x", dllInstance, retfinal, GetLastError());
+                            Log(L"[%d] GetFileAttributes: returns with result 0x%x and error =0x%x", dllInstance, retfinal, GetLastError());
 #endif
                             return retfinal;
                         case mfr::mfr_redirect_flags::prefer_redirection_none:
@@ -175,17 +212,17 @@ DWORD __stdcall GetFileAttributesFixup(_In_ const CharT* fileName) noexcept
                     break;
                 case mfr::mfr_path_types::in_package_pvad_area:
                     /// NOTE: Ilv does not allow accessing PVAD files in the package.  PERIOD!!!  So this call will always fail.
-                    if (cohorts.map.Valid_mapping)
+                    if (cohorts.map.Valid_mapping == mfr::mfr_enabled_types::enabled)
                     {
-                        if (!cohorts.map.IsAnExclusionToRedirect)
+                        if (cohorts.map.IsAnExclusionToRedirect == mfr::mfr_exclusion_types::not_excluded)
                         {
-                            Log(L"[%d] GetFileAttributes try redirected... ", dllInstance);
+                            Log(L"[%d] GetFileAttributes: try redirected... ", dllInstance);
                             //// try the redirected path, then package, then don't need native.
                             WRAPPER_GETFILEATTRIBUTES(cohorts.WsRedirected, debug, moreDebug, L"WsRedirected");   // returns if successful.
                         }
-                        Log(L"[%d] GetFileAttributes still here, try package... ", dllInstance);
+                        Log(L"[%d] GetFileAttributes: still here, try package... ", dllInstance);
                         WRAPPER_GETFILEATTRIBUTES(cohorts.WsPackage, debug, moreDebug, L"WsPackage");   // returns if successful.
-                        Log(L"[%d] GetFileAttributes still here, try package... ", dllInstance);
+                        Log(L"[%d] GetFileAttributes: still here, try package... ", dllInstance);
 
                         // Both failed if here
                         if (anyFileNotFound)
@@ -197,23 +234,30 @@ DWORD __stdcall GetFileAttributesFixup(_In_ const CharT* fileName) noexcept
                             SetLastError(ERROR_PATH_NOT_FOUND);
                         }
 #if _DEBUG
-                        Log(L"[%d] GetFileAttributes returns with result 0x%x and error =0x%x", dllInstance, retfinal, GetLastError());
+                        Log(L"[%d] GetFileAttributes: returns with result 0x%x and error =0x%x", dllInstance, retfinal, GetLastError());
 #endif
                         return retfinal;
                     }
                     break;
                 case mfr::mfr_path_types::in_package_vfs_area:
-                    if (cohorts.map.Valid_mapping)
+                    if (cohorts.map.Valid_mapping == mfr::mfr_enabled_types::enabled)
                     {
                         switch (cohorts.map.RedirectionFlags)
                         {
                         case mfr::mfr_redirect_flags::prefer_redirection_local:
-                            if (!cohorts.map.IsAnExclusionToRedirect)
+                            if (cohorts.map.IsAnExclusionToRedirect == mfr::mfr_exclusion_types::not_excluded)
                             {
                                 WRAPPER_GETFILEATTRIBUTES(cohorts.WsRedirected, debug, moreDebug, L"WsRedirected");   // returns if successful.                              
+                                if (cohorts.WsPackage.compare(cohorts.WsRedirected) != 0)
+                                {
+                                    WRAPPER_GETFILEATTRIBUTES(cohorts.WsPackage, debug, moreDebug, L"WsPackage");   // returns if successful.
+                                }
+                            }
+                            else
+                            {
+                                WRAPPER_GETFILEATTRIBUTES(cohorts.WsPackage, debug, moreDebug, L"WsPackage");   // returns if successful.
                             }
 
-                            WRAPPER_GETFILEATTRIBUTES(cohorts.WsPackage, debug, moreDebug, L"WsPackage");   // returns if successful.
 
                             // Both failed if here
                             if (anyFileNotFound)
@@ -225,20 +269,34 @@ DWORD __stdcall GetFileAttributesFixup(_In_ const CharT* fileName) noexcept
                                 SetLastError(ERROR_PATH_NOT_FOUND);
                             }
 #if _DEBUG
-                            Log(L"[%d] GetFileAttributes returns with result 0x%x and error =0x%x", dllInstance, retfinal, GetLastError());
+                            Log(L"[%d] GetFileAttributes: returns with result 0x%x and error =0x%x", dllInstance, retfinal, GetLastError());
 #endif
                             return retfinal;
                         case mfr::mfr_redirect_flags::prefer_redirection_containerized:
                         case mfr::mfr_redirect_flags::prefer_redirection_if_package_vfs:
-                            if (!cohorts.map.IsAnExclusionToRedirect)
+                            if (cohorts.map.IsAnExclusionToRedirect == mfr::mfr_exclusion_types::not_excluded)
                             {
                                 // try the redirected path, then package, then native.
                                 WRAPPER_GETFILEATTRIBUTES(cohorts.WsRedirected, debug, moreDebug, L"WsRedirected");  // returns if successful.
+                                if (cohorts.WsPackage.compare(cohorts.WsRedirected)!=0)
+                                {
+                                    WRAPPER_GETFILEATTRIBUTES(cohorts.WsPackage, debug, moreDebug, L"WsPackage");  // returns if successful.
+                                }
+                                if (cohorts.WsNative.compare(cohorts.WsRedirected) != 0 &&
+                                    cohorts.WsNative.compare(cohorts.WsPackage) != 0)
+                                {
+                                    WRAPPER_GETFILEATTRIBUTES(cohorts.WsNative, debug, moreDebug, L"WsNative");  // returns if successful.
+                                }
                             }
+                            else
+                            {
 
-                            WRAPPER_GETFILEATTRIBUTES(cohorts.WsPackage, debug, moreDebug, L"WsPackage");  // returns if successful.
-
-                            WRAPPER_GETFILEATTRIBUTES(cohorts.WsNative, debug, moreDebug, L"WsNative");  // returns if successful.
+                                WRAPPER_GETFILEATTRIBUTES(cohorts.WsPackage, debug, moreDebug, L"WsPackage");  // returns if successful.
+                                if (cohorts.WsNative.compare(cohorts.WsPackage) != 0)
+                                {
+                                    WRAPPER_GETFILEATTRIBUTES(cohorts.WsNative, debug, moreDebug, L"WsNative");  // returns if successful.
+                                }
+                            }
 
                             // All failed if here
                             if (anyFileNotFound)
@@ -250,7 +308,7 @@ DWORD __stdcall GetFileAttributesFixup(_In_ const CharT* fileName) noexcept
                                 SetLastError(ERROR_PATH_NOT_FOUND);
                             }
 #if _DEBUG
-                            Log(L"[%d] GetFileAttributes returns with result 0x%x and error =0x%x", dllInstance, retfinal, GetLastError());
+                            Log(L"[%d] GetFileAttributes: returns with result 0x%x and error =0x%x", dllInstance, retfinal, GetLastError());
 #endif
                             return retfinal;
                         case mfr::mfr_redirect_flags::prefer_redirection_none:
@@ -262,7 +320,7 @@ DWORD __stdcall GetFileAttributesFixup(_In_ const CharT* fileName) noexcept
                     }
                     break;
                 case mfr::mfr_path_types::in_redirection_area_writablepackageroot:
-                    if (cohorts.map.Valid_mapping)
+                    if (cohorts.map.Valid_mapping == mfr::mfr_enabled_types::enabled)
                     {
                         switch (cohorts.map.RedirectionFlags)
                         {
@@ -271,19 +329,32 @@ DWORD __stdcall GetFileAttributesFixup(_In_ const CharT* fileName) noexcept
                             break;
                         case mfr::mfr_redirect_flags::prefer_redirection_containerized:
                         case mfr::mfr_redirect_flags::prefer_redirection_if_package_vfs:
-                            if (!cohorts.map.IsAnExclusionToRedirect)
+                            if (cohorts.map.IsAnExclusionToRedirect == mfr::mfr_exclusion_types::not_excluded)
                             {
                                 // try the redirected path, then package, then native if relevant.
                                 WRAPPER_GETFILEATTRIBUTES(cohorts.WsRedirected, debug, moreDebug, L"WsRedirected");  // returns if successful.
+                                if (cohorts.WsPackage.compare(cohorts.WsRedirected) != 0)
+                                {
+                                    WRAPPER_GETFILEATTRIBUTES(cohorts.WsPackage, debug, moreDebug, L"WsPackage");  // returns if successful.
+                                }
+                                if (cohorts.UsingNative)
+                                {
+                                    if (cohorts.WsNative.compare(cohorts.WsRedirected) !=0 &&
+                                        cohorts.WsNative.compare(cohorts.WsPackage) != 0)
+                                    {
+                                        WRAPPER_GETFILEATTRIBUTES(cohorts.WsNative, debug, moreDebug, L"WsNative");  // returns if successful.
+                                    }
+                                }
                             }
-
-                            WRAPPER_GETFILEATTRIBUTES(cohorts.WsPackage, debug, moreDebug, L"WsPackage");  // returns if successful.
-
-                            if (cohorts.UsingNative)
+                            else
                             {
-                                WRAPPER_GETFILEATTRIBUTES(cohorts.WsNative, debug, moreDebug, L"WsNative");  // returns if successful.
-                            }
+                                WRAPPER_GETFILEATTRIBUTES(cohorts.WsPackage, debug, moreDebug, L"WsPackage");  // returns if successful.
 
+                                if (cohorts.UsingNative)
+                                {
+                                    WRAPPER_GETFILEATTRIBUTES(cohorts.WsNative, debug, moreDebug, L"WsNative");  // returns if successful.
+                                }
+                            }
 
                             // all failed if still here
                             if (anyFileNotFound)
@@ -295,7 +366,7 @@ DWORD __stdcall GetFileAttributesFixup(_In_ const CharT* fileName) noexcept
                                 SetLastError(ERROR_PATH_NOT_FOUND);
                             }
 #if _DEBUG
-                            Log(L"[%d] GetFileAttributes returns with result 0x%x and error =0x%x", dllInstance, retfinal, GetLastError());
+                            Log(L"[%d] GetFileAttributes: returns with result 0x%x and error =0x%x", dllInstance, retfinal, GetLastError());
 #endif
                             return retfinal;
                         case mfr::mfr_redirect_flags::prefer_redirection_none:
@@ -324,11 +395,11 @@ DWORD __stdcall GetFileAttributesFixup(_In_ const CharT* fileName) noexcept
                 std::wstring UseFile = DetermineIlvPathForReadOperations(cohorts, dllInstance, moreDebug);
                 // In a redirect to local scenario, we are responsible for determing if source is local or in package
 #if _DEBUG
-                Log(L"[%d] GetFileAttributes in ILV Mode using %s", dllInstance, UseFile.c_str());
+                Log(L"[%d] GetFileAttributes: in ILV Mode using %s", dllInstance, UseFile.c_str());
 #endif
                 UseFile = SelectLocalOrPackageForRead(UseFile, cohorts.WsPackage);
 #if _DEBUG
-                Log(L"[%d] GetFileAttributes in ILV Mode now using %s", dllInstance, UseFile.c_str());
+                Log(L"[%d] GetFileAttributes: in ILV Mode now using %s", dllInstance, UseFile.c_str());
 #endif
                 WRAPPER_GETFILEATTRIBUTES(UseFile, debug, moreDebug, L"IlvMode");  // returns if successful.
                 return retfinal;
@@ -341,7 +412,7 @@ DWORD __stdcall GetFileAttributesFixup(_In_ const CharT* fileName) noexcept
 #else
     catch (...)
     {
-        Log(L"[%d] GetFileAttributes Exception=0x%x", dllInstance, GetLastError());
+        Log(L"[%d] GetFileAttributes: Exception=0x%x", dllInstance, GetLastError());
     }
 #endif
     if (fileName != nullptr)

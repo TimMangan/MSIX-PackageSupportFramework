@@ -74,8 +74,20 @@ namespace psf
             {
                 if (target->Target != nullptr)
                 {
-                    check_win32(::PSFRegister(&target->Target, target->Detour));
-                   target->Registered = true;
+                    try
+                    {
+                        check_win32(::PSFRegister(&target->Target, target->Detour));
+                        target->Registered = true;
+                    }
+                    catch (...)
+                    {
+#if DEBUG 
+#if MOREDEBUG
+                        pvtLog(L">>>>>Register fixup EXCEPTION from 0x0%x to 0x0%x", target->Target, target->Detour);
+#endif
+#endif
+                        target->Registered = false;
+                    }
                 }
                 else
                 {
@@ -85,23 +97,7 @@ namespace psf
         });
     }
 
-//#if _DEBUG
-#if MOREDEBUG
-    inline int attach_count_all()
-    {
-        int count = 0;
-        std::for_each(details::fixups_begin, details::fixups_end, [&](details::detour_function_pair* target)
-        {
-            if (target && !target->Registered)
-            {
-                check_win32(::PSFRegister(&target->Target, target->Detour));
-                target->Registered = true;
-                count++;
-            }
-        });
-        return count;
-    }
-
+#if _DEBUG
     inline void pvtLog(const wchar_t* fmt, ...)
     {
         try
@@ -131,8 +127,35 @@ namespace psf
             ::OutputDebugStringA("Exception in wide Log()");
             ::OutputDebugStringW(fmt);
         }
-       
     }
+#endif
+
+//#if _DEBUG
+#if MOREDEBUG
+    inline int attach_count_all()
+    {
+        int count = 0;
+        std::for_each(details::fixups_begin, details::fixups_end, [&](details::detour_function_pair* target)
+        {
+            if (target && !target->Registered)
+            {
+                try
+                {
+                    check_win32(::PSFRegister(&target->Target, target->Detour));
+                    target->Registered = true;
+                    count++; 
+                }
+                catch (...)
+                {
+                    pvtLog(L">>>>>Register fixup EXCEPTION from 0x0%x to 0x0%x", target->Target, target->Detour);
+                    target->Registered = false;
+                }
+            }
+        });
+        return count;
+    }
+
+
 
     inline void attach_count_all_debug()
     {
@@ -145,32 +168,39 @@ namespace psf
                 {
 #if MOREDEBUG
 #if DEBUG_NEW_FIXUPS
-                    pvtLog(L">>>>>Register FIXUP from 0x0%x to 0x0%x", target->Target, target->Detour);
+                    pvtLog(L">>>>>Register FIXUP from 0x0%x to 0x0%x ", target->Target, target->Detour); 
                     if (target->Target == (void*)0x743d77a0)   //ws_ShellExecuteExW
                     {
-                        pvtLog(L">>>>>Registering (WS)ShellExecuteExW");
+                        pvtLog(L"is (WS)ShellExecuteExW");
                     }
                     if (target->Target == (void*)0x743d78e0)   //ws_ShellExecuteW
                     {
-                        pvtLog(L">>>>>Registering (WS)ShellExecuteW");
+                        pvtLog(L"is (WS)ShellExecuteW");
                     }
                     if (target->Target == (void*)0x75cac880)    // KernelBase MoveFileExW
                     {
-                        pvtLog(L">>>>>Registering (KernelBase)MoveFileExW");
+                        pvtLog(L"is (KernelBase)MoveFileExW");
                     }
                     if (target->Target == (void*)0x77306a40)    // ntdll ZwQueryDirectoryFile
                     {
-                        pvtLog(L">>>>>Registering (ntdll)ZwQueryDirectoryFile");
+                        pvtLog(L"is  (ntdll)ZwQueryDirectoryFile");
                     }
 #endif
 #endif
-                    check_win32(::PSFRegister(&target->Target, target->Detour));
-                    target->Registered = true;
+                    try
+                    {
+                        check_win32(::PSFRegister(&target->Target, target->Detour));
+                        target->Registered = true;
 #if MOREDEBUG
 #if DEBUG_NEW_FIXUPS
-                    pvtLog(L"<<<<<Registered FIXUP Complete.\n");
+                        pvtLog(L"<<<<<Registered FIXUP Complete.\n");
 #endif
 #endif
+                    }
+                    catch (...)
+                    {
+                        pvtLog(L"<<<<EXCEPTION registering FIXUP\n");
+                    }
                 }
                 else
                 {

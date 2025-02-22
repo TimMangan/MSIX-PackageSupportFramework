@@ -47,44 +47,54 @@ namespace mfr
 
     mfr_path_types Get_ManagedPathTypeForDriveAbsolute(std::filesystem::path path)
     {
-        if (pathString_isSubsetOf_Path(g_writablePackageRootPath.generic_wstring().c_str(), path))
+        std::filesystem::path forwardPath = path.generic_string();  // get rid of "/" issue by changing all "\\" to "/" for the comparison.
+        //if (pathString_isSubsetOf_Path(g_writablePackageRootPath.generic_wstring().c_str(), path))
+        if (pathString_isSubsetOf_Path(g_writablePackageRootPath.generic_wstring().c_str(), forwardPath))
         {
             return mfr_path_types::in_redirection_area_writablepackageroot;
         }
-        if (pathString_isSubsetOf_Path(g_short_writablePackageRootPath.generic_wstring().c_str(), path))
+        //if (pathString_isSubsetOf_Path(g_short_writablePackageRootPath.generic_wstring().c_str(), path))
+        if (pathString_isSubsetOf_Path(g_short_writablePackageRootPath.generic_wstring().c_str(), forwardPath))
         {
             return mfr_path_types::in_redirection_area_writablepackageroot;
         }
 
-        if (pathString_isSubsetOf_Path(g_redirectRootPath.generic_wstring().c_str(), path))
+        //if (pathString_isSubsetOf_Path(g_redirectRootPath.generic_wstring().c_str(), path))
+        if (pathString_isSubsetOf_Path(g_redirectRootPath.generic_wstring().c_str(), forwardPath))
         {
             return mfr_path_types::in_redirection_area_other;
         }
-        if (pathString_isSubsetOf_Path(g_short_redirectRootPath.generic_wstring().c_str(), path))
+        //if (pathString_isSubsetOf_Path(g_short_redirectRootPath.generic_wstring().c_str(), path))
+        if (pathString_isSubsetOf_Path(g_short_redirectRootPath.generic_wstring().c_str(), forwardPath))
         {
             return mfr_path_types::in_redirection_area_other;
         }
 
-        if (pathString_isSubsetOf_Path(g_packageVfsRootPath.generic_wstring().c_str(), path))
+        //if (pathString_isSubsetOf_Path(g_packageVfsRootPath.generic_wstring().c_str(), path))
+        if (pathString_isSubsetOf_Path(g_packageVfsRootPath.generic_wstring().c_str(), forwardPath))
         {
             return mfr_path_types::in_package_vfs_area;
         }
-        if (pathString_isSubsetOf_Path(g_short_packageVfsRootPath.generic_wstring().c_str(), path))
+        //if (pathString_isSubsetOf_Path(g_short_packageVfsRootPath.generic_wstring().c_str(), path))
+        if (pathString_isSubsetOf_Path(g_short_packageVfsRootPath.generic_wstring().c_str(), forwardPath))
         {
             return mfr_path_types::in_package_vfs_area;
         }
 
-        if (pathString_isSubsetOf_Path(g_packageRootPath.generic_wstring().c_str(), path))
+        //if (pathString_isSubsetOf_Path(g_packageRootPath.generic_wstring().c_str(), path))
+        if (pathString_isSubsetOf_Path(g_packageRootPath.generic_wstring().c_str(), forwardPath))
         {
             return mfr_path_types::in_package_pvad_area;
         }
-        if (pathString_isSubsetOf_Path(g_short_packageRootPath.generic_wstring().c_str(), path))
+        //if (pathString_isSubsetOf_Path(g_short_packageRootPath.generic_wstring().c_str(), path))
+        if (pathString_isSubsetOf_Path(g_short_packageRootPath.generic_wstring().c_str(), forwardPath))
         {
             return mfr_path_types::in_package_pvad_area;
         }
 
         //Log(L"FID_RootDrive  %s", FID_RootDrive.generic_wstring().c_str());
-        if (!pathString_isSubsetOf_Path(FID_RootDrive.generic_wstring().c_str(), path))
+        //if (!pathString_isSubsetOf_Path(FID_RootDrive.generic_wstring().c_str(), path))
+        if (!pathString_isSubsetOf_Path(FID_RootDrive.generic_wstring().c_str(), forwardPath))
         {
             return mfr_path_types::in_other_drive_area;
         }
@@ -108,7 +118,6 @@ namespace mfr
             outputPath.Request_MfrPathType = mfr::Get_ManagedPathTypeForDriveAbsolute(outputPath.Request_NormalizedPath);
             break;
         case psf::dos_path_type::drive_relative:   // E.g. "C:path\to\file"  or shell::{...}
-
             outputPath.Request_NormalizedPath = drive_relative_to_normal(inputPath);
             outputPath.Request_MfrPathType = mfr::Get_ManagedPathTypeForDriveAbsolute(outputPath.Request_NormalizedPath);
             break;

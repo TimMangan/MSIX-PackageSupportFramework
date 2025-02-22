@@ -9,14 +9,16 @@
 #include "PathUtilities.h"
 #include <psf_logging.h>
 
+
 #if _DEBUG
-//#define MOREDEBUG 1
+#define MOREDEBUG 1
 #endif
 
 namespace mfr
 {
 
     std::vector<mfr_folder_mapping> g_MfrFolderMappings;
+    std::vector<mfr_vfs_remapping> g_MfrVfsRemappings;
 
     
 
@@ -33,468 +35,754 @@ namespace mfr
         FID_Initialize(); 
 
 #if MOREDEBUG
-        Log("\t\tMFRFixup Initialize_MFR_Mappings: post FID");
-#endif  
+        Log(L"\t\t\t\tMFRFixup FID_Initialize: FID_UserProfiles = %s", FID_UserProfiles.wstring().c_str());
+        Log(L"\t\t\t\tMFRFixup FID_Initialize: FID_UserFolder =   %s", FID_UserFolder.wstring().c_str());
+        Log(L"\t\t\t\tMFRFixup FID_Initialize: FID_Profile =      %s", FID_Profile.wstring().c_str());
 
-        g_MfrFolderMappings.push_back(mfr::mfr_folder_mapping {  /*Valid_mapping =*/ true, /*IsAnExclusionToRedirect =*/ false,
+        Log("\t\t\tMFRFixup Initialize_MFR_Mappings: post FID");
+#endif  
+        // This first set are a set of exact-match special exceptions that we need to be handled as native paths.  The system might layer into the package/redirected paths.
+        g_MfrFolderMappings.push_back(mfr::mfr_folder_mapping{ mfr_enabled_types::enabled,
+                                                        mfr_exactmatchonly_types::exactmatchonly,
+                                                        mfr_exclusion_types::not_excluded,
+                                                        mfr::mfr_redirect_flags::prefer_redirection_local,
+                                                        FID_RootDrive,  // without trailing backslash
+                                                        L"AppVPackageDrive",
+                                                        L"AppVPackageDrive",
+                                                        g_packageVfsRootPath / L"AppVPackageDrive"sv,
+                                                        false,
+                                                        g_writablePackageRootPath / L"VFS"sv / L"AppVPackageDrive"sv });
+        g_MfrFolderMappings.push_back(mfr::mfr_folder_mapping{ mfr_enabled_types::enabled,
+                                                        mfr_exactmatchonly_types::exactmatchonly,
+                                                        mfr_exclusion_types::not_excluded,
+                                                        mfr::mfr_redirect_flags::prefer_redirection_local,
+                                                        FID_RootDrive / LR"(\)"sv, // and with trailing backslash
+                                                        L"AppVPackageDrive",
+                                                        L"AppVPackageDrive",
+                                                        g_packageVfsRootPath / L"AppVPackageDrive"sv,
+                                                        false,
+                                                        g_writablePackageRootPath / L"VFS"sv / L"AppVPackageDrive"sv });
+        g_MfrFolderMappings.push_back(mfr::mfr_folder_mapping{ mfr_enabled_types::enabled,
+                                                        mfr_exactmatchonly_types::exactmatchonly,
+                                                        mfr_exclusion_types::not_excluded,
+                                                        mfr::mfr_redirect_flags::prefer_redirection_local,
+                                                        FID_UserProfiles,
+                                                        L"UserProfiles",
+                                                        L"UserProfiles",
+                                                        g_packageVfsRootPath / L"UserProfiles"sv,
+                                                        false,
+                                                        g_writablePackageRootPath / L"VFS"sv / L"UserProfiles"sv });
+        g_MfrFolderMappings.push_back(mfr::mfr_folder_mapping{ mfr_enabled_types::enabled,
+                                                                mfr_exactmatchonly_types::exactmatchonly,
+                                                                mfr_exclusion_types::not_excluded,
+                                                                mfr::mfr_redirect_flags::prefer_redirection_local,
+                                                                FID_UserFolder,                           // This path is the users\username folder
+                                                                L"Profile",  
+                                                                L"Profile",
+                                                                g_packageVfsRootPath / L"Profile"sv,
+                                                                false,
+                                                                g_writablePackageRootPath / L"VFS"sv / L"Profile"sv });
+        g_MfrFolderMappings.push_back(mfr::mfr_folder_mapping{ mfr_enabled_types::enabled,
+                                                                mfr_exactmatchonly_types::exactmatchonly,
+                                                                mfr_exclusion_types::not_excluded,
+                                                                mfr::mfr_redirect_flags::prefer_redirection_local,
+                                                                FID_Profile,
+                                                                L"Profile\\AppData",
+                                                                L"Profile\\AppData",
+                                                                g_packageVfsRootPath / L"Profile"sv / L"AppData"sv ,
+                                                                false,
+                                                                g_writablePackageRootPath / L"VFS"sv / L"Profile"sv / L"AppData"sv });
+
+
+        // This is the normal ordered list of folders that we will redirect.
+        g_MfrFolderMappings.push_back(mfr::mfr_folder_mapping { /*Valid_mapping =*/ mfr_enabled_types::enabled, 
+                                                                /*IsExactMatchOnly */ mfr_exactmatchonly_types::not_exactmatchonly,
+                                                                /*IsAnExclusionToRedirect =*/ mfr_exclusion_types::not_excluded,
+                                                                /*RedirectionFlags =*/ mfr::mfr_redirect_flags::prefer_redirection_containerized,
                                                                 /*NativePathBase =*/ FID_System32 / LR"(catroot2)"sv,
                                                                 /*FolderId =*/ L"FOLDERID_System\\Catroot2",
                                                                 /*VFSFolderName =*/ L"AppVSystem32Catroot2",
                                                                 /*PackagePathBase =*/ g_packageVfsRootPath / L"AppVSystem32Catroot2"sv,
                                                                 /*DoesRuntimeMapNativeToVFS =*/ true,
-                                                                /*RedirectedPathBase =*/g_writablePackageRootPath / L"VFS"sv / L"AppVSystem32Catroot2"sv,
-                                                                /*RedirectionFlags =*/ mfr::mfr_redirect_flags::prefer_redirection_containerized });
+                                                                /*RedirectedPathBase =*/g_writablePackageRootPath / L"VFS"sv / L"AppVSystem32Catroot2"sv });
 
 
-        g_MfrFolderMappings.push_back(mfr::mfr_folder_mapping{ true, false, 
+        g_MfrFolderMappings.push_back(mfr::mfr_folder_mapping{ mfr_enabled_types::enabled,
+                                                                mfr_exactmatchonly_types::not_exactmatchonly,
+                                                                mfr_exclusion_types::not_excluded,
+                                                                mfr::mfr_redirect_flags::prefer_redirection_containerized,
                                                                 FID_System32 / LR"(catroot)"sv,       
                                                                 L"FOLDERID_System\\Catroot",        
                                                                 L"AppVSystem32Catroot",     
                                                                 g_packageVfsRootPath / L"AppVSystem32Catroot"sv,     
                                                                 true,  
-                                                                g_writablePackageRootPath / L"VFS"sv / L"AppVSystem32Catroot"sv,     
-                                                                mfr::mfr_redirect_flags::prefer_redirection_containerized });
+                                                                g_writablePackageRootPath / L"VFS"sv / L"AppVSystem32Catroot"sv });
 
 
-        g_MfrFolderMappings.push_back(mfr::mfr_folder_mapping{ true, false,
+        g_MfrFolderMappings.push_back(mfr::mfr_folder_mapping{ mfr_enabled_types::enabled,
+                                                                mfr_exactmatchonly_types::not_exactmatchonly,
+                                                                mfr_exclusion_types::not_excluded,
+                                                                mfr::mfr_redirect_flags::prefer_redirection_containerized,
                                                                 FID_System32 / LR"(drivers)"sv / LR"(etc)"sv,
                                                                 L"FOLDERID_System\\drivers\\etc",
                                                                 L"AppVSystem32DriversEtc",
                                                                 g_packageVfsRootPath / L"AppVSystem32DriversEtc"sv,
                                                                 true,
-                                                                g_writablePackageRootPath / L"VFS"sv / L"AppVSystem32DriversEtc"sv,
-                                                                mfr::mfr_redirect_flags::prefer_redirection_containerized });
-        g_MfrFolderMappings.push_back(mfr::mfr_folder_mapping{ true, false,
+                                                                g_writablePackageRootPath / L"VFS"sv / L"AppVSystem32DriversEtc"sv });
+        g_MfrFolderMappings.push_back(mfr::mfr_folder_mapping{ mfr_enabled_types::enabled,
+                                                                mfr_exactmatchonly_types::not_exactmatchonly,
+                                                                mfr_exclusion_types::not_excluded,
+                                                                mfr::mfr_redirect_flags::prefer_redirection_containerized,
                                                                 FID_System32 / LR"(driverstore)"sv,
                                                                 L"FOLDERID_System\\driverstore",
                                                                 L"AppVSystem32Driverstore", g_packageVfsRootPath / L"AppVSystem32Driverstore"sv, 
                                                                 true,
-                                                                g_writablePackageRootPath / L"VFS"sv / L"AppVSystem32Driverstore"sv,
-                                                                mfr::mfr_redirect_flags::prefer_redirection_containerized });
-        g_MfrFolderMappings.push_back(mfr::mfr_folder_mapping{ true, false,
+                                                                g_writablePackageRootPath / L"VFS"sv / L"AppVSystem32Driverstore"sv });
+        g_MfrFolderMappings.push_back(mfr::mfr_folder_mapping{ mfr_enabled_types::enabled,
+                                                                mfr_exactmatchonly_types::not_exactmatchonly,
+                                                                mfr_exclusion_types::not_excluded,
+                                                                mfr::mfr_redirect_flags::prefer_redirection_containerized,
                                                                 FID_System32 / LR"(logfiles)"sv,
                                                                 L"FOLDERID_System\\logfiles",
                                                                 L"AppVSystem32Logfiles",
                                                                 g_packageVfsRootPath / L"AppVSystem32Logfiles"sv,
                                                                 true,
-                                                                g_writablePackageRootPath / L"VFS"sv / L"AppVSystem32Logfiles"sv,
-                                                                mfr::mfr_redirect_flags::prefer_redirection_containerized });
-        g_MfrFolderMappings.push_back(mfr::mfr_folder_mapping{ true, false,
+                                                                g_writablePackageRootPath / L"VFS"sv / L"AppVSystem32Logfiles"sv });
+        g_MfrFolderMappings.push_back(mfr::mfr_folder_mapping{ mfr_enabled_types::enabled,
+                                                                mfr_exactmatchonly_types::not_exactmatchonly,
+                                                                mfr_exclusion_types::not_excluded,
+                                                                mfr::mfr_redirect_flags::prefer_redirection_containerized,
                                                                 FID_System32 / LR"(spool)"sv,
                                                                 L"FOLDERID_System\\spool",
                                                                 L"AppVSystem32Spool",
                                                                 g_packageVfsRootPath / L"AppVSystem32Spool"sv,
                                                                 true,
-                                                                g_writablePackageRootPath / L"VFS"sv / L"AppVSystem32Spool"sv,
-                                                                mfr::mfr_redirect_flags::prefer_redirection_containerized });
+                                                                g_writablePackageRootPath / L"VFS"sv / L"AppVSystem32Spool"sv });
 
-        g_MfrFolderMappings.push_back(mfr::mfr_folder_mapping{ true, false,
+        g_MfrFolderMappings.push_back(mfr::mfr_folder_mapping{ mfr_enabled_types::enabled,
+                                                                mfr_exactmatchonly_types::not_exactmatchonly,
+                                                                mfr_exclusion_types::not_excluded,
+                                                                mfr::mfr_redirect_flags::prefer_redirection_containerized,
                                                                 FID_SystemX86,
                                                                 L"FOLDERID_SystemX86",
                                                                 L"SystemX86",
                                                                 g_packageVfsRootPath / L"SystemX86"sv,
                                                                 true,
-                                                                g_writablePackageRootPath / L"VFS"sv / L"SystemX86"sv,
-                                                                mfr::mfr_redirect_flags::prefer_redirection_containerized });
-        g_MfrFolderMappings.push_back(mfr::mfr_folder_mapping{ true, false,
+                                                                g_writablePackageRootPath / L"VFS"sv / L"SystemX86"sv });
+        g_MfrFolderMappings.push_back(mfr::mfr_folder_mapping{ mfr_enabled_types::enabled,
+                                                                mfr_exactmatchonly_types::not_exactmatchonly,
+                                                                mfr_exclusion_types::not_excluded,
+                                                                mfr::mfr_redirect_flags::prefer_redirection_containerized,
                                                                 FID_ProgramFilesCommonX86,
                                                                 L"FOLDERID_ProgramFilesCommonX86",
                                                                 L"ProgramFilesCommonX86",
                                                                 g_packageVfsRootPath / L"ProgramFilesCommonX86"sv,
                                                                 true,
-                                                                g_writablePackageRootPath / L"VFS"sv / L"ProgramFilesCommonX86"sv,
-                                                                mfr::mfr_redirect_flags::prefer_redirection_containerized });
-        g_MfrFolderMappings.push_back(mfr::mfr_folder_mapping{ true, false,
+                                                                g_writablePackageRootPath / L"VFS"sv / L"ProgramFilesCommonX86"sv });
+        g_MfrFolderMappings.push_back(mfr::mfr_folder_mapping{ mfr_enabled_types::enabled,
+                                                                mfr_exactmatchonly_types::not_exactmatchonly,
+                                                                mfr_exclusion_types::not_excluded,
+                                                                mfr::mfr_redirect_flags::prefer_redirection_containerized,
                                                                 ConvertPathToShortPath(FID_ProgramFilesCommonX86),
                                                                 L"FOLDERID_ProgramFilesCommonX86",
                                                                 L"ProgramFilesCommonX86",
                                                                 g_packageVfsRootPath / L"ProgramFilesCommonX86"sv,
                                                                 true,
-                                                                g_writablePackageRootPath / L"VFS"sv / L"ProgramFilesCommonX86"sv,
-                                                                mfr::mfr_redirect_flags::prefer_redirection_containerized });
-        g_MfrFolderMappings.push_back(mfr::mfr_folder_mapping{ true, false,
+                                                                g_writablePackageRootPath / L"VFS"sv / L"ProgramFilesCommonX86"sv });
+        g_MfrFolderMappings.push_back(mfr::mfr_folder_mapping{ mfr_enabled_types::enabled,
+                                                                mfr_exactmatchonly_types::not_exactmatchonly,
+                                                                mfr_exclusion_types::not_excluded,
+                                                                mfr::mfr_redirect_flags::prefer_redirection_containerized,
                                                                 FID_ProgramFilesX86,
                                                                 L"FOLDERID_ProgramFilesX86",
                                                                 L"ProgramFilesX86",
                                                                 g_packageVfsRootPath / L"ProgramFilesX86"sv,
                                                                 true,
-                                                                g_writablePackageRootPath / L"VFS"sv / L"ProgramFilesX86"sv,
-                                                                mfr::mfr_redirect_flags::prefer_redirection_containerized });
-        g_MfrFolderMappings.push_back(mfr::mfr_folder_mapping{ true, false,
+                                                                g_writablePackageRootPath / L"VFS"sv / L"ProgramFilesX86"sv });
+        g_MfrFolderMappings.push_back(mfr::mfr_folder_mapping{ mfr_enabled_types::enabled,
+                                                                mfr_exactmatchonly_types::not_exactmatchonly,
+                                                                mfr_exclusion_types::not_excluded,
+                                                                mfr::mfr_redirect_flags::prefer_redirection_containerized,
                                                                 ConvertPathToShortPath(FID_ProgramFilesX86),
                                                                 L"FOLDERID_ProgramFilesX86",
                                                                 L"ProgramFilesX86",
                                                                 g_packageVfsRootPath / L"ProgramFilesX86"sv,
                                                                 true,
-                                                                g_writablePackageRootPath / L"VFS"sv / L"ProgramFilesX86"sv,
-                                                                mfr::mfr_redirect_flags::prefer_redirection_containerized });
+                                                                g_writablePackageRootPath / L"VFS"sv / L"ProgramFilesX86"sv });
 #if !_M_IX86
         // FUTURE: We may want to consider the possibility of a 32-bit application trying to reference "%windir%\sysnative\"
         //         in which case we'll have to get smarter about how we resolve paths
-        g_MfrFolderMappings.push_back(mfr::mfr_folder_mapping{ true, false,
+        g_MfrFolderMappings.push_back(mfr::mfr_folder_mapping{ mfr_enabled_types::enabled,
+                                                                mfr_exactmatchonly_types::not_exactmatchonly,
+                                                                mfr_exclusion_types::not_excluded,
+                                                                mfr::mfr_redirect_flags::prefer_redirection_containerized,
                                                                 FID_System32,
                                                                 L"SystemX64",
                                                                 L"SystemX64",
                                                                 g_packageVfsRootPath / L"SystemX64"sv,
                                                                 true,
-                                                                g_writablePackageRootPath / L"VFS"sv / L"SystemX64"sv,
-                                                                mfr::mfr_redirect_flags::prefer_redirection_containerized });
+                                                                g_writablePackageRootPath / L"VFS"sv / L"SystemX64"sv });
         // FOLDERID_ProgramFilesX64* not supported for 32-bit applications
         // FUTURE: We may want to consider the possibility of a 32-bit process trying to access this path anyway. E.g. a
         //         32-bit child process of a 64-bit process that set the current directory
-        g_MfrFolderMappings.push_back(mfr::mfr_folder_mapping{ true, false,
+        g_MfrFolderMappings.push_back(mfr::mfr_folder_mapping{ mfr_enabled_types::enabled,
+                                                                mfr_exactmatchonly_types::not_exactmatchonly,
+                                                                mfr_exclusion_types::not_excluded,
+                                                                mfr::mfr_redirect_flags::prefer_redirection_containerized,
                                                                 FID_ProgramFilesCommonX64,
                                                                 L"ProgramFilesCommonX64",
                                                                 L"ProgramFilesCommonX64",
                                                                 g_packageVfsRootPath / L"ProgramFilesCommonX64"sv,
                                                                 true,
-                                                                g_writablePackageRootPath / L"VFS"sv / L"ProgramFilesCommonX64"sv,
-                                                                mfr::mfr_redirect_flags::prefer_redirection_containerized });
-        g_MfrFolderMappings.push_back(mfr::mfr_folder_mapping{ true, false,
+                                                                g_writablePackageRootPath / L"VFS"sv / L"ProgramFilesCommonX64"sv });
+        g_MfrFolderMappings.push_back(mfr::mfr_folder_mapping{ mfr_enabled_types::enabled,
+                                                                mfr_exactmatchonly_types::not_exactmatchonly,
+                                                                mfr_exclusion_types::not_excluded,
+                                                                mfr::mfr_redirect_flags::prefer_redirection_containerized,
                                                                 ConvertPathToShortPath(FID_ProgramFilesCommonX64),
                                                                 L"ProgramFilesCommonX64",
                                                                 L"ProgramFilesCommonX64",
                                                                 g_packageVfsRootPath / L"ProgramFilesCommonX64"sv,
                                                                 true,
-                                                                g_writablePackageRootPath / L"VFS"sv / L"ProgramFilesCommonX64"sv,
-                                                                mfr::mfr_redirect_flags::prefer_redirection_containerized });
-        g_MfrFolderMappings.push_back(mfr::mfr_folder_mapping{ true, false,
+                                                                g_writablePackageRootPath / L"VFS"sv / L"ProgramFilesCommonX64"sv });
+        g_MfrFolderMappings.push_back(mfr::mfr_folder_mapping{ mfr_enabled_types::enabled,
+                                                                mfr_exactmatchonly_types::not_exactmatchonly,
+                                                                mfr_exclusion_types::not_excluded,
+                                                                mfr::mfr_redirect_flags::prefer_redirection_containerized,
                                                                 FID_ProgramFilesX64,
                                                                 L"ProgramFilesX64",
                                                                 L"ProgramFilesX64",
                                                                 g_packageVfsRootPath / L"ProgramFilesX64"sv,
                                                                 true,
-                                                                g_writablePackageRootPath / L"VFS"sv / L"ProgramFilesX64"sv,
-                                                                mfr::mfr_redirect_flags::prefer_redirection_containerized });
-        g_MfrFolderMappings.push_back(mfr::mfr_folder_mapping{ true, false,
+                                                                g_writablePackageRootPath / L"VFS"sv / L"ProgramFilesX64"sv });
+        g_MfrFolderMappings.push_back(mfr::mfr_folder_mapping{ mfr_enabled_types::enabled,
+                                                                mfr_exactmatchonly_types::not_exactmatchonly,
+                                                                mfr_exclusion_types::not_excluded,
+                                                                mfr::mfr_redirect_flags::prefer_redirection_containerized,
                                                                 ConvertPathToShortPath(FID_ProgramFilesX64),
                                                                 L"ProgramFilesX64",
                                                                 L"ProgramFilesX64",
                                                                 g_packageVfsRootPath / L"ProgramFilesX64"sv,
                                                                 true,
-                                                                g_writablePackageRootPath / L"VFS"sv / L"ProgramFilesX64"sv,
-                                                                mfr::mfr_redirect_flags::prefer_redirection_containerized });
+                                                                g_writablePackageRootPath / L"VFS"sv / L"ProgramFilesX64"sv });
 #endif
-        g_MfrFolderMappings.push_back(mfr::mfr_folder_mapping{ true, false,
+        g_MfrFolderMappings.push_back(mfr::mfr_folder_mapping{ mfr_enabled_types::enabled,
+                                                                mfr_exactmatchonly_types::not_exactmatchonly,
+                                                                mfr_exclusion_types::not_excluded,
+                                                                mfr::mfr_redirect_flags::prefer_redirection_containerized,
                                                                 FID_Windows / LR"(System)"sv,
                                                                 L"System",
                                                                 L"System",
                                                                 g_packageVfsRootPath / L"System"sv,
                                                                 false,
-                                                                g_writablePackageRootPath / L"VFS"sv / L"System"sv,
-                                                                mfr::mfr_redirect_flags::prefer_redirection_containerized });
-        g_MfrFolderMappings.push_back(mfr::mfr_folder_mapping{ true, false,
+                                                                g_writablePackageRootPath / L"VFS"sv / L"System"sv });
+        g_MfrFolderMappings.push_back(mfr::mfr_folder_mapping{ mfr_enabled_types::enabled,
+                                                                mfr_exactmatchonly_types::not_exactmatchonly,
+                                                                mfr_exclusion_types::not_excluded,
+                                                                mfr::mfr_redirect_flags::prefer_redirection_containerized,
                                                                 FID_Fonts,
                                                                 L"Fonts",
                                                                 L"Fonts",
                                                                 g_packageVfsRootPath / L"Fonts"sv,
                                                                 false,
-                                                                g_writablePackageRootPath / L"VFS"sv / L"Fonts"sv,
-                                                                mfr::mfr_redirect_flags::prefer_redirection_containerized });
-        g_MfrFolderMappings.push_back(mfr::mfr_folder_mapping{ true, true,
+                                                                g_writablePackageRootPath / L"VFS"sv / L"Fonts"sv });
+        g_MfrFolderMappings.push_back(mfr::mfr_folder_mapping{ mfr_enabled_types::enabled,
+                                                                mfr_exactmatchonly_types::not_exactmatchonly,
+                                                                mfr_exclusion_types::excluded,
+                                                                mfr::mfr_redirect_flags::prefer_redirection_containerized,
                                                                 FID_Windows / LR"(Microsoft.NET)"sv,
                                                                 L"Windows\\Microsoft.NET",
                                                                 L"Windows\\Microsoft.NET",
                                                                 g_packageVfsRootPath / L"Windows"sv / L"Microsoft.NET"sv,
                                                                 true,
-                                                                g_writablePackageRootPath / L"VFS"sv / L"Windows"sv / L"Microsoft.Net"sv,
-                                                                mfr::mfr_redirect_flags::prefer_redirection_containerized });
-        g_MfrFolderMappings.push_back(mfr::mfr_folder_mapping{ true, false,
+                                                                g_writablePackageRootPath / L"VFS"sv / L"Windows"sv / L"Microsoft.Net"sv });
+        g_MfrFolderMappings.push_back(mfr::mfr_folder_mapping{ mfr_enabled_types::enabled,
+                                                                mfr_exactmatchonly_types::not_exactmatchonly,
+                                                                mfr_exclusion_types::excluded,
+                                                                mfr::mfr_redirect_flags::prefer_redirection_local,
+                                                                FID_Windows / LR"(SystemApps)"sv,
+                                                                L"SystemApps",
+                                                                L"SystemApps",
+                                                                g_packageVfsRootPath / L"SystemApps"sv,
+                                                                true,
+                                                                g_writablePackageRootPath / L"VFS"sv / L"SystemApps"sv });
+        g_MfrFolderMappings.push_back(mfr::mfr_folder_mapping{ mfr_enabled_types::enabled,
+                                                                mfr_exactmatchonly_types::not_exactmatchonly,
+                                                                mfr_exclusion_types::not_excluded,
+                                                                mfr::mfr_redirect_flags::prefer_redirection_containerized,
                                                                 FID_Windows,
                                                                 L"Windows",
                                                                 L"Windows",
                                                                 g_packageVfsRootPath / L"Windows"sv,
                                                                 true,
-                                                                g_writablePackageRootPath / L"VFS\\Windows"sv,
-                                                                mfr::mfr_redirect_flags::prefer_redirection_containerized });
+                                                                g_writablePackageRootPath / L"VFS\\Windows"sv });
 
         // Exclude the AppRepository from redirection, but add rest of ProgramData.
-        g_MfrFolderMappings.push_back(mfr::mfr_folder_mapping{ true, true,
+        g_MfrFolderMappings.push_back(mfr::mfr_folder_mapping{ mfr_enabled_types::enabled,
+                                                                mfr_exactmatchonly_types::not_exactmatchonly,
+                                                                mfr_exclusion_types::excluded,
+                                                                mfr::mfr_redirect_flags::prefer_redirection_local,
                                                                 FID_ProgramData / LR"(Microsoft)"sv / LR"(Windows)"sv / LR"(AppRepository)"sv,
                                                                 L"Common AppData\\Microsoft\\Windows\\AppRepository",
                                                                 L"Common AppData\\Microsoft\\Windows\\AppRepository",
                                                                 g_packageVfsRootPath / L"Common AppData"sv / L"Microsoft"sv / L"Windows"sv / L"AppRepository"sv,
                                                                 true,
-                                                                g_writablePackageRootPath / L"VFS\\Common AppData\\Microsoft\\Windows\\AppRepository"sv,
-                                                                mfr::mfr_redirect_flags::prefer_redirection_none});
-        g_MfrFolderMappings.push_back(mfr::mfr_folder_mapping{ true, true,
+                                                                g_writablePackageRootPath / L"VFS\\Common AppData\\Microsoft\\Windows\\AppRepository"sv });
+        g_MfrFolderMappings.push_back(mfr::mfr_folder_mapping{ mfr_enabled_types::enabled,
+                                                                mfr_exactmatchonly_types::not_exactmatchonly,
+                                                                mfr_exclusion_types::excluded,
+                                                                mfr::mfr_redirect_flags::prefer_redirection_local,
                                                                 ConvertPathToShortPath(FID_ProgramData / LR"(Microsoft)"sv / LR"(Windows)"sv / LR"(AppRepository)"sv),
                                                                 L"Common AppData\\Microsoft\\Windows\\AppRepository",
                                                                 L"Common AppData\\Microsoft\\Windows\\AppRepository",
                                                                 g_packageVfsRootPath / L"Common AppData"sv / L"Microsoft"sv / L"Windows"sv / L"AppRepository"sv,
                                                                 true,
-                                                                g_writablePackageRootPath / L"VFS\\Common AppData\\Microsoft\\Windows\\AppRepository"sv,
-                                                                mfr::mfr_redirect_flags::prefer_redirection_none });
-        g_MfrFolderMappings.push_back(mfr::mfr_folder_mapping{ true, false,
+                                                                g_writablePackageRootPath / L"VFS\\Common AppData\\Microsoft\\Windows\\AppRepository"sv });
+        g_MfrFolderMappings.push_back(mfr::mfr_folder_mapping{ mfr_enabled_types::enabled,
+                                                                mfr_exactmatchonly_types::not_exactmatchonly,
+                                                                mfr_exclusion_types::not_excluded,
+                                                                mfr::mfr_redirect_flags::prefer_redirection_containerized,
                                                                 FID_ProgramData,
                                                                 L"Common AppData",
                                                                 L"Common AppData",
                                                                 g_packageVfsRootPath / L"Common AppData"sv,
                                                                 true,
-                                                                g_writablePackageRootPath / L"VFS"sv / L"Common AppData"sv,
-                                                                mfr::mfr_redirect_flags::prefer_redirection_containerized });
-        g_MfrFolderMappings.push_back(mfr::mfr_folder_mapping{ true, false,
+                                                                g_writablePackageRootPath / L"VFS"sv / L"Common AppData"sv });
+        g_MfrFolderMappings.push_back(mfr::mfr_folder_mapping{ mfr_enabled_types::enabled,
+                                                                mfr_exactmatchonly_types::not_exactmatchonly,
+                                                                mfr_exclusion_types::not_excluded,
+                                                                mfr::mfr_redirect_flags::prefer_redirection_containerized,
                                                                 ConvertPathToShortPath(FID_ProgramData),
                                                                 L"Common AppData",
                                                                 L"Common AppData",
                                                                 g_packageVfsRootPath / L"Common AppData"sv,
                                                                 true,
-                                                                g_writablePackageRootPath / L"VFS"sv / L"Common AppData"sv,
-                                                                mfr::mfr_redirect_flags::prefer_redirection_containerized });
+                                                                g_writablePackageRootPath / L"VFS"sv / L"Common AppData"sv });
 
         // These are additional folders that may appear in MSIX packages and need help
-        g_MfrFolderMappings.push_back(mfr::mfr_folder_mapping{ true, false,
+        g_MfrFolderMappings.push_back(mfr::mfr_folder_mapping{ mfr_enabled_types::enabled,
+                                                                mfr_exactmatchonly_types::not_exactmatchonly,
+                                                                mfr_exclusion_types::not_excluded,
+                                                                mfr::mfr_redirect_flags::prefer_redirection_containerized,
                                                                 FID_LocalAppDataLow,
                                                                 L"LocalAppDataLow",
                                                                 L"LocalAppDataLow",
                                                                 g_packageVfsRootPath / L"LocalAppDataLow"sv,
                                                                 false,
-                                                                g_writablePackageRootPath / L"VFS"sv / L"LocalAppDataLow"sv,
-                                                                mfr::mfr_redirect_flags::prefer_redirection_containerized });
-        g_MfrFolderMappings.push_back(mfr::mfr_folder_mapping{ true, false,
+                                                                g_writablePackageRootPath / L"VFS"sv / L"LocalAppDataLow"sv });
+        g_MfrFolderMappings.push_back(mfr::mfr_folder_mapping{ mfr_enabled_types::enabled,
+                                                                mfr_exactmatchonly_types::not_exactmatchonly,
+                                                                mfr_exclusion_types::not_excluded,
+                                                                mfr::mfr_redirect_flags::prefer_redirection_containerized,
                                                                 ConvertPathToShortPath(FID_LocalAppDataLow),
                                                                 L"LocalAppDataLow",
                                                                 L"LocalAppDataLow",
                                                                 g_packageVfsRootPath / L"LocalAppDataLow"sv,
                                                                 false,
-                                                                g_writablePackageRootPath / L"VFS"sv / L"LocalAppDataLow"sv,
-                                                                mfr::mfr_redirect_flags::prefer_redirection_containerized });
-        g_MfrFolderMappings.push_back(mfr::mfr_folder_mapping{ true, true,
+                                                                g_writablePackageRootPath / L"VFS"sv / L"LocalAppDataLow"sv });
+        g_MfrFolderMappings.push_back(mfr::mfr_folder_mapping{ mfr_enabled_types::enabled,
+                                                                mfr_exactmatchonly_types::not_exactmatchonly,
+                                                                mfr_exclusion_types::excluded,
+                                                                mfr::mfr_redirect_flags::prefer_redirection_local,
                                                                 FID_LocalAppData / LR"(Temp)"sv,
                                                                 L"Local AppData\\Temp",
                                                                 L"Local AppData\\Temp",
                                                                 g_packageVfsRootPath / L"Local AppData"sv / L"Temp"sv,
                                                                 false,
-                                                                g_writablePackageRootPath / L"VFS"sv / L"Local AppData"sv / L"Temp"sv,
-                                                                mfr::mfr_redirect_flags::prefer_redirection_containerized });
-        g_MfrFolderMappings.push_back(mfr::mfr_folder_mapping{ true, true,
+                                                                g_writablePackageRootPath / L"VFS"sv / L"Local AppData"sv / L"Temp"sv });
+        g_MfrFolderMappings.push_back(mfr::mfr_folder_mapping{ mfr_enabled_types::enabled,
+                                                                mfr_exactmatchonly_types::not_exactmatchonly,
+                                                                mfr_exclusion_types::excluded,
+                                                                mfr::mfr_redirect_flags::prefer_redirection_containerized,
                                                                 FID_LocalAppData / LR"(Microsoft)"sv / LR"(Windows)"sv,
                                                                 L"Local AppData\\Microsoft\\Windows",
                                                                 L"Local AppData\\Microsoft\\Windows",
                                                                 g_packageVfsRootPath / L"Local AppData"sv / L"Microsoft"sv / L"Windows"sv,
                                                                 false,
-                                                                g_writablePackageRootPath / L"VFS"sv / L"Local AppData"sv / L"Microsoft"sv / L"Windows"sv,
-                                                                mfr::mfr_redirect_flags::prefer_redirection_containerized});
-        g_MfrFolderMappings.push_back(mfr::mfr_folder_mapping{ true, true,
+                                                                g_writablePackageRootPath / L"VFS"sv / L"Local AppData"sv / L"Microsoft"sv / L"Windows"sv });
+        g_MfrFolderMappings.push_back(mfr::mfr_folder_mapping{ mfr_enabled_types::enabled,
+                                                                mfr_exactmatchonly_types::not_exactmatchonly,
+                                                                mfr_exclusion_types::excluded,
+                                                                mfr::mfr_redirect_flags::prefer_redirection_containerized,
                                                                 ConvertPathToShortPath(FID_LocalAppData / LR"(Microsoft)"sv / LR"(Windows)"sv),
                                                                 L"Local AppData\\Microsoft\\Windows",
                                                                 L"Local AppData\\Microsoft\\Windows",
                                                                 g_packageVfsRootPath / L"Local AppData"sv / L"Microsoft"sv / L"Windows"sv,
                                                                 false,
-                                                                g_writablePackageRootPath / L"VFS"sv / L"Local AppData"sv / L"Microsoft"sv / L"Windows"sv,
-                                                                mfr::mfr_redirect_flags::prefer_redirection_containerized });
-        g_MfrFolderMappings.push_back(mfr::mfr_folder_mapping{ true, false,
+                                                                g_writablePackageRootPath / L"VFS"sv / L"Local AppData"sv / L"Microsoft"sv / L"Windows"sv });
+        g_MfrFolderMappings.push_back(mfr::mfr_folder_mapping{ mfr_enabled_types::enabled,
+                                                                mfr_exactmatchonly_types::not_exactmatchonly,
+                                                                mfr_exclusion_types::not_excluded,
+                                                                mfr::mfr_redirect_flags::prefer_redirection_containerized,
                                                                 FID_LocalAppData,
                                                                 L"Local AppData",
                                                                 L"Local AppData",
                                                                 g_packageVfsRootPath / L"Local AppData"sv,
                                                                 false,
-                                                                g_writablePackageRootPath / L"VFS"sv / L"Local AppData"sv,
-                                                                mfr::mfr_redirect_flags::prefer_redirection_containerized });
-        g_MfrFolderMappings.push_back(mfr::mfr_folder_mapping{ true, false,
+                                                                g_writablePackageRootPath / L"VFS"sv / L"Local AppData"sv });
+        g_MfrFolderMappings.push_back(mfr::mfr_folder_mapping{ mfr_enabled_types::enabled,
+                                                                mfr_exactmatchonly_types::not_exactmatchonly,
+                                                                mfr_exclusion_types::not_excluded,
+                                                                mfr::mfr_redirect_flags::prefer_redirection_containerized,
                                                                 ConvertPathToShortPath(FID_LocalAppData),
                                                                 L"Local AppData",
                                                                 L"Local AppData",
                                                                 g_packageVfsRootPath / L"Local AppData"sv,
                                                                 false,
-                                                                g_writablePackageRootPath / L"VFS"sv / L"Local AppData"sv,
-                                                                mfr::mfr_redirect_flags::prefer_redirection_containerized });
-        g_MfrFolderMappings.push_back(mfr::mfr_folder_mapping{ true, false,
+                                                                g_writablePackageRootPath / L"VFS"sv / L"Local AppData"sv });
+        g_MfrFolderMappings.push_back(mfr::mfr_folder_mapping{ mfr_enabled_types::enabled,
+                                                                mfr_exactmatchonly_types::not_exactmatchonly,
+                                                                mfr_exclusion_types::not_excluded,
+                                                                mfr::mfr_redirect_flags::prefer_redirection_local,
+                                                                FID_RoamingAppData / LR"(Microsoft)"sv / LR"(Windows)"sv / LR"(Recent)"sv,
+                                                                L"AppData\\Microsoft\\Windows\\Recent",
+                                                                L"AppData\\Microsoft\\Windows\\Recent",
+                                                                g_packageVfsRootPath / L"AppData"sv / L"Microsoft"sv / L"Windows"sv / L"Recent"sv,
+                                                                false,
+                                                                g_writablePackageRootPath / L"VFS"sv / L"AppData"sv / L"Microsoft"sv / L"Windows"sv / L"Recent"sv });
+        g_MfrFolderMappings.push_back(mfr::mfr_folder_mapping{ mfr_enabled_types::enabled,
+                                                                mfr_exactmatchonly_types::not_exactmatchonly,
+                                                                mfr_exclusion_types::not_excluded,
+                                                                mfr::mfr_redirect_flags::prefer_redirection_containerized,
                                                                 FID_RoamingAppData,
                                                                 L"AppData",
                                                                 L"AppData",
                                                                 g_packageVfsRootPath / L"AppData"sv,
                                                                 false,
-                                                                g_writablePackageRootPath / L"VFS"sv / L"AppData"sv,
-                                                                mfr::mfr_redirect_flags::prefer_redirection_containerized });
-        g_MfrFolderMappings.push_back(mfr::mfr_folder_mapping{ true, false,
+                                                                g_writablePackageRootPath / L"VFS"sv / L"AppData"sv });
+        g_MfrFolderMappings.push_back(mfr::mfr_folder_mapping{ mfr_enabled_types::enabled,
+                                                                mfr_exactmatchonly_types::not_exactmatchonly,
+                                                                mfr_exclusion_types::not_excluded,
+                                                                mfr::mfr_redirect_flags::prefer_redirection_containerized,
                                                                 ConvertPathToShortPath(FID_RoamingAppData),
                                                                 L"AppData",
                                                                 L"AppData",
                                                                 g_packageVfsRootPath / L"AppData"sv,
                                                                 false,
-                                                                g_writablePackageRootPath / L"VFS"sv / L"AppData"sv,
-                                                                mfr::mfr_redirect_flags::prefer_redirection_containerized });
-        g_MfrFolderMappings.push_back(mfr::mfr_folder_mapping{ true, false,
+                                                                g_writablePackageRootPath / L"VFS"sv / L"AppData"sv });
+        g_MfrFolderMappings.push_back(mfr::mfr_folder_mapping{ mfr_enabled_types::enabled,
+                                                                mfr_exactmatchonly_types::not_exactmatchonly,
+                                                                mfr_exclusion_types::not_excluded,
+                                                                mfr::mfr_redirect_flags::prefer_redirection_containerized,
                                                                 FID_UserProgramFiles,
                                                                 L"UserProgramFiles",
                                                                 L"UserProgramFiles",
                                                                 g_packageVfsRootPath / L"UserProgramFiles"sv,
                                                                 false,
-                                                                g_writablePackageRootPath / L"VFS"sv / L"UserProgramFiles"sv,
-                                                                mfr::mfr_redirect_flags::prefer_redirection_containerized });
+                                                                g_writablePackageRootPath / L"VFS"sv / L"UserProgramFiles"sv });
 
-        g_MfrFolderMappings.push_back(mfr::mfr_folder_mapping{ true, false,
+        g_MfrFolderMappings.push_back(mfr::mfr_folder_mapping{ mfr_enabled_types::enabled,
+                                                                mfr_exactmatchonly_types::not_exactmatchonly,
+                                                                mfr_exclusion_types::not_excluded,
+                                                                mfr::mfr_redirect_flags::prefer_redirection_containerized,
                                                                 FID_CommonPrograms,
                                                                 L"Common Programs",
                                                                 L"Common Programs",
                                                                 g_packageVfsRootPath / L"Common Programs"sv,
                                                                 false,
-                                                                g_writablePackageRootPath / L"VFS"sv / L"Common Programs"sv,
-                                                                mfr::mfr_redirect_flags::prefer_redirection_containerized });
-        g_MfrFolderMappings.push_back(mfr::mfr_folder_mapping{ true, false,
+                                                                g_writablePackageRootPath / L"VFS"sv / L"Common Programs"sv });
+        g_MfrFolderMappings.push_back(mfr::mfr_folder_mapping{ mfr_enabled_types::enabled,
+                                                                mfr_exactmatchonly_types::not_exactmatchonly,
+                                                                mfr_exclusion_types::not_excluded,
+                                                                mfr::mfr_redirect_flags::prefer_redirection_containerized,
                                                                 ConvertPathToShortPath(FID_CommonPrograms),
                                                                 L"Common Programs",
                                                                 L"Common Programs",
                                                                 g_packageVfsRootPath / L"Common Programs"sv,
                                                                 false,
-                                                                g_writablePackageRootPath / L"VFS"sv / L"Common Programs"sv,
-                                                                mfr::mfr_redirect_flags::prefer_redirection_containerized });
-        g_MfrFolderMappings.push_back(mfr::mfr_folder_mapping{ true, false,
+                                                                g_writablePackageRootPath / L"VFS"sv / L"Common Programs"sv });
+        g_MfrFolderMappings.push_back(mfr::mfr_folder_mapping{ mfr_enabled_types::enabled,
+                                                                mfr_exactmatchonly_types::not_exactmatchonly,
+                                                                mfr_exclusion_types::not_excluded,
+                                                                mfr::mfr_redirect_flags::prefer_redirection_local,
                                                                 FID_Desktop,
                                                                 L"ThisPCDesktopFolder",
                                                                 L"ThisPCDesktopFolder",
                                                                 g_packageVfsRootPath / L"ThisPCDesktopFolder"sv,
                                                                 false,
-                                                                FID_Desktop,
-                                                                mfr::mfr_redirect_flags::prefer_redirection_local });
-        g_MfrFolderMappings.push_back(mfr::mfr_folder_mapping{ true, false,
+                                                                FID_Desktop });
+        g_MfrFolderMappings.push_back(mfr::mfr_folder_mapping{ mfr_enabled_types::enabled,
+                                                                mfr_exactmatchonly_types::not_exactmatchonly,
+                                                                mfr_exclusion_types::not_excluded,
+                                                                mfr::mfr_redirect_flags::prefer_redirection_local,
                                                                 ConvertPathToShortPath(FID_Desktop),
                                                                 L"ThisPCDesktopFolder",
                                                                 L"ThisPCDesktopFolder",
                                                                 g_packageVfsRootPath / L"ThisPCDesktopFolder"sv,
                                                                 false,
-                                                                FID_Desktop,
-                                                                mfr::mfr_redirect_flags::prefer_redirection_local });
-        g_MfrFolderMappings.push_back(mfr::mfr_folder_mapping{ true, false,
+                                                                FID_Desktop });
+        g_MfrFolderMappings.push_back(mfr::mfr_folder_mapping{ mfr_enabled_types::enabled,
+                                                                mfr_exactmatchonly_types::not_exactmatchonly,
+                                                                mfr_exclusion_types::not_excluded,
+                                                                mfr::mfr_redirect_flags::prefer_redirection_local,
                                                                 FID_Documents,
                                                                 L"Personal",
                                                                 L"Personal",
                                                                 g_packageVfsRootPath / L"Personal"sv,
                                                                 false,
-                                                                FID_Documents,
-                                                                mfr::mfr_redirect_flags::prefer_redirection_local });
-        g_MfrFolderMappings.push_back(mfr::mfr_folder_mapping{ true, false,
+                                                                FID_Documents });
+        g_MfrFolderMappings.push_back(mfr::mfr_folder_mapping{ mfr_enabled_types::enabled,
+                                                                mfr_exactmatchonly_types::not_exactmatchonly,
+                                                                mfr_exclusion_types::not_excluded,
+                                                                mfr::mfr_redirect_flags::prefer_redirection_local,
                                                                 ConvertPathToShortPath(FID_Documents),
                                                                 L"Personal",
                                                                 L"Personal",
                                                                 g_packageVfsRootPath / L"Personal"sv,
                                                                 false,
-                                                                FID_Documents,
-                                                                mfr::mfr_redirect_flags::prefer_redirection_local });        
-        g_MfrFolderMappings.push_back(mfr::mfr_folder_mapping{ true, false,
+                                                                FID_Documents });        
+        g_MfrFolderMappings.push_back(mfr::mfr_folder_mapping{ mfr_enabled_types::enabled,
+                                                                mfr_exactmatchonly_types::not_exactmatchonly,
+                                                                mfr_exclusion_types::not_excluded,
+                                                                mfr::mfr_redirect_flags::prefer_redirection_containerized,
                                                                 FID_Profile,
-                                                                L"Profile",
-                                                                L"Profile",
-                                                                g_packageVfsRootPath / L"Profile"sv,
+                                                                L"Profile\\AppData",
+                                                                L"Profile\\AppData",
+                                                                g_packageVfsRootPath / L"Profile"sv / L"AppData"sv ,
                                                                 false,
-                                                                g_writablePackageRootPath / L"VFS"sv / L"Profile"sv,
-                                                                mfr::mfr_redirect_flags::prefer_redirection_containerized });
-        g_MfrFolderMappings.push_back(mfr::mfr_folder_mapping{ true, false,
+                                                                g_writablePackageRootPath / L"VFS"sv / L"Profile"sv / L"AppData"sv });
+        g_MfrFolderMappings.push_back(mfr::mfr_folder_mapping{ mfr_enabled_types::enabled,
+                                                                mfr_exactmatchonly_types::not_exactmatchonly,
+                                                                mfr_exclusion_types::not_excluded,
+                                                                mfr::mfr_redirect_flags::prefer_redirection_containerized,
                                                                 ConvertPathToShortPath(FID_Profile),
-                                                                L"Profile",
-                                                                L"Profile",
-                                                                g_packageVfsRootPath / L"Profile"sv,
+                                                                L"Profile\\AppData",
+                                                                L"Profile\\AppData",
+                                                                g_packageVfsRootPath / L"Profile"sv / L"AppData"sv ,
                                                                 false,
-                                                                g_writablePackageRootPath / L"VFS"sv / L"Profile"sv,
-                                                                mfr::mfr_redirect_flags::prefer_redirection_containerized });
-        g_MfrFolderMappings.push_back(mfr::mfr_folder_mapping{ true, false,
+                                                                g_writablePackageRootPath / L"VFS"sv / L"Profile"sv / L"AppData"sv });
+
+        g_MfrFolderMappings.push_back(mfr::mfr_folder_mapping{ mfr_enabled_types::enabled,
+                                                                mfr_exactmatchonly_types::not_exactmatchonly,
+                                                                mfr_exclusion_types::not_excluded,
+                                                                mfr::mfr_redirect_flags::prefer_redirection_containerized,
+                                                                FID_UserFolder,
+                                                                L"Profile",
+                                                                L"Profile",
+                                                                g_packageVfsRootPath / L"Profile"sv ,
+                                                                false,
+                                                                g_writablePackageRootPath / L"VFS"sv / L"Profile"sv  });
+        g_MfrFolderMappings.push_back(mfr::mfr_folder_mapping{ mfr_enabled_types::enabled,
+                                                                mfr_exactmatchonly_types::not_exactmatchonly,
+                                                                mfr_exclusion_types::not_excluded,
+                                                                mfr::mfr_redirect_flags::prefer_redirection_containerized,
+                                                                ConvertPathToShortPath(FID_UserFolder),
+                                                                L"Profile",
+                                                                L"Profile",
+                                                                g_packageVfsRootPath / L"Profile"sv  ,
+                                                                false,
+                                                                g_writablePackageRootPath / L"VFS"sv / L"Profile"sv  });
+
+        g_MfrFolderMappings.push_back(mfr::mfr_folder_mapping{ mfr_enabled_types::enabled,
+                                                                mfr_exactmatchonly_types::not_exactmatchonly,
+                                                                mfr_exclusion_types::not_excluded,
+                                                                mfr::mfr_redirect_flags::prefer_redirection_local,
                                                                 FID_PublicDesktop,
                                                                 L"Common Desktop",
                                                                 L"Common Desktop",
                                                                 g_packageVfsRootPath / L"Common Desktop"sv,
                                                                 false,
-                                                                FID_PublicDesktop,
-                                                                mfr::mfr_redirect_flags::prefer_redirection_local });
-        g_MfrFolderMappings.push_back(mfr::mfr_folder_mapping{ true, false,
+                                                                FID_PublicDesktop });
+        g_MfrFolderMappings.push_back(mfr::mfr_folder_mapping{ mfr_enabled_types::enabled,
+                                                                mfr_exactmatchonly_types::not_exactmatchonly,
+                                                                mfr_exclusion_types::not_excluded,
+                                                                mfr::mfr_redirect_flags::prefer_redirection_local,
                                                                 FID_PublicDocuments,
                                                                 L"Common Documents",
                                                                 L"Common Documents",
                                                                 g_packageVfsRootPath / L"Common Documents"sv,
                                                                 false,
-                                                                FID_PublicDocuments,
-                                                                mfr::mfr_redirect_flags::prefer_redirection_local });
+                                                                FID_PublicDocuments });
 
-        g_MfrFolderMappings.push_back(mfr::mfr_folder_mapping{ true, false,
+
+        g_MfrFolderMappings.push_back(mfr::mfr_folder_mapping{ mfr_enabled_types::enabled,
+                                                                mfr_exactmatchonly_types::not_exactmatchonly,
+                                                                mfr_exclusion_types::not_excluded,
+                                                                mfr::mfr_redirect_flags::prefer_redirection_containerized,
                                                                 FID_RootDrive,
                                                                 L"AppVPackageDrive",
                                                                 L"AppVPackageDrive",
                                                                 g_packageVfsRootPath / L"AppVPackageDrive"sv,
                                                                 false,
-                                                                g_writablePackageRootPath / L"VFS"sv / L"AppVPackageDrive"sv,
-                                                                mfr::mfr_redirect_flags::prefer_redirection_containerized });
-        g_MfrFolderMappings.push_back(mfr::mfr_folder_mapping{ true, false,
-                                                                L"PVAD",
+                                                                g_writablePackageRootPath / L"VFS"sv / L"AppVPackageDrive"sv });
+
+        g_MfrFolderMappings.push_back(mfr::mfr_folder_mapping{ mfr_enabled_types::enabled,
+                                                                mfr_exactmatchonly_types::not_exactmatchonly,
+                                                                mfr_exclusion_types::not_excluded,
+                                                                mfr::mfr_redirect_flags::prefer_redirection_containerized,
+                                                                g_packageRootPath, // changed out 2/14/25 from this? L"PVAD",
                                                                 L"PVAD",
                                                                 L"PVAD",
                                                                 g_packageRootPath,
                                                                 false,
-                                                                g_writablePackageRootPath,
-                                                                mfr::mfr_redirect_flags::prefer_redirection_containerized});
+                                                                g_writablePackageRootPath});
+
+
+        // Remapping for the Find cases (See Cohorts for QueryDirectoryFile etc)
+        g_MfrVfsRemappings.push_back(mfr_vfs_remapping{ L"VFS\\SystemX64",          L"Catroot2",            L"VFS", L"AppVSystem32Catroot2" });
+        g_MfrVfsRemappings.push_back(mfr_vfs_remapping{ L"VFS\\SystemX64",          L"Catroot",             L"VFS", L"AppVSystem32Catroot" });
+        g_MfrVfsRemappings.push_back(mfr_vfs_remapping{ L"VFS\\SystemX64\\drivers", L"etc",                 L"VFS", L"AppVSystem32DriversEtc" });
+        g_MfrVfsRemappings.push_back(mfr_vfs_remapping{ L"VFS\\SystemX64",          L"driverstore",         L"VFS", L"AppVSystem32Driverstore" });
+        g_MfrVfsRemappings.push_back(mfr_vfs_remapping{ L"VFS\\SystemX64",          L"spool",               L"VFS", L"AppVSystem32Spool" });
+        g_MfrVfsRemappings.push_back(mfr_vfs_remapping{ L"VFS\\Windows",            L"SystemApps",          L"VFS", L"SystemApps" });
+        g_MfrVfsRemappings.push_back(mfr_vfs_remapping{ L"VFS\\Profile\\AppData",   L"Local",               L"VFS", L"Local AppData" });
+        g_MfrVfsRemappings.push_back(mfr_vfs_remapping{ L"VFS\\Profile\\AppData",   L"Roaming",             L"VFS", L"AppData" });
+        g_MfrVfsRemappings.push_back(mfr_vfs_remapping{ L"VFS\\AppVPackageDrive",   L"Windows",             L"VFS", L"Windows" });
+        g_MfrVfsRemappings.push_back(mfr_vfs_remapping{ L"VFS\\AppVPackageDrive",   L"ProgramFilesX64",     L"VFS", L"ProgramFilesX64" });
+        g_MfrVfsRemappings.push_back(mfr_vfs_remapping{ L"VFS\\AppVPackageDrive",   L"ProgramFilesX86",     L"VFS", L"ProgramFilesX86" });
+        g_MfrVfsRemappings.push_back(mfr_vfs_remapping{ L"VFS\\AppVPackageDrive",   L"ProgramData",         L"VFS", L"ProgramData" });
+
+
+
 #if MOREDEBUG
-        Log(L" MFR_Mappings initialized.");
+        Log(L"\t\t\tMFR Mappings initialized.");
 #endif
     } // Initialize_MFR_Mappings()
 
     mfr_folder_mapping  MakeInvalidMapping()
     {
-        mfr_folder_mapping none;
-        none.Valid_mapping = false;
-        return none;
+        mfr_folder_mapping mapdisabled;
+        mapdisabled.Valid_mapping = mfr_enabled_types::disabled;
+        return mapdisabled;
     }
 
-    mfr_folder_mapping  Find_LocalRedirMapping_FromNativePath_ForwardSearch(std::wstring WsPath)
+    mfr_folder_mapping  Find_LocalRedirMapping_FromNativePath_ForwardSearch(std::wstring WsPath, [[maybe_unused]] DWORD dllInstance)
     {
+        int i = 0;
         for (mfr_folder_mapping map : g_MfrFolderMappings)
         {
-            // 4.2.0.0: Restoring the check against local explicitly.  Not sure why it was changed.
-            if (map.RedirectionFlags != mfr_redirect_flags::disabled &&
-                //map.RedirectionFlags != mfr_redirect_flags::prefer_redirection_none
-                map.RedirectionFlags == mfr_redirect_flags::prefer_redirection_local
-               )
+            if (map.Valid_mapping == mfr_enabled_types::enabled)
             {
-                if (path_isSubsetOf_String(map.NativePathBase, WsPath.c_str()))
+                // 4.2.0.0: Restoring the check against local explicitly.  Not sure why it was changed.
+                if (map.RedirectionFlags != mfr_redirect_flags::disabled &&
+                    map.RedirectionFlags == mfr_redirect_flags::prefer_redirection_local
+                    )
                 {
-                    return map;
+                    switch (map.IsExactMatchOnly)
+                    {
+                    case mfr_exactmatchonly_types::exactmatchonly:
+                        if (path_isExactMatchOf_String(map.NativePathBase, WsPath.c_str()))
+                        {
+#if MOREDEBUG
+                            Log(L"[%d]      MFR_Mappings: Found exact match index=%d for %s", dllInstance, i, WsPath.c_str());
+#endif
+                            return map;
+                        }
+                        break;
+                    case mfr_exactmatchonly_types::not_exactmatchonly:
+                    default:
+                        if (path_isSubsetOf_String(map.NativePathBase, WsPath.c_str()))
+                        {
+#if MOREDEBUG
+                            Log(L"[%d]      MFR_Mappings: Found subset match index=%d for %s", dllInstance, i, WsPath.c_str());
+#endif
+                            return map;
+                        }
+                        break;
+                    }
                 }
             }
+            i++;
         }
+#if MOREDEBUG
+        Log(L"[%d]      MFR_Mappings: No mapping found for %s", dllInstance, WsPath.c_str());
+#endif
         return MakeInvalidMapping();
     }  // Find_LocalRedirMapping_FromNativePath_ForwardSearch() 
 
 
-    mfr_folder_mapping  Find_LocalRedirMapping_FromPackagePath_ForwardSearch(std::wstring WsPath)
+    mfr_folder_mapping  Find_LocalRedirMapping_FromPackagePath_ForwardSearch(std::wstring WsPath, [[maybe_unused]] DWORD dllInstance)
     {
         mfr::mfr_folder_mapping packagemap;
-        //{ true, FID_ProgramFilesX64, L"ProgramFilesX64", L"ProgramFilesX64", g_packageVfsRootPath / L"ProgramFilesX64"sv, true, g_writablePackageRootPath / L"VFS\\ProgramFilesX64"sv, mfr::mfr_redirect_flags::prefer_redirection_containerized });
 
+        int i = 0;
         for (mfr_folder_mapping map : g_MfrFolderMappings)
         {
-            // 4.2.0.0: Restoring the check against local explicitly.  Not sure why it was changed.
-            if (map.RedirectionFlags != mfr_redirect_flags::disabled &&
-                //map.RedirectionFlags != mfr_redirect_flags::prefer_redirection_none
-                map.RedirectionFlags == mfr_redirect_flags::prefer_redirection_local
-                )
-            {
-                if (path_isSubsetOf_String(map.PackagePathBase, WsPath.c_str()))
+            if (map.Valid_mapping == mfr_enabled_types::enabled)
+            {// 4.2.0.0: Restoring the check against local explicitly.  Not sure why it was changed.
+                if (map.RedirectionFlags != mfr_redirect_flags::disabled &&
+                    //map.RedirectionFlags != mfr_redirect_flags::prefer_redirection_none
+                    map.RedirectionFlags == mfr_redirect_flags::prefer_redirection_local
+                    )
                 {
-                    return map;
+                    switch (map.IsExactMatchOnly)
+                    {
+                    case mfr_exactmatchonly_types::exactmatchonly:
+                        if (path_isExactMatchOf_String(map.PackagePathBase, WsPath.c_str()))
+                        {
+#if MOREDEBUG
+                            Log(L"[%d]      MFR_Mappings: Found exact match index=%d for %s", dllInstance, i, WsPath.c_str());
+#endif
+                            return map;
+                        }
+                        break;
+                    case mfr_exactmatchonly_types::not_exactmatchonly:
+                    default:
+                        if (path_isSubsetOf_String(map.PackagePathBase, WsPath.c_str()))
+                        {
+#if MOREDEBUG
+                            Log(L"[%d]      MFR_Mappings: Found subset match index=%d for %s", dllInstance, i, WsPath.c_str());
+#endif
+                            return map;
+                        }
+                        break;
+                    }
                 }
             }
+            i++;
         }
         // if still here, this might be PVAD, but PVADs don't map
+#if MOREDEBUG
+        Log(L"[%x]      MFR_Mappings: No mapping found for %s", dllInstance, WsPath.c_str());
+#endif
         return MakeInvalidMapping();
     } // Find_LocalRedirMapping_FromPackagePath_ForwardSearch() 
 
 
-    mfr_folder_mapping  Find_TraditionalRedirMapping_FromNativePath_ForwardSearch(std::wstring WsPath)
+    mfr_folder_mapping  Find_TraditionalRedirMapping_FromNativePath_ForwardSearch(std::wstring WsPath, [[maybe_unused]] DWORD dllInstance)
     {
+        int i = 0;
         for (mfr_folder_mapping map : g_MfrFolderMappings)
         {
-            if (map.RedirectionFlags != mfr_redirect_flags::disabled &&
-                map.RedirectionFlags != mfr_redirect_flags::prefer_redirection_local)
+            if (map.Valid_mapping == mfr_enabled_types::enabled)
             {
-                if (path_isSubsetOf_String(map.NativePathBase, WsPath.c_str()))
+                if (map.RedirectionFlags != mfr_redirect_flags::disabled &&
+                    map.RedirectionFlags != mfr_redirect_flags::prefer_redirection_local)
                 {
-                    return map;
+                    switch (map.IsExactMatchOnly)
+                    {
+                    case mfr_exactmatchonly_types::exactmatchonly:
+                        if (path_isExactMatchOf_String(map.NativePathBase, WsPath.c_str()))
+                        {
+#if MOREDEBUG
+                            Log(L"      MFR_Mappings: Found exact match index=%d for %s", i, WsPath.c_str());
+#endif
+                            return map;
+                        }
+                        break;
+                    case mfr_exactmatchonly_types::not_exactmatchonly:
+                    default:
+                        if (path_isSubsetOf_String(map.NativePathBase, WsPath.c_str()))
+                        {
+#if MOREDEBUG
+                            Log(L"      MFR_Mappings: Found subset match index=%d for %s", i, WsPath.c_str());
+#endif
+                            return map;
+                        }
+                        break;
+                    }
                 }
             }
+            i++;
         }
+#if MOREDEBUG
+        Log(L"      MFR_Mappings: No mapping found for %s", WsPath.c_str());
+#endif
         return MakeInvalidMapping();
     }  // Find_TraditionalRedirMapping_FromNativePath_ForwardSearch() 
 
 #if DEAD2ME
-    mfr_folder_mapping  Find_TraditionalRedirMapping_FromRedirPath_BackwardSearch(std::wstring WsPath)
+    mfr_folder_mapping  Find_TraditionalRedirMapping_FromRedirPath_BackwardSearch(std::wstring WsPath, [[maybe_unused]] DWORD dllInstance)
     {
         // Reverse lookup still needs to leave bottom wildcard entry until last.
         for (auto map = g_MfrFolderMappings.rbegin(); map != g_MfrFolderMappings.rend(); map++)
@@ -524,43 +812,42 @@ namespace mfr
     }  // Find_TraditionalRedirMapping_FromRedirPath_BackwardSearch() 
 #endif
 
-    mfr_folder_mapping CloneFolderMapping(mfr_folder_mapping inputMap)
-    {
-        mfr_folder_mapping newMap;
-        newMap.DoesRuntimeMapNativeToVFS = inputMap.DoesRuntimeMapNativeToVFS;
-        newMap.FolderId = inputMap.FolderId;
-        newMap.IsAnExclusionToRedirect = inputMap.IsAnExclusionToRedirect;
-        newMap.NativePathBase = inputMap.NativePathBase;
-        newMap.PackagePathBase = inputMap.PackagePathBase;
-        newMap.RedirectedPathBase = inputMap.RedirectedPathBase;
-        newMap.RedirectionFlags = inputMap.RedirectionFlags;
-        newMap.Valid_mapping = inputMap.Valid_mapping;
-        newMap.VFSFolderName = inputMap.VFSFolderName;
-        return newMap;
-    }
 
-
-
-    mfr_folder_mapping Find_TraditionalRedirMapping_FromPackagePath_ForwardSearch(std::wstring WsPath)
+    mfr_folder_mapping Find_TraditionalRedirMapping_FromPackagePath_ForwardSearch(std::wstring WsPath, [[maybe_unused]] DWORD dllInstance)
     {
         mfr::mfr_folder_mapping packagemap;
         //{ true, FID_ProgramFilesX64, L"ProgramFilesX64", L"ProgramFilesX64", g_packageVfsRootPath / L"ProgramFilesX64"sv, true, g_writablePackageRootPath / L"VFS\\ProgramFilesX64"sv, mfr::mfr_redirect_flags::prefer_redirection_containerized });
 
         for (mfr_folder_mapping map : g_MfrFolderMappings)
         {
-            if (map.RedirectionFlags != mfr_redirect_flags::disabled &&
-                map.RedirectionFlags != mfr_redirect_flags::prefer_redirection_local)
+            if (map.Valid_mapping == mfr_enabled_types::enabled)
             {
-                if (path_isSubsetOf_String(map.PackagePathBase, WsPath.c_str()))
+                if (map.RedirectionFlags != mfr_redirect_flags::disabled &&
+                    map.RedirectionFlags != mfr_redirect_flags::prefer_redirection_local)
                 {
-                    return map;
+                    switch (map.IsExactMatchOnly)
+                    {
+                    case mfr_exactmatchonly_types::exactmatchonly:
+                        if (path_isExactMatchOf_String(map.PackagePathBase, WsPath.c_str()))
+                        {
+                            return map;
+                        }
+                        break;
+                    case mfr_exactmatchonly_types::not_exactmatchonly:
+                    default:
+                        if (path_isSubsetOf_String(map.PackagePathBase, WsPath.c_str()))
+                        {
+                            return map;
+                        }
+                        break;
+                    }
                 }
             }
         }
         // if still here, this might be PVAD
         if (path_isSubsetOf_String(g_packageVfsRootPath,WsPath.c_str()))
         {
-            packagemap.Valid_mapping = true;
+            packagemap.Valid_mapping = mfr_enabled_types::enabled;
             packagemap.DoesRuntimeMapNativeToVFS = false;
             //packagemap.FolderId = L"";
             packagemap.NativePathBase = FID_RootDrive;
@@ -569,7 +856,7 @@ namespace mfr
         }
         else if (path_isSubsetOf_String(g_packageRootPath, WsPath.c_str()))
         {
-            packagemap.Valid_mapping = true;
+            packagemap.Valid_mapping = mfr_enabled_types::enabled;
             packagemap.DoesRuntimeMapNativeToVFS = false;
             //packagemap.FolderId = L"";
             packagemap.NativePathBase = FID_RootDrive;
@@ -580,23 +867,120 @@ namespace mfr
             return packagemap;
         }
         return MakeInvalidMapping();
-    } // Find_TraditionalRedirMapping_FromPackagePath_ForwardSearch() 
+    } // Find_TraditionalRedirMapping_FromPackagePath_ForwardSearch()
 
 
-    mfr_folder_mapping  Find_TraditionalRedirMapping_FromRedirectedPath_ForwardSearch(std::wstring WsPath)
+    mfr_folder_mapping  Find_TraditionalRedirMapping_FromRedirectedPath_ForwardSearch(std::wstring WsPath, [[maybe_unused]] DWORD dllInstance)
     {
         for (mfr_folder_mapping map : g_MfrFolderMappings)
         {
-            if (map.RedirectionFlags != mfr_redirect_flags::disabled &&
-                map.RedirectionFlags != mfr_redirect_flags::prefer_redirection_local)
+            if (map.Valid_mapping == mfr_enabled_types::enabled)
             {
-                if (path_isSubsetOf_String(map.RedirectedPathBase, WsPath.c_str()))
+                if (map.RedirectionFlags != mfr_redirect_flags::disabled &&
+                    map.RedirectionFlags != mfr_redirect_flags::prefer_redirection_local)
                 {
-                    return map;
+                    switch (map.IsExactMatchOnly)
+                    {
+                    case mfr_exactmatchonly_types::exactmatchonly:
+                        if (path_isExactMatchOf_String(map.RedirectedPathBase, WsPath.c_str()))
+                        {
+                            return map;
+                        }
+                        break;
+                    case mfr_exactmatchonly_types::not_exactmatchonly:
+                    default:
+                        if (path_isSubsetOf_String(map.RedirectedPathBase, WsPath.c_str()))
+                        {
+                            return map;
+                        }
+                        break;
+                    }
                 }
             }
         }
         return MakeInvalidMapping();
     }  // Find_TraditionalRedirMapping_FromRedirectedPath_ForwardSearch()
 
+
+
+    mfr_folder_mapping CloneFolderMapping(mfr_folder_mapping inputMap)
+    {
+        mfr_folder_mapping newMap;
+        newMap.Valid_mapping = inputMap.Valid_mapping;
+        newMap.IsExactMatchOnly = inputMap.IsExactMatchOnly;
+        newMap.IsAnExclusionToRedirect = inputMap.IsAnExclusionToRedirect;
+        newMap.DoesRuntimeMapNativeToVFS = inputMap.DoesRuntimeMapNativeToVFS;
+        newMap.FolderId = inputMap.FolderId;
+        newMap.NativePathBase = inputMap.NativePathBase;
+        newMap.PackagePathBase = inputMap.PackagePathBase;
+        newMap.RedirectedPathBase = inputMap.RedirectedPathBase;
+        newMap.RedirectionFlags = inputMap.RedirectionFlags;
+        newMap.VFSFolderName = inputMap.VFSFolderName;
+        return newMap;
+    }
+
+
+
+    bool findStringIC(const std::wstring& strHaystack, const std::wstring& strNeedle)
+    {
+        auto it = std::search(
+            strHaystack.begin(), strHaystack.end(),
+            strNeedle.begin(), strNeedle.end(),
+            [](wchar_t ch1, wchar_t ch2) { return std::toupper(ch1) == std::toupper(ch2); }
+        );
+        return (it != strHaystack.end());
+    }
+
+    std::wstring wStringToLower(const std::wstring& str) {
+        std::wstring lowerStr = str;
+        std::transform(lowerStr.begin(), lowerStr.end(), lowerStr.begin(), ::towlower);
+        return lowerStr;
+    }
+
+    std::wstring caseInsensitiveReplace(const std::wstring& str, const std::wstring& from, const std::wstring& to) {
+        std::wstring lowerStr = wStringToLower(str);
+        std::wstring lowerFrom = wStringToLower(from);
+
+        size_t pos = 0;
+        std::wstring result = str;
+        while ((pos = lowerStr.find(lowerFrom, pos)) != std::wstring::npos) {
+            result.replace(pos, from.length(), to);
+            lowerStr.replace(pos, from.length(), wStringToLower(to));
+            pos += to.length();
+        }
+
+        return result;
+    }
+
+    void ToUnicodeString(const std::wstring source, IN OUT UNICODE_STRING dest) 
+    {
+        dest.Length = static_cast<USHORT>(source.size() * sizeof(wchar_t));
+        dest.MaximumLength = dest.Length + sizeof(wchar_t); // Include space for the null-terminator
+        dest.Buffer = (PWSTR)malloc(dest.MaximumLength);
+        if (dest.Buffer) 
+        {
+            memcpy(dest.Buffer, source.c_str(), dest.Length);
+            dest.Buffer[source.size()] = L'\0'; // Null-terminate the string
+        }
+    }
+
+    bool FindCohortVfsRemapping(IN std::wstring cohort, IN std::wstring nextLevel, OUT std::wstring returnCohort, OUT std::wstring returnNextLevel)
+    {
+        returnCohort = cohort;
+        returnNextLevel = nextLevel;
+
+        for (std::vector<mfr_vfs_remapping>::iterator iter = g_MfrVfsRemappings.begin(); iter != g_MfrVfsRemappings.end(); ++iter)
+        {
+            if (findStringIC(cohort, iter->OrigPath))
+            {
+                if (wStringToLower(nextLevel).compare(wStringToLower(iter->SubPath)) != 0)
+                {
+                    returnCohort = caseInsensitiveReplace(cohort, iter->OrigPath, iter->RetargetedPath);
+                    returnNextLevel = iter->RetargetedSubPath;
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
 }

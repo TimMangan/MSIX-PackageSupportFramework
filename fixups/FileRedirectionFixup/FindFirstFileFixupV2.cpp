@@ -1511,12 +1511,20 @@ BOOL __stdcall FindCloseFixupV2(_Inout_ HANDLE findHandle) noexcept
         return FALSE;
     }
 
-#if _DEBUG
     auto data = reinterpret_cast<find_data2*>(findHandle);
+#if _DEBUG
     Log(L"[%d][%d] FindCloseFixupV2.", data->RememberedInstance, FindCloseInstance);
 #endif
 
-    delete reinterpret_cast<find_data2*>(findHandle);
+    for (int i = 0; i < 5; i++)
+    {
+        if (data->find_handles[i])
+        {
+            data->find_handles[i].release();
+        }
+    }
+
+   /// delete reinterpret_cast<find_data2*>(findHandle);
     ::SetLastError(ERROR_SUCCESS);
     return TRUE;
 }

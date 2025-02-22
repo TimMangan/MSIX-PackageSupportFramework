@@ -28,8 +28,14 @@ extern std::filesystem::path g_short_finalPackageRootPath;
 extern bool path_isSubsetOf_String(std::filesystem::path& basePath, const wchar_t* pathstring);
 extern bool path_isSubsetOf_String(std::filesystem::path& basePath, const char* pathstring);
 
+extern bool path_isExactMatchOf_String(std::filesystem::path& basePath, const wchar_t* pathstring);
+extern bool path_isExactMatchOf_String(std::filesystem::path& basePath, const char* pathstring);
+
 extern bool pathString_isSubsetOf_Path(const wchar_t* pathstring, std::filesystem::path& basePath);
 extern bool pathString_isSubsetOf_Path(const char* pathstring, std::filesystem::path& basePath);
+
+extern bool pathString_isExactMatchOf_Path(const wchar_t* pathstring, std::filesystem::path& basePath);
+extern bool pathString_isExactMatchOf_Path(const char* pathstring, std::filesystem::path& basePath);
 
 extern std::wstring ReplacePathPart(std::wstring inputWstring, std::filesystem::path from, std::filesystem::path to);
 

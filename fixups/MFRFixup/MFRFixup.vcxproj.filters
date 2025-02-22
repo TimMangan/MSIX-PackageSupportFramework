@@ -119,6 +119,12 @@
     <ClInclude Include="resource.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\CommonSrc\findStringIC.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\FileRedirectionFixup\PathRedirection.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="dllmain.cpp">
@@ -282,6 +288,9 @@
     </ClCompile>
     <ClCompile Include="ZwOpenFile.cpp">
       <Filter>Source Files\Intercepts\NtDll</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\CommonSrc\findStringIC.cpp">
+      <Filter>Common Source</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

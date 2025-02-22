@@ -99,7 +99,7 @@ BOOL __stdcall CreateDirectoryExFixup(
                 switch (cohortsNew.file_mfr.Request_MfrPathType)
                 {
                 case mfr::mfr_path_types::in_native_area:
-                    if (cohortsNew.map.Valid_mapping && !cohortsNew.map.IsAnExclusionToRedirect)
+                    if (cohortsNew.map.Valid_mapping == mfr::mfr_enabled_types::enabled && cohortsNew.map.IsAnExclusionToRedirect == mfr::mfr_exclusion_types::not_excluded)
                     {
                         newDirectoryWsRedirected = cohortsNew.WsRedirected;
                     }
@@ -109,7 +109,7 @@ BOOL __stdcall CreateDirectoryExFixup(
                     }
                     break;
                 case mfr::mfr_path_types::in_package_pvad_area:
-                    if (cohortsNew.map.Valid_mapping && !cohortsNew.map.IsAnExclusionToRedirect)
+                    if (cohortsNew.map.Valid_mapping == mfr::mfr_enabled_types::enabled && cohortsNew.map.IsAnExclusionToRedirect == mfr::mfr_exclusion_types::not_excluded)
                     {
                         newDirectoryWsRedirected = cohortsNew.WsRedirected;
                     }
@@ -119,7 +119,7 @@ BOOL __stdcall CreateDirectoryExFixup(
                     }
                     break;
                 case mfr::mfr_path_types::in_package_vfs_area:
-                    if (cohortsNew.map.Valid_mapping && !cohortsNew.map.IsAnExclusionToRedirect)
+                    if (cohortsNew.map.Valid_mapping == mfr::mfr_enabled_types::enabled && cohortsNew.map.IsAnExclusionToRedirect == mfr::mfr_exclusion_types::not_excluded)
                     {
                         newDirectoryWsRedirected = cohortsNew.WsRedirected;
                     }
@@ -129,7 +129,7 @@ BOOL __stdcall CreateDirectoryExFixup(
                     }
                     break;
                 case mfr::mfr_path_types::in_redirection_area_writablepackageroot:
-                    if (cohortsNew.map.Valid_mapping && !cohortsNew.map.IsAnExclusionToRedirect)
+                    if (cohortsNew.map.Valid_mapping == mfr::mfr_enabled_types::enabled && cohortsNew.map.IsAnExclusionToRedirect == mfr::mfr_exclusion_types::not_excluded)
                     {
                         newDirectoryWsRedirected = cohortsNew.WsRedirected;
                     }
@@ -161,10 +161,11 @@ BOOL __stdcall CreateDirectoryExFixup(
                 {
                 case mfr::mfr_path_types::in_native_area:
                     if (cohortsTemplate.map.RedirectionFlags == mfr::mfr_redirect_flags::prefer_redirection_local &&
-                        cohortsTemplate.map.Valid_mapping)
+                        cohortsTemplate.map.Valid_mapping == mfr::mfr_enabled_types::enabled)
                     {
                         // try the request path, which must be the local redirected version by definition, and then a package equivalent, or make original call to fail.
-                        if (!cohortsTemplate.map.IsAnExclusionToRedirect && PathExists(cohortsTemplate.WsRedirected.c_str()))
+                        if (cohortsTemplate.map.IsAnExclusionToRedirect == mfr::mfr_exclusion_types::not_excluded  && 
+                            PathExists(cohortsTemplate.WsRedirected.c_str()))
                         {
                             PreCreateFolders(newDirectoryWsRedirected.c_str(), dllInstance, L"CreateDirectoryExFixup");
                             retfinal = WRAPPER_CREATEDIRECTORYEX(cohortsTemplate.WsRedirected, newDirectoryWsRedirected, securityAttributes, dllInstance, debug, moredebug);
@@ -209,10 +210,11 @@ BOOL __stdcall CreateDirectoryExFixup(
                     }
                     else if ((cohortsTemplate.map.RedirectionFlags == mfr::mfr_redirect_flags::prefer_redirection_containerized ||
                         cohortsTemplate.map.RedirectionFlags == mfr::mfr_redirect_flags::prefer_redirection_if_package_vfs) &&
-                        cohortsTemplate.map.Valid_mapping)
+                        cohortsTemplate.map.Valid_mapping == mfr::mfr_enabled_types::enabled)
                     {
                         // try the redirected path, then package, then native, or let fail using original.
-                        if (!cohortsTemplate.map.IsAnExclusionToRedirect && PathExists(cohortsTemplate.WsRedirected.c_str()))
+                        if (cohortsTemplate.map.IsAnExclusionToRedirect == mfr::mfr_exclusion_types::not_excluded  && 
+                            PathExists(cohortsTemplate.WsRedirected.c_str()))
                         {
                             PreCreateFolders(newDirectoryWsRedirected.c_str(), dllInstance, L"CreateDirectoryExFixup");
                             retfinal = WRAPPER_CREATEDIRECTORYEX(cohortsTemplate.WsRedirected, newDirectoryWsRedirected, securityAttributes, dllInstance, debug, moredebug);
@@ -282,10 +284,11 @@ BOOL __stdcall CreateDirectoryExFixup(
                     }
                     break;
                 case mfr::mfr_path_types::in_package_pvad_area:
-                    if (cohortsTemplate.map.Valid_mapping)
+                    if (cohortsTemplate.map.Valid_mapping == mfr::mfr_enabled_types::enabled)
                     {
                         //// try the redirected path, then package (COW), then don't need native.
-                        if (!cohortsTemplate.map.IsAnExclusionToRedirect && PathExists(cohortsTemplate.WsRedirected.c_str()))
+                        if (cohortsTemplate.map.IsAnExclusionToRedirect == mfr::mfr_exclusion_types::not_excluded  && 
+                            PathExists(cohortsTemplate.WsRedirected.c_str()))
                         {
                             PreCreateFolders(newDirectoryWsRedirected.c_str(), dllInstance, L"CreateDirectoryExFixup");
                             retfinal = WRAPPER_CREATEDIRECTORYEX(cohortsTemplate.WsRedirected, newDirectoryWsRedirected, securityAttributes, dllInstance, debug, moredebug);
@@ -335,10 +338,11 @@ BOOL __stdcall CreateDirectoryExFixup(
                     break;
                 case mfr::mfr_path_types::in_package_vfs_area:
                     if (cohortsTemplate.map.RedirectionFlags == mfr::mfr_redirect_flags::prefer_redirection_local &&
-                        cohortsTemplate.map.Valid_mapping)
+                        cohortsTemplate.map.Valid_mapping == mfr::mfr_enabled_types::enabled)
                     {
                         // try the redirection path, then the package (COW).
-                        if (!cohortsTemplate.map.IsAnExclusionToRedirect && PathExists(cohortsTemplate.WsRedirected.c_str()))
+                        if (cohortsTemplate.map.IsAnExclusionToRedirect == mfr::mfr_exclusion_types::not_excluded && 
+                            PathExists(cohortsTemplate.WsRedirected.c_str()))
                         {
                             PreCreateFolders(newDirectoryWsRedirected.c_str(), dllInstance, L"CreateDirectoryExFixup");
                             retfinal = WRAPPER_CREATEDIRECTORYEX(cohortsTemplate.WsRedirected, newDirectoryWsRedirected, securityAttributes, dllInstance, debug, moredebug);
@@ -387,10 +391,11 @@ BOOL __stdcall CreateDirectoryExFixup(
                     }
                     else if ((cohortsTemplate.map.RedirectionFlags == mfr::mfr_redirect_flags::prefer_redirection_containerized ||
                         cohortsTemplate.map.RedirectionFlags == mfr::mfr_redirect_flags::prefer_redirection_if_package_vfs) &&
-                        cohortsTemplate.map.Valid_mapping)
+                        cohortsTemplate.map.Valid_mapping == mfr::mfr_enabled_types::enabled)
                     {
                         // try the redirection path, then the package (COW), then native (possibly COW)
-                        if (!cohortsTemplate.map.IsAnExclusionToRedirect && PathExists(cohortsTemplate.WsRedirected.c_str()))
+                        if (cohortsTemplate.map.IsAnExclusionToRedirect == mfr::mfr_exclusion_types::not_excluded && 
+                            PathExists(cohortsTemplate.WsRedirected.c_str()))
                         {
                             PreCreateFolders(newDirectoryWsRedirected.c_str(), dllInstance, L"CreateDirectoryExFixup");
                             retfinal = WRAPPER_CREATEDIRECTORYEX(cohortsTemplate.WsRedirected, newDirectoryWsRedirected, securityAttributes, dllInstance, debug, moredebug);
@@ -460,10 +465,11 @@ BOOL __stdcall CreateDirectoryExFixup(
                     }
                     break;
                 case mfr::mfr_path_types::in_redirection_area_writablepackageroot:
-                    if (cohortsTemplate.map.Valid_mapping)
+                    if (cohortsTemplate.map.Valid_mapping == mfr::mfr_enabled_types::enabled)
                     {
                         // try the redirected path, then package (COW), then possibly native (Possibly COW).
-                        if (!cohortsTemplate.map.IsAnExclusionToRedirect && PathExists(cohortsTemplate.WsRedirected.c_str()))
+                        if (cohortsTemplate.map.IsAnExclusionToRedirect == mfr::mfr_exclusion_types::not_excluded && 
+                            PathExists(cohortsTemplate.WsRedirected.c_str()))
                         {
                             PreCreateFolders(newDirectoryWsRedirected.c_str(), dllInstance, L"CreateDirectoryExFixup");
                             retfinal = WRAPPER_CREATEDIRECTORYEX(cohortsTemplate.WsRedirected, newDirectoryWsRedirected, securityAttributes, dllInstance, debug, moredebug);

@@ -20,18 +20,22 @@ extern std::filesystem::path FID_ProgramFilesX86;
 extern std::filesystem::path FID_ProgramFilesCommonX64;
 extern std::filesystem::path FID_ProgramFilesX64;
 #endif
-extern std::filesystem::path FID_UserProgramFiles;
 extern std::filesystem::path FID_Fonts;
 extern std::filesystem::path FID_ProgramData;
+extern std::filesystem::path FID_CommonPrograms;
+
+extern std::filesystem::path FID_UserProfiles;
+extern std::filesystem::path FID_UserFolder;
+extern std::filesystem::path FID_Profile;
 extern std::filesystem::path FID_LocalAppDataLow;
 extern std::filesystem::path FID_LocalAppData;
 extern std::filesystem::path FID_RoamingAppData;
-extern std::filesystem::path FID_CommonPrograms;
+extern std::filesystem::path FID_UserProgramFiles;
 extern std::filesystem::path FID_Desktop;
 extern std::filesystem::path FID_Documents;
-extern std::filesystem::path FID_Profile;
 extern std::filesystem::path FID_PublicDesktop;
 extern std::filesystem::path FID_PublicDocuments;
+
 extern std::filesystem::path FID_RootDrive;
 
 extern void FID_Initialize();

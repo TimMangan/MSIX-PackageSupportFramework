@@ -32,6 +32,7 @@ inline thread_local psf::reentrancy_guard g_reentrancyGuard;
 
 namespace impl
 {
+
     inline auto CopyFile = psf::detoured_string_function(&::CopyFileA, &::CopyFileW);
     inline auto CopyFile2 = &::CopyFile2;
     inline auto CopyFileEx = psf::detoured_string_function(&::CopyFileExA, &::CopyFileExW);

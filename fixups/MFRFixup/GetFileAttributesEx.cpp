@@ -88,7 +88,7 @@ BOOL __stdcall GetFileAttributesExFixup(
 #if MOREDEBUG
     moreDebug = true;
 #endif
-    DWORD retfinal;
+    DWORD retfinal = 0;
     auto guard = g_reentrancyGuard.enter();
     try
     {
@@ -114,24 +114,35 @@ BOOL __stdcall GetFileAttributesExFixup(
                 switch (cohorts.file_mfr.Request_MfrPathType)
                 {
                 case mfr::mfr_path_types::in_native_area:
-                    if (cohorts.map.Valid_mapping)
+                    if (cohorts.map.Valid_mapping == mfr::mfr_enabled_types::enabled)
                     {
                         switch (cohorts.map.RedirectionFlags)
                         {
                         case mfr::mfr_redirect_flags::prefer_redirection_local:
-                            if (!cohorts.map.IsAnExclusionToRedirect)
+                            if (cohorts.map.IsAnExclusionToRedirect == mfr::mfr_exclusion_types::not_excluded)
                             {
                                 // try the request path, which must be the local redirected version by definition, and then a package equivalent  
                                 WRAPPER_GETFILEATTRIBUTESEX(cohorts.WsRedirected, debug, moreDebug, L"WsRedirected");   // returns if successful.
+                                if (cohorts.WsPackage.compare(cohorts.WsRedirected) != 0)
+                                {
+                                    WRAPPER_GETFILEATTRIBUTESEX(cohorts.WsPackage, debug, moreDebug, L"WsPackage");   // returns if successful.
+                                }
+
+                                if (cohorts.WsRequested.compare(cohorts.WsRedirected) != 0 &&
+                                    cohorts.WsRequested.compare(cohorts.WsPackage) != 0)
+                                {
+                                    WRAPPER_GETFILEATTRIBUTESEX(cohorts.WsRequested, debug, moreDebug, L"WsRequested");   // returns if successful.
+                                }
                             }
-
-                            WRAPPER_GETFILEATTRIBUTESEX(cohorts.WsPackage, debug, moreDebug, L"WsPackage");   // returns if successful.
-
-                            if (!cohorts.WsPackage.compare(cohorts.WsRequested))
+                            else
                             {
-                                WRAPPER_GETFILEATTRIBUTESEX(cohorts.WsRequested, debug, moreDebug, L"WsRequested");   // returns if successful.
-                            }
+                                WRAPPER_GETFILEATTRIBUTESEX(cohorts.WsPackage, debug, moreDebug, L"WsPackage");   // returns if successful.\
 
+                                if (cohorts.WsRequested.compare(cohorts.WsPackage) != 0)
+                                {
+                                    WRAPPER_GETFILEATTRIBUTESEX(cohorts.WsRequested, debug, moreDebug, L"WsRequested");   // returns if successful.
+                                }
+                            }
                             // Everything failed if here
                             if (anyFileNotFound)
                             {
@@ -147,15 +158,28 @@ BOOL __stdcall GetFileAttributesExFixup(
                             return retfinal;
                         case mfr::mfr_redirect_flags::prefer_redirection_containerized:
                         case mfr::mfr_redirect_flags::prefer_redirection_if_package_vfs:
-                            if (!cohorts.map.IsAnExclusionToRedirect)
+                            if (cohorts.map.IsAnExclusionToRedirect == mfr::mfr_exclusion_types::not_excluded)
                             {
                                 // try the redirected path, then package, then native.
                                 WRAPPER_GETFILEATTRIBUTESEX(cohorts.WsRedirected, debug, moreDebug, L"WsRedirected");   // returns if successful.
+                                if (cohorts.WsPackage.compare(cohorts.WsRedirected) != 0)
+                                {
+                                    WRAPPER_GETFILEATTRIBUTESEX(cohorts.WsPackage, debug, moreDebug, L"WsPackage");   // returns if successful.
+                                }
+                                if (cohorts.WsNative.compare(cohorts.WsRedirected) != 0 &&
+                                    cohorts.WsNative.compare(cohorts.WsPackage) != 0)
+                                {
+                                    WRAPPER_GETFILEATTRIBUTESEX(cohorts.WsNative, debug, moreDebug, L"WsNative");   // returns if successful.
+                                }
                             }
-
-                            WRAPPER_GETFILEATTRIBUTESEX(cohorts.WsPackage, debug, moreDebug, L"WsPackage");   // returns if successful.
-
-                            WRAPPER_GETFILEATTRIBUTESEX(cohorts.WsNative, debug, moreDebug, L"WsNative");   // returns if successful.
+                            else
+                            {
+                                WRAPPER_GETFILEATTRIBUTESEX(cohorts.WsPackage, debug, moreDebug, L"WsPackage");   // returns if successful.
+                                if (cohorts.WsNative.compare(cohorts.WsPackage) != 0 )
+                                {
+                                    WRAPPER_GETFILEATTRIBUTESEX(cohorts.WsNative, debug, moreDebug, L"WsNative");   // returns if successful.
+                                }
+                            }
 
                             // All failed if here
                             if (anyFileNotFound)
@@ -180,17 +204,21 @@ BOOL __stdcall GetFileAttributesExFixup(
                     break;
                 case mfr::mfr_path_types::in_package_pvad_area:
                     /// NOTE: Ilv does not allow accessing PVAD files in the package.  PERIOD!!!  So this call will always fail.
-                    if (cohorts.map.Valid_mapping)
+                    if (cohorts.map.Valid_mapping == mfr::mfr_enabled_types::enabled)
                     {
-                        if (!cohorts.map.IsAnExclusionToRedirect)
+                        if (cohorts.map.IsAnExclusionToRedirect == mfr::mfr_exclusion_types::not_excluded)
                         {
                             //// try the redirected path, then package, then don't need native.
                             WRAPPER_GETFILEATTRIBUTESEX(cohorts.WsRedirected, debug, moreDebug, L"WsRedirected");   // returns if successful.
+                            if (cohorts.WsPackage.compare(cohorts.WsRedirected) != 0)
+                            {
+                                WRAPPER_GETFILEATTRIBUTESEX(cohorts.WsPackage, debug, moreDebug, "WsPackage");   // returns if successful.
+                            }
                         }
-
-                        Log(L"[%d] GetFileAttributesExFixup still here, try package... ", dllInstance);
-                        WRAPPER_GETFILEATTRIBUTESEX(cohorts.WsPackage, debug, moreDebug, "WsPackage");   // returns if successful.
-                        Log(L"[%d] GetFileAttributesExFixup still here, try package... ", dllInstance);
+                        else
+                        {
+                            WRAPPER_GETFILEATTRIBUTESEX(cohorts.WsPackage, debug, moreDebug, "WsPackage");   // returns if successful.
+                        }
 
                         // Both failed if here
                         if (anyFileNotFound)
@@ -208,18 +236,20 @@ BOOL __stdcall GetFileAttributesExFixup(
                     }
                     break;
                 case mfr::mfr_path_types::in_package_vfs_area:
-                    if (cohorts.map.Valid_mapping)
+                    if (cohorts.map.Valid_mapping == mfr::mfr_enabled_types::enabled)
                     {
                         switch (cohorts.map.RedirectionFlags)
                         {
                         case mfr::mfr_redirect_flags::prefer_redirection_local:
-                            if (!cohorts.map.IsAnExclusionToRedirect)
+                            if (cohorts.map.IsAnExclusionToRedirect == mfr::mfr_exclusion_types::not_excluded)
                             {
                                 // try the request path, which must be the local redirected version by definition, and then a package equivalent.
                                 WRAPPER_GETFILEATTRIBUTESEX(cohorts.WsRedirected, debug, moreDebug, L"WsRedirected");   // returns if successful.
                             }
-
-                            WRAPPER_GETFILEATTRIBUTESEX(cohorts.WsPackage, debug, moreDebug, L"WsPackage");   // returns if successful.
+                            if (cohorts.WsPackage.compare(cohorts.WsRedirected) != 0)
+                            {
+                                WRAPPER_GETFILEATTRIBUTESEX(cohorts.WsPackage, debug, moreDebug, L"WsPackage");   // returns if successful.
+                            }
 
                             // Both failed if here
                             if (anyFileNotFound)
@@ -236,15 +266,29 @@ BOOL __stdcall GetFileAttributesExFixup(
                             return retfinal;
                         case mfr::mfr_redirect_flags::prefer_redirection_containerized:
                         case mfr::mfr_redirect_flags::prefer_redirection_if_package_vfs:
-                            if (!cohorts.map.IsAnExclusionToRedirect)
+                            if (cohorts.map.IsAnExclusionToRedirect == mfr::mfr_exclusion_types::not_excluded)
                             {
                                 // try the redirected path, then package, then native.
                                 WRAPPER_GETFILEATTRIBUTESEX(cohorts.WsRedirected, debug, moreDebug, L"WsRedirected");  // returns if successful.
+                                if (cohorts.WsPackage.compare(cohorts.WsRedirected) != 0)
+                                {
+                                    WRAPPER_GETFILEATTRIBUTESEX(cohorts.WsPackage, debug, moreDebug, L"WsPackage");  // returns if successful.
+                                }
+                                if (cohorts.WsNative.compare(cohorts.WsRedirected) != 0 &&
+                                    cohorts.WsNative.compare(cohorts.WsPackage) != 0)
+                                {
+                                    WRAPPER_GETFILEATTRIBUTESEX(cohorts.WsNative, debug, moreDebug, L"WsNative");  // returns if successful.
+                                }
+                            }
+                            else
+                            {
+                                WRAPPER_GETFILEATTRIBUTESEX(cohorts.WsPackage, debug, moreDebug, L"WsPackage");  // returns if successful.
+                                if (cohorts.WsNative.compare(cohorts.WsPackage) != 0)
+                                {
+                                    WRAPPER_GETFILEATTRIBUTESEX(cohorts.WsNative, debug, moreDebug, L"WsNative");  // returns if successful.
+                                }
                             }
 
-                            WRAPPER_GETFILEATTRIBUTESEX(cohorts.WsPackage, debug, moreDebug, L"WsPackage");  // returns if successful.
-
-                            WRAPPER_GETFILEATTRIBUTESEX(cohorts.WsNative, debug, moreDebug, L"WsNative");  // returns if successful.
 
                             // All failed if here
                             if (anyFileNotFound)
@@ -268,20 +312,38 @@ BOOL __stdcall GetFileAttributesExFixup(
                     }
                     break;
                 case mfr::mfr_path_types::in_redirection_area_writablepackageroot:
-                    if (cohorts.map.Valid_mapping)
+                    if (cohorts.map.Valid_mapping == mfr::mfr_enabled_types::enabled)
                     {
-                        if (!cohorts.map.IsAnExclusionToRedirect)
+                        if (cohorts.map.IsAnExclusionToRedirect == mfr::mfr_exclusion_types::not_excluded)
                         {
                             // try the redirected path, then package, then native if relevant.
-                            WRAPPER_GETFILEATTRIBUTESEX(cohorts.WsRedirected, debug, moreDebug, L"WsRedirected");  // returns if successful.
+                            WRAPPER_GETFILEATTRIBUTESEX(cohorts.WsRedirected, debug, moreDebug, L"WsRedirected");  // returns if successful
+                            if (cohorts.WsPackage.compare(cohorts.WsRedirected) != 0)
+                            {
+                                WRAPPER_GETFILEATTRIBUTESEX(cohorts.WsPackage, debug, moreDebug, L"WsPackage");  // returns if successful.
+                            }
+                            if (cohorts.UsingNative)
+                            {
+                                if (!cohorts.WsNative.compare(cohorts.WsRedirected) &&
+                                    !cohorts.WsNative.compare(cohorts.WsPackage))
+                                {
+                                    WRAPPER_GETFILEATTRIBUTESEX(cohorts.WsNative, debug, moreDebug, L"WsNative");  // returns if successful.
+                                }
+                            }
                         }
-
-                        WRAPPER_GETFILEATTRIBUTESEX(cohorts.WsPackage, debug, moreDebug, L"WsPackage");  // returns if successful.
-
-                        if (cohorts.UsingNative)
+                        else
                         {
-                            WRAPPER_GETFILEATTRIBUTESEX(cohorts.WsNative, debug, moreDebug, L"WsNative");  // returns if successful.
+                            WRAPPER_GETFILEATTRIBUTESEX(cohorts.WsPackage, debug, moreDebug, L"WsPackage");  // returns if successful.
+
+                            if (cohorts.UsingNative)
+                            {
+                                if (cohorts.WsNative.compare(cohorts.WsPackage) != 0)
+                                {
+                                    WRAPPER_GETFILEATTRIBUTESEX(cohorts.WsNative, debug, moreDebug, L"WsNative");  // returns if successful.
+                                }
+                            }
                         }
+                        
 
                         if (anyFileNotFound)
                         {

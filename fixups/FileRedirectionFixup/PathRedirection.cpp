@@ -46,6 +46,7 @@ std::filesystem::path g_finalPackageRootPath;
 DWORD g_FileIntceptInstance = 0;
 
 std::vector<vfs_folder_mapping> g_vfsFolderMappings;
+std::vector<path_redirection_spec> g_redirectionSpecs;
 
 void InitializePaths()
 {
@@ -63,14 +64,14 @@ void InitializePaths()
 
     g_packageVfsRootPath = g_packageRootPath / L"VFS";
 
-	auto finalPackageRootPath = std::wstring(::PSFQueryFinalPackageRootPath());
-	g_finalPackageRootPath = psf::remove_trailing_path_separators(finalPackageRootPath);  // has \\?\ prepended to PackageRootPath
-    
+    auto finalPackageRootPath = std::wstring(::PSFQueryFinalPackageRootPath());
+    g_finalPackageRootPath = psf::remove_trailing_path_separators(finalPackageRootPath);  // has \\?\ prepended to PackageRootPath
+
     // Ensure that the redirected root path exists
     g_redirectRootPath = psf::known_folder(FOLDERID_LocalAppData) / std::filesystem::path(L"Packages") / psf::current_package_family_name() / LR"(LocalCache\Local\VFS)";
     std::filesystem::create_directories(g_redirectRootPath);
 
-    g_writablePackageRootPath = psf::known_folder(FOLDERID_LocalAppData) /std::filesystem::path(L"Packages") / psf::current_package_family_name() / LR"(LocalCache\Local\Microsoft\WritablePackageRoot)";
+    g_writablePackageRootPath = psf::known_folder(FOLDERID_LocalAppData) / std::filesystem::path(L"Packages") / psf::current_package_family_name() / LR"(LocalCache\Local\Microsoft\WritablePackageRoot)";
     std::filesystem::create_directories(g_writablePackageRootPath);
 
     // Folder IDs and their desktop bridge packaged VFS location equivalents. Taken from:
@@ -120,6 +121,7 @@ void InitializePaths()
 #endif
     g_vfsFolderMappings.push_back(vfs_folder_mapping{ System32Path,                                             LR"(System)"sv,                 false });
     g_vfsFolderMappings.push_back(vfs_folder_mapping{ psf::known_folder(FOLDERID_Fonts),                        LR"(Fonts)"sv,                  false });
+    g_vfsFolderMappings.push_back(vfs_folder_mapping{ windirPath / LR"(SystemApps)"sv,                          LR"(SystemApps)"sv,             false });
     g_vfsFolderMappings.push_back(vfs_folder_mapping{ windirPath,                                               LR"(Windows)"sv,                true });
 
     g_vfsFolderMappings.push_back(vfs_folder_mapping{ psf::known_folder(FOLDERID_ProgramData),                  LR"(Common AppData)"sv,         true });
@@ -138,10 +140,9 @@ void InitializePaths()
     g_vfsFolderMappings.push_back(vfs_folder_mapping{ psf::known_folder(FOLDERID_PublicDocuments),              LR"(Common Documents)"sv,       false });
 
     g_vfsFolderMappings.push_back(vfs_folder_mapping{ windirPath.root_name(),                                   LR"(AppVPackageDrive)"sv,       false });
+
+
 }
-
-std::vector<path_redirection_spec> g_redirectionSpecs;
-
 
 
 std::filesystem::path path_from_known_folder_string(std::wstring_view str)

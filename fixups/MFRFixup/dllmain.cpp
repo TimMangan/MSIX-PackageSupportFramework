@@ -2,6 +2,7 @@
 // Copyright (C) TMurgent Technologies, LLP. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 //-------------------------------------------------------------------------------------------------------
+#define Intercept_NTDLL 1
 #if _DEBUG
 //#define _ManualDebug 1
 #include <thread>
@@ -12,8 +13,10 @@
 #include <psf_framework.h>
 #include <psf_logging.h>
 
+#include "FunctionImplementations.h"
 #include "FunctionImplementations_WindowsStorage.h"
 #include "FunctionImplementations_KernelBase.h"
+#include "FunctionImplementations_ntdll.h"
 
 #if _DEBUG
 //#define MOREDEBUG 1
@@ -39,46 +42,46 @@ extern "C" {
 #if DEBUG_NEW_FIXUPS_MFR
     void PrintDebugAddrs()
     {
-        Log("CopyFile Ansi=%p Wide=%p\n", &::CopyFileA, &::CopyFileW);
-        Log("CopyFile2 neutral=%p\n", &::CopyFile2);
-        Log("CopyFileEx Ansi=%p Wide=%p\n", &::CopyFileExA, &::CopyFileExW);
-        Log("CreateDirectory  Ansi=%p Wide=%p\n", &::CreateDirectoryA, &::CreateDirectoryW);
-        Log("CreateDirectoryEx  Ansi=%p Wide=%p\n", &::CreateDirectoryExA, &::CreateDirectoryExW);
-        Log("CreateFile  Ansi=%p Wide=%p\n", &::CreateFileA, &::CreateFileW);
-        Log("CreateFile2  neutral=%p\n", &::CreateFile2);
-        Log("CreateHardLink  Ansi=%p Wide=%p\n", &::CreateHardLinkA, &::CreateHardLinkW);
-        Log("CreateSymbolicLink  Ansi=%p Wide=%p\n", &::CreateSymbolicLinkA, &::CreateSymbolicLinkW);
-        Log("DeleteFile  Ansi=%p Wide=%p\n", &::DeleteFileA, &::DeleteFileW);
-        Log("FindClose  neutral=%p\n", &::FindClose);
-        Log("FindFirstFile  Ansi=%p Wide=%p\n", &::FindFirstFileA, &::FindFirstFileW);
-        Log("FindFirstFileEx  Ansi=%p Wide=%p\n", &::FindFirstFileExA, &::FindFirstFileExW);
-        Log("FindNextFile  Ansi=%p Wide=%p\n", &::FindNextFileA, &::FindNextFileW);
+        Log("CopyFile Ansi=%p Wide=%p\n", &impl::CopyFileW.ansi, &impl::CopyFileW.wide);
+        Log("CopyFile2 neutral=%p\n", &impl::CopyFile2);
+        Log("CopyFileEx Ansi=%p Wide=%p\n", &impl::CopyFileExW.ansi, &impl::CopyFileExW.wide);
+        Log("CreateDirectory  Ansi=%p Wide=%p\n", &impl::CreateDirectoryW.ansi, &impl::CreateDirectoryW.wide);
+        Log("CreateDirectoryEx  Ansi=%p Wide=%p\n", &impl::CreateDirectoryExW.ansi, &impl::CreateDirectoryExW.wide);
+        Log("CreateFile  Ansi=%p Wide=%p\n", &impl::CreateFileW.ansi, &impl::CreateFileW.wide);
+        Log("CreateFile2  neutral=%p\n", &impl::CreateFile2);
+        Log("CreateHardLink  Ansi=%p Wide=%p\n", &impl::CreateHardLinkW.ansi, &impl::CreateHardLinkW.wide);
+        Log("CreateSymbolicLink  Ansi=%p Wide=%p\n", &impl::CreateSymbolicLinkW.ansi, &impl::CreateSymbolicLinkW.wide);
+        Log("DeleteFile  Ansi=%p Wide=%p\n", &impl::DeleteFileW.ansi, &impl::DeleteFileW.wide);
+        Log("FindClose  neutral=%p\n", &impl::FindClose);
+        Log("FindFirstFile  Ansi=%p Wide=%p\n", &impl::FindFirstFileW.ansi, &impl::FindFirstFileW.wide);
+        Log("FindFirstFileEx  Ansi=%p Wide=%p\n", &impl::FindFirstFileExW.ansi, &impl::FindFirstFileExW.wide);
+        Log("FindNextFile  Ansi=%p Wide=%p\n", &impl::FindNextFileW.ansi, &impl::FindNextFileW.wide);
 
 #if FIXUP_FROM_KernelBase
         Log("(KernelBase)MoveFileExW  Wide=%p\n", kernelbaseimpl::MoveFileExWImpl);
 #endif
 
-        Log("MoveFile  Ansi=%p Wide=%p\n", &::MoveFileA, &::MoveFileW);
-        Log("MoveFileEx  Ansi=%p Wide=%p\n", &::MoveFileExA, &::MoveFileExW);
-        Log("MoveFileWithProgress  Ansi=%p Wide=%p\n", &::MoveFileWithProgressA, &::MoveFileWithProgressW);
-        Log("RemoveDirectory  Ansi=%p Wide=%p\n", &::RemoveDirectoryA, &::RemoveDirectoryW);
-        Log("ReplaceFile  Ansi=%p Wide=%p\n", &::ReplaceFileA, &::ReplaceFileW);
-        Log("SetFileAttributes  Ansi=%p Wide=%p\n", &::SetFileAttributesA, &::SetFileAttributesW);
+        Log("MoveFile  Ansi=%p Wide=%p\n", &impl::MoveFileW.ansi, &impl::MoveFileW.wide);
+        Log("MoveFileEx  Ansi=%p Wide=%p\n", &impl::MoveFileExW.ansi, &impl::MoveFileExW.wide);
+        Log("MoveFileWithProgress  Ansi=%p Wide=%p\n", &impl::MoveFileWithProgressW.ansi, &impl::MoveFileWithProgressW.wide);
+        Log("RemoveDirectory  Ansi=%p Wide=%p\n", &impl::RemoveDirectoryW.ansi, &impl::RemoveDirectoryW.wide);
+        Log("ReplaceFile  Ansi=%p Wide=%p\n", &impl::ReplaceFileW.ansi, &impl::ReplaceFileW.wide);
+        Log("SetFileAttributes  Ansi=%p Wide=%p\n", &impl::SetFileAttributesW.ansi, &impl::SetFileAttributesW.wide);
 
-        Log("GetFileAttributes  Ansi=%p Wide=%p\n", &::GetFileAttributesA, &::GetFileAttributesW);
-        Log("GetFileAttributesEx  Ansi=%p Wide=%p\n", &::GetFileAttributesExA, &::GetFileAttributesExW);
-        Log("GetPrivateProfileInt  Ansi=%p Wide=%p\n", &::GetPrivateProfileIntA, &::GetPrivateProfileIntW);
-        Log("GetPrivateProfileSection  Ansi=%p Wide=%p\n", &::GetPrivateProfileSectionA, &::GetPrivateProfileSectionW);
-        Log("GetPrivateProfileSectionNames  Ansi=%p Wide=%p\n", &::GetPrivateProfileSectionNamesA, &::GetPrivateProfileSectionNamesW);
-        Log("GetPrivateProfileString  Ansi=%p Wide=%p\n", &::GetPrivateProfileStringA, &::GetPrivateProfileStringW);
-        Log("GetPrivateProfileStruct  Ansi=%p Wide=%p\n", &::GetPrivateProfileStructA, &::GetPrivateProfileStructW);
+        Log("GetFileAttributes  Ansi=%p Wide=%p\n", &impl::GetFileAttributesW.ansi, &impl::GetFileAttributesW.wide);
+        Log("GetFileAttributesEx  Ansi=%p Wide=%p\n", &impl::GetFileAttributesExW.ansi, &impl::GetFileAttributesExW.wide);
+        Log("GetPrivateProfileInt  Ansi=%p Wide=%p\n", &impl::GetPrivateProfileIntW.ansi, &impl::GetPrivateProfileIntW.wide);
+        Log("GetPrivateProfileSection  Ansi=%p Wide=%p\n", &impl::GetPrivateProfileSectionW.ansi, &impl::GetPrivateProfileSectionW.wide);
+        Log("GetPrivateProfileSectionNames  Ansi=%p Wide=%p\n", &impl::GetPrivateProfileSectionNamesW.ansi, &impl::GetPrivateProfileSectionNamesW.wide);
+        Log("GetPrivateProfileString  Ansi=%p Wide=%p\n", &impl::GetPrivateProfileStringW.ansi, &impl::GetPrivateProfileStringW.wide);
+        Log("GetPrivateProfileStruct  Ansi=%p Wide=%p\n", &impl::GetPrivateProfileStructW.ansi, &impl::GetPrivateProfileStructW.wide);
         
         //Log("GetCurrentDirectory  Ansi=%p Wide=%p\n", &::GetCurrentDirectoryA, &::GetCurrentDirectoryW);
         
-        Log("SetCurrentDirectory  Ansi=%p Wide=%p\n", &::SetCurrentDirectoryA, &::SetCurrentDirectoryW);
-        Log("WritePrivateProfileSection  Ansi=%p Wide=%p\n", &::WritePrivateProfileSectionA, &::WritePrivateProfileSectionW);
-        Log("WritePrivateProfileString  Ansi=%p Wide=%p\n", &::WritePrivateProfileStringA, &::WritePrivateProfileStringW);
-        Log("WritePrivateProfileStruct  Ansi=%p Wide=%p\n", &::WritePrivateProfileStructA, &::WritePrivateProfileStructW);
+        Log("SetCurrentDirectory  Ansi=%p Wide=%p\n", &impl::SetCurrentDirectoryW.wide, &impl::SetCurrentDirectoryW.wide);
+        Log("WritePrivateProfileSection  Ansi=%p Wide=%p\n", &impl::WritePrivateProfileSectionW.wide, &impl::WritePrivateProfileSectionW.wide);
+        Log("WritePrivateProfileString  Ansi=%p Wide=%p\n", &impl::WritePrivateProfileStringW.ansi, &impl::WritePrivateProfileStringW.wide);
+        Log("WritePrivateProfileStruct  Ansi=%p Wide=%p\n", &impl::WritePrivateProfileStructW.ansi, &impl::WritePrivateProfileStructW.wide);
 
         //Log("SearchPath  Ansi=%p Wide=%p\n", &::SearchPathA, &::SearchPathW);
 
@@ -113,8 +116,23 @@ extern "C" {
             Log("(windows.storage)ShellExecuteExW to  Wide=NULL\n");
         else
             Log("(windows.storage)ShellExecuteExW  Wide=%p\n", &windowsstorageimpl::ShellExecuteExWImpl);
-#endif
         Log("WindowsStorage Fixups loaded.\n");
+#endif
+
+
+#ifdef Intercept_NTDLL
+#ifdef DO_Intercept_NtQueryDirectoryFile
+        if (ntdllimpl::NtQueryDirectoryFileImpl != nullptr)
+            Log("(ntdll)NtQueryDirectoryFile Neutral=%p\n", &ntdllimpl::NtQueryDirectoryFileImpl);
+#endif
+
+#ifdef DO_Intercept_NtQueryDirectoryFileEx
+        if (ntdllimpl::NtQueryDirectoryFileExImpl != nullptr)
+            Log("(ntdll)NtQueryDirectoryFileEx Neutral=%p\n", &ntdllimpl::NtQueryDirectoryFileExImpl);
+#endif
+        Log("ntdll Fixups loaded.\n");
+#endif
+
 #endif
     }
 #endif
@@ -149,7 +167,7 @@ extern "C" {
             std::this_thread::yield();
             ::DebugBreak();
         }
-        manual_LogWFD(L"WFD: Done.");
+        manual_LogWFD(L"WFD: Done.\n");
     }
 #endif
 

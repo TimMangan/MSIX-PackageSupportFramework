@@ -88,13 +88,13 @@ BOOL __stdcall WritePrivateProfileStringFixup(
                     switch (cohorts.file_mfr.Request_MfrPathType)
                     {
                     case mfr::mfr_path_types::in_native_area:
-                        if (cohorts.map.Valid_mapping)
+                        if (cohorts.map.Valid_mapping == mfr::mfr_enabled_types::enabled)
                         {
                             switch (cohorts.map.RedirectionFlags)
                             {
                             case mfr::mfr_redirect_flags::prefer_redirection_local:
                                 // try the request path (which must be the local redirected version by definition), and then a package equivalent with COW if needed.
-                                if (!cohorts.map.IsAnExclusionToRedirect && PathExists(cohorts.WsRedirected.c_str()))
+                                if (cohorts.map.IsAnExclusionToRedirect == mfr::mfr_exclusion_types::not_excluded && PathExists(cohorts.WsRedirected.c_str()))
                                 {
                                     // no special acction, just write to redirected area
                                     WRAPPER_WRITEPRIVATEPROFILESTRING(cohorts.WsRedirected, debug);
@@ -120,7 +120,7 @@ BOOL __stdcall WritePrivateProfileStringFixup(
                             case mfr::mfr_redirect_flags::prefer_redirection_containerized:
                             case mfr::mfr_redirect_flags::prefer_redirection_if_package_vfs:
                                 // try the redirected path, then package (COW), then native (possibly via COW).
-                                if (!cohorts.map.IsAnExclusionToRedirect && PathExists(cohorts.WsRedirected.c_str()))
+                                if (cohorts.map.IsAnExclusionToRedirect == mfr::mfr_exclusion_types::not_excluded && PathExists(cohorts.WsRedirected.c_str()))
                                 {
                                     WRAPPER_WRITEPRIVATEPROFILESTRING(cohorts.WsRedirected, debug);
                                 }
@@ -173,7 +173,7 @@ BOOL __stdcall WritePrivateProfileStringFixup(
                         }
                         break;
                     case mfr::mfr_path_types::in_package_pvad_area:
-                        if (cohorts.map.Valid_mapping)
+                        if (cohorts.map.Valid_mapping == mfr::mfr_enabled_types::enabled)
                         {
                             switch (cohorts.map.RedirectionFlags)
                             {
@@ -183,7 +183,7 @@ BOOL __stdcall WritePrivateProfileStringFixup(
                             case mfr::mfr_redirect_flags::prefer_redirection_containerized:
                             case mfr::mfr_redirect_flags::prefer_redirection_if_package_vfs:
                                 //// try the redirected path, then package with COW, then don't need native and create in redirected.
-                                if (!cohorts.map.IsAnExclusionToRedirect && PathExists(cohorts.WsRedirected.c_str()))
+                                if (cohorts.map.IsAnExclusionToRedirect == mfr::mfr_exclusion_types::not_excluded && PathExists(cohorts.WsRedirected.c_str()))
                                 {
                                     WRAPPER_WRITEPRIVATEPROFILESTRING(cohorts.WsRedirected, debug);
                                 }
@@ -226,13 +226,13 @@ BOOL __stdcall WritePrivateProfileStringFixup(
                         }
                         break;
                     case mfr::mfr_path_types::in_package_vfs_area:
-                        if (cohorts.map.Valid_mapping)
+                        if (cohorts.map.Valid_mapping == mfr::mfr_enabled_types::enabled)
                         {
                             switch (cohorts.map.RedirectionFlags)
                             {
                             case mfr::mfr_redirect_flags::prefer_redirection_local:
                                 // try the redirected path, then package path (COW), then create redirected
-                                if (!cohorts.map.IsAnExclusionToRedirect && PathExists(cohorts.WsRedirected.c_str()))
+                                if (cohorts.map.IsAnExclusionToRedirect == mfr::mfr_exclusion_types::not_excluded && PathExists(cohorts.WsRedirected.c_str()))
                                 {
                                     WRAPPER_WRITEPRIVATEPROFILESTRING(cohorts.WsRedirected, debug);
                                 }
@@ -257,7 +257,7 @@ BOOL __stdcall WritePrivateProfileStringFixup(
                             case mfr::mfr_redirect_flags::prefer_redirection_containerized:
                             case mfr::mfr_redirect_flags::prefer_redirection_if_package_vfs:
                                 // try the redirected path, then package (COW), then native (COW), then just create new in redirected.
-                                if (!cohorts.map.IsAnExclusionToRedirect && PathExists(cohorts.WsRedirected.c_str()))
+                                if (cohorts.map.IsAnExclusionToRedirect == mfr::mfr_exclusion_types::not_excluded && PathExists(cohorts.WsRedirected.c_str()))
                                 {
                                     WRAPPER_WRITEPRIVATEPROFILESTRING(cohorts.WsRedirected, debug);
                                 }
@@ -300,7 +300,7 @@ BOOL __stdcall WritePrivateProfileStringFixup(
                         }
                         break;
                     case mfr::mfr_path_types::in_redirection_area_writablepackageroot:
-                        if (cohorts.map.Valid_mapping)
+                        if (cohorts.map.Valid_mapping == mfr::mfr_enabled_types::enabled)
                         {
                             switch (cohorts.map.RedirectionFlags)
                             {
@@ -310,7 +310,7 @@ BOOL __stdcall WritePrivateProfileStringFixup(
                             case mfr::mfr_redirect_flags::prefer_redirection_containerized:
                             case mfr::mfr_redirect_flags::prefer_redirection_if_package_vfs:
                                 // try the redirected path, then package (COW), then possibly native (COW), then create new in redirected.
-                                if (!cohorts.map.IsAnExclusionToRedirect && PathExists(cohorts.WsRedirected.c_str()))
+                                if (cohorts.map.IsAnExclusionToRedirect == mfr::mfr_exclusion_types::not_excluded && PathExists(cohorts.WsRedirected.c_str()))
                                 {
                                     WRAPPER_WRITEPRIVATEPROFILESTRING(cohorts.WsRedirected, debug);
                                 }

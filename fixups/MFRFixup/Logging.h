@@ -21,3 +21,18 @@
             } \
         } \
     }
+
+#define LogCallingModuleInstance(instance) \
+    { \
+        if (!g_psf_NoLogging) \
+        { \
+            HMODULE moduleHandle; \
+            if (::GetModuleHandleExW( \
+                GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS | GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT, \
+                reinterpret_cast<const wchar_t*>(_ReturnAddress()), \
+                &moduleHandle)) \
+            { \
+                Log(L"[%d]\tCalling Module=%ls\n", instance, psf::get_module_path(moduleHandle).c_str()); \
+            } \
+        } \
+    }

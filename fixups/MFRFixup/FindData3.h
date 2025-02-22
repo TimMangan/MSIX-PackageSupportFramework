@@ -9,7 +9,6 @@
 #include <dos_paths.h>
 #include "fancy_handle.h"
 
-
 struct find_deleter
 {
     using pointer = psf::fancy_handle;

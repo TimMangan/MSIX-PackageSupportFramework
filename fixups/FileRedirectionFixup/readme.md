@@ -9,6 +9,14 @@ When injected into a process, the File Redirection Fixup supports the ability to
 > > * In the case of a folder the redirected folder is created (including folder structures as needed) and used.
 > * The rule may optionally have additional configuration to modify the behavior, such as to control the redirected location or exempt a file from redirection.
 
+## Deprecation Notice
+The FileRedirectionFixup is deprecated and might be removed in a future release.  Please use the MfrFixup.
+> * All file based fixup maintenance is being done in the MfrFixup.
+> * There is some shared code between the two, so some changes may creep over as the MfrFixup is updated.
+> * No testing of the FileRedirecctionFixup is used in the release process.
+> * It remains in the build only as a last resort to try when MfrFixup doesn't take care of the needs of an application.
+> * Pull requests for the FileRedirectionFixup will be considered, but the primary maintainers will not not author anything beyond keep the build from breaking.
+
 ### Detecting the need for this fixup
 A static analysis of the files in the package is often all that is needed:
 > * If the package contains files in the VFS/AppData or VFS\LocalAppData folders that are required.

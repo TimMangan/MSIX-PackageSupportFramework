@@ -13,6 +13,23 @@ ideas:
 	   situation from one where the native file exists and it was never in the package.  A possibility would be to add an additional marker in Delete file(etc) such
 	   as an extra xxx.yyy.deleted file in the redirection area.  But then all methods looking to see files would have to look for this, and anything creating a file might have to remove it.
 	   Needs more thought on finding a way to distinguish.
+* EnvVar:  If the value is a string including Registry file pathing {[ProgramFilexX64]} we might need to Reg->VFS path it?  Seems like we'd need to and a quick look at the code suggests that we don't.
+
+
+v.2025.02.22:
+ * MFRFixup: Fix for mapping of virtual directories edge case.  Also improved handling of file requests to C:\ to stay with the native path.
+ * MFRFixup: Fixes to improve results when app "walks through" the user profile directory to get to either of the appdatas.  Similarly for the Windows folder and renamapped children, and for System32 and it's remapped children
+ * FRF/MFR: Added support for "SystemApps", an undocumented virtual folder created by the MMPT.
+ * MFR: Added support to turn Appdata\Microsoft\Windows\Recent into a redirect to local folder (redirect to local not implemented in the FRF).  This fixes certain win32 app dialog boxes for file/directory picking when first opened.
+ * Added support for fixups in NtQueryDirectoryFile and NtQueryDirectoryFileEx where windows.storage.dll was bypassing kernel32.
+ * Added registry marker to processes after PSF has finished initializing all fixup dlls in the process.  It will try to open a non-existent key HKCU\PSF_READY_MARKER that you can see in Process Monitor.
+ * Added debugging output when an app gets access denied to create a registry key. Not important.
+ * Added missing versioning to the 64 bit components.
+ * Solved issue with Debug build "2_Ctr_new_delete:" issue.
+ * MFRFixup and FileRedirectionFixup: Cleanup on FindClose() leading to app crash in odd situations and possible memory leak.
+ * MFRFixup: Proper handling of older Shell API (for old file picker dialogs) calls that walk up the directory tree.  This includes properly handling the undocumented
+		UserProfiles and Profile VFS variables, but also the actual AppData folder.
+ * MfrFixup: Reduction in calls to the same path.
 
 v.2025.01.02:
  * Improvements in DynamicLibraryFixup for situations where ILV seems to interfere with the fixup.

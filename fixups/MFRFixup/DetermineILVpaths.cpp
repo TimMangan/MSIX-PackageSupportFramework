@@ -31,46 +31,63 @@ std::wstring DetermineIlvPathForReadOperations(Cohorts cohorts, [[maybe_unused]]
     // This is because requests using the native path don't notice the ILV deletion marker.
 
     std::wstring UseFile;
-    DWORD oldErr = GetLastError();
-    DWORD RequestedAttributes = impl::GetFileAttributes(MakeLongPath(cohorts.WsRequested).c_str());
-    [[maybe_unused]] DWORD RequestedError = GetLastError();
-    DWORD PackageAttributes = impl::GetFileAttributes(MakeLongPath(cohorts.WsPackage).c_str());
-    [[maybe_unused]] DWORD PackageError = GetLastError();
-    DWORD RedirectedAttributes = impl::GetFileAttributes(MakeLongPath(cohorts.WsRedirected).c_str());
-    [[maybe_unused]] DWORD RedirectedError = GetLastError();
-    bool RedirectoinDeletionMarker = false;
-    if (RedirectedAttributes != INVALID_FILE_ATTRIBUTES &&
-        (RedirectedAttributes & (FILE_ATTRIBUTE_HIDDEN | FILE_ATTRIBUTE_SYSTEM)) == (FILE_ATTRIBUTE_HIDDEN | FILE_ATTRIBUTE_SYSTEM))
+    DWORD oldErr = GetLastError();  
+    SetLastError(0);
+
+    DWORD RequestedAttributes;
+    [[maybe_unused]] DWORD RequestedError = 0;
+    bool SkipPackage = false;
+    [[maybe_unused]] DWORD PackageAttributes = 0;
+    [[maybe_unused]] DWORD PackageError = 0;
+    bool SkipRedirection = false;
+    DWORD RedirectedAttributes = 0;
+    [[maybe_unused]] DWORD RedirectedError = 0;
+
+    RequestedAttributes = impl::GetFileAttributes(MakeLongPath(cohorts.WsRequested).c_str());
+    RequestedError = GetLastError();
+        
+    if (cohorts.WsRequested == cohorts.WsPackage)
     {
-        // Might want to also make additional checks, but this does seem sufficient as no other redirected files should be marked system-hidden.
-        RedirectoinDeletionMarker = true;
+        SkipPackage = true;
     }
-    //std::wstring lcRedirected = (MakeLongPath(cohorts.WsRedirected).c_str());
-    //std::transform(
-    //    lcRedirected.begin(), lcRedirected.end(),
-    //    lcRedirected.begin(),
-    //        towlower);
-#if DIDNTHELP
-    WIN32_FILE_ATTRIBUTE_DATA finfoPackage;
-    WIN32_FILE_ATTRIBUTE_DATA finfoRedirected;
-    DWORD PackageAttributesEx = impl::GetFileAttributesEx(cohorts.WsPackage.c_str(), GetFileExMaxInfoLevel, &finfoRedirected);
-    DWORD RedirectedAttributesEx = impl::GetFileAttributesEx(cohorts.WsRedirected.c_str(), GetFileExMaxInfoLevel, &finfoPackage);
-#endif
+    if (!SkipPackage)
+    {
+        PackageAttributes = impl::GetFileAttributes(MakeLongPath(cohorts.WsPackage).c_str());
+        PackageError = GetLastError();
+    }
+
+    if (cohorts.WsPackage == cohorts.WsRedirected ||
+        cohorts.WsPackage == cohorts.WsPackage)
+    {
+        SkipRedirection = true;
+    }
+    if (!SkipRedirection)
+    {
+        RedirectedAttributes = impl::GetFileAttributes(MakeLongPath(cohorts.WsRedirected).c_str());
+        RedirectedError = GetLastError();
+    }
+
+    bool RedirectoinDeletionMarker = false;
+    if (!SkipRedirection)
+    {
+        if (RedirectedAttributes != INVALID_FILE_ATTRIBUTES &&
+            (RedirectedAttributes & (FILE_ATTRIBUTE_HIDDEN | FILE_ATTRIBUTE_SYSTEM)) == (FILE_ATTRIBUTE_HIDDEN | FILE_ATTRIBUTE_SYSTEM))
+        {
+            // Might want to also make additional checks, but this does seem sufficient as no other redirected files should be marked system-hidden.
+            RedirectoinDeletionMarker = true;
+        }
+    }
+    
     SetLastError(oldErr);
     if (moredebug)
     {
-        Log(L"[0x%d]       DetermineILVPaths Atts Req=0x%x/0x%x Pkg=0x%x/0x%x Redir=0x%x/0x%x", dllInstance, RequestedAttributes, RequestedError, PackageAttributes, PackageError, RedirectedAttributes, RedirectedError);
-#if DIDNTHELP
-        Log(L"[0x%d]       DetermineILVPaths ExAtt Pkg ret=0x%x att=0x%x Szs=0x%x/0x%x ", dllInstance, PackageAttributesEx, finfoPackage.dwFileAttributes, finfoPackage.nFileSizeHigh, finfoPackage.nFileSizeLow);
-        Log(L"[0x%d]       DetermineILVPaths ExAtt Rdr ret=0x%x att=0x%x Szs=0x%x/0x%x ", dllInstance, RedirectedAttributesEx, finfoRedirected.dwFileAttributes, finfoRedirected.nFileSizeHigh, finfoRedirected.nFileSizeLow);
-        CheckFileForIlvAnomoly(dllInstance, cohorts.WsPackage);
-        CheckFileForIlvAnomoly(dllInstance, cohorts.WsRedirected);
-#endif
+        Log(L"[%d]        DetermineILVPaths Atts Req=[0]0x%x/0x%x Pkg=[%d]0x%x/0x%x Redir=[%d]0x%x/0x%x", dllInstance, RequestedAttributes, RequestedError, SkipPackage, PackageAttributes, PackageError, SkipRedirection, RedirectedAttributes, RedirectedError);
     }
     switch (cohorts.file_mfr.Request_MfrPathType)
     {
     case mfr::mfr_path_types::in_native_area: 
-        if (cohorts.map.Valid_mapping && !cohorts.map.IsAnExclusionToRedirect &&
+        if (cohorts.map.Valid_mapping == mfr::mfr_enabled_types::enabled && 
+            cohorts.map.IsAnExclusionToRedirect == mfr::mfr_exclusion_types::not_excluded &&
             cohorts.map.RedirectionFlags == mfr::mfr_redirect_flags::prefer_redirection_local)
         {
             // for REQUESTED, PACKAGE, REDIRECTED
@@ -140,9 +157,10 @@ std::wstring DetermineIlvPathForReadOperations(Cohorts cohorts, [[maybe_unused]]
             }
             break;
         }
-        else if (cohorts.map.Valid_mapping && !cohorts.map.IsAnExclusionToRedirect &&
-            (cohorts.map.RedirectionFlags == mfr::mfr_redirect_flags::prefer_redirection_containerized ||
-                cohorts.map.RedirectionFlags == mfr::mfr_redirect_flags::prefer_redirection_if_package_vfs))
+        else if (cohorts.map.Valid_mapping == mfr::mfr_enabled_types::enabled && 
+                cohorts.map.IsAnExclusionToRedirect == mfr::mfr_exclusion_types::not_excluded &&
+                (cohorts.map.RedirectionFlags == mfr::mfr_redirect_flags::prefer_redirection_containerized ||
+                 cohorts.map.RedirectionFlags == mfr::mfr_redirect_flags::prefer_redirection_if_package_vfs))
         {
             // for REQUESTED, PACKAGE, REDIRECTED
             //K1 True, True, True    : means it might or mightnot be native, but we have a redirected copy and it was not deleted:                            USE=Package
@@ -220,7 +238,8 @@ std::wstring DetermineIlvPathForReadOperations(Cohorts cohorts, [[maybe_unused]]
         UseFile = cohorts.WsRequested;
         break;
     case mfr::mfr_path_types::in_package_vfs_area:
-        if (cohorts.map.Valid_mapping && !cohorts.map.IsAnExclusionToRedirect &&
+        if (cohorts.map.Valid_mapping == mfr::mfr_enabled_types::enabled && 
+            cohorts.map.IsAnExclusionToRedirect == mfr::mfr_exclusion_types::not_excluded &&
             cohorts.map.RedirectionFlags == mfr::mfr_redirect_flags::prefer_redirection_local)
         {
             if (cohorts.UsingNative && PathExists(cohorts.WsNative.c_str()))
@@ -238,9 +257,10 @@ std::wstring DetermineIlvPathForReadOperations(Cohorts cohorts, [[maybe_unused]]
                 break;
             }
         }
-        else if (cohorts.map.Valid_mapping && !cohorts.map.IsAnExclusionToRedirect &&
-            (cohorts.map.RedirectionFlags == mfr::mfr_redirect_flags::prefer_redirection_containerized ||
-                cohorts.map.RedirectionFlags == mfr::mfr_redirect_flags::prefer_redirection_if_package_vfs))
+        else if (cohorts.map.Valid_mapping == mfr::mfr_enabled_types::enabled && 
+                cohorts.map.IsAnExclusionToRedirect == mfr::mfr_exclusion_types::not_excluded &&
+                (cohorts.map.RedirectionFlags == mfr::mfr_redirect_flags::prefer_redirection_containerized ||
+                 cohorts.map.RedirectionFlags == mfr::mfr_redirect_flags::prefer_redirection_if_package_vfs))
         {
             UseFile = cohorts.WsPackage;
             break;
@@ -251,7 +271,8 @@ std::wstring DetermineIlvPathForReadOperations(Cohorts cohorts, [[maybe_unused]]
         }
         break;
     case mfr::mfr_path_types::in_redirection_area_writablepackageroot:
-        if (cohorts.map.Valid_mapping && !cohorts.map.IsAnExclusionToRedirect)
+        if (cohorts.map.Valid_mapping == mfr::mfr_enabled_types::enabled && 
+            cohorts.map.IsAnExclusionToRedirect == mfr::mfr_exclusion_types::not_excluded)
         {
             UseFile = cohorts.WsPackage;
         }
@@ -290,14 +311,16 @@ std::wstring DetermineIlvPathForWriteOperations(Cohorts cohorts, [[maybe_unused]
     switch (cohorts.file_mfr.Request_MfrPathType)
     {
     case mfr::mfr_path_types::in_native_area:
-        if (cohorts.map.Valid_mapping && !cohorts.map.IsAnExclusionToRedirect &&
+        if (cohorts.map.Valid_mapping == mfr::mfr_enabled_types::enabled && 
+            cohorts.map.IsAnExclusionToRedirect == mfr::mfr_exclusion_types::not_excluded &&
             cohorts.map.RedirectionFlags == mfr::mfr_redirect_flags::prefer_redirection_local)
         {
             UseFile = cohorts.WsRequested;
             break;
         }
-        else if (cohorts.map.Valid_mapping && !cohorts.map.IsAnExclusionToRedirect &&
-            (cohorts.map.RedirectionFlags == mfr::mfr_redirect_flags::prefer_redirection_containerized ||
+        else if (cohorts.map.Valid_mapping == mfr::mfr_enabled_types::enabled && 
+                cohorts.map.IsAnExclusionToRedirect == mfr::mfr_exclusion_types::not_excluded &&
+                (cohorts.map.RedirectionFlags == mfr::mfr_redirect_flags::prefer_redirection_containerized ||
                 cohorts.map.RedirectionFlags == mfr::mfr_redirect_flags::prefer_redirection_if_package_vfs))
         {
             UseFile = cohorts.WsPackage;
@@ -312,7 +335,8 @@ std::wstring DetermineIlvPathForWriteOperations(Cohorts cohorts, [[maybe_unused]
         UseFile = cohorts.WsRequested;
         break;
     case mfr::mfr_path_types::in_package_vfs_area:
-        if (cohorts.map.Valid_mapping && !cohorts.map.IsAnExclusionToRedirect &&
+        if (cohorts.map.Valid_mapping == mfr::mfr_enabled_types::enabled && 
+            cohorts.map.IsAnExclusionToRedirect == mfr::mfr_exclusion_types::not_excluded &&
             cohorts.map.RedirectionFlags == mfr::mfr_redirect_flags::prefer_redirection_local)
         {
             if (cohorts.UsingNative)
@@ -326,8 +350,9 @@ std::wstring DetermineIlvPathForWriteOperations(Cohorts cohorts, [[maybe_unused]
                 break;
             }
         }
-        else if (cohorts.map.Valid_mapping && !cohorts.map.IsAnExclusionToRedirect &&
-            (cohorts.map.RedirectionFlags == mfr::mfr_redirect_flags::prefer_redirection_containerized ||
+        else if (cohorts.map.Valid_mapping == mfr::mfr_enabled_types::enabled && 
+                cohorts.map.IsAnExclusionToRedirect == mfr::mfr_exclusion_types::not_excluded &&
+                (cohorts.map.RedirectionFlags == mfr::mfr_redirect_flags::prefer_redirection_containerized ||
                 cohorts.map.RedirectionFlags == mfr::mfr_redirect_flags::prefer_redirection_if_package_vfs))
         {
             UseFile = cohorts.WsPackage;
@@ -339,7 +364,8 @@ std::wstring DetermineIlvPathForWriteOperations(Cohorts cohorts, [[maybe_unused]
         }
         break;
     case mfr::mfr_path_types::in_redirection_area_writablepackageroot:
-        if (cohorts.map.Valid_mapping && !cohorts.map.IsAnExclusionToRedirect)
+        if (cohorts.map.Valid_mapping == mfr::mfr_enabled_types::enabled && 
+            cohorts.map.IsAnExclusionToRedirect == mfr::mfr_exclusion_types::not_excluded)
         {
             UseFile = cohorts.WsPackage;
         }

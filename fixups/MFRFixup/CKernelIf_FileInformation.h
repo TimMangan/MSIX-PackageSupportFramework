@@ -114,6 +114,8 @@ typedef struct OBJECT_ATTRIBUTES {
 #define KDEF_FILE_CLASS_34
 #define KDEF_FILE_CLASS_35
 #define KDEF_FILE_CLASS_36
+#define KDEF_FILE_CLASS_37
+#define KDEF_FILE_CLASS_38
 
 #ifdef KDEF_FILEIF
 
@@ -485,6 +487,45 @@ typedef struct _FILE_ATTRIBUTE_TAG_INFORMATION
 #ifdef KDEF_FILE_CLASS_36
 // Missing structure
 #endif // KDEF_FILE_CLASS_36
+
+
+#ifdef KDEF_FILE_CLASS_37
+typedef struct _FILE_ID_BOTH_DIR_INFORMATION {
+	ULONG         NextEntryOffset;
+	ULONG         FileIndex;
+	LARGE_INTEGER CreationTime;
+	LARGE_INTEGER LastAccessTime;
+	LARGE_INTEGER LastWriteTime;
+	LARGE_INTEGER ChangeTime;
+	LARGE_INTEGER EndOfFile;
+	LARGE_INTEGER AllocationSize;
+	ULONG         FileAttributes;
+	ULONG         FileNameLength;
+	ULONG         EaSize;
+	CCHAR         ShortNameLength;
+	WCHAR         ShortName[12];
+	LARGE_INTEGER FileId;
+	WCHAR         FileName[1];
+} FILE_ID_BOTH_DIR_INFORMATION, * PFILE_ID_BOTH_DIR_INFORMATION;
+#endif // KDEF_FILE_CLASS_37
+
+#ifdef KDEF_FILE_CLASS_38
+typedef struct _FILE_ID_FULL_DIR_INFORMATION {
+	ULONG         NextEntryOffset;
+	ULONG         FileIndex;
+	LARGE_INTEGER CreationTime;
+	LARGE_INTEGER LastAccessTime;
+	LARGE_INTEGER LastWriteTime;
+	LARGE_INTEGER ChangeTime;
+	LARGE_INTEGER EndOfFile;
+	LARGE_INTEGER AllocationSize;
+	ULONG         FileAttributes;
+	ULONG         FileNameLength;
+	ULONG         EaSize;
+	LARGE_INTEGER FileId;
+	WCHAR         FileName[1];
+} FILE_ID_FULL_DIR_INFORMATION, * PFILE_ID_FULL_DIR_INFORMATION;
+#endif // KDEF_CLASS_38
 
 #endif // KDEF_FILEIF
 

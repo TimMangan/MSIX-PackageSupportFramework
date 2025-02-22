@@ -125,7 +125,7 @@
       <AdditionalLibraryDirectories>C:\Program Files (x86)\Windows Kits\10\Lib\10.0.22621.0\um\$(PlatformTarget)</AdditionalLibraryDirectories>
     </Link>
     <PostBuildEvent>
-      <Command>powershell.exe /f $(SolutionDir)Set-DllVersionByDate.ps1 $(SolutionDir)SetVersionInfo\StampVer.exe  $(OutputPath)$(TargetName)$(TargetExt)</Command>
+      <Command>powershell.exe /f $(SolutionDir)Set-DllVersionByDate.ps1 $(SolutionDir)verpatch\verpatch.exe  $(OutputPath)$(TargetName)$(TargetExt)</Command>
       <Message>Set the build</Message>
     </PostBuildEvent>
   </ItemDefinitionGroup>
@@ -160,7 +160,7 @@
       <AdditionalLibraryDirectories>C:\Program Files (x86)\Windows Kits\10\Lib\10.0.22621.0\um\$(PlatformTarget)</AdditionalLibraryDirectories>
     </Link>
     <PostBuildEvent>
-      <Command>powershell.exe /f $(SolutionDir)Set-DllVersionByDate.ps1 $(SolutionDir)SetVersionInfo\StampVer.exe  $(OutputPath)$(TargetName)$(TargetExt)</Command>
+      <Command>powershell.exe /f $(SolutionDir)Set-DllVersionByDate.ps1 $(SolutionDir)verpatch\verpatch.exe  $(OutputPath)$(TargetName)$(TargetExt)</Command>
       <Message>Set the build</Message>
     </PostBuildEvent>
   </ItemDefinitionGroup>
@@ -190,7 +190,7 @@
       <AdditionalLibraryDirectories>C:\Program Files (x86)\Windows Kits\10\Lib\10.0.22621.0\um\$(PlatformTarget)</AdditionalLibraryDirectories>
     </Link>
     <PostBuildEvent>
-      <Command>powershell.exe /f $(SolutionDir)Set-DllVersionByDate.ps1 $(SolutionDir)SetVersionInfo\StampVer.exe  $(OutputPath)$(TargetName)$(TargetExt)</Command>
+      <Command>powershell.exe /f $(SolutionDir)Set-DllVersionByDate.ps1 $(SolutionDir)verpatch\verpatch.exe  $(OutputPath)$(TargetName)$(TargetExt)</Command>
       <Message>Set the build</Message>
     </PostBuildEvent>
   </ItemDefinitionGroup>
@@ -225,12 +225,14 @@
       <AdditionalLibraryDirectories>C:\Program Files (x86)\Windows Kits\10\Lib\10.0.22621.0\um\$(PlatformTarget)</AdditionalLibraryDirectories>
     </Link>
     <PostBuildEvent>
-      <Command>powershell.exe /f $(SolutionDir)Set-DllVersionByDate.ps1 $(SolutionDir)SetVersionInfo\StampVer.exe  $(OutputPath)$(TargetName)$(TargetExt)</Command>
+      <Command>powershell.exe /f $(SolutionDir)Set-DllVersionByDate.ps1 $(SolutionDir)verpatch\verpatch.exe  $(OutputPath)$(TargetName)$(TargetExt)</Command>
       <Message>Set the build</Message>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="..\..\CommonSrc\findStringIC.h" />
     <ClInclude Include="..\..\include\utilities.h" />
+    <ClInclude Include="..\FileRedirectionFixup\PathRedirection.h" />
     <ClInclude Include="CKernelIf_FileInformation.h" />
     <ClInclude Include="Detect_Pipe.h" />
     <ClInclude Include="DetermineCohorts.h" />
@@ -252,6 +254,7 @@
     <ClInclude Include="resource.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\..\CommonSrc\findStringIC.cpp" />
     <ClCompile Include="..\..\CommonSrc\psf_logging.cpp" />
     <ClCompile Include="CopyFile.cpp" />
     <ClCompile Include="CopyFile2.cpp" />

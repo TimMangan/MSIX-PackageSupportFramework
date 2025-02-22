@@ -34,3 +34,24 @@ bool findStringIC(const std::wstring& strHaystack, const std::wstring& strNeedle
     );
     return (it != strHaystack.end());
 }
+
+std::wstring wStringToLower(const std::wstring& str) {
+    std::wstring lowerStr = str;
+    std::transform(lowerStr.begin(), lowerStr.end(), lowerStr.begin(), ::towlower);
+    return lowerStr;
+}
+
+std::wstring caseInsensitiveReplace(const std::wstring& str, const std::wstring& from, const std::wstring& to) {
+    std::wstring lowerStr = wStringToLower(str);
+    std::wstring lowerFrom = wStringToLower(from);
+
+    size_t pos = 0;
+    std::wstring result = str;
+    while ((pos = lowerStr.find(lowerFrom, pos)) != std::wstring::npos) {
+        result.replace(pos, from.length(), to);
+        lowerStr.replace(pos, from.length(), wStringToLower(to));
+        pos += to.length();
+    }
+
+    return result;
+}

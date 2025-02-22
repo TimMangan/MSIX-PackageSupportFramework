@@ -32,7 +32,7 @@ std::wstring DetermineNonIlvPathForReplaced(Cohorts cohortsReplaced, [[maybe_unu
     switch (cohortsReplaced.file_mfr.Request_MfrPathType)
     {
     case mfr::mfr_path_types::in_native_area:
-        if (cohortsReplaced.map.Valid_mapping)
+        if (cohortsReplaced.map.Valid_mapping == mfr::mfr_enabled_types::enabled)
         {
             UseReplacedFile = cohortsReplaced.WsRedirected;
         }
@@ -42,7 +42,7 @@ std::wstring DetermineNonIlvPathForReplaced(Cohorts cohortsReplaced, [[maybe_unu
         }
         break;
     case mfr::mfr_path_types::in_package_pvad_area:
-        if (cohortsReplaced.map.Valid_mapping)
+        if (cohortsReplaced.map.Valid_mapping == mfr::mfr_enabled_types::enabled)
         {
             UseReplacedFile = cohortsReplaced.WsRedirected;
         }
@@ -52,7 +52,7 @@ std::wstring DetermineNonIlvPathForReplaced(Cohorts cohortsReplaced, [[maybe_unu
         }
         break;
     case mfr::mfr_path_types::in_package_vfs_area:
-        if (cohortsReplaced.map.Valid_mapping)
+        if (cohortsReplaced.map.Valid_mapping == mfr::mfr_enabled_types::enabled)
         {
             UseReplacedFile = cohortsReplaced.WsRedirected;
         }
@@ -62,7 +62,7 @@ std::wstring DetermineNonIlvPathForReplaced(Cohorts cohortsReplaced, [[maybe_unu
         }
         break;
     case mfr::mfr_path_types::in_redirection_area_writablepackageroot:
-        if (cohortsReplaced.map.Valid_mapping)
+        if (cohortsReplaced.map.Valid_mapping == mfr::mfr_enabled_types::enabled)
         {
             UseReplacedFile = cohortsReplaced.WsRequested;
         }
@@ -94,12 +94,12 @@ std::wstring DetermineNonIlvPathForReplacement(Cohorts cohortsReplacement, [[may
     switch (cohortsReplacement.file_mfr.Request_MfrPathType)
     {
     case mfr::mfr_path_types::in_native_area:
-        if (cohortsReplacement.map.Valid_mapping)
+        if (cohortsReplacement.map.Valid_mapping == mfr::mfr_enabled_types::enabled)
         {
             switch (cohortsReplacement.map.RedirectionFlags)
             {
             case mfr::mfr_redirect_flags::prefer_redirection_local:
-                if (!cohortsReplacement.map.IsAnExclusionToRedirect && PathExists(cohortsReplacement.WsNative.c_str()))
+                if (cohortsReplacement.map.IsAnExclusionToRedirect == mfr::mfr_exclusion_types::not_excluded && PathExists(cohortsReplacement.WsNative.c_str()))
                 {
                     UseReplacementFile = cohortsReplacement.WsNative;
                 }
@@ -114,7 +114,7 @@ std::wstring DetermineNonIlvPathForReplacement(Cohorts cohortsReplacement, [[may
                 break;
             case mfr::mfr_redirect_flags::prefer_redirection_containerized:
             case mfr::mfr_redirect_flags::prefer_redirection_if_package_vfs:
-                if (!cohortsReplacement.map.IsAnExclusionToRedirect && PathExists(cohortsReplacement.WsRedirected.c_str()))
+                if (cohortsReplacement.map.IsAnExclusionToRedirect == mfr::mfr_exclusion_types::not_excluded && PathExists(cohortsReplacement.WsRedirected.c_str()))
                 {
                     UseReplacementFile = cohortsReplacement.WsRedirected;
                 }
@@ -145,7 +145,7 @@ std::wstring DetermineNonIlvPathForReplacement(Cohorts cohortsReplacement, [[may
         }
         break;
     case mfr::mfr_path_types::in_package_pvad_area:
-        if (cohortsReplacement.map.Valid_mapping)
+        if (cohortsReplacement.map.Valid_mapping == mfr::mfr_enabled_types::enabled)
         {
             switch (cohortsReplacement.map.RedirectionFlags)
             {
@@ -154,7 +154,7 @@ std::wstring DetermineNonIlvPathForReplacement(Cohorts cohortsReplacement, [[may
                 break;
             case mfr::mfr_redirect_flags::prefer_redirection_containerized:
             case mfr::mfr_redirect_flags::prefer_redirection_if_package_vfs:
-                if (!cohortsReplacement.map.IsAnExclusionToRedirect && PathExists(cohortsReplacement.WsRedirected.c_str()))
+                if (cohortsReplacement.map.IsAnExclusionToRedirect == mfr::mfr_exclusion_types::not_excluded && PathExists(cohortsReplacement.WsRedirected.c_str()))
                 {
                     UseReplacementFile = cohortsReplacement.WsRedirected;
                 }
@@ -176,12 +176,12 @@ std::wstring DetermineNonIlvPathForReplacement(Cohorts cohortsReplacement, [[may
         }
         break;
     case mfr::mfr_path_types::in_package_vfs_area:
-        if (cohortsReplacement.map.Valid_mapping)
+        if (cohortsReplacement.map.Valid_mapping == mfr::mfr_enabled_types::enabled)
         {
             switch (cohortsReplacement.map.RedirectionFlags)
             {
             case mfr::mfr_redirect_flags::prefer_redirection_local:
-                if (!cohortsReplacement.map.IsAnExclusionToRedirect && PathExists(cohortsReplacement.WsRedirected.c_str()))
+                if (cohortsReplacement.map.IsAnExclusionToRedirect == mfr::mfr_exclusion_types::not_excluded && PathExists(cohortsReplacement.WsRedirected.c_str()))
                 {
                     UseReplacementFile = cohortsReplacement.WsRedirected;
                 }
@@ -196,7 +196,7 @@ std::wstring DetermineNonIlvPathForReplacement(Cohorts cohortsReplacement, [[may
                 break;
             case mfr::mfr_redirect_flags::prefer_redirection_containerized:
             case mfr::mfr_redirect_flags::prefer_redirection_if_package_vfs:
-                if (!cohortsReplacement.map.IsAnExclusionToRedirect && PathExists(cohortsReplacement.WsRedirected.c_str()))
+                if (cohortsReplacement.map.IsAnExclusionToRedirect == mfr::mfr_exclusion_types::not_excluded && PathExists(cohortsReplacement.WsRedirected.c_str()))
                 {
                     UseReplacementFile = cohortsReplacement.WsRedirected;
                 }
@@ -227,7 +227,7 @@ std::wstring DetermineNonIlvPathForReplacement(Cohorts cohortsReplacement, [[may
         }
         break;
     case mfr::mfr_path_types::in_redirection_area_writablepackageroot:
-        if (cohortsReplacement.map.Valid_mapping)
+        if (cohortsReplacement.map.Valid_mapping == mfr::mfr_enabled_types::enabled)
         {
             switch (cohortsReplacement.map.RedirectionFlags)
             {
@@ -236,7 +236,7 @@ std::wstring DetermineNonIlvPathForReplacement(Cohorts cohortsReplacement, [[may
                 break;
             case mfr::mfr_redirect_flags::prefer_redirection_containerized:
             case mfr::mfr_redirect_flags::prefer_redirection_if_package_vfs:
-                if (!cohortsReplacement.map.IsAnExclusionToRedirect && PathExists(cohortsReplacement.WsRedirected.c_str()))
+                if (cohortsReplacement.map.IsAnExclusionToRedirect == mfr::mfr_exclusion_types::not_excluded && PathExists(cohortsReplacement.WsRedirected.c_str()))
                 {
                     UseReplacementFile = cohortsReplacement.WsRedirected;
                 }
@@ -290,7 +290,7 @@ std::wstring DetermineNonIlvPathForBackup(Cohorts cohortsBackup, [[maybe_unused]
     switch (cohortsBackup.file_mfr.Request_MfrPathType)
     {
     case mfr::mfr_path_types::in_native_area:
-        if (cohortsBackup.map.Valid_mapping)
+        if (cohortsBackup.map.Valid_mapping == mfr::mfr_enabled_types::enabled)
         {
             switch (cohortsBackup.map.RedirectionFlags)
             {
@@ -299,7 +299,7 @@ std::wstring DetermineNonIlvPathForBackup(Cohorts cohortsBackup, [[maybe_unused]
                 break;
             case mfr::mfr_redirect_flags::prefer_redirection_containerized:
             case mfr::mfr_redirect_flags::prefer_redirection_if_package_vfs:
-                if (!cohortsBackup.map.IsAnExclusionToRedirect)
+                if (cohortsBackup.map.IsAnExclusionToRedirect == mfr::mfr_exclusion_types::not_excluded)
                 {
                     UseBackupFile = cohortsBackup.WsRedirected;
                 }
@@ -317,7 +317,7 @@ std::wstring DetermineNonIlvPathForBackup(Cohorts cohortsBackup, [[maybe_unused]
         }
         break;
     case mfr::mfr_path_types::in_package_pvad_area:
-        if (cohortsBackup.map.Valid_mapping && !cohortsBackup.map.IsAnExclusionToRedirect)
+        if (cohortsBackup.map.Valid_mapping == mfr::mfr_enabled_types::enabled && cohortsBackup.map.IsAnExclusionToRedirect == mfr::mfr_exclusion_types::not_excluded)
         {
             UseBackupFile = cohortsBackup.WsRedirected;
             break;
@@ -328,19 +328,19 @@ std::wstring DetermineNonIlvPathForBackup(Cohorts cohortsBackup, [[maybe_unused]
         }
         break;
     case mfr::mfr_path_types::in_package_vfs_area:
-        if (cohortsBackup.map.Valid_mapping)
+        if (cohortsBackup.map.Valid_mapping == mfr::mfr_enabled_types::enabled)
         {
             switch (cohortsBackup.map.RedirectionFlags)
             {
             case mfr::mfr_redirect_flags::prefer_redirection_local:
-                if (!cohortsBackup.map.IsAnExclusionToRedirect)
+                if (cohortsBackup.map.IsAnExclusionToRedirect == mfr::mfr_exclusion_types::not_excluded)
                 {
                     UseBackupFile = cohortsBackup.WsRequested;
                 }
                 break;
             case mfr::mfr_redirect_flags::prefer_redirection_containerized:
             case mfr::mfr_redirect_flags::prefer_redirection_if_package_vfs:
-                if (!cohortsBackup.map.IsAnExclusionToRedirect)
+                if (cohortsBackup.map.IsAnExclusionToRedirect == mfr::mfr_exclusion_types::not_excluded)
                 {
                     UseBackupFile = cohortsBackup.WsRedirected;
                 }
@@ -358,7 +358,7 @@ std::wstring DetermineNonIlvPathForBackup(Cohorts cohortsBackup, [[maybe_unused]
         }
         break;
     case mfr::mfr_path_types::in_redirection_area_writablepackageroot:
-        if (cohortsBackup.map.Valid_mapping && !cohortsBackup.map.IsAnExclusionToRedirect)
+        if (cohortsBackup.map.Valid_mapping == mfr::mfr_enabled_types::enabled && cohortsBackup.map.IsAnExclusionToRedirect == mfr::mfr_exclusion_types::not_excluded)
         {
             UseBackupFile = cohortsBackup.WsRedirected;
             break;
