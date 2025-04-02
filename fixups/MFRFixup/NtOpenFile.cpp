@@ -3,7 +3,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 //-------------------------------------------------------------------------------------------------------
 
-// Microsoft documentation on this api: https://learn.microsoft.com/en-us/windows-hardware/drivers/ddi/wdm/nf-wdm-zwopenfile
+// Microsoft documentation on this api:https://learn.microsoft.com/en-us/windows-hardware/drivers/ddi/ntifs/nf-ntifs-ntopenfile
 
 
 #if _DEBUG
@@ -15,16 +15,23 @@
 #include "FunctionImplementations.h"
 #include "FunctionImplementations_ntdll.h"
 
-
 #include "ManagedPathTypes.h"
 #include "PathUtilities.h"
 #include "DetermineCohorts.h"
 
 #if Intercept_NTDLL
 
-#ifdef DO_Intercept_ZwOpenFile
+#ifdef DO_Intercept_NtOpenFile
 
-NTSTATUS __stdcall NtDll_ZwOpenFileFixup(
+
+#ifdef _M_IX86
+#pragma comment(linker, "/EXPORT:Ntdll_NtOpenFileFixup_Fixup=_NtDll_NtOpenFileFixup_Fixup_v")  // A test to see if exporting these names helps ProcessMonitor stack traces.    
+#else
+#pragma comment(linker, "/EXPORT:Ntdll_NtOpenFileFixup_Fixup=NtDll_NtOpenFileFixup_Fixup_v")  // A test to see if exporting these names helps ProcessMonitor stack traces.    
+#endif
+
+
+NTSTATUS __stdcall NtDll_NtOpenFileFixup(
     _Out_          PHANDLE            FileHandle,
     _In_           ACCESS_MASK        DesiredAccess,
     _In_           POBJECT_ATTRIBUTES ObjectAttributes,
@@ -39,42 +46,43 @@ NTSTATUS __stdcall NtDll_ZwOpenFileFixup(
 #if _DEBUG
     debug = true;
 #endif
-    auto guard = g_reentrancyGuard.enter();
+
+    //auto guard = g_reentrancyGuard.enter();
     try
     {
-        if (guard)
+        //if (guard)
         {
             // Release level logging for detection
             bool temp = g_psf_NoLogging;
             g_psf_NoLogging = false;
-            Log(L"[%d] NtDll_ZwOpenFileFixup unguarded", dllInstance);
+            Log(L"[%d] NtDll_NtOpenFileFixup unguarded and informational", dllInstance);
             if (ObjectAttributes->ObjectName != NULL)
             {
-                Log(L"[%d] NtDll_ZwOpenFileFixup RootDirectory=0x%x ObjectName=%ls", dllInstance, ObjectAttributes->RootDirectory, ObjectAttributes->ObjectName->Buffer);
+                Log(L"[%d] NtDll_NtOpenFileFixup RootDirectory=0x%x ObjectName=%ls", dllInstance, ObjectAttributes->RootDirectory, ObjectAttributes->ObjectName->Buffer);
             }
             else
             {
-                Log(L"[%d] NtDll_ZwOpenFileFixup RootDirectory=0x%x ObjectName=NULL", dllInstance, ObjectAttributes->RootDirectory);
+                Log(L"[%d] NtDll_NtOpenFileFixup RootDirectory=0x%x ObjectName=NULL", dllInstance, ObjectAttributes->RootDirectory);
             }
             LogCallingModule();
             g_psf_NoLogging = temp;
         }
-        retfinal = ntdllimpl::ZwOpenFileImpl(FileHandle, DesiredAccess, ObjectAttributes, IoStatusBlock, ShareAccess, OpenOptions);
+        retfinal = ntdllimpl::NtOpenFileImpl(FileHandle, DesiredAccess, ObjectAttributes, IoStatusBlock,ShareAccess, OpenOptions);
         return retfinal;
     }
 #if _DEBUG
     // Fall back to assuming no redirection is necessary if exception
-    LOGGED_CATCHHANDLER(dllInstance, L"NtDll_ZwOpenFileFixup")
+    LOGGED_CATCHHANDLER(dllInstance, L"NtDll_NtOpenFileFixup")
 #else
     catch (...)
     {
-        Log(L"[%d] NtDll_ZwOpenFileFixup Exception=0x%x", dllInstance, GetLastError());
+        Log(L"[%d] NtDll_NtOpenFileFixup Exception=0x%x", dllInstance, GetLastError());
     }
 #endif
-    retfinal = ntdllimpl::ZwOpenFileImpl(FileHandle, DesiredAccess, ObjectAttributes, IoStatusBlock,ShareAccess, OpenOptions);
+    retfinal = ntdllimpl::NtOpenFileImpl(FileHandle, DesiredAccess, ObjectAttributes, IoStatusBlock, ShareAccess, OpenOptions);
     return retfinal;
 }
-DECLARE_FIXUP(ntdllimpl::ZwOpenFileImpl, NtDll_ZwOpenFileFixup);
+DECLARE_FIXUP(ntdllimpl::NtOpenFileImpl, NtDll_NtOpenFileFixup);
 #endif
 
 #endif

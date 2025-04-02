@@ -16,6 +16,7 @@
 #if _DEBUG
 //#define MOREDEBUG 1
 #endif
+///#define MOREDEBUG 1
 
 #include <errno.h>
 #include <psf_logging.h>
@@ -39,12 +40,13 @@ BOOL __stdcall  ShellExecuteExAFixup(_Inout_ SHELLEXECUTEINFOA* pExecInfo)
     moredebug = true;
 #endif
 
-    auto guard = g_reentrancyGuard.enter();
+    /// Don't guard if we aren't making changes
+    ///auto guard = g_reentrancyGuard.enter();
     BOOL retfinal;
 
     try
     {
-        if (guard)
+        ///if (guard)
         {
             if (pExecInfo)
             {
@@ -53,13 +55,18 @@ BOOL __stdcall  ShellExecuteExAFixup(_Inout_ SHELLEXECUTEINFOA* pExecInfo)
                     // Release level logging for detection
                     bool temp = g_psf_NoLogging;
                     g_psf_NoLogging = false;
-                    Log(L"[%d] ShellExecuteExA unguarded. Known compatibility issues exist in certain usages!", dllInstance);
+                    Log(L"[%d] ShellExecuteExA unguarded informational. Known compatibility issues exist in certain usages!", dllInstance);
                     LogString(dllInstance, L"ShellExecuteExA: file", pExecInfo->lpFile);
                     LogString(dllInstance, L"ShellExecuteExA: verb", pExecInfo->lpVerb);
                     LogString(dllInstance, L"ShellExecuteExA: directory", pExecInfo->lpDirectory);
-#ifdef MOREDEBUG
+                    LogString(dllInstance, L"ShellExecuteExA: parameters", pExecInfo->lpParameters);
+///#ifdef MOREDEBUG
                     Log(L"[%d] ShellExecuteExA fMask=0x%x", dllInstance, pExecInfo->fMask);
-#endif
+                    if ((pExecInfo->fMask & SEE_MASK_CLASSNAME) != 0)
+                    {
+                        LogString(dllInstance, L"ShellExecuteExA: class", pExecInfo->lpClass);
+                    }
+///#endif
                     LogCallingModule();
                     g_psf_NoLogging = temp;
                 }
@@ -98,12 +105,13 @@ BOOL __stdcall  ShellExecuteExAFixup(_Inout_ SHELLEXECUTEINFOA* pExecInfo)
      moredebug = true;
 #endif
 
-     auto guard = g_reentrancyGuard.enter();
+     ///Don't guard if we aren't making changes
+     ///auto guard = g_reentrancyGuard.enter();
      BOOL retfinal;
 
      try
      {
-         if (guard)
+         ///if (guard)
          {
              if (pExecInfo)
              {
@@ -114,9 +122,16 @@ BOOL __stdcall  ShellExecuteExAFixup(_Inout_ SHELLEXECUTEINFOA* pExecInfo)
                      g_psf_NoLogging = false;
                      Log(L"[%d] ShellExecuteExW unguarded. Known compatibility issues exist in certain usages!", dllInstance);
                      LogString(dllInstance, L"ShellExecuteExW: verb", pExecInfo->lpVerb);
-#if MOREDEBUG
+                     LogString(dllInstance, L"ShellExecuteExW: file", pExecInfo->lpFile);
+                     LogString(dllInstance, L"ShellExecuteExW: directory", pExecInfo->lpDirectory);
+                     LogString(dllInstance, L"ShellExecuteExW: parameters", pExecInfo->lpParameters);
+///#if MOREDEBUG
                      Log(L"[%d] ShellExecuteExW fMask=0x%x", dllInstance, pExecInfo->fMask);
-#endif
+                     if ((pExecInfo->fMask & SEE_MASK_CLASSNAME) != 0)
+                     {
+                         LogString(dllInstance, L"ShellExecuteExW: class", pExecInfo->lpClass);
+                     }
+///#endif
                      LogCallingModule();
                      g_psf_NoLogging = temp;
                  }

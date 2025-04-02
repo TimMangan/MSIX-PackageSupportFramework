@@ -121,6 +121,14 @@ extern "C" {
 
 
 #ifdef Intercept_NTDLL
+#ifdef DO_Intercept_NtCreateFile
+        if (ntdllimpl::NtCreateFileImpl != nullptr)
+            Log("(ntdll)NtCreateFile Neutral=%p\n", &ntdllimpl::NtCreateFileImpl);
+#endif
+#ifdef DO_Intercept_NtOpenFile
+        if (ntdllimpl::NtOpenFileImpl != nullptr)
+            Log("(ntdll)NtOpenFile Neutral=%p\n", &ntdllimpl::NtOpenFileImpl);
+#endif
 #ifdef DO_Intercept_NtQueryDirectoryFile
         if (ntdllimpl::NtQueryDirectoryFileImpl != nullptr)
             Log("(ntdll)NtQueryDirectoryFile Neutral=%p\n", &ntdllimpl::NtQueryDirectoryFileImpl);
@@ -130,6 +138,7 @@ extern "C" {
         if (ntdllimpl::NtQueryDirectoryFileExImpl != nullptr)
             Log("(ntdll)NtQueryDirectoryFileEx Neutral=%p\n", &ntdllimpl::NtQueryDirectoryFileExImpl);
 #endif
+
         Log("ntdll Fixups loaded.\n");
 #endif
 

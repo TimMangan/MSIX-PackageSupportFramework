@@ -13,6 +13,8 @@
 #pragma once
 
 #define Intercept_NTDLL 1
+#define DO_Intercept_NtCreateFile 1
+#define DO_Intercept_NtOpenFile 1
 #define DO_Intercept_NtQueryDirectoryFile 1
 #define DO_Intercept_NtQueryDirectoryFileEx 1
 #if Intercept_NTDLL
@@ -43,6 +45,33 @@ extern "C" {
     // Most of the functions in NTDll that appear file/directory based take handles as input, so we don't need to worry about intercepting those.
     // These are the ones that seem most interesting.
 
+
+#ifdef DO_Intercept_NtCreateFile
+    NTSTATUS __stdcall NtDll_NtCreateFileFixup(
+        _Out_          PHANDLE            FileHandle,
+        _In_           ACCESS_MASK        DesiredAccess,
+        _In_           POBJECT_ATTRIBUTES ObjectAttributes,
+        _Out_          PIO_STATUS_BLOCK   IoStatusBlock,
+        _In_opt_       PLARGE_INTEGER     AllocationSize,
+        _In_           ULONG              FileAttributes,
+        _In_           ULONG              ShareAccess,
+        _In_           ULONG              CreateDisposition,
+        _In_           ULONG              CreateOptions,
+        _In_opt_       PVOID              EaBuffer,
+        _In_           ULONG              EaLength
+    );
+#endif
+
+#ifdef DO_Intercept_NtOpenFile
+    NTSTATUS __stdcall NtDll_NtOpenFile(
+        _Out_          PHANDLE            FileHandle,
+        _In_           ACCESS_MASK        DesiredAccess,
+        _In_           POBJECT_ATTRIBUTES ObjectAttributes,
+        _Out_          PIO_STATUS_BLOCK   IoStatusBlock,
+        _In_           ULONG              ShareAccess,
+        _In_           ULONG              OpenOptions
+    );
+#endif
 
  #ifdef DO_Intercept_NtQueryDirectoryFile
 // This call ends up calling Zw.  But we find we need to trap at Zw because, well Microsoft sometimes calls the Zw version directly.
@@ -116,7 +145,12 @@ inline Func GetNtDllInternalFunction(const char* functionName)
 
 namespace ntdllimpl
 {
-
+#ifdef DO_Intercept_NtCreateFile
+    inline auto NtCreateFileImpl = NTDLL_FUNCTION(NtCreateFile);
+#endif
+#ifdef DO_Intercept_NtOpenFile
+    inline auto NtOpenFileImpl = NTDLL_FUNCTION(NtOpenFile);
+#endif
 #ifdef DO_Intercept_NtQueryDirectoryFile
     inline auto NtQueryDirectoryFileImpl = NTDLL_FUNCTION(NtQueryDirectoryFile);
 #endif

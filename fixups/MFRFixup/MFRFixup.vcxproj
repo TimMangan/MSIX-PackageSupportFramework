@@ -281,6 +281,8 @@
     <ClCompile Include="MoveFile.cpp" />
     <ClCompile Include="MoveFileEx.cpp" />
     <ClCompile Include="MoveFileWithProgress.cpp" />
+    <ClCompile Include="NtCreateFilecpp.cpp" />
+    <ClCompile Include="NtOpenFile.cpp" />
     <ClCompile Include="RemoveDirectory.cpp" />
     <ClCompile Include="ReplaceFile.cpp" />
     <ClCompile Include="SetFileAttributes.cpp" />
@@ -305,10 +307,8 @@
     <ClCompile Include="WritePrivateProfileStruct.cpp" />
     <ClCompile Include="WS_ShellExecuteEx.cpp" />
     <ClCompile Include="WS_ShellExecute.cpp" />
-    <ClCompile Include="ZwCreateFile.cpp" />
-    <ClCompile Include="ZwOpenFile.cpp" />
-    <ClCompile Include="ZwQueryDirectoryFile.cpp" />
-    <ClCompile Include="ZwQueryDirectoryFileEx.cpp" />
+    <ClCompile Include="NtQueryDirectoryFile.cpp" />
+    <ClCompile Include="NtQueryDirectoryFileEx.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="readme.md" />

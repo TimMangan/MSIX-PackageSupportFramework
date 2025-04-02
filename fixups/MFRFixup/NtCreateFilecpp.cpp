@@ -3,7 +3,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 //-------------------------------------------------------------------------------------------------------
 
-// Microsoft documentation on this api:https://learn.microsoft.com/en-us/windows-hardware/drivers/ddi/wdm/nf-wdm-zwcreatefile
+// Microsoft documentation on this api:https://learn.microsoft.com/en-us/windows-hardware/drivers/ddi/wdm/nf-wdm-ntcreatefile
 
 
 #if _DEBUG
@@ -21,9 +21,17 @@
 
 #if Intercept_NTDLL
 
-#ifdef DO_Intercept_ZwCreateFile
+#ifdef DO_Intercept_NtCreateFile
 
-NTSTATUS __stdcall NtDll_ZwCreateFileFixup(
+
+#ifdef _M_IX86
+#pragma comment(linker, "/EXPORT:NtDll_NtCreateFileFixup_Fixup=_NtDll_NtCreateFileFixup_Fixup_v")  // A test to see if exporting these names helps ProcessMonitor stack traces.    
+#else
+#pragma comment(linker, "/EXPORT:Ntdll_NtDll_NtCreateFileFixup_Fixup=NtDll_NtCreateFileFixup_Fixup_v")  // A test to see if exporting these names helps ProcessMonitor stack traces.    
+#endif
+
+
+NTSTATUS __stdcall NtDll_NtCreateFileFixup(
     _Out_          PHANDLE            FileHandle,
     _In_           ACCESS_MASK        DesiredAccess,
     _In_           POBJECT_ATTRIBUTES ObjectAttributes,
@@ -43,42 +51,42 @@ NTSTATUS __stdcall NtDll_ZwCreateFileFixup(
 #if _DEBUG
     debug = true;
 #endif
-    auto guard = g_reentrancyGuard.enter();
+    //auto guard = g_reentrancyGuard.enter();
     try
     {
-        if (guard)
+        //if (guard)
         {
             // Release level logging for detection
             bool temp = g_psf_NoLogging;
             g_psf_NoLogging = false;
-            Log(L"[%d] NtDll_ZwCreateFileFixup unguarded", dllInstance);
+            Log(L"[%d] NtDll_NtCreateFileFixup unguarded and informational", dllInstance);
             if (ObjectAttributes->ObjectName != NULL)
             {
-                Log(L"[%d] NtDll_ZwCreateFileFixup RootDirectory=0x%x ObjectName=%ls", dllInstance, ObjectAttributes->RootDirectory, ObjectAttributes->ObjectName->Buffer);
+                Log(L"[%d] NtDll_NtCreateFileFixup RootDirectory=0x%x ObjectName=%ls", dllInstance, ObjectAttributes->RootDirectory, ObjectAttributes->ObjectName->Buffer);
             }
             else
             {
-                Log(L"[%d] NtDll_ZwCreateFileFixup RootDirectory=0x%x ObjectName=NULL", dllInstance, ObjectAttributes->RootDirectory);
+                Log(L"[%d] NtDll_NtCreateFileFixup RootDirectory=0x%x ObjectName=NULL", dllInstance, ObjectAttributes->RootDirectory);
             }
             LogCallingModule();
             g_psf_NoLogging = temp;
         }
-        retfinal = ntdllimpl::ZwCreateFileImpl(FileHandle, DesiredAccess, ObjectAttributes, IoStatusBlock, AllocationSize, FileAttributes, ShareAccess, CreateDisposition, CreateOptions, EaBuffer, EaLength);
+        retfinal = ntdllimpl::NtCreateFileImpl(FileHandle, DesiredAccess, ObjectAttributes, IoStatusBlock, AllocationSize, FileAttributes, ShareAccess, CreateDisposition, CreateOptions, EaBuffer, EaLength);
         return retfinal;
     }
 #if _DEBUG
     // Fall back to assuming no redirection is necessary if exception
-    LOGGED_CATCHHANDLER(dllInstance, L"NtDll_ZwCreateFileFixup")
+    LOGGED_CATCHHANDLER(dllInstance, L"NtDll_NtCreateFileFixup")
 #else
     catch (...)
     {
-        Log(L"[%d] NtDll_ZwCreateFileFixup Exception=0x%x", dllInstance, GetLastError());
+        Log(L"[%d] NtDll_NtCreateFileFixup Exception=0x%x", dllInstance, GetLastError());
     }
 #endif
-    retfinal = ntdllimpl::ZwCreateFileImpl(FileHandle, DesiredAccess, ObjectAttributes, IoStatusBlock, AllocationSize, FileAttributes, ShareAccess, CreateDisposition, CreateOptions, EaBuffer, EaLength);
+    retfinal = ntdllimpl::NtCreateFileImpl(FileHandle, DesiredAccess, ObjectAttributes, IoStatusBlock, AllocationSize, FileAttributes, ShareAccess, CreateDisposition, CreateOptions, EaBuffer, EaLength);
     return retfinal;
 }
-DECLARE_FIXUP(ntdllimpl::ZwCreateFileImpl, NtDll_ZwCreateFileFixup);
+DECLARE_FIXUP(ntdllimpl::NtCreateFileImpl, NtDll_NtCreateFileFixup);
 #endif
 
 #endif

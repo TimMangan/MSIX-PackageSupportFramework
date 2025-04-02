@@ -277,20 +277,20 @@
     <ClCompile Include="WS_ShellExecuteEx.cpp">
       <Filter>Source Files\Intercepts\WindowsStorage</Filter>
     </ClCompile>
-    <ClCompile Include="ZwQueryDirectoryFile.cpp">
+    <ClCompile Include="NtQueryDirectoryFile.cpp">
       <Filter>Source Files\Intercepts\NtDll</Filter>
     </ClCompile>
-    <ClCompile Include="ZwQueryDirectoryFileEx.cpp">
-      <Filter>Source Files\Intercepts\NtDll</Filter>
-    </ClCompile>
-    <ClCompile Include="ZwCreateFile.cpp">
-      <Filter>Source Files\Intercepts\NtDll</Filter>
-    </ClCompile>
-    <ClCompile Include="ZwOpenFile.cpp">
+    <ClCompile Include="NtQueryDirectoryFileEx.cpp">
       <Filter>Source Files\Intercepts\NtDll</Filter>
     </ClCompile>
     <ClCompile Include="..\..\CommonSrc\findStringIC.cpp">
       <Filter>Common Source</Filter>
+    </ClCompile>
+    <ClCompile Include="NtOpenFile.cpp">
+      <Filter>Source Files\Intercepts\NtDll</Filter>
+    </ClCompile>
+    <ClCompile Include="NtCreateFilecpp.cpp">
+      <Filter>Source Files\Intercepts\NtDll</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

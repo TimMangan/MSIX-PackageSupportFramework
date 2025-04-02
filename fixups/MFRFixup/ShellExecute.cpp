@@ -97,19 +97,19 @@ HINSTANCE __stdcall ShellExecuteWFixup(_In_opt_ HWND   hwnd,
     moredebug = true;
 #endif
 
-    auto guard = g_reentrancyGuard.enter();
+    //auto guard = g_reentrancyGuard.enter();
     HINSTANCE  retfinal;
 
     try
     {
-        if (guard)
+        //if (guard)
         {
             if (lpOperation)
             {
                 // Release level logging for detection
                 bool temp = g_psf_NoLogging;
                 g_psf_NoLogging = false;
-                Log(L"[%d] ShellExecuteW unguarded. Known compatibility issues exist in certain usages!", dllInstance);
+                Log(L"[%d] ShellExecuteW unguarded informational. Known compatibility issues exist in certain usages!", dllInstance);
                 LogString(dllInstance, L"ShellExecuteW: file", lpFile);
                 LogString(dllInstance, L"ShellExecuteW: verb", lpOperation);
                 LogString(dllInstance, L"ShellExecuteW: directory", lpDirectory);
