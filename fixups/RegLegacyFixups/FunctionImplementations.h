@@ -193,7 +193,7 @@ namespace winternl
 
 #endif
 
-#ifdef INTERCEPT_KERNELBASE
+#if INTERCEPT_KERNELBASE
     // There are system dlls that call directly into kernelbase.dll, bypassing our detours which hook into Kernel32. We need to fix those too.
     // An example is the Winsock2 library ws2_32.dll, which calls RegOpenKeyExW directly in kernelbase.dll.  This dll is used by Bloomberg Terminal, for example.
     
@@ -301,7 +301,7 @@ namespace winternl
         _Out_opt_ LPDWORD lpType,
         _Out_opt_ LPBYTE lpData,
         _In_opt_ _Out_opt_ LPDWORD lpcbData);
-#ifdef INTERCEPT_KERNELBASE_PlusRegGetValue
+#if INTERCEPT_KERNELBASE_PlusRegGetValue
     LSTATUS __stdcall RegGetValueA(
         _In_ HKEY key,
         _In_opt_ LPCSTR lpSubKey,
@@ -365,7 +365,7 @@ namespace winternl
         return result;
     }
 
-#ifdef  INTERCEPT_KERNELBASE
+#if  INTERCEPT_KERNELBASE
     template <typename Func>
     inline Func GetKernelBaseInternalFunction(const char* functionName)
     {
@@ -399,7 +399,7 @@ namespace impl
 
     inline auto NtQueryKey = WINTERNL_FUNCTION(winternl::NtQueryKey);
 
-#ifdef INTERCEPT_KERNELBASE
+#if INTERCEPT_KERNELBASE
     inline auto KernelBaseRegCreateKeyExA = KERNELBASEINTERNL_FUNCTION(winternl::RegCreateKeyExA);
     inline auto KernelBaseRegCreateKeyExW = KERNELBASEINTERNL_FUNCTION(winternl::RegCreateKeyExW);
 
@@ -421,7 +421,7 @@ namespace impl
     inline auto KernelBaseRegEnumValueA = KERNELBASEINTERNL_FUNCTION(winternl::RegEnumValueA);
     inline auto KernelBaseRegEnumValueW = KERNELBASEINTERNL_FUNCTION(winternl::RegEnumValueW);
 
-#ifdef INTERCEPT_KERNELBASE_PlusRegGetValue
+#if INTERCEPT_KERNELBASE_PlusRegGetValue
     inline auto KernelBaseRegGetValueA = KERNELBASEINTERNL_FUNCTION(winternl::RegGetValueA);
     inline auto KernelBaseRegGetValueW = KERNELBASEINTERNL_FUNCTION(winternl::RegGetValueW);
 #endif

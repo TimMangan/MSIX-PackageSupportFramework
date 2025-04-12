@@ -68,7 +68,7 @@ NTSTATUS __stdcall NtDll_NtCreateFileFixup(
             {
                 Log(L"[%d] NtDll_NtCreateFileFixup RootDirectory=0x%x ObjectName=NULL", dllInstance, ObjectAttributes->RootDirectory);
             }
-            LogCallingModule();
+            LogCallingModuleInstance(dllInstance);
             g_psf_NoLogging = temp;
         }
         retfinal = ntdllimpl::NtCreateFileImpl(FileHandle, DesiredAccess, ObjectAttributes, IoStatusBlock, AllocationSize, FileAttributes, ShareAccess, CreateDisposition, CreateOptions, EaBuffer, EaLength);

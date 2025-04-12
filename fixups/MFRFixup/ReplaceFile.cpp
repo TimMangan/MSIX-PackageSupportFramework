@@ -440,8 +440,8 @@ BOOL __stdcall ReplaceFileFixup(
 #endif
             std::wstring wReplacedFileName = widen(replacedFileName);
             std::wstring wReplacementFileName = widen(replacementFileName);
-            wReplacedFileName = AdjustSlashes(wReplacedFileName);
-            wReplacementFileName = AdjustSlashes(wReplacementFileName);
+            wReplacedFileName = AdjustSlashes(wReplacedFileName, dllInstance);
+            wReplacementFileName = AdjustSlashes(wReplacementFileName, dllInstance);
 
             wReplacedFileName = AdjustBadUNC(wReplacedFileName, dllInstance, L"ReplaceFileFixup (replaced)");
             wReplacementFileName = AdjustBadUNC(wReplacementFileName, dllInstance, L"ReplaceFileFixup (replacement)");

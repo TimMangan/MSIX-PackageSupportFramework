@@ -5,7 +5,6 @@
 #if _DEBUG
 //#define _ManualDebug 1
 #define MOREDEBUG 1
-#define DEBUG_NEW_FIXUPS 1
 #include <thread>
 #include <windows.h>
 #endif
@@ -20,7 +19,13 @@
 #include <regex>
 #include "RegRemediation.h"
 
-#ifdef INTERCEPT_KERNELBASE
+#if _DEBUG
+#if DEBUG_NEW_FIXUPS 
+#define DEBUG_NEW_FIXUPS_REGLEG 1
+#endif
+#endif
+
+#if INTERCEPT_KERNELBASE
 LSTATUS __stdcall RegEnumKeyExAFixup(
     _In_ HKEY key,
     _In_ DWORD dwIndex,
@@ -54,7 +59,7 @@ LSTATUS __stdcall RegEnumKeyExAFixup(
             if (result == ERROR_SUCCESS)
             {
 #if MOREDEBUG
-                Log(L"[%d] RegEnumKeyEx:  Returning lpName=%S", RegLocalInstance, lpName);
+                Log(L"[%d] RegEnumKeyExA:  Returning lpName=%S", RegLocalInstance, lpName);
 #endif                
                 stillWorking = false;
             }
@@ -64,7 +69,7 @@ LSTATUS __stdcall RegEnumKeyExAFixup(
                 // When we return this value, a subsequent call by the app might ask for this new index, but we can probably assume it's OK to return it twice
                 // because we do not have a way to remember this, like done in FindFirstFile.
 #if _DEBUG
-                Log(L"[%d] RegEnumKeyEx:  DeletionMarker Blocking lpName=%S, try again.", RegLocalInstance, lpName);
+                Log(L"[%d] RegEnumKeyExA:  DeletionMarker Blocking lpName=%S, try again.", RegLocalInstance, lpName);
 #endif                
                 onIndex++;
             }
@@ -72,7 +77,7 @@ LSTATUS __stdcall RegEnumKeyExAFixup(
         else
         {
 #if _DEBUG
-            Log(L"[%d] RegEnumKeyEx:  Returning normal failure 0x%x.", RegLocalInstance, result);
+            Log(L"[%d] RegEnumKeyEAx:  Returning normal failure 0x%x.", RegLocalInstance, result);
 #endif                
             stillWorking = false;;
         }
@@ -80,9 +85,9 @@ LSTATUS __stdcall RegEnumKeyExAFixup(
 
 
 
-#ifdef _DEBUG
-#ifdef MOREDEBUG
-    if (true) //result == ERROR_ACCESS_DENIED)
+#if _DEBUG
+#if MOREDEBUG
+    if (result == ERROR_ACCESS_DENIED)
     {
         auto functionResult = from_win32(result);
         if (auto lock = acquire_output_lock(function_type::registry, functionResult))
@@ -90,17 +95,17 @@ LSTATUS __stdcall RegEnumKeyExAFixup(
             try
             {
                 LogKeyPath(key);
-                LogFunctionResult(functionResult);
+                LogFunctionResultInstance(RegLocalInstance, functionResult);
                 if (function_failed(functionResult))
                 {
-                    LogWin32Error(result);
+                    LogWin32ErrorInstance(RegLocalInstance, result);
                 }
-                LogCallingModule();
+                LogCallingModuleInstance(RegLocalInstance);
                 Log("[%d] This error often indicates that the key must be added to the original package.", RegLocalInstance);
             }
             catch (...)
             {
-                Log(L"[%d] RegEnumKeyEx logging failure.\n", RegLocalInstance);
+                Log(L"[%d] RegEnumKeyExA logging failure.\n", RegLocalInstance);
             }
         }
     }
@@ -143,7 +148,7 @@ LSTATUS __stdcall RegEnumKeyExWFixup(
             if (result == ERROR_SUCCESS)
             {
 #if MOREDEBUG
-                Log(L"[%d] RegEnumKeyEx:  Returning lpName=%S", RegLocalInstance, lpName);
+                Log(L"[%d] RegEnumKeyExW:  Returning lpName=%s", RegLocalInstance, lpName);
 #endif                
                 stillWorking = false;
             }
@@ -153,7 +158,7 @@ LSTATUS __stdcall RegEnumKeyExWFixup(
                 // When we return this value, a subsequent call by the app might ask for this new index, but we can probably assume it's OK to return it twice
                 // because we do not have a way to remember this, like done in FindFirstFile.
 #if _DEBUG
-                Log(L"[%d] RegEnumKeyEx:  DeletionMarker Blocking lpName=%S, try again.", RegLocalInstance, lpName);
+                Log(L"[%d] RegEnumKeyExW:  DeletionMarker Blocking lpName=%s, try again.", RegLocalInstance, lpName);
 #endif                
                 onIndex++;
             }
@@ -161,7 +166,7 @@ LSTATUS __stdcall RegEnumKeyExWFixup(
         else
         {
 #if _DEBUG
-            Log(L"[%d] RegEnumKeyEx:  Returning normal failure 0x%x.", RegLocalInstance, result);
+            Log(L"[%d] RegEnumKeyExW:  Returning normal failure 0x%x.", RegLocalInstance, result);
 #endif                
             stillWorking = false;;
         }
@@ -169,9 +174,9 @@ LSTATUS __stdcall RegEnumKeyExWFixup(
 
 
 
-#ifdef _DEBUG
-#ifdef MOREDEBUG
-    if (true) //result == ERROR_ACCESS_DENIED)
+#if _DEBUG
+#if MOREDEBUG
+    if (result == ERROR_ACCESS_DENIED)
     {
         auto functionResult = from_win32(result);
         if (auto lock = acquire_output_lock(function_type::registry, functionResult))
@@ -179,17 +184,17 @@ LSTATUS __stdcall RegEnumKeyExWFixup(
             try
             {
                 LogKeyPath(key);
-                LogFunctionResult(functionResult);
+                LogFunctionResultInstance(RegLocalInstance, functionResult);
                 if (function_failed(functionResult))
                 {
-                    LogWin32Error(result);
+                    LogWin32ErrorInstance(RegLocalInstance, result);
                 }
-                LogCallingModule();
+                LogCallingModuleInstance(RegLocalInstance);
                 Log("[%d] This error often indicates that the key must be added to the original package.", RegLocalInstance);
             }
             catch (...)
             {
-                Log(L"[%d] RegEnumKeyEx logging failure.\n", RegLocalInstance);
+                Log(L"[%d] RegEnumKeyExW logging failure.\n", RegLocalInstance);
             }
         }
     }
@@ -268,8 +273,8 @@ LSTATUS __stdcall RegEnumKeyExAFixup(
 
 
 
-#ifdef _DEBUG
-#ifdef MOREDEBUG
+#if _DEBUG
+#if MOREDEBUG
     if (true) //result == ERROR_ACCESS_DENIED)
     {
         auto functionResult = from_win32(result);
@@ -278,12 +283,12 @@ LSTATUS __stdcall RegEnumKeyExAFixup(
             try
             {
                 LogKeyPath(key);
-                LogFunctionResult(functionResult);
+                LogFunctionResult(RegLocalInstance, functionResult);
                 if (function_failed(functionResult))
                 {
-                    LogWin32Error(result);
+                    LogWin32Error(RegLocalInstance, result);
                 }
-                LogCallingModule();
+                LogCallingModuleInstance(RegLocalInstance);
                 Log("[%d] This error often indicates that the key must be added to the original package.", RegLocalInstance);
             }
             catch (...)
@@ -357,8 +362,8 @@ LSTATUS __stdcall RegEnumKeyExWFixup(
 
 
 
-#ifdef _DEBUG
-#ifdef MOREDEBUG
+#if _DEBUG
+#if MOREDEBUG
     if (true) //result == ERROR_ACCESS_DENIED)
     {
         auto functionResult = from_win32(result);
@@ -367,12 +372,12 @@ LSTATUS __stdcall RegEnumKeyExWFixup(
             try
             {
                 LogKeyPath(key);
-                LogFunctionResult(functionResult);
+                LogFunctionResult(RegLocalInstance, functionResult);
                 if (function_failed(functionResult))
                 {
-                    LogWin32Error(result);
+                    LogWin32Error(RegLocalInstance, result);
                 }
-                LogCallingModule();
+                LogCallingModuleInstance(RegLocalInstance);
                 Log("[%d] This error often indicates that the key must be added to the original package.", RegLocalInstance);
             }
             catch (...)

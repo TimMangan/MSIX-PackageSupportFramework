@@ -73,8 +73,8 @@ BOOL __stdcall Kb_MoveFileExWFixup(
 #endif            
             //std::wstring wNewFileName = widen(newFileName);
             //std::wstring wExistingFileName = widen(existingFileName);
-            std::wstring wNewFileName = AdjustSlashes(newFileName);
-            std::wstring wExistingFileName = AdjustSlashes(existingFileName);
+            std::wstring wNewFileName = AdjustSlashes(newFileName, dllInstance);
+            std::wstring wExistingFileName = AdjustSlashes(existingFileName, dllInstance);
 
             wExistingFileName = AdjustBadUNC(wExistingFileName, dllInstance, L"Kb_MoveFileExWFixup (existing)");
             wNewFileName = AdjustBadUNC(wNewFileName, dllInstance, L"Kb_MoveFileExWFixup (new)");

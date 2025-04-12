@@ -837,11 +837,14 @@ PDETOUR_SYM_INFO DetourLoadImageHlp(VOID);
 
 #ifndef DETOUR_TRACE
 #if DETOUR_DEBUG
-#define DETOUR_TRACE(x) printf x
+#define DETOUR_TRACE(x) printf x 
 #define DETOUR_BREAK()  __debugbreak()
 #include <stdio.h>
 #include <limits.h>
 #else
+#if _DEBUG
+#include <stdio.h>
+#endif
 #define DETOUR_TRACE(x)
 #define DETOUR_BREAK()
 #endif

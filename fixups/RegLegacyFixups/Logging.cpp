@@ -195,7 +195,11 @@ void LogWin32Error(DWORD error, const wchar_t* msg )
     auto str = win32_error_description(error);
     Log(L"\t%s=%d (%s)\n", msg, error, widen(str).c_str());
 }
-
+void LogWin32ErrorInstance(DWORD DllInstance, DWORD error, const wchar_t* msg)
+{
+    auto str = win32_error_description(error);
+    Log(L"[%d]\t%s=%d (%s)\n", DllInstance, msg, error, widen(str).c_str());
+}
 std::string InterpretWin32Error(DWORD error, const char* msg )
 {
     return InterpretAsHex(msg, error);
@@ -204,6 +208,10 @@ std::string InterpretWin32Error(DWORD error, const char* msg )
 void LogLastError(const char* msg )
 {
     LogWin32Error(::GetLastError(), widen(msg).c_str());
+}
+void LogLastErrorInstance(DWORD dllInstance, const char* msg)
+{
+    LogWin32ErrorInstance(dllInstance, ::GetLastError(), widen(msg).c_str());
 }
 
 std::string InterpretLastError(const char* msg )
@@ -564,6 +572,13 @@ void LogFunctionResult(function_result result, const wchar_t* msg )
     std::wstring winterp = widen(interp);
 
     Log(L"\t%s=%s\n", msg, winterp.c_str());
+}
+void LogFunctionResultInstance(DWORD dllInstance, function_result result, const wchar_t* msg)
+{
+    const char* interp = InterperetFunctionResult(result);
+    std::wstring winterp = widen(interp);
+
+    Log(L"[%d]\t%s=%s\n", dllInstance, msg, winterp.c_str());
 }
 
 void LogRegKeyAccess(DWORD access, const char* msg )

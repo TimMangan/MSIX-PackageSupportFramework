@@ -54,7 +54,7 @@ HINSTANCE __stdcall ShellExecuteAFixup(_In_opt_ HWND   hwnd,
                 LogString(dllInstance, L"ShellExecuteA: file", lpFile);
                 LogString(dllInstance, L"ShellExecuteA: verb", lpOperation);
                 LogString(dllInstance, L"ShellExecuteA: directory", lpDirectory);
-                LogCallingModule();
+                LogCallingModuleInstance(dllInstance);
                 g_psf_NoLogging = temp;
             }
             retfinal = impl::ShellExecuteA(hwnd, lpOperation, lpFile, lpParameters, lpDirectory, nShowCmd);
@@ -113,7 +113,7 @@ HINSTANCE __stdcall ShellExecuteWFixup(_In_opt_ HWND   hwnd,
                 LogString(dllInstance, L"ShellExecuteW: file", lpFile);
                 LogString(dllInstance, L"ShellExecuteW: verb", lpOperation);
                 LogString(dllInstance, L"ShellExecuteW: directory", lpDirectory);
-                LogCallingModule();
+                LogCallingModuleInstance(dllInstance);
                 g_psf_NoLogging = temp;
             }
             retfinal = impl::ShellExecuteW(hwnd, lpOperation, lpFile, lpParameters, lpDirectory, nShowCmd);

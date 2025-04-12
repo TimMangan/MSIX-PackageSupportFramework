@@ -16,6 +16,14 @@ ideas:
 * EnvVar:  If the value is a string including Registry file pathing {[ProgramFilexX64]} we might need to Reg->VFS path it?  Seems like we'd need to and a quick look at the code suggests that we don't.
 
 
+v.Next
+ * Detours: Changes to enable intercepts of new patterns
+ * MfrFixup: Changes to ShellExecute, ShellExecuteEx for debugging in release mode
+ * MfrFixup: Changes to NtCreateFile and NtOpenFile for debugging in release mode
+ * MfrFixup: ShortName improvements
+ * MfrFixup/FileRedirectionFixup: Another needed change for case insensitive file matching
+ * General: Debugging improvements in debug mode
+
 v.2025.02.22:
  * MFRFixup: Fix for mapping of virtual directories edge case.  Also improved handling of file requests to C:\ to stay with the native path.
  * MFRFixup: Fixes to improve results when app "walks through" the user profile directory to get to either of the appdatas.  Similarly for the Windows folder and renamapped children, and for System32 and it's remapped children

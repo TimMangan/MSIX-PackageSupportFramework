@@ -89,7 +89,7 @@ DWORD __stdcall GetPrivateProfileSectionFixup(
                 // This get is inheirently a read-only operation in all cases.
                 // We prefer to use the redirecton case, if present.
                 std::wstring wfileName = widen(fileName);
-                wfileName = AdjustSlashes(wfileName);
+                wfileName = AdjustSlashes(wfileName, dllInstance);
                 wfileName = AdjustBadUNC(wfileName, dllInstance, L"GetPrivateProfileSectioniFixup");
 
                 Cohorts cohorts;

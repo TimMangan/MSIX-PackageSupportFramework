@@ -362,6 +362,17 @@ PBYTE CDetourDis::CopyInstruction(PBYTE pbDst, PBYTE pbSrc)
     // and figure out what the target of the instruction is if any.
     //
     REFCOPYENTRY pEntry = &s_rceCopyTable[pbSrc[0]];
+
+    // Superkludge also in the end check.  We are reading the first byte wrong on these and don't understand how.
+    // This workaround probably helps.  Seems like only happening with WaitForDebugger added???
+    if (pbSrc[0] == 0xcc && pbSrc[1] == 0xff && pbSrc[2] == 0x55 && pbSrc[3] == 0x8b && pbSrc[4] == 0xec)
+    {
+        pEntry = &s_rceCopyTable[0x8b];
+    }
+    else if (pbSrc[0] == 0xcc && pbSrc[1] == 0x35 && pbSrc[2] == 0x0 && pbSrc[3] == 0x0 && pbSrc[4] == 0x0)
+    {
+        pEntry = &s_rceCopyTable[0xb8];
+    }
     return (this->*pEntry->pfCopy)(pEntry, pbDst, pbSrc);
 }
 

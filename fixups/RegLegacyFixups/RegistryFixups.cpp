@@ -5,7 +5,6 @@
 #if _DEBUG
 //#define _ManualDebug 1
 #define MOREDEBUG 1
-#define DEBUG_NEW_FIXUPS 1
 #include <thread>
 #include <windows.h>
 #endif
@@ -19,6 +18,12 @@
 #include "Logging.h"
 #include <regex>
 #include "RegRemediation.h"
+
+#if _DEBUG
+#if DEBUG_NEW_FIXUPS 
+#define DEBUG_NEW_FIXUPS_REGLEG 1
+#endif
+#endif
 
 DWORD g_RegIntceptInstance = 50000;
 

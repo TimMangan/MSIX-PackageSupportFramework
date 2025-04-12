@@ -67,8 +67,8 @@ BOOL __stdcall MoveFileExFixup(
 
             std::wstring wNewFileName = widen(newFileName);
             std::wstring wExistingFileName = widen(existingFileName);
-            wNewFileName = AdjustSlashes(wNewFileName);
-            wExistingFileName = AdjustSlashes(wExistingFileName);
+            wNewFileName = AdjustSlashes(wNewFileName, dllInstance);
+            wExistingFileName = AdjustSlashes(wExistingFileName, dllInstance);
 
             wExistingFileName = AdjustBadUNC(wExistingFileName, dllInstance, L"MoveFileExFixup (existing)");
             wNewFileName = AdjustBadUNC(wNewFileName, dllInstance, L"MoveFileExFixup (new)");

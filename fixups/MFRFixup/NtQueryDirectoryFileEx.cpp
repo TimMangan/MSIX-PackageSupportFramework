@@ -112,7 +112,7 @@ NTSTATUS TripplePlay_NtQueryDirectoryFileExImpl(
 
         // Make adjustments to the found path to more normalize it.  
         // This is probably not needed because it didn't come from the application directly, but we do this in FindFiles and it can't hurt.
-        std::wstring wfilePath = AdjustSlashes(filePath);
+        std::wstring wfilePath = AdjustSlashes(filePath, dllInstance);
         wfilePath = AdjustBadUNC(wfilePath, dllInstance, L"NtDll_NtQueryDirectoryFileExFixup");
 
         // Determine possible paths involved

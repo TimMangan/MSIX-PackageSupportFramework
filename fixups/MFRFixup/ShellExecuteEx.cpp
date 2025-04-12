@@ -67,7 +67,7 @@ BOOL __stdcall  ShellExecuteExAFixup(_Inout_ SHELLEXECUTEINFOA* pExecInfo)
                         LogString(dllInstance, L"ShellExecuteExA: class", pExecInfo->lpClass);
                     }
 ///#endif
-                    LogCallingModule();
+                    LogCallingModuleInstance(dllInstance);
                     g_psf_NoLogging = temp;
                 }
             }
@@ -132,7 +132,7 @@ BOOL __stdcall  ShellExecuteExAFixup(_Inout_ SHELLEXECUTEINFOA* pExecInfo)
                          LogString(dllInstance, L"ShellExecuteExW: class", pExecInfo->lpClass);
                      }
 ///#endif
-                     LogCallingModule();
+                     LogCallingModuleInstance(dllInstance);
                      g_psf_NoLogging = temp;
                  }
              }

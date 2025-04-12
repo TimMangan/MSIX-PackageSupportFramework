@@ -383,6 +383,7 @@ inline PBYTE detour_skip_jmp(PBYTE pbCode, PVOID *ppGlobals)
         *ppGlobals = NULL;
     }
 
+
     // First, skip over the import vector if there is one.
     if (pbCode[0] == 0xff && pbCode[1] == 0x25) {   // jmp [+imm32]
         // Looks like an import alias jump, then get the code it points to.
@@ -467,7 +468,12 @@ inline BOOL detour_does_code_end_function(PBYTE pbCode)
     if ((first == 0x8b || first == 0xcc) && second == 0xff && third == 0x55 && fourth == 0x8b)
     {
         // We are having an issue where this code sees [0] as value 0xcc when it is really 0x8b, but only on a few intercepts.
-        // This was debugged to the assmebler level.  This is a hack to just ignore the problem, which hopefully is safe.
+        // This was debugged to the assmebler level.  This is a hack to just ignore the problem, which hopefully is safe. (ShellExecuteW in ws)
+        return FALSE;
+    }
+    if ((first == 0xba || first == 0xcc) && second == 0x35 && third == 0x00 && fourth == 0x00)
+    {
+        // Now we are also having it on this one (NtQueryDirectoryFile in nt.dll)
         return FALSE;
     }
     if (pbCode[0] == 0xeb ||    // jmp +imm8
@@ -1866,8 +1872,23 @@ LONG WINAPI DetourAttachEx(_Inout_ PVOID *ppPointer,
     DETOUR_TRACE(("  ppldTarget=%p, code=%p [gp=%p]\n",
                   ppldTarget, pbTarget, pTargetGlobals));
 #else // DETOURS_IA64
+#if _DEBUG
+    PBYTE ptmp = pbTarget;
+    char buffer_deb[512]; // Adjust size as needed
+    snprintf(buffer_deb, sizeof(buffer_deb), "  Detour target original code %p 0x%x 0x%x 0x%x 0x%x 0x%x 0x%x 0x%x 0x%x\n", ptmp, *ptmp, *(ptmp + 1), *(ptmp + 2), *(ptmp + 3), *(ptmp + 4), *(ptmp + 5), *(ptmp + 6), *(ptmp + 7));
+    OutputDebugStringA(buffer_deb);
+#endif
+
     pbTarget = (PBYTE)DetourCodeFromPointer(pbTarget, NULL);
     pDetour = DetourCodeFromPointer(pDetour, NULL);
+#if _DEBUG
+    if (ptmp != pbTarget)
+    {
+        OutputDebugStringA("  Detour: Somebody moved the cheese.\n");
+        snprintf(buffer_deb, sizeof(buffer_deb), "  Detour target now code %p 0x%x 0x%x 0x%x 0x%x 0x%x 0x%x 0x%x 0x%x\n", pbTarget, *pbTarget, *(pbTarget + 1), *(pbTarget + 2), *(pbTarget + 3), *(pbTarget + 4), *(pbTarget + 5), *(pbTarget + 6), *(pbTarget + 7));
+        OutputDebugStringA(buffer_deb);
+    }
+#endif
 #endif // !DETOURS_IA64
 
     // Don't follow a jump if its destination is the target function.
@@ -1938,6 +1959,22 @@ LONG WINAPI DetourAttachEx(_Inout_ PVOID *ppPointer,
     ULONG cbJump = SIZE_OF_JMP;
     ULONG nAlign = 0;
 
+    // Handle 32-bit calls in other dlls like ntdll
+    //[[maybe_unused]] BYTE first = pbSrc[0];
+    //[[maybe_unused]] BYTE fifth = pbSrc[5];
+    //[[maybe_unused]] BYTE Ath = pbSrc[0xA];
+    //[[maybe_unused]] BYTE Bth = pbSrc[0xB];
+    //[[maybe_unused]] BYTE Cth = pbSrc[0xc];
+    //[[maybe_unused]] BYTE Dth = pbSrc[0xD];
+    //[[maybe_unused]] BYTE Eth = pbSrc[0xE];
+    if (pbSrc[0] == 0xcc && pbSrc[1] == 0xff && pbSrc[2] == 0x55 && pbSrc[3] == 0x8b && pbSrc[4] == 0xec)
+    {
+        OutputDebugStringA("  Detour: Fix for cc is really 0x8b.\n");
+    }
+    else if (pbSrc[0] == 0xcc && pbSrc[1] == 0x35 && pbSrc[2] == 0x0 && pbSrc[3] == 0x0 && pbSrc[4] == 0x0)
+    {
+        OutputDebugStringA("  Detour: Fix for cc is really 0xb8.\n");
+    }
 #ifdef DETOURS_ARM
     // On ARM, we need an extra instruction when the function isn't 32-bit aligned.
     // Check if the existing code is another detour (or at least a similar
@@ -1967,6 +2004,7 @@ LONG WINAPI DetourAttachEx(_Inout_ PVOID *ppPointer,
         }
     }
 #endif
+
 
     while (cbTarget < cbJump) {
         PBYTE pbOp = pbSrc;

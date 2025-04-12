@@ -342,6 +342,12 @@ inline void LogFunctionResult(function_result result, const char* msg = "Result"
 
     Log("\t%s=%s\n", msg, resultMsg);
 }
+inline void LogFunctionResultInstance(DWORD dllInstance, function_result result, const char* msg = "Result")
+{
+    const char* resultMsg = InterperetFunctionResult(result);
+
+    Log("[%d]\t%s=%s\n", dllInstance, msg, resultMsg);
+}
 
 inline std::string InterpretReturn(function_result functionResult, DWORD resultcode)
 {
@@ -415,6 +421,11 @@ inline void LogWin32Error(DWORD error, const char* msg = "Error")
 {
     auto str = win32_error_description(error);
     Log("\t%s=%d (%s)\n", msg, error, str.c_str());
+}
+inline void LogWin32ErrorInstance(DWORD DllInstance, DWORD error, const char* msg = "Error")
+{
+    auto str = win32_error_description(error);
+    Log("[%d]\t%s=%d (%s)\n", DllInstance, msg, error, str.c_str());
 }
 
 inline std::string InterpretWin32Error(DWORD error, const char* msg = "Error")
@@ -592,6 +603,20 @@ inline std::string InterpretLZError(INT err)
         } \
     }
 
+#define LogCallingModuleInstance(instance) \
+    { \
+        if (trace_calling_module) \
+        { \
+            HMODULE moduleHandle; \
+            if (::GetModuleHandleExW( \
+                GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS | GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT, \
+                reinterpret_cast<const wchar_t*>(_ReturnAddress()), \
+                &moduleHandle)) \
+            { \
+                Log(L"[%d]\tCalling Module=%ls\n", instance, psf::get_module_path(moduleHandle).c_str()); \
+            } \
+        } \
+    }
 // The replacement for LogCallingModule for the ETW case is currently this three part call like this:
     //std::ostringstream sout;
     //InterpretCallingModulePart1()

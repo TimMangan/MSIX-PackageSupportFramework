@@ -5,7 +5,6 @@
 #if _DEBUG
 //#define _ManualDebug 1
 #define MOREDEBUG 1
-#define DEBUG_NEW_FIXUPS 1
 #include <thread>
 #include <windows.h>
 #endif
@@ -20,7 +19,13 @@
 #include <regex>
 #include "RegRemediation.h"
 
-#ifdef INTERCEPT_KERNELBASE_PlusRegGetValue
+#if _DEBUG
+#if DEBUG_NEW_FIXUPS 
+#define DEBUG_NEW_FIXUPS_REGLEG 1
+#endif
+#endif
+
+#if INTERCEPT_KERNELBASE_PlusRegGetValue
 LSTATUS __stdcall RegGetValueAFixup(
     _In_ HKEY key,
     _In_opt_ LPCSTR lpSubKey,

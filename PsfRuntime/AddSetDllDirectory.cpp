@@ -48,7 +48,7 @@ BOOL WINAPI SetDefaultDllDirectoriesFixup(
     {
 #ifdef _DEBUG
         DWORD AddSetDllDirectoryInstance = ++g_AddSetDllDirectoryIntceptInstance;
-        Log(L" [%d] SetDefaultDllDirectoriesFixup: 0x%x", AddSetDllDirectoryInstance, DirectoryFlags);
+        Log(L" [%d] SetDefaultDllDirectoriesFixup: (Informational) 0x%x", AddSetDllDirectoryInstance, DirectoryFlags);
 #endif
     }
     return impl::SetDefaultDllDirectories(DirectoryFlags);
@@ -71,7 +71,7 @@ DLL_DIRECTORY_COOKIE WINAPI AddDllDirectoryFixup(
         DWORD AddSetDllDirectoryInstance = ++g_AddSetDllDirectoryIntceptInstance;
         if (path == NULL)
         {
-            Log(L" [%d] AddDllDirectoryFixup: Input path is null", AddSetDllDirectoryInstance);
+            Log(L" [%d] AddDllDirectoryFixup: (Informational) Input path is null", AddSetDllDirectoryInstance);
         }
         else
         {
@@ -111,7 +111,7 @@ BOOL WINAPI SetDllDirectoryFixup(
         // needing this.
         if (path == NULL)
         {
-            Log(L"\t[%d] SetDllDirectoryFixup: Input path is null (restores search order)", AddSetDllDirectoryInstance);
+            Log(L"\t[%d] SetDllDirectoryFixup: (Informational) Input path is null (restores search order)", AddSetDllDirectoryInstance);
         }
         else
         {
@@ -119,22 +119,22 @@ BOOL WINAPI SetDllDirectoryFixup(
             {
                 if (strlen(path) == 0)
                 {
-                    Log(L"\t[%d] SetDllDirectoryFixup: Input path is empty (remove current directory from list)", AddSetDllDirectoryInstance);
+                    Log(L"\t[%d] SetDllDirectoryFixup: (Informational) Input path is empty (remove current directory from list)", AddSetDllDirectoryInstance);
                 }
                 else
                 {
-                    LogString(AddSetDllDirectoryInstance, "SetDllDirectoryFixup: Input path", path);
+                    LogString(AddSetDllDirectoryInstance, "SetDllDirectoryFixupA: (Informational) Input path", path);
                 }
             }
             else
             {
                 if (wcslen(path) == 0)
                 {
-                    Log(L"\t[%d] SetDllDirectoryFixup: Input path is empty (remove current directory from list)", AddSetDllDirectoryInstance);
+                    Log(L"\t[%d] SetDllDirectoryFixup: (Informational) Input path is empty (remove current directory from list)", AddSetDllDirectoryInstance);
                 }
                 else
                 {
-                    LogString(AddSetDllDirectoryInstance, L"SetDllDirectoryFixup: Input path", path);
+                    LogString(AddSetDllDirectoryInstance, L"SetDllDirectoryFixupW: (Informational) Input path", path);
                 }
             }
         }

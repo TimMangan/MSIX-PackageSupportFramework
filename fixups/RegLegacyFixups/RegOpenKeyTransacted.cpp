@@ -5,7 +5,6 @@
 #if _DEBUG
 //#define _ManualDebug 1
 #define MOREDEBUG 1
-#define DEBUG_NEW_FIXUPS 1
 #include <thread>
 #include <windows.h>
 #endif
@@ -19,6 +18,12 @@
 #include "Logging.h"
 #include <regex>
 #include "RegRemediation.h"
+
+#if _DEBUG
+#if DEBUG_NEW_FIXUPS 
+#define DEBUG_NEW_FIXUPS_REGLEG 1
+#endif
+#endif
 
 
 auto RegOpenKeyTransactedImpl = psf::detoured_string_function(&::RegOpenKeyTransactedA, &::RegOpenKeyTransactedW);
@@ -67,11 +72,11 @@ LSTATUS __stdcall RegOpenKeyTransactedFixup(
         resultKey = NULL;
     }
 
-#ifdef _DEBUG
+#if _DEBUG
     Log("[%d] RegOpenKeyTransacted result=%d", RegLocalInstance, result);
 #endif
 
-#ifdef MOREDEBUG
+#if MOREDEBUG
     auto functionResult = from_win32(result);
     if (auto lock = acquire_output_lock(function_type::registry, functionResult))
     {
@@ -85,12 +90,12 @@ LSTATUS __stdcall RegOpenKeyTransactedFixup(
             {
                 Log(L"[%d] ModifiedSam=%s\n", RegLocalInstance, InterpretRegKeyAccess(samModified).c_str());
             }
-            LogFunctionResult(functionResult);
+            LogCallingModuleInstance(RegLocalInstance);
+            LogFunctionResultInstance(RegLocalInstance, functionResult);
             if (function_failed(functionResult))
             {
-                LogWin32Error(result);
+                LogWin32ErrorInstance(RegLocalInstance, result);
             }
-            LogCallingModule();
         }
         catch (...)
         {

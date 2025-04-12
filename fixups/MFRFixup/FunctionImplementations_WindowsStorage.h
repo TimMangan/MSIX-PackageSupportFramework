@@ -23,7 +23,9 @@
 #include <psf_framework.h>
 #include <shellapi.h>
 
-
+#if DEBUG_NEW_FIXUPS
+#define DEBUG_NEW_FIXUPS_WINDOWSSTORAGE 1
+#endif
 
 template <typename Func>
 inline Func GetWindowsStorageDllInternalFunction(const char* functionName)
@@ -43,6 +45,7 @@ inline Func GetWindowsStorageDllInternalFunction(const char* functionName)
 
     auto result = reinterpret_cast<Func>(::GetProcAddress(mod, functionName));
 #if _DEBUG
+#if DEBUG_NEW_FIXUPS_WINDOWSSTORAGE
     if (functionName != NULL)
     {
         Log(L">>>WindowsStorage Fixup loaded name=%S from 0x%x", functionName, result);
@@ -51,6 +54,7 @@ inline Func GetWindowsStorageDllInternalFunction(const char* functionName)
     {
         Log(L">>>WindowsStorage Fixup mistaken loaded name=??? 0x%x",  result);
     }
+#endif
 #endif
     /////assert(result);
     if (result == NULL)

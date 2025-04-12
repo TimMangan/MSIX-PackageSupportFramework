@@ -5,13 +5,16 @@
 #pragma once
 
 #if _DEBUG
-#define MOREDEBUG 1
+//#define MOREDEBUG 1
 #else
 //#define MOREDEBUG 1
 #endif
 
+#if _DEBUG
 #define DEBUG_NEW_FIXUPS 1
-
+#else
+#define DEBUG_NEW_FIXUPS 0
+#endif
 #include <algorithm>
 #include <type_traits>
 
@@ -66,38 +69,8 @@ namespace psf
         inline const auto fixups_end = &fixups_end_v;
     }
 
-    inline void attach_all()
-    {
-        std::for_each(details::fixups_begin, details::fixups_end, [](details::detour_function_pair* target)
-        {
-            if (target && !target->Registered)
-            {
-                if (target->Target != nullptr)
-                {
-                    try
-                    {
-                        check_win32(::PSFRegister(&target->Target, target->Detour));
-                        target->Registered = true;
-                    }
-                    catch (...)
-                    {
-#if DEBUG 
-#if MOREDEBUG
-                        pvtLog(L">>>>>Register fixup EXCEPTION from 0x0%x to 0x0%x", target->Target, target->Detour);
-#endif
-#endif
-                        target->Registered = false;
-                    }
-                }
-                else
-                {
-                    ;
-                }
-            }
-        });
-    }
 
-#if _DEBUG
+    //#if _DEBUG
     inline void pvtLog(const wchar_t* fmt, ...)
     {
         try
@@ -128,10 +101,39 @@ namespace psf
             ::OutputDebugStringW(fmt);
         }
     }
+    //#endif
+
+    inline void attach_all()
+    {
+        std::for_each(details::fixups_begin, details::fixups_end, [](details::detour_function_pair* target)
+        {
+            if (target && !target->Registered)
+            {
+                if (target->Target != nullptr)
+                {
+                    try
+                    {
+                        check_win32(::PSFRegister(&target->Target, target->Detour));
+                        target->Registered = true;
+                    }
+                    catch (...)
+                    {
+#if _DEBUG 
+                        pvtLog(L">>>>>Register fixup EXCEPTION from 0x0%x to 0x0%x", target->Target, target->Detour);
 #endif
+                        target->Registered = false;
+                    }
+                }
+                else
+                {
+                    ;
+                }
+            }
+        });
+    }
 
 //#if _DEBUG
-#if MOREDEBUG
+#if DEBUG_NEW_FIXUPS
     inline int attach_count_all()
     {
         int count = 0;
@@ -166,14 +168,15 @@ namespace psf
             {
                 if (target->Target != nullptr)
                 {
-#if MOREDEBUG
+                    bool tempskip = false;
 #if DEBUG_NEW_FIXUPS
                     pvtLog(L">>>>>Register FIXUP from 0x0%x to 0x0%x ", target->Target, target->Detour); 
-                    if (target->Target == (void*)0x743d77a0)   //ws_ShellExecuteExW
+                    if (target->Target == (void*)0x71F8DD00)   //ws_ShellExecuteExW
                     {
                         pvtLog(L"is (WS)ShellExecuteExW");
+                        //tempskip = true; // Temp skip
                     }
-                    if (target->Target == (void*)0x743d78e0)   //ws_ShellExecuteW
+                    if (target->Target == (void*)0x71f8DDF0)   //ws_ShellExecuteW
                     {
                         pvtLog(L"is (WS)ShellExecuteW");
                     }
@@ -181,33 +184,30 @@ namespace psf
                     {
                         pvtLog(L"is (KernelBase)MoveFileExW");
                     }
-                    if (target->Target == (void*)0x77306a40)    // ntdll ZwQueryDirectoryFile
+                    if (target->Target == (void*)0x77429990)    // ntdll ZwQueryDirectoryFile
                     {
-                        pvtLog(L"is  (ntdll)ZwQueryDirectoryFile");
+                        pvtLog(L"is  (ntdll)NTQueryDirectoryFile");
                     }
 #endif
-#endif
-                    try
-                    {
-                        check_win32(::PSFRegister(&target->Target, target->Detour));
-                        target->Registered = true;
-#if MOREDEBUG
+                    if (!tempskip) {
+                        try
+                        {
+                            check_win32(::PSFRegister(&target->Target, target->Detour));
+                            target->Registered = true;
 #if DEBUG_NEW_FIXUPS
-                        pvtLog(L"<<<<<Registered FIXUP Complete.\n");
+                            pvtLog(L"<<<<<Registered FIXUP Complete.\n");
 #endif
-#endif
-                    }
-                    catch (...)
-                    {
-                        pvtLog(L"<<<<EXCEPTION registering FIXUP\n");
+                        }
+                        catch (...)
+                        {
+                            pvtLog(L"<<<<EXCEPTION registering FIXUP\n");
+                        }
                     }
                 }
                 else
                 {
-#if MOREDEBUG
 #if DEBUG_NEW_FIXUPS
                     pvtLog(L">>>>>Register FIXUP was null target, skipped.\n");
-#endif
 #endif
                 }
             }
@@ -301,7 +301,6 @@ namespace psf
     template <typename AnsiFunc, typename WideFunc>
     inline auto detoured_string_function(AnsiFunc ansi, WideFunc wide)
     {
-#if MOREDEBUG
 #if DEBUG_NEW_FIXUPS
         if (ansi != nullptr && wide != nullptr)
         {
@@ -311,7 +310,6 @@ namespace psf
         {
             pvtLog(L">>>>>Define FIXUP null pair\n");
         }
-#endif
 #endif
         return detoured_string_function_t<AnsiFunc, WideFunc>{ ansi, wide };
     }

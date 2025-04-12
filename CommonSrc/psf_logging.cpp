@@ -90,11 +90,11 @@ void LogString(const char* name, const char* value)
     {
         if ((value != NULL && value[1] != 0x0))
         {
-            Log(L"%s=%s\n", name, value);
+            Log(L"%S=%S\n", name, value);
         }
         else
         {
-            Log(L"%s=%ls", name, (wchar_t*)value);
+            Log(L"%s=%s", name, (wchar_t*)value);
         }
     }
 }
@@ -105,11 +105,11 @@ void LogString(const char* name, const wchar_t* value)
     {
         if ((value != NULL && ((char*)value)[1] == 0x0))
         {
-            Log(L"%s=%s\n", name, value);
+            Log(L"%S=%s\n", name, value);
         }
         else
         {
-            Log(L"%s=%s", name, (char*)value);
+            Log(L"%S=%S", name, (char*)value);
         }
     }
 }
@@ -118,7 +118,7 @@ void LogString(const wchar_t* name, const char* value)
 {
     if (!g_psf_NoLogging)
     {
-        Log(L"%s=%s\n", name, widen(value).c_str());
+        Log(L"%s=%S\n", name, widen(value).c_str());
     }
 }
 
@@ -137,11 +137,11 @@ void LogString(DWORD inst, const char* name, const char* value)
     {
         if ((value != NULL && value[1] != 0x0))
         {
-            Log(L"[%d] %s=%s\n", inst, name, value);
+            Log(L"[%d] %S=%S\n", inst, name, value);
         }
         else
         {
-            Log(L"[%d] %s=%ls", inst, name, (wchar_t*)value);
+            Log(L"[%d] %S=%s", inst, name, (wchar_t*)value);
         }
     }
 }
@@ -152,11 +152,11 @@ void LogString(DWORD inst, const char* name, const wchar_t* value)
     {
         if ((value != NULL && ((char*)value)[1] == 0x0))
         {
-            Log(L"[%d] %s=%ls\n", inst, name, value);
+            Log(L"[%d] %S=%s\n", inst, name, value);
         }
         else
         {
-            Log(L"[%d] %s=%s", inst, name, (char*)value);
+            Log(L"[%d] %S=%S", inst, name, (char*)value);
         }
     }
 }
@@ -182,11 +182,12 @@ void LogString(DWORD inst, const wchar_t* name, const char* value)
     {
         if ((value != NULL && value[1] != 0x0))
         {
-            Log(L"[%d] %ls=%ls\n", inst, name, widen(value).c_str());
+            //Log(L"[%d] %ls=%ls\n", inst, name, widen(value).c_str());
+            Log(L"[%d] %s=%S\n", inst, name, value);
         }
         else
         {
-            Log(L"[%d] %ls=%ls", inst, name, (wchar_t*)value);
+            Log(L"[%d] %s=%s", inst, name, (wchar_t*)value);
         }
     }
 }
@@ -197,13 +198,14 @@ void LogString(DWORD inst, const wchar_t* name, const wchar_t* value)
     {
         if ((value != NULL && ((char*)value)[1] == 0x0))
         {
-            Log(L"[%d] %ls=%ls\n", inst, name, value);
+            Log(L"[%d] %s=%s\n", inst, name, value);
         }
         else
         {
             if (value != nullptr)
             {
-                Log(L"[%d] %ls=%ls", inst, name, widen((const char*)value).c_str());
+                //Log(L"[%d] %ls=%ls", inst, name, widen((const char*)value).c_str());
+                Log(L"[%d] %s=%S", inst, name, (char*)value);
             }
             else
             {
@@ -235,11 +237,11 @@ void LogString(DWORD rememberedInst, DWORD inst, const wchar_t* name, const char
     {
         if ((value != NULL && value[1] != 0x0))
         {
-            Log(L"[%d][%d] %ls=%ls\n", rememberedInst, inst, name, widen(value).c_str());
+            Log(L"[%d][%d] %s=%s\n", rememberedInst, inst, name, widen(value).c_str());
         }
         else
         {
-            Log(L"[%d][%d] %ls=%ls", rememberedInst, inst, name, (wchar_t*)value);
+            Log(L"[%d][%d] %s=%s", rememberedInst, inst, name, (wchar_t*)value);
         }
     }
 }
@@ -250,13 +252,13 @@ void LogString(DWORD rememberedInst, DWORD inst, const wchar_t* name, const wcha
     {
         if ((value != NULL && ((char*)value)[1] == 0x0))
         {
-            Log(L"[%d][%d] %ls=%ls\n", rememberedInst, inst, name, value);
+            Log(L"[%d][%d] %s=%s\n", rememberedInst, inst, name, value);
         }
         else
         {
             if (value != nullptr)
             {
-                Log(L"[%d][%d] %ls=%ls", rememberedInst, inst, name, widen((const char*)value).c_str());
+                Log(L"[%d][%d] %s=%s", rememberedInst, inst, name, widen((const char*)value).c_str());
             }
             else
             {

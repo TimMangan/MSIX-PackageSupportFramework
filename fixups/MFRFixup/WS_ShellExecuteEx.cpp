@@ -54,7 +54,7 @@ BOOL __stdcall WS_ShellExecuteExAFixup(
                 bool temp = g_psf_NoLogging;
                 g_psf_NoLogging = false;
                 Log(L"[%d] (Windows.Storage)ShellExecutEx()", dllInstance);
-                LogCallingModule();
+                LogCallingModuleInstance(dllInstance);
                 g_psf_NoLogging = temp;
             }
 
@@ -106,7 +106,7 @@ BOOL __stdcall WS_ShellExecuteExWFixup(
                 g_psf_NoLogging = false; 
                 Log(L"[%d] (Windows.Storage)ShellExecutExW()", dllInstance);
                 Log(L"[%d] (Windows.Storage)ShellExecute() unfixed  dir=%ls, file=%ls, verb=%ls", dllInstance, pExecInfo->lpDirectory, pExecInfo->lpFile, pExecInfo->lpVerb);
-                LogCallingModule();
+                LogCallingModuleInstance(dllInstance);
                 g_psf_NoLogging = temp;
             }
 

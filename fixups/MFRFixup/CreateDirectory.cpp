@@ -94,7 +94,7 @@ BOOL __stdcall CreateDirectoryFixup(_In_ const CharT* pathName, _In_opt_ LPSECUR
         {
             dllInstance = ++g_InterceptInstance;
             std::wstring wPathName = widen(pathName);
-            wPathName = AdjustSlashes(wPathName);
+            wPathName = AdjustSlashes(wPathName, dllInstance);
 
 #if _DEBUG
             LogString(dllInstance, L"CreateDirectoryFixup for path", pathName);

@@ -78,8 +78,8 @@ BOOL __stdcall CreateDirectoryExFixup(
 #endif
             std::wstring WtemplateDirectory = widen(templateDirectory);
             std::wstring WnewDirectory = widen(newDirectory);
-            WtemplateDirectory = AdjustSlashes(WtemplateDirectory);
-            WnewDirectory = AdjustSlashes(WnewDirectory);
+            WtemplateDirectory = AdjustSlashes(WtemplateDirectory, dllInstance);
+            WnewDirectory = AdjustSlashes(WnewDirectory, dllInstance);
 
             WtemplateDirectory = AdjustBadUNC(WtemplateDirectory, dllInstance, L"CreateDirectoryExFixup (template)");
             WnewDirectory = AdjustBadUNC(WnewDirectory, dllInstance, L"CreateDirectoryExFixup (new)");

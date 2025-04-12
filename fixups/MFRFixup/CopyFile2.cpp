@@ -72,8 +72,8 @@ HRESULT __stdcall CopyFile2Fixup(
 #endif
             std::wstring wExistingFileName = widen(existingFileName);
             std::wstring wNewFileName = widen(newFileName);
-            wExistingFileName = AdjustSlashes(wExistingFileName);
-            wNewFileName = AdjustSlashes(wNewFileName);
+            wExistingFileName = AdjustSlashes(wExistingFileName, dllInstance);
+            wNewFileName = AdjustSlashes(wNewFileName, dllInstance);
 
             wExistingFileName = AdjustBadUNC(wExistingFileName, dllInstance, L"CopyFile2Fixup (existing)");
             wNewFileName = AdjustBadUNC(wNewFileName, dllInstance, L"CopyFile2Fixup (new)");

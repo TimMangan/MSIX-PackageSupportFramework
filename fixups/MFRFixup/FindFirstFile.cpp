@@ -73,7 +73,7 @@ HANDLE __stdcall FindFirstFileFixup(_In_ const CharT* fileName, _Out_ win32_find
 
     if (guard)
     {
-        std::wstring wfileName = AdjustSlashes(widen(fileName));
+        std::wstring wfileName = AdjustSlashes(widen(fileName), dllInstance);
 
         auto result = std::make_unique<FindData3>();
         result->RememberedInstance = dllInstance;

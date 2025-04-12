@@ -5,7 +5,6 @@
 #if _DEBUG
 //#define _ManualDebug 1
 #define MOREDEBUG 1
-#define DEBUG_NEW_FIXUPS 1
 #include <thread>
 #include <windows.h>
 #endif
@@ -20,9 +19,14 @@
 #include <regex>
 #include "RegRemediation.h"
 
+#if _DEBUG
+#if DEBUG_NEW_FIXUPS 
+#define DEBUG_NEW_FIXUPS_REGLEG 1
+#endif
+#endif
 
 
-#ifdef INTERCEPT_KERNELBASE
+#if INTERCEPT_KERNELBASE
 
 LSTATUS __stdcall RegOpenKeyExAFixup(
     _In_ HKEY key,
@@ -94,7 +98,7 @@ LSTATUS __stdcall RegOpenKeyExAFixup(
 
 
 
-#ifdef _DEBUG
+#if _DEBUG
     if (result != ERROR_SUCCESS)
     {
         Log("[%d] RegOpenKeyExA result=%d", RegLocalInstance, result);
@@ -105,8 +109,8 @@ LSTATUS __stdcall RegOpenKeyExAFixup(
     }
 #endif
 
-#ifdef _DEBUG
-#ifdef MOREDEBUG
+#if _DEBUG
+#if MOREDEBUG
     if (true) //result == ERROR_ACCESS_DENIED)
     {
         auto functionResult = from_win32(result);
@@ -114,24 +118,27 @@ LSTATUS __stdcall RegOpenKeyExAFixup(
         {
             try
             {
+                LogCallingModuleInstance(RegLocalInstance);
                 LogKeyPath(key);
                 if (subKey != NULL)
-                    LogString(L" Sub Key", subKey);
+                    LogString(RegLocalInstance, L" Sub Key", subKey);
                 else
-                    LogString(L" Sub Key", L"NULL");
+                    LogString(RegLocalInstance, L" Sub Key", L"NULL");
                 LogRegKeyFlags(options);
                 Log(L"[%d] samDesired=%s\n", RegLocalInstance, widen(InterpretRegKeyAccess(samDesired)).c_str());
                 if (samDesired != samModified)
                 {
                     Log(L"[%d] ModifiedSam=%s\n", RegLocalInstance, widen(InterpretRegKeyAccess(samModified)).c_str());
                 }
-                LogFunctionResult(functionResult);
+                LogFunctionResultInstance(RegLocalInstance, functionResult);
                 if (function_failed(functionResult))
                 {
-                    LogWin32Error(result);
+                    LogWin32ErrorInstance(RegLocalInstance, result);
                 }
-                LogCallingModule();
-                Log("[%d] If a ACCESS DENIED error, this error often indicates that the key must be added to the original package.", RegLocalInstance);
+                if (result == ERROR_ACCESS_DENIED)
+                {
+                    Log("[%d] An ACCESS DENIED error may indicate that the key must be added to the original package.", RegLocalInstance);
+                }
             }
             catch (...)
             {
@@ -215,7 +222,7 @@ LSTATUS __stdcall RegOpenKeyExWFixup(
 
 
 
-#ifdef _DEBUG
+#if _DEBUG
     if (result != ERROR_SUCCESS)
     {
         Log("[%d] RegOpenKeyExW result=%d", RegLocalInstance, result);
@@ -226,8 +233,8 @@ LSTATUS __stdcall RegOpenKeyExWFixup(
     }
 #endif
 
-#ifdef _DEBUG
-#ifdef MOREDEBUG
+#if _DEBUG
+#if MOREDEBUG
     if (true) //result == ERROR_ACCESS_DENIED)
     {
         auto functionResult = from_win32(result);
@@ -235,24 +242,27 @@ LSTATUS __stdcall RegOpenKeyExWFixup(
         {
             try
             {
+                LogCallingModuleInstance(RegLocalInstance);
                 LogKeyPath(key);
                 if (subKey != NULL)
-                    LogString(L" Sub Key", subKey);
+                    LogString(RegLocalInstance, L" Sub Key", subKey);
                 else
-                    LogString(L" Sub Key", L"NULL");
+                    LogString(RegLocalInstance, L" Sub Key", L"NULL");
                 LogRegKeyFlags(options);
                 Log(L"[%d] samDesired=%s\n", RegLocalInstance, widen(InterpretRegKeyAccess(samDesired)).c_str());
                 if (samDesired != samModified)
                 {
                     Log(L"[%d] ModifiedSam=%s\n", RegLocalInstance, widen(InterpretRegKeyAccess(samModified)).c_str());
                 }
-                LogFunctionResult(functionResult);
+                LogFunctionResultInstance(RegLocalInstance, functionResult);
                 if (function_failed(functionResult))
                 {
-                    LogWin32Error(result);
+                    LogWin32ErrorInstance(RegLocalInstance, result);
                 }
-                LogCallingModule();
-                Log("[%d] If a ACCESS DENIED error, this error often indicates that the key must be added to the original package.", RegLocalInstance);
+                if (result == ERROR_ACCESS_DENIED)
+                {
+                    Log("[%d] An ACCESS DENIED error may indicate that the key must be added to the original package.", RegLocalInstance);
+                }
             }
             catch (...)
             {
@@ -329,7 +339,7 @@ LSTATUS __stdcall RegOpenKeyExFixup(
                 result = RegOpenKeyExImpl(altkey, subKey, options, samModified, resultKey);
                 RegCloseKey(altkey);
                 hasRedirection = true;
-#ifdef _DEBUG
+#if _DEBUG
                 LogString(RegLocalInstance, L"\tRegOpenKeyEx Redirecting to HKCU", subKey);
 #endif
             }
@@ -373,7 +383,7 @@ LSTATUS __stdcall RegOpenKeyExFixup(
 
 
 
-#ifdef _DEBUG
+#if _DEBUG
     if (result != ERROR_SUCCESS)
     {
         Log("[%d] RegOpenKeyEx result=%d", RegLocalInstance, result);
@@ -384,8 +394,8 @@ LSTATUS __stdcall RegOpenKeyExFixup(
     }
 #endif
 
-#ifdef _DEBUG
-#ifdef MOREDEBUG
+#if _DEBUG
+#if MOREDEBUG
     if (true) //result == ERROR_ACCESS_DENIED)
     {
         auto functionResult = from_win32(result);
@@ -393,6 +403,7 @@ LSTATUS __stdcall RegOpenKeyExFixup(
         {
             try
             {
+                LogCallingModuleInstance(RegLocalInstance);
                 LogKeyPath(key);
                 LogString(L" Sub Key", subKey);
                 LogRegKeyFlags(options);
@@ -401,12 +412,11 @@ LSTATUS __stdcall RegOpenKeyExFixup(
                 {
                     Log(L"[%d] ModifiedSam=%s\n", RegLocalInstance, widen(InterpretRegKeyAccess(samModified)).c_str());
                 }
-                LogFunctionResult(functionResult);
+                LogFunctionResult(RegLocalInstance, functionResult);
                 if (function_failed(functionResult))
                 {
-                    LogWin32Error(result);
+                    LogWin32Error(RegLocalInstance, result);
                 }
-                LogCallingModule();
                 Log("[%d] If a ACCESS DENIED error, this error often indicates that the key must be added to the original package.", RegLocalInstance);
             }
             catch (...)

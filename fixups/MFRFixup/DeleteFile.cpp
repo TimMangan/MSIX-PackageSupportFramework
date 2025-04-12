@@ -59,7 +59,7 @@ BOOL __stdcall DeleteFileFixup(_In_ const CharT* pathName) noexcept
         if (guard)
         {
             std::wstring wPathName = widen(pathName);
-            wPathName = AdjustSlashes(wPathName);
+            wPathName = AdjustSlashes(wPathName, dllInstance);
 
 #if _DEBUG
             LogString(dllInstance, L"DeleteFileFixup for pathName", wPathName.c_str());

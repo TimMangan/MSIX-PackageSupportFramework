@@ -55,8 +55,8 @@ BOOL __stdcall CreateHardLinkFixup(
 #endif
             std::wstring wNewFileName = widen(fileName);
             std::wstring wExistingFileName = widen(existingFileName);
-            wNewFileName = AdjustSlashes(wNewFileName);
-            wExistingFileName = AdjustSlashes(wExistingFileName);
+            wNewFileName = AdjustSlashes(wNewFileName, dllInstance);
+            wExistingFileName = AdjustSlashes(wExistingFileName, dllInstance);
 
             wExistingFileName = AdjustBadUNC(wExistingFileName, dllInstance, L"CreateHardLinkFixup (existing)");
             wNewFileName = AdjustBadUNC(wNewFileName, dllInstance, L"CreateHardLinkFixup (new link)");

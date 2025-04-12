@@ -66,7 +66,7 @@ BOOL __stdcall SetFileAttributesFixup(_In_ const CharT* fileName, _In_ DWORD fil
         {
             dllInstance = ++g_InterceptInstance;
             std::wstring wfileName = widen(fileName);
-            wfileName = AdjustSlashes(wfileName);
+            wfileName = AdjustSlashes(wfileName, dllInstance);
 
 #if _DEBUG
             LogString(dllInstance, L"SetFileAttributesFixup for fileName", wfileName.c_str());

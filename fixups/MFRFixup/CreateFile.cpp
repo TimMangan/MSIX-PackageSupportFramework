@@ -7,7 +7,7 @@
 // Microsoft Documentation on this API: https://docs.microsoft.com/en-us/windows/win32/api/fileapi/nf-fileapi-createfilew
 
 #if _DEBUG
-//#define MOREDEBUG 1
+#define MOREDEBUG 1
 //#define EVENMOREDEBUG 1
 #endif
 
@@ -87,7 +87,7 @@ HANDLE __stdcall CreateFileFixup(_In_ const CharT* pathName,
         {
             dllInstance = ++g_InterceptInstance;
             std::wstring wPathName = widen(pathName);
-            wPathName = AdjustSlashes(wPathName);
+            wPathName = AdjustSlashes(wPathName, dllInstance);
             wPathName = AdjustLocalPipeName(wPathName);
 
             if (wPathName._Starts_with(L"\\\\?\\UNC"))

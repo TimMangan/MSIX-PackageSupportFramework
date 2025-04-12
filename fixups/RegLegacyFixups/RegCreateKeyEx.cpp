@@ -5,7 +5,6 @@
 #if _DEBUG
 //#define _ManualDebug 1
 #define MOREDEBUG 1
-#define DEBUG_NEW_FIXUPS 1
 #include <thread>
 #include <windows.h>
 #endif
@@ -20,8 +19,14 @@
 #include <regex>
 #include "RegRemediation.h"
 
+#if _DEBUG
+#if DEBUG_NEW_FIXUPS 
+#define DEBUG_NEW_FIXUPS_REGLEG 1
+#endif
+#endif
 
-#ifdef INTERCEPT_KERNELBASE
+
+#if INTERCEPT_KERNELBASE
 
 template <typename CharT>
 LSTATUS __stdcall RegCreateKeyExGeneric(
@@ -91,7 +96,7 @@ LSTATUS __stdcall RegCreateKeyExGeneric(
                 }
                 RegCloseKey(altkey);
                 hasRedirection = true;
-#ifdef _DEBUG
+#if _DEBUG
                 LogString(RegLocalInstance, L"\tRegCreateKeyEx Redirecting to HKCU", subKey);
                 Log("[%d] RegCreateKeyEx result=%d", RegLocalInstance, result);
 #endif
@@ -161,13 +166,13 @@ LSTATUS __stdcall RegCreateKeyExGeneric(
 
         if (result != ERROR_SUCCESS)
         {
-#ifdef _DEBUG
+#if _DEBUG
             Log("[%d] RegCreateKeyEx result=0x%x", RegLocalInstance, result);
 #endif   
         }
         else
         {
-#ifdef _DEBUG
+#if _DEBUG
             Log("[%d] RegCreateKeyEx result=SUCCESS key=0x%x", RegLocalInstance, *resultKey);
 #endif
         }
@@ -181,10 +186,11 @@ LSTATUS __stdcall RegCreateKeyExGeneric(
         auto functionResult = from_win32(result);
         if (auto lock = acquire_output_lock(function_type::registry, functionResult))
         {
-#ifdef _DEBUG
-#ifdef MOREDEBUG
+#if _DEBUG
+#if MOREDEBUG
             try
             {
+                LogCallingModuleInstance(RegLocalInstance);
                 LogKeyPath(key);
                 LogString(RegLocalInstance, L"Sub Key", subKey);
                 Log(L"[%d] Reserved=%d\n", RegLocalInstance, reserved);
@@ -197,16 +203,15 @@ LSTATUS __stdcall RegCreateKeyExGeneric(
                 }
                 LogSecurityAttributes(securityAttributes, RegLocalInstance);
 
-                LogFunctionResult(functionResult);
+                LogFunctionResultInstance(RegLocalInstance, functionResult);
                 if (function_failed(functionResult))
                 {
-                    LogWin32Error(result);
+                    LogWin32ErrorInstance(RegLocalInstance, result);
                 }
                 else if (disposition)
                 {
                     LogRegKeyDisposition(*disposition);
                 }
-                LogCallingModule();
                 Log("[%d] This error often indicates that the key must be added to the original package.", RegLocalInstance);
             }
             catch (...)
@@ -238,7 +243,7 @@ LSTATUS __stdcall RegCreateKeyExGeneric(
                     {
                         size_t offset = keyname.find_first_of(L"\\", 15) + 1;
                         newsubkeyname = keyname.substr(offset).append(L"\\").append(widen(subKey));
-#ifdef _DEBUG
+#if _DEBUG
                         LogString(RegLocalInstance, L"\tModified HKCU Sub Key", newsubkeyname.c_str());
 #endif
                         if constexpr (psf::is_ansi<CharT>)
@@ -253,7 +258,7 @@ LSTATUS __stdcall RegCreateKeyExGeneric(
                             result = ::RegCreateKeyExW(HKEY_CURRENT_USER, newsubkeyname.c_str(), reserved, classType, options, samModified, securityAttributes, resultKey, disposition);
                             //result = ::RegCreateKeyW(HKEY_CURRENT_USER, newsubkeyname.c_str(), resultKey);
                         }
-#ifdef _DEBUG
+#if _DEBUG
                         Log("[%d]\tRegCreateKeyEx modified result=%d\n", RegLocalInstance, result);
 #endif
                     }
@@ -261,7 +266,7 @@ LSTATUS __stdcall RegCreateKeyExGeneric(
                     {
                         size_t offset = keyname.find_first_of(L"\\", 18) + 1;
                         newsubkeyname = keyname.substr(offset).append(L"\\").append(widen(subKey));
-#ifdef _DEBUG
+#if _DEBUG
                         LogString(RegLocalInstance, L"\tModified HKLM Sub Key", newsubkeyname.c_str());
 #endif
                         if constexpr (psf::is_ansi<CharT>)
@@ -276,7 +281,7 @@ LSTATUS __stdcall RegCreateKeyExGeneric(
                             result = ::RegCreateKeyExW(HKEY_LOCAL_MACHINE, newsubkeyname.c_str(), reserved, classType, options, samModified, securityAttributes, resultKey, disposition);
                             //result = ::RegCreateKeyW(HKEY_LOCAL_MACHINE, newsubkeyname.c_str(), resultKey);
                         }
-#ifdef _DEBUG
+#if _DEBUG
                         Log("[%d]\tRegCreateKeyEx modified result=%d\n", RegLocalInstance, result);
 #endif
                     }
@@ -392,7 +397,7 @@ LSTATUS __stdcall RegCreateKeyExFixup(
                 result = RegCreateKeyExImpl(altkey, subKey, reserved, classType, options, samModified, securityAttributes, resultKey, disposition);
                 RegCloseKey(altkey);
                 hasRedirection = true;
-#ifdef _DEBUG
+#if _DEBUG
                 LogString(RegLocalInstance, L"\tRegCreateKeyEx Redirecting to HKCU", subKey);
                 Log("[%d] RegCreateKeyEx result=%d", RegLocalInstance, result);
 #endif
@@ -432,13 +437,13 @@ LSTATUS __stdcall RegCreateKeyExFixup(
 
         if (result != ERROR_SUCCESS)
         {
-#ifdef _DEBUG
+#if _DEBUG
             Log("[%d] RegCreateKeyEx result=0x%x", RegLocalInstance, result);
 #endif   
         }
         else
         {
-#ifdef _DEBUG
+#if _DEBUG
             Log("[%d] RegCreateKeyEx result=SUCCESS key=0x%x", RegLocalInstance, *resultKey);
 #endif
         }
@@ -452,10 +457,11 @@ LSTATUS __stdcall RegCreateKeyExFixup(
         auto functionResult = from_win32(result);
         if (auto lock = acquire_output_lock(function_type::registry, functionResult))
         {
-#ifdef _DEBUG
-#ifdef MOREDEBUG
+#if _DEBUG
+#if MOREDEBUG
             try
             {
+                LogCallingModuleInstance(RegLocalInstance);
                 LogKeyPath(key);
                 LogString(RegLocalInstance, L"Sub Key", subKey);
                 Log(L"[%d] Reserved=%d\n", RegLocalInstance, reserved);
@@ -468,16 +474,15 @@ LSTATUS __stdcall RegCreateKeyExFixup(
                 }
                 LogSecurityAttributes(securityAttributes, RegLocalInstance);
 
-                LogFunctionResult(functionResult);
+                LogFunctionResult(RegLocalInstance, functionResult);
                 if (function_failed(functionResult))
                 {
-                    LogWin32Error(result);
+                    LogWin32Error(RegLocalInstance, result);
                 }
                 else if (disposition)
                 {
                     LogRegKeyDisposition(*disposition);
                 }
-                LogCallingModule();
                 Log("[%d] This error often indicates that the key must be added to the original package.", RegLocalInstance);
             }
             catch (...)
@@ -509,7 +514,7 @@ LSTATUS __stdcall RegCreateKeyExFixup(
                     {
                         size_t offset = keyname.find_first_of(L"\\", 15) + 1;
                         newsubkeyname = keyname.substr(offset).append(L"\\").append(widen(subKey));
-#ifdef _DEBUG
+#if _DEBUG
                         LogString(RegLocalInstance, L"\tModified HKCU Sub Key", newsubkeyname.c_str());
 #endif
                         if constexpr (psf::is_ansi<CharT>)
@@ -524,7 +529,7 @@ LSTATUS __stdcall RegCreateKeyExFixup(
                             result = ::RegCreateKeyExW(HKEY_CURRENT_USER, newsubkeyname.c_str(), reserved, classType, options, samModified, securityAttributes, resultKey, disposition);
                             //result = ::RegCreateKeyW(HKEY_CURRENT_USER, newsubkeyname.c_str(), resultKey);
                         }
-#ifdef _DEBUG
+#if _DEBUG
                         Log("[%d]\tRegCreateKeyEx modified result=%d\n", RegLocalInstance, result);
 #endif
                     }
@@ -532,7 +537,7 @@ LSTATUS __stdcall RegCreateKeyExFixup(
                     {
                         size_t offset = keyname.find_first_of(L"\\", 18) + 1;
                         newsubkeyname = keyname.substr(offset).append(L"\\").append(widen(subKey));
-#ifdef _DEBUG
+#if _DEBUG
                         LogString(RegLocalInstance, L"\tModified HKLM Sub Key", newsubkeyname.c_str());
 #endif
                         if constexpr (psf::is_ansi<CharT>)
@@ -547,7 +552,7 @@ LSTATUS __stdcall RegCreateKeyExFixup(
                             result = ::RegCreateKeyExW(HKEY_LOCAL_MACHINE, newsubkeyname.c_str(), reserved, classType, options, samModified, securityAttributes, resultKey, disposition);
                             //result = ::RegCreateKeyW(HKEY_LOCAL_MACHINE, newsubkeyname.c_str(), resultKey);
                         }
-#ifdef _DEBUG
+#if _DEBUG
                         Log("[%d]\tRegCreateKeyEx modified result=%d\n", RegLocalInstance, result);
 #endif
                     }

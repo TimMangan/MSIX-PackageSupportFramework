@@ -6,7 +6,7 @@
 #if _DEBUG
 //#define _ManualDebug 1
 #define MOREDEBUG 1
-#define DEBUG_NEW_FIXUPS 1
+
 #include <thread>
 #include <windows.h>
 #endif
@@ -16,6 +16,12 @@
 ///#define PSF_DEFINE_EXPORTS
 #include <psf_framework.h>
 #include <psf_logging.h>
+
+#if _DEBUG
+#if DEBUG_NEW_FIXUPS 
+#define DEBUG_NEW_FIXUPS_REGLEG 1
+#endif
+#endif
 
 bool trace_function_entry = false;
 bool m_inhibitOutput = false;

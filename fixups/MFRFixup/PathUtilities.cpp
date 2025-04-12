@@ -24,7 +24,7 @@
 bool path_isSubsetOf_String( std::filesystem::path& basePath, const wchar_t* pathstring)
 {
     ///Log(L"path_isExactMatchOf_String basePath=%s len=%d pathstring=%s len=%d", basePath.c_str(), basePath.native().length(), pathstring, wcslen(pathstring));
-    if (wcsncmp(basePath.wstring().c_str(), pathstring, basePath.wstring().length()) == 0)
+    if (_wcsnicmp(basePath.wstring().c_str(), pathstring, basePath.wstring().length()) == 0)
     {
         return true;
     }
@@ -36,7 +36,7 @@ bool path_isSubsetOf_String( std::filesystem::path& basePath, const wchar_t* pat
 }
 bool path_isSubsetOf_String( std::filesystem::path& basePath, const char* pathstring)
 {
-    if (strncmp(basePath.string().c_str(), pathstring, basePath.string().length()) == 0)
+    if (_strnicmp(basePath.string().c_str(), pathstring, basePath.string().length()) == 0)
     {
         return true;
     }
@@ -268,7 +268,7 @@ std::filesystem::path drive_absolute_to_normal(std::filesystem::path nativeRelat
 ///
 /// Adjust a file path for common non-standard requests that might or might not work as is,
 /// but give our code fits.  Alter the path to look normal.
-std::wstring AdjustSlashes(std::wstring path)
+std::wstring AdjustSlashes(std::wstring path, [[maybe_unused]] DWORD dllInstance)
 {
     std::wstring wPathName = path;
     
@@ -286,7 +286,7 @@ std::wstring AdjustSlashes(std::wstring path)
     while (found != std::wstring::npos)
     {
 #ifdef _DEBUG
-        Log(L"Adjusting for double backslash.");
+        Log(L"[%d] Adjusting for double backslash.",dllInstance);
 #endif
         // We see calls made with extra backslashes which will fail in FindFirst
         //wPathName.replace(found + start, 2, L"\\");
@@ -678,16 +678,23 @@ bool comparei(const std::string strA, const std::string strB)
 std::filesystem::path ConvertPathToShortPath(std::filesystem::path inputPath)
 {
     std::filesystem::path outputPath = inputPath;
-    DWORD dRet = GetShortPathNameW(inputPath.wstring().c_str(), NULL, 0);
-    if (dRet != 0)
+    try
     {
-        wchar_t* buffer = new wchar_t[dRet];
-        dRet = GetShortPathNameW(inputPath.wstring().c_str(), buffer, dRet);
+        DWORD dRet = GetShortPathNameW(inputPath.wstring().c_str(), NULL, 0);
         if (dRet != 0)
         {
-            outputPath = buffer;
+            wchar_t* buffer = new wchar_t[dRet];
+            dRet = GetShortPathNameW(inputPath.wstring().c_str(), buffer, dRet);
+            if (dRet != 0)
+            {
+                outputPath = buffer;
+            }
+            delete[] buffer;
         }
-        delete [] buffer;
+    }
+    catch (...)
+    {
+        ;
     }
     return outputPath;
 }

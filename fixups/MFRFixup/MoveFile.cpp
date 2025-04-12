@@ -58,8 +58,8 @@ BOOL __stdcall MoveFileFixup(_In_ const CharT* existingFileName, _In_ const Char
 
             std::wstring wNewFileName = widen(newFileName);
             std::wstring wExistingFileName = widen(existingFileName);
-            wNewFileName = AdjustSlashes(wNewFileName);
-            wExistingFileName = AdjustSlashes(wExistingFileName);
+            wNewFileName = AdjustSlashes(wNewFileName, dllInstance);
+            wExistingFileName = AdjustSlashes(wExistingFileName, dllInstance);
 
             wExistingFileName = AdjustBadUNC(wExistingFileName, dllInstance, L"MoveFileFixup (existing)");
             wNewFileName = AdjustBadUNC(wNewFileName, dllInstance, L"MoveFileFixup (new)");

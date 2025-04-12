@@ -19,8 +19,11 @@
 
 
 #define FIXUP_FROM_KernelBase 1
-
+//#define DEBUG_NEW_FIXUPS
 #if FIXUP_FROM_KernelBase
+#if DEBUG_NEW_FIXUPS
+#define DEBUG_NEW_FIXUPS_KERNELBASE 1
+#endif
 
 // NOTE: Most of the Windows API functions present in Kernel32.dll are also in KernelBase.dll. With most library imports, it is the kernel32.dll that is targeted.
 // There are possibly situations where kernelbase can be targeted.  This function gives us a chance to do so.
@@ -41,6 +44,8 @@ inline Func GetKernelBaseDllInternalFunction(const char* functionName)
 
     auto result = reinterpret_cast<Func>(::GetProcAddress(mod, functionName));
 #if _DEBUG
+#if DEBUG_NEW_FIXUPS_KERNELBASE
+
     if (functionName != NULL)
     {
         Log(L">>>KernelBase Fixup loaded name=%S from 0x%x", functionName, result);
@@ -49,6 +54,7 @@ inline Func GetKernelBaseDllInternalFunction(const char* functionName)
     {
         Log(L">>>KernelBase Fixup mistaken loaded name=??? 0x%x", result);
     }
+#endif
 #endif
     assert(result);
     return result;

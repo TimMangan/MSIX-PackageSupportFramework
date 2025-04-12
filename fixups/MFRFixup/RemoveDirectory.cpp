@@ -65,7 +65,7 @@ BOOL __stdcall RemoveDirectoryFixup(_In_ const CharT* pathName) noexcept
         if (guard)
         {
             std::wstring wPathName = widen(pathName);
-            wPathName = AdjustSlashes(wPathName);
+            wPathName = AdjustSlashes(wPathName, dllInstance);
 #if _DEBUG
             LogString(dllInstance, L"RemoveDirectoryFixup for pathName", wPathName.c_str());
 #endif

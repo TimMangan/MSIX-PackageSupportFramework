@@ -5,7 +5,6 @@
 #if _DEBUG
 //#define _ManualDebug 1
 #define MOREDEBUG 1
-#define DEBUG_NEW_FIXUPS 1
 #include <thread>
 #include <windows.h>
 #endif
@@ -20,6 +19,11 @@
 #include <regex>
 #include "RegRemediation.h"
 
+#if _DEBUG
+#if DEBUG_NEW_FIXUPS 
+#define DEBUG_NEW_FIXUPS_REGLEG 1
+#endif
+#endif
 
 
 auto RegDeleteKeyImpl = psf::detoured_string_function(&::RegDeleteKeyA, &::RegDeleteKeyW);
@@ -46,14 +50,14 @@ LSTATUS __stdcall RegDeleteKeyFixup(
 #endif
                 std::string keypath = ReplaceAppRegistrySyntax(InterpretKeyPath(key) + "\\" + InterpretStringA(subKey));
 
-#ifdef _DEBUG
+#if _DEBUG
                 Log(L"[%d] RegDeleteKey: Path=%s", RegLocalInstance, keypath.c_str());
 #endif
                 if (RegFixupFakeDelete(keypath, RegLocalInstance) == true)
                 {
-#ifdef _DEBUG
+#if _DEBUG
+                    LogCallingModuleInstance(RegLocalInstance);
                     Log(L"[%d] RegDeleteKey:Fake Success\n", RegLocalInstance);
-                    LogCallingModule();
 #endif
                     result = 0;
                 }

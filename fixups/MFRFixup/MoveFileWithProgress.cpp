@@ -68,8 +68,8 @@ BOOL __stdcall MoveFileWithProgressFixup(
 
             std::wstring wNewFileName = widen(newFileName);
             std::wstring wExistingFileName = widen(existingFileName);
-            wNewFileName = AdjustSlashes(wNewFileName);
-            wExistingFileName = AdjustSlashes(wExistingFileName);
+            wNewFileName = AdjustSlashes(wNewFileName, dllInstance);
+            wExistingFileName = AdjustSlashes(wExistingFileName, dllInstance);
 
             if (wExistingFileName._Starts_with(L"\\\\?\\UNC"))
             {

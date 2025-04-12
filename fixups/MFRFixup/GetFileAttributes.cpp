@@ -80,7 +80,7 @@ DWORD __stdcall GetFileAttributesFixup(_In_ const CharT* fileName) noexcept
         {
             dllInstance = ++g_InterceptInstance;
             std::wstring wfileName = widen(fileName);
-            wfileName = AdjustSlashes(wfileName);
+            wfileName = AdjustSlashes(wfileName, dllInstance);
 
 
             if constexpr (psf::is_ansi<CharT>)

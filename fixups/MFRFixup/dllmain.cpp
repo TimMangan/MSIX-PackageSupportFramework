@@ -39,9 +39,9 @@ void InitializeConfiguration();
 extern "C" {
 
 #if MOREDEBUG
-#if DEBUG_NEW_FIXUPS_MFR
     void PrintDebugAddrs()
     {
+#if DEBUG_NEW_FIXUPS_MFR
         Log("CopyFile Ansi=%p Wide=%p\n", &impl::CopyFileW.ansi, &impl::CopyFileW.wide);
         Log("CopyFile2 neutral=%p\n", &impl::CopyFile2);
         Log("CopyFileEx Ansi=%p Wide=%p\n", &impl::CopyFileExW.ansi, &impl::CopyFileExW.wide);
@@ -143,8 +143,8 @@ extern "C" {
 #endif
 
 #endif
-    }
 #endif
+    }
 #endif
 
 #if _ManualDebug

@@ -18,7 +18,9 @@
 #define DO_Intercept_NtQueryDirectoryFile 1
 #define DO_Intercept_NtQueryDirectoryFileEx 1
 #if Intercept_NTDLL
-
+#if DEBUG_NEW_FIXUPS
+#define DEBUG_NEW_FIXUPS_NTDLL 1
+#endif
 
 #include <reentrancy_guard.h>
 #include <psf_framework.h>
@@ -129,6 +131,7 @@ inline Func GetNtDllInternalFunction(const char* functionName)
 
     auto result = reinterpret_cast<Func>(::GetProcAddress(mod, functionName));
 #if _DEBUG
+#if DEBUG_NEW_FIXUPS_NTDLL
     if (functionName != NULL)
     {
         Log(L">>>NtDll Fixup loaded name=%S from 0x%x", functionName, result);
@@ -137,6 +140,7 @@ inline Func GetNtDllInternalFunction(const char* functionName)
     {
         Log(L">>>NtDll Fixup mistaken loaded name=??? 0x%x", result);
     }
+#endif
 #endif
     assert(result);
     return result;

@@ -87,7 +87,7 @@ HINSTANCE __stdcall WS_ShellExecuteAFixup(
                 bool temp = g_psf_NoLogging;
                 g_psf_NoLogging = false; 
                 Log(L"[%d] (Windows.Storage)ShellExecute(%ls, %ls, %ls, %ls, %d)", dllInstance, wcOperation, wcFile, wcParameters, wcDirectory, nShowCmd);
-                LogCallingModule();
+                LogCallingModuleInstance(dllInstance);
                 g_psf_NoLogging = temp;
             }
             
@@ -178,7 +178,7 @@ HINSTANCE __stdcall WS_ShellExecuteWFixup(
                 bool temp = g_psf_NoLogging;
                 g_psf_NoLogging = false;
                 Log(L"[%d] (Windows.Storage)ShellExecute(%ls, %ls, %ls, %ls, %d) unfixed", dllInstance, wcOperation, wcFile, wcParameters, wcDirectory, nShowCmd);
-                LogCallingModule();
+                LogCallingModuleInstance(dllInstance);
                 g_psf_NoLogging = temp;
             }
 

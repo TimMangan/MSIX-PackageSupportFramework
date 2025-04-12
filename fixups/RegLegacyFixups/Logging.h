@@ -227,10 +227,12 @@ std::string InterpretFrom_win32(DWORD code);
 std::string win32_error_description(DWORD error);
 
 void LogWin32Error(DWORD error, const wchar_t* msg = L"Error");
+void LogWin32ErrorInstance(DWORD dllInstance, DWORD error, const wchar_t* msg = L"Error");
 
 std::string InterpretWin32Error(DWORD error, const char* msg = "Error");
 
 void LogLastError(const char* msg = "Last Error");
+void LogLastErrorInstance(DWORD dllInstance, const char* msg = "Last Error");
 
 std::string InterpretLastError(const char* msg = "Last Error");
 
@@ -260,6 +262,7 @@ std::string InterpretRegKeyAccess(DWORD access, const char* msg = "Access");
 const char* InterperetFunctionResult(function_result result);
 
 void LogFunctionResult(function_result result, const wchar_t* msg = L"Result");
+void LogFunctionResultInstance(DWORD dllInstance, function_result result, const wchar_t* msg = L"Result");
 
 void LogRegKeyAccess(DWORD access, const char* msg = "Access");
 
@@ -278,6 +281,17 @@ void LogSecurityAttributes(LPSECURITY_ATTRIBUTES securityAttributes, DWORD insta
         } \
     }
 
+#define LogCallingModuleInstance(instance) \
+    { \
+        HMODULE moduleHandle; \
+        if (::GetModuleHandleExW( \
+            GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS | GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT, \
+            reinterpret_cast<const wchar_t*>(_ReturnAddress()), \
+            &moduleHandle)) \
+        { \
+            Log(L"[%d]\tCalling Module=%ls\n", instance, psf::get_module_path(moduleHandle).c_str()); \
+        } \
+    }
 
 function_result from_win32(DWORD code);
 

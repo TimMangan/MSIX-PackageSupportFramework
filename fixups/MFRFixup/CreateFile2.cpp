@@ -79,7 +79,7 @@ HANDLE __stdcall CreateFile2Fixup(
         {
             dllInstance = ++g_InterceptInstance;
             std::wstring wPathName = fileName;
-            wPathName = AdjustSlashes(wPathName);
+            wPathName = AdjustSlashes(wPathName, dllInstance);
             wPathName = AdjustLocalPipeName(wPathName);
 
 #if _DEBUG

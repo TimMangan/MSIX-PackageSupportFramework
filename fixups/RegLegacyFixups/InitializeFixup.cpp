@@ -7,7 +7,6 @@
 #if _DEBUG
 //#define _ManualDebug 1
 #define MOREDEBUG 1
-#define DEBUG_NEW_FIXUPS 1
 #include <thread>
 #include <windows.h>
 #endif
@@ -21,8 +20,16 @@
 #include <objbase.h>
 
 #include <psf_framework.h>
+
 #include <psf_logging.h>
 #include <utilities.h>
+
+#if _DEBUG
+#if DEBUG_NEW_FIXUPS 
+#define DEBUG_NEW_FIXUPS_REGLEG 1
+#endif
+#endif
+
 
 #include <filesystem>
 using namespace std::literals;

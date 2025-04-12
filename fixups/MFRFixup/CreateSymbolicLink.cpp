@@ -67,8 +67,8 @@ BOOLEAN __stdcall CreateSymbolicLinkFixup(
 
             std::wstring wSymlinkFileName = widen(symlinkFileName);
             std::wstring wTargetFileName = widen(targetFileName);
-            wSymlinkFileName = AdjustSlashes(wSymlinkFileName);
-            wTargetFileName = AdjustSlashes(wTargetFileName);
+            wSymlinkFileName = AdjustSlashes(wSymlinkFileName, dllInstance);
+            wTargetFileName = AdjustSlashes(wTargetFileName, dllInstance);
 
             wSymlinkFileName = AdjustBadUNC(wSymlinkFileName, dllInstance, L"CreateSymbolicLinkFixup (new link)");
             wTargetFileName = AdjustBadUNC(wTargetFileName, dllInstance, L"CreateSymbolicLinkFixup (existing)");

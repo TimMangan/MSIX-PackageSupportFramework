@@ -5,7 +5,6 @@
 #if _DEBUG
 //#define _ManualDebug 1
 #define MOREDEBUG 1
-#define DEBUG_NEW_FIXUPS 1
 #include <thread>
 #include <windows.h>
 #endif
@@ -19,6 +18,12 @@
 #include "Logging.h"
 #include <regex>
 #include "RegRemediation.h"
+
+#if _DEBUG
+#if DEBUG_NEW_FIXUPS 
+#define DEBUG_NEW_FIXUPS_REGLEG 1
+#endif
+#endif
 
 auto RegOpenKeyImpl = psf::detoured_string_function(&::RegOpenKeyA, &::RegOpenKeyW);
 template <typename CharT>
@@ -76,7 +81,7 @@ LSTATUS __stdcall RegOpenKeyFixup(
                 result = RegOpenKeyImpl(altkey, subKey, resultKey);
                 RegCloseKey(altkey);
                 hasRedirection = true;
-#ifdef _DEBUG
+#if _DEBUG
                 LogString(RegLocalInstance, L"\tRegOpenKey Redirecting to HKCU", subKey);
 #endif
             }
@@ -121,7 +126,7 @@ LSTATUS __stdcall RegOpenKeyFixup(
         }
     }
 
-#ifdef _DEBUG
+#if _DEBUG
     if (result != ERROR_SUCCESS)
     {
         Log(L"[%d] RegOpenKey result=%d", RegLocalInstance, result);
@@ -132,8 +137,8 @@ LSTATUS __stdcall RegOpenKeyFixup(
     }
 #endif
 
-#ifdef _DEBUG
-#ifdef MOREDEBUG2
+#if _DEBUG
+#if MOREDEBUG2
     if (true) //resultKey == ERROR_ACCESS_DENIED)
     {
         auto functionResult = from_win32(result);
@@ -143,12 +148,12 @@ LSTATUS __stdcall RegOpenKeyFixup(
             {
                 LogKeyPath(key);
                 LogString(L" Sub Key", subKey);
-                LogFunctionResult(functionResult);
+                LogFunctionResult(RegLocalInstance, functionResult);
                 if (function_failed(functionResult))
                 {
-                    LogWin32Error(result);
+                    LogWin32Error(RegLocalInstance, result);
                 }
-                LogCallingModule();
+                LogCallingModuleInstance(RegLocalInstance);
                 Log("[%d] This error often indicates that the key must be added to the original package.", RegLocalInstance);
             }
             catch (...)

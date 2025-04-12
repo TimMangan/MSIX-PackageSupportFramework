@@ -64,7 +64,7 @@ NTSTATUS __stdcall NtDll_NtOpenFileFixup(
             {
                 Log(L"[%d] NtDll_NtOpenFileFixup RootDirectory=0x%x ObjectName=NULL", dllInstance, ObjectAttributes->RootDirectory);
             }
-            LogCallingModule();
+            LogCallingModuleInstance(dllInstance);
             g_psf_NoLogging = temp;
         }
         retfinal = ntdllimpl::NtOpenFileImpl(FileHandle, DesiredAccess, ObjectAttributes, IoStatusBlock,ShareAccess, OpenOptions);

@@ -83,7 +83,7 @@ HANDLE __stdcall FindFirstFileExFixup(_In_ const CharT* fileName,
     if (guard)
     {
         std::wstring wfileName = widen(fileName);
-        wfileName = AdjustSlashes(wfileName);
+        wfileName = AdjustSlashes(wfileName, dllInstance);
 
         auto result = std::make_unique<FindData3>();
         result->RememberedInstance = dllInstance;
