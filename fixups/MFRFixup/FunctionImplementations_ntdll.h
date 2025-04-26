@@ -13,8 +13,8 @@
 #pragma once
 
 #define Intercept_NTDLL 1
-#define DO_Intercept_NtCreateFile 1
-#define DO_Intercept_NtOpenFile 1
+//#define DO_Intercept_NtCreateFile 1
+//#define DO_Intercept_NtOpenFile 1
 #define DO_Intercept_NtQueryDirectoryFile 1
 #define DO_Intercept_NtQueryDirectoryFileEx 1
 #if Intercept_NTDLL

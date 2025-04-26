@@ -49,7 +49,7 @@
 #include "DetermineIlvPaths.h"
 
 #if _DEBUG
-//#define MOREDEBUG 1
+#define MOREDEBUG 1
 #endif
 
 BOOL  WRAPPER_CREATEDIRECTORY(std::wstring theDestinationDirectory, LPSECURITY_ATTRIBUTES securityAttributes, DWORD dllInstance, bool debug)
@@ -460,12 +460,23 @@ BOOL __stdcall CreateDirectoryFixup(_In_ const CharT* pathName, _In_opt_ LPSECUR
             }
             else
             {
+                // TODO ISSUE:  App calls to createdirectory C:\Users\username which is an exact-match redirect to local
+                //              While we normally want to consider if it is in the package, in this case (because it is a directory and redir to local),
+                //              we don't want to pre-create in the redirection area.  In fact, we don't even need to check the package area either in that case.
+                //              Just do what was asked (which is probably going to be a failure because it already exists!).
+                //              The code below needs some improvement.  
+                //              Also CreateDirectoryEx.  
+                //              Then think about the file case (which might be OK but definately not the changes we need here).
+                
                 //ILV aware
                 std::wstring usePath = DetermineIlvPathForWriteOperations(cohorts, dllInstance, moredebug);
                 // In a redirect to local scenario, we are responsible for pre-creating the local parent folders
                 // if-and-only-if they are present in the package.
                 PreCreateLocalFoldersIfNeededForWrite(usePath, cohorts.WsPackage, dllInstance, debug, L"CreateDirectoryFixup");
-                PreCreatePackageFoldersIfIlvNeededForWrite(usePath, dllInstance, debug, L"CreateDirectoryFixup");
+                if (!cohorts.UsingNative)
+                {
+                    PreCreatePackageFoldersIfIlvNeededForWrite(usePath, dllInstance, debug, L"CreateDirectoryFixup");
+                }
 
                 retfinal = WRAPPER_CREATEDIRECTORY(usePath, securityAttributes, dllInstance, debug);
                 return retfinal;

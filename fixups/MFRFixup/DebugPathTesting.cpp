@@ -79,7 +79,7 @@ void DebugPathTesting(DWORD dllInstance)
             switch (test_mfr.Request_MfrPathType)
             {
             case mfr::mfr_path_types::in_native_area:
-                map = mfr::Find_LocalRedirMapping_FromNativePath_ForwardSearch(test_mfr.Request_NormalizedPath.c_str(),dllInstance );
+                map = mfr::Find_RedirMapping_FromNativePath_ForwardSearch(test_mfr.Request_NormalizedPath.c_str(),dllInstance );
                 if (map.Valid_mapping == mfr::mfr_enabled_types::enabled)
                 {
                     Log(L"[%d]  DEBUGPATHTESTING:   map=LocalRedirection", dllInstance);
@@ -115,7 +115,7 @@ void DebugPathTesting(DWORD dllInstance)
                 }
                 break;
             case mfr::mfr_path_types::in_package_pvad_area:
-                map = mfr::Find_LocalRedirMapping_FromPackagePath_ForwardSearch(test_mfr.Request_NormalizedPath.c_str(), dllInstance);
+                map = mfr::Find_RedirMapping_FromPackagePath_ForwardSearch(test_mfr.Request_NormalizedPath.c_str(), dllInstance);
                 if (map.Valid_mapping == mfr::mfr_enabled_types::enabled)
                 {
                     Log(L"[%d]  DEBUGPATHTESTING:   map=LocalRedirection", dllInstance);
@@ -159,7 +159,7 @@ void DebugPathTesting(DWORD dllInstance)
                 }
                 break;
             case mfr::mfr_path_types::in_package_vfs_area:
-                map = mfr::Find_LocalRedirMapping_FromPackagePath_ForwardSearch(test_mfr.Request_NormalizedPath.c_str(), dllInstance);
+                map = mfr::Find_RedirMapping_FromPackagePath_ForwardSearch(test_mfr.Request_NormalizedPath.c_str(), dllInstance);
                 if (map.Valid_mapping == mfr::mfr_enabled_types::enabled)
                 {
                     Log(L"[%d]  DEBUGPATHTESTING:   map=LocalRedirection", dllInstance);

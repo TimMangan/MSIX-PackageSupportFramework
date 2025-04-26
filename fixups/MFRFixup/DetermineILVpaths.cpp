@@ -315,7 +315,14 @@ std::wstring DetermineIlvPathForWriteOperations(Cohorts cohorts, [[maybe_unused]
             cohorts.map.IsAnExclusionToRedirect == mfr::mfr_exclusion_types::not_excluded &&
             cohorts.map.RedirectionFlags == mfr::mfr_redirect_flags::prefer_redirection_local)
         {
-            UseFile = cohorts.WsRequested;
+            if (cohorts.map.IsExactMatchOnly == mfr::mfr_exactmatchonly_types::exactmatchonly && cohorts.UsingNative)
+            {
+                UseFile = cohorts.WsNative;
+            }
+            else
+            {
+                UseFile = cohorts.WsRequested;
+            }
             break;
         }
         else if (cohorts.map.Valid_mapping == mfr::mfr_enabled_types::enabled && 

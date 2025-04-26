@@ -51,17 +51,21 @@ namespace mfr
                                                         L"AppVPackageDrive",
                                                         g_packageVfsRootPath / L"AppVPackageDrive"sv,
                                                         false,
-                                                        g_writablePackageRootPath / L"VFS"sv / L"AppVPackageDrive"sv });
+                                                        //g_writablePackageRootPath / L"VFS"sv / L"AppVPackageDrive"sv  
+                                                        FID_RootDrive 
+                                                        });
         g_MfrFolderMappings.push_back(mfr::mfr_folder_mapping{ mfr_enabled_types::enabled,
                                                         mfr_exactmatchonly_types::exactmatchonly,
                                                         mfr_exclusion_types::not_excluded,
                                                         mfr::mfr_redirect_flags::prefer_redirection_local,
-                                                        FID_RootDrive / LR"(\)"sv, // and with trailing backslash
+                                                        FID_RootDrive / L""sv, // and with trailing backslash
                                                         L"AppVPackageDrive",
                                                         L"AppVPackageDrive",
-                                                        g_packageVfsRootPath / L"AppVPackageDrive"sv,
+                                                        g_packageVfsRootPath / L"AppVPackageDrive\\"sv,
                                                         false,
-                                                        g_writablePackageRootPath / L"VFS"sv / L"AppVPackageDrive"sv });
+                                                        //g_writablePackageRootPath / L"VFS"sv / L"AppVPackageDrive\\"sv    
+                                                        FID_RootDrive / L""sv
+                                                        });
         g_MfrFolderMappings.push_back(mfr::mfr_folder_mapping{ mfr_enabled_types::enabled,
                                                         mfr_exactmatchonly_types::exactmatchonly,
                                                         mfr_exclusion_types::not_excluded,
@@ -71,7 +75,21 @@ namespace mfr
                                                         L"UserProfiles",
                                                         g_packageVfsRootPath / L"UserProfiles"sv,
                                                         false,
-                                                        g_writablePackageRootPath / L"VFS"sv / L"UserProfiles"sv });
+                                                        //g_writablePackageRootPath / L"VFS"sv / L"UserProfiles"sv  
+                                                        FID_UserProfiles
+                                                        });
+        g_MfrFolderMappings.push_back(mfr::mfr_folder_mapping{ mfr_enabled_types::enabled,
+                                                        mfr_exactmatchonly_types::exactmatchonly,
+                                                        mfr_exclusion_types::not_excluded,
+                                                        mfr::mfr_redirect_flags::prefer_redirection_local,
+                                                        FID_UserProfiles / L""sv,
+                                                        L"UserProfiles",
+                                                        L"UserProfiles",
+                                                        g_packageVfsRootPath / L"UserProfiles\\"sv,
+                                                        false,
+                                                        //g_writablePackageRootPath / L"VFS"sv / L"UserProfiles\\"sv   
+                                                        FID_UserProfiles / L""sv
+                                                        });
         g_MfrFolderMappings.push_back(mfr::mfr_folder_mapping{ mfr_enabled_types::enabled,
                                                                 mfr_exactmatchonly_types::exactmatchonly,
                                                                 mfr_exclusion_types::not_excluded,
@@ -81,7 +99,21 @@ namespace mfr
                                                                 L"Profile",
                                                                 g_packageVfsRootPath / L"Profile"sv,
                                                                 false,
-                                                                g_writablePackageRootPath / L"VFS"sv / L"Profile"sv });
+                                                                //g_writablePackageRootPath / L"VFS"sv / L"Profile"sv   ExactMarchRedirLocal
+                                                                FID_UserFolder
+                                                              });
+        g_MfrFolderMappings.push_back(mfr::mfr_folder_mapping{ mfr_enabled_types::enabled,
+                                                                mfr_exactmatchonly_types::exactmatchonly,
+                                                                mfr_exclusion_types::not_excluded,
+                                                                mfr::mfr_redirect_flags::prefer_redirection_local,
+                                                                FID_UserFolder / L""sv,                           // This path is the users\username folder
+                                                                L"Profile",
+                                                                L"Profile",
+                                                                g_packageVfsRootPath / L"Profile"sv,
+                                                                false,
+                                                                //g_writablePackageRootPath / L"VFS"sv / L"Profile"sv   ExactMarchRedirLocal
+                                                                FID_UserFolder / L""sv
+                                                            });
         g_MfrFolderMappings.push_back(mfr::mfr_folder_mapping{ mfr_enabled_types::enabled,
                                                                 mfr_exactmatchonly_types::exactmatchonly,
                                                                 mfr_exclusion_types::not_excluded,
@@ -91,7 +123,21 @@ namespace mfr
                                                                 L"Profile\\AppData",
                                                                 g_packageVfsRootPath / L"Profile"sv / L"AppData"sv ,
                                                                 false,
-                                                                g_writablePackageRootPath / L"VFS"sv / L"Profile"sv / L"AppData"sv });
+                                                                //g_writablePackageRootPath / L"VFS"sv / L"Profile"sv / L"AppData"sv     ExactMarchRedirLocal
+                                                                FID_Profile
+                                                            });
+        g_MfrFolderMappings.push_back(mfr::mfr_folder_mapping{ mfr_enabled_types::enabled,
+                                                                mfr_exactmatchonly_types::exactmatchonly,
+                                                                mfr_exclusion_types::not_excluded,
+                                                                mfr::mfr_redirect_flags::prefer_redirection_local,
+                                                                FID_Profile / L""sv,
+                                                                L"Profile\\AppData",
+                                                                L"Profile\\AppData",
+                                                                g_packageVfsRootPath / L"Profile"sv / L"AppData"sv ,
+                                                                false,
+                                                                //g_writablePackageRootPath / L"VFS"sv / L"Profile"sv / L"AppData"sv     ExactMarchRedirLocal
+                                                                FID_Profile / L""sv
+                                                            });
 
 
         // This is the normal ordered list of folders that we will redirect.
@@ -646,16 +692,15 @@ namespace mfr
         return mapdisabled;
     }
 
-    mfr_folder_mapping  Find_LocalRedirMapping_FromNativePath_ForwardSearch(std::wstring WsPath, [[maybe_unused]] DWORD dllInstance)
+    mfr_folder_mapping  Find_RedirMapping_FromNativePath_ForwardSearch(std::wstring WsPath, [[maybe_unused]] DWORD dllInstance)
     {
         int i = 0;
         for (mfr_folder_mapping map : g_MfrFolderMappings)
         {
             if (map.Valid_mapping == mfr_enabled_types::enabled)
             {
-                // 4.2.0.0: Restoring the check against local explicitly.  Not sure why it was changed.
                 if (map.RedirectionFlags != mfr_redirect_flags::disabled &&
-                    map.RedirectionFlags == mfr_redirect_flags::prefer_redirection_local
+                    map.RedirectionFlags != mfr_redirect_flags::prefer_redirection_none
                     )
                 {
                     switch (map.IsExactMatchOnly)
@@ -664,7 +709,21 @@ namespace mfr
                         if (path_isExactMatchOf_String(map.NativePathBase, WsPath.c_str()))
                         {
 #if MOREDEBUG
-                            Log(L"[%d]      MFR_Mappings: LocalFromNative Found exact match prefer_local index=%d for %s", dllInstance, i, WsPath.c_str());
+                            switch (map.RedirectionFlags)
+                            {
+                            case mfr_redirect_flags::prefer_redirection_local:
+                                Log(L"[%d]      MFR_Mappings: LocalFromNative Found exact match prefer_local index=%d for %s", dllInstance, i, WsPath.c_str());
+                                break;
+                            case mfr_redirect_flags::prefer_redirection_containerized:
+                                Log(L"[%d]      MFR_Mappings: LocalFromNative Found exact match prefer_containerized index=%d for %s", dllInstance, i, WsPath.c_str());
+                                break;
+                            case mfr_redirect_flags::prefer_redirection_if_package_vfs:
+                                Log(L"[%d]      MFR_Mappings: LocalFromNative Found exact match prefer_if_package index=%d for %s", dllInstance, i, WsPath.c_str());
+                                break;
+                            default:
+                                Log(L"[%d]      MFR_Mappings: LocalFromNative Found exact match none index=%d for %s", dllInstance, i, WsPath.c_str());
+                                break;
+                            }
 #endif
                             return map;
                         }
@@ -674,7 +733,21 @@ namespace mfr
                         if (path_isSubsetOf_String(map.NativePathBase, WsPath.c_str()))
                         {
 #if MOREDEBUG
-                            Log(L"[%d]      MFR_Mappings: LocalFromNative Found subset match prefer_local index=%d for %s", dllInstance, i, WsPath.c_str());
+                            switch (map.RedirectionFlags)
+                            {
+                            case mfr_redirect_flags::prefer_redirection_local:
+                                Log(L"[%d]      MFR_Mappings: LocalFromNative Found subset match prefer_local index=%d for %s", dllInstance, i, WsPath.c_str());
+                                break;
+                            case mfr_redirect_flags::prefer_redirection_containerized:
+                                Log(L"[%d]      MFR_Mappings: LocalFromNative Found subset match prefer_containerized index=%d for %s", dllInstance, i, WsPath.c_str());
+                                break;
+                            case mfr_redirect_flags::prefer_redirection_if_package_vfs:
+                                Log(L"[%d]      MFR_Mappings: LocalFromNative Found subset match prefer_if_package index=%d for %s", dllInstance, i, WsPath.c_str());
+                                break;
+                            default:
+                                Log(L"[%d]      MFR_Mappings: LocalFromNative Found subset match none index=%d for %s", dllInstance, i, WsPath.c_str());
+                                break;
+                            }
 #endif
                             return map;
                         }
@@ -688,10 +761,10 @@ namespace mfr
         Log(L"[%d]      MFR_Mappings: LocalFromNative No mapping found for %s", dllInstance, WsPath.c_str());
 #endif
         return MakeInvalidMapping();
-    }  // Find_LocalRedirMapping_FromNativePath_ForwardSearch() 
+    }  // Find_RedirMapping_FromNativePath_ForwardSearch() 
 
 
-    mfr_folder_mapping  Find_LocalRedirMapping_FromPackagePath_ForwardSearch(std::wstring WsPath, [[maybe_unused]] DWORD dllInstance)
+    mfr_folder_mapping  Find_RedirMapping_FromPackagePath_ForwardSearch(std::wstring WsPath, [[maybe_unused]] DWORD dllInstance)
     {
         mfr::mfr_folder_mapping packagemap;
 
@@ -699,10 +772,9 @@ namespace mfr
         for (mfr_folder_mapping map : g_MfrFolderMappings)
         {
             if (map.Valid_mapping == mfr_enabled_types::enabled)
-            {// 4.2.0.0: Restoring the check against local explicitly.  Not sure why it was changed.
+            {
                 if (map.RedirectionFlags != mfr_redirect_flags::disabled &&
-                    //map.RedirectionFlags != mfr_redirect_flags::prefer_redirection_none
-                    map.RedirectionFlags == mfr_redirect_flags::prefer_redirection_local
+                    map.RedirectionFlags != mfr_redirect_flags::prefer_redirection_none
                     )
                 {
                     switch (map.IsExactMatchOnly)
@@ -711,7 +783,21 @@ namespace mfr
                         if (path_isExactMatchOf_String(map.PackagePathBase, WsPath.c_str()))
                         {
 #if MOREDEBUG
-                            Log(L"[%d]      MFR_Mappings: LocalFromPackage Found exact match prefer local index=%d for %s", dllInstance, i, WsPath.c_str());
+                            switch (map.RedirectionFlags)
+                            {
+                            case mfr_redirect_flags::prefer_redirection_local:
+                                Log(L"[%d]      MFR_Mappings: LocalFromPackage Found exact match prefer_local index=%d for %s", dllInstance, i, WsPath.c_str());
+                                break;
+                            case mfr_redirect_flags::prefer_redirection_containerized:
+                                Log(L"[%d]      MFR_Mappings: LocalFromPackage Found exact match prefer_containerized index=%d for %s", dllInstance, i, WsPath.c_str());
+                                break;
+                            case mfr_redirect_flags::prefer_redirection_if_package_vfs:
+                                Log(L"[%d]      MFR_Mappings: LocalFromPackage Found exact match prefer_if_package index=%d for %s", dllInstance, i, WsPath.c_str());
+                                break;
+                            default:
+                                Log(L"[%d]      MFR_Mappings: LocalFromPackage Found exact match none index=%d for %s", dllInstance, i, WsPath.c_str());
+                                break;
+                            }
 #endif
                             return map;
                         }
@@ -721,7 +807,21 @@ namespace mfr
                         if (path_isSubsetOf_String(map.PackagePathBase, WsPath.c_str()))
                         {
 #if MOREDEBUG
-                            Log(L"[%d]      MFR_Mappings: LocalFromPackage Found subset match prefer local index=%d for %s", dllInstance, i, WsPath.c_str());
+                            switch (map.RedirectionFlags)
+                            {
+                            case mfr_redirect_flags::prefer_redirection_local:
+                                Log(L"[%d]      MFR_Mappings: LocalFromPackage Found subset match prefer_local index=%d for %s", dllInstance, i, WsPath.c_str());
+                                break;
+                            case mfr_redirect_flags::prefer_redirection_containerized:
+                                Log(L"[%d]      MFR_Mappings: LocalFromPackage Found subset match prefer_containerized index=%d for %s", dllInstance, i, WsPath.c_str());
+                                break;
+                            case mfr_redirect_flags::prefer_redirection_if_package_vfs:
+                                Log(L"[%d]      MFR_Mappings: LocalFromPackage Found subset match prefer_if_package index=%d for %s", dllInstance, i, WsPath.c_str());
+                                break;
+                            default:
+                                Log(L"[%d]      MFR_Mappings: LocalFromPackage Found subset match none index=%d for %s", dllInstance, i, WsPath.c_str());
+                                break;
+                            }
 #endif
                             return map;
                         }
@@ -736,7 +836,7 @@ namespace mfr
         Log(L"[%x]      MFR_Mappings: LocalFromPackage No mapping found for %s", dllInstance, WsPath.c_str());
 #endif
         return MakeInvalidMapping();
-    } // Find_LocalRedirMapping_FromPackagePath_ForwardSearch() 
+    } // Find_RedirMapping_FromPackagePath_ForwardSearch() 
 
 
     mfr_folder_mapping  Find_TraditionalRedirMapping_FromNativePath_ForwardSearch(std::wstring WsPath, [[maybe_unused]] DWORD dllInstance)

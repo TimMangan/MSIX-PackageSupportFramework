@@ -12,10 +12,10 @@
 // We must be careful to avoid a recursion of any of these methods accidentally calling back to other intercepted counterparts 
 #pragma once
 #define Intercept_WindowsStorage 1
-//#define DO_WS_Shex_A 1
-#define DO_WS_Shex_W 1
+//#define DO_WS_Shex_A
+//#define DO_WS_Shex_W 1
 //#define DO_WS_ShexEx_A 1
-#define DO_WS_ShexEx_W 1
+//#define DO_WS_ShexEx_W 1
 
 #if Intercept_WindowsStorage
 

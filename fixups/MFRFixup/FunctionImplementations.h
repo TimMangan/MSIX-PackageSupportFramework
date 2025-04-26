@@ -16,8 +16,10 @@
 #include "Logging.h"
 
 //#define FIXUP_UCRTMOVE 1
-#define FIXUP_ORIGINAL_SHELLEXECUTE 1
-#define FIXUP_ORIGINAL_SHELLEXECUTEEX 1
+
+// These are handled in PsfRuntime so Can't do here
+//#define FIXUP_ORIGINAL_SHELLEXECUTE 1
+//#define FIXUP_ORIGINAL_SHELLEXECUTEEX 1
 
 
 
