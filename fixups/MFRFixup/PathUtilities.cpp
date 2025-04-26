@@ -271,29 +271,33 @@ std::filesystem::path drive_absolute_to_normal(std::filesystem::path nativeRelat
 std::wstring AdjustSlashes(std::wstring path, [[maybe_unused]] DWORD dllInstance)
 {
     std::wstring wPathName = path;
-    
-    // Part 1:  Spin any backwards slashes around.
-    std::replace(wPathName.begin(), wPathName.end(), L'/', L'\\');
-    size_t start = 0;
 
-    // Part 2: Replace any double backslashes with a single, except for
-    //         Long path references (\\?\ and \\.\) and file share references.
-    if (wPathName.find(L"\\\\") != std::wstring::npos)
+    // Do not adust paths like "/dev/urandom"
+    if (!wPathName._Starts_with(L"/dev/"))
     {
-        start = 2;
-    }
-    size_t found = wPathName.find(L"\\\\", start);
-    while (found != std::wstring::npos)
-    {
+        // Part 1:  Spin any backwards slashes around.
+        std::replace(wPathName.begin(), wPathName.end(), L'/', L'\\');
+        size_t start = 0;
+
+        // Part 2: Replace any double backslashes with a single, except for
+        //         Long path references (\\?\ and \\.\) and file share references.
+        if (wPathName.find(L"\\\\") != std::wstring::npos)
+        {
+            start = 2;
+        }
+        size_t found = wPathName.find(L"\\\\", start);
+        while (found != std::wstring::npos)
+        {
 #ifdef _DEBUG
-        Log(L"[%d] Adjusting for double backslash.",dllInstance);
+            Log(L"[%d] Adjusting for double backslash.", dllInstance);
 #endif
-        // We see calls made with extra backslashes which will fail in FindFirst
-        //wPathName.replace(found + start, 2, L"\\");
-        std::wstring temp = wPathName.substr(0, found);
-        temp.append(wPathName.substr(found + 1));
-        wPathName = temp;
-        found = wPathName.find(L"\\\\", start);
+            // We see calls made with extra backslashes which will fail in FindFirst
+            //wPathName.replace(found + start, 2, L"\\");
+            std::wstring temp = wPathName.substr(0, found);
+            temp.append(wPathName.substr(found + 1));
+            wPathName = temp;
+            found = wPathName.find(L"\\\\", start);
+        }
     }
     return wPathName;
 }
