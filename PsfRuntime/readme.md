@@ -104,6 +104,9 @@ In the example below, the child process `notme.exe` will not get PSF injections.
     "processes": [
         {
           "executable": "^PsfLauncher.*"
+        },        
+        {
+          "executable": ".*_PsfFtaCom.*"
         },
         {
           "executable": "^[Pp]ower[Ss]hell.*"
