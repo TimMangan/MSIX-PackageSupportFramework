@@ -88,7 +88,10 @@ int launcher_main(PCWSTR wargs, int cmdShow) noexcept try
             targetFilePath = parts[0] + parts[1];
             for (int inx=2; inx <(int)parts.size(); inx++)
             {
-                targetArgs += parts[inx];
+                if (inx == 2)
+                    targetArgs += parts[inx];
+                else
+                    targetArgs += L" \"" + parts[inx] + L"\"";  // restore these quotes as they might have been around a file path that needs them
             }
             targetFilePath = ReplaceVariablesInString(targetFilePath, true, true);
             targetArgs = ReplaceVariablesInString(targetArgs, true, true);
