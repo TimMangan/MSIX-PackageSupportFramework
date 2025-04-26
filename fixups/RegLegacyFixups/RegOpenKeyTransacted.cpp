@@ -82,9 +82,9 @@ LSTATUS __stdcall RegOpenKeyTransactedFixup(
     {
         try
         {
-            LogKeyPath(key);
-            if (subKey) LogString(L"Sub Key", subKey);
-            LogRegKeyFlags(options);
+            LogKeyPath(RegLocalInstance, key);
+            if (subKey) LogString(RegLocalInstance, L"Sub Key", subKey);
+            LogRegKeyFlags(RegLocalInstance, options);
             Log(L"\n[%d] SamDesired=%s\n", RegLocalInstance, InterpretRegKeyAccess(samDesired).c_str());
             if (samDesired != samModified)
             {

@@ -72,6 +72,7 @@ NTSTATUS __stdcall NtDll_NtCreateFileFixup(
             g_psf_NoLogging = temp;
         }
         retfinal = ntdllimpl::NtCreateFileImpl(FileHandle, DesiredAccess, ObjectAttributes, IoStatusBlock, AllocationSize, FileAttributes, ShareAccess, CreateDisposition, CreateOptions, EaBuffer, EaLength);
+        Log(L"[%d] NtDll_NtCreateFileFixup result=0x%x", dllInstance, retfinal);
         return retfinal;
     }
 #if _DEBUG

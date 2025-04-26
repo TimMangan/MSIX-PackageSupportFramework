@@ -68,6 +68,7 @@ NTSTATUS __stdcall NtDll_NtOpenFileFixup(
             g_psf_NoLogging = temp;
         }
         retfinal = ntdllimpl::NtOpenFileImpl(FileHandle, DesiredAccess, ObjectAttributes, IoStatusBlock,ShareAccess, OpenOptions);
+        Log(L"[%d] NtDll_NtOpenFileFixup result=0x%x", dllInstance, retfinal);
         return retfinal;
     }
 #if _DEBUG

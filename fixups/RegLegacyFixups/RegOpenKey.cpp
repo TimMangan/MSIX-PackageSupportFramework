@@ -146,7 +146,7 @@ LSTATUS __stdcall RegOpenKeyFixup(
         {
             try
             {
-                LogKeyPath(key);
+                LogKeyPath(RegLocalInstance, key);
                 LogString(L" Sub Key", subKey);
                 LogFunctionResult(RegLocalInstance, functionResult);
                 if (function_failed(functionResult))

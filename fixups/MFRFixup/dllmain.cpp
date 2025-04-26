@@ -19,7 +19,7 @@
 #include "FunctionImplementations_ntdll.h"
 
 #if _DEBUG
-//#define MOREDEBUG 1
+#define MOREDEBUG 1
 #if DEBUG_NEW_FIXUPS
 #define DEBUG_NEW_FIXUPS_MFR 1
 #endif

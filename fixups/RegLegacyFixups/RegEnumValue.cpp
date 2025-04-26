@@ -94,7 +94,7 @@ LSTATUS __stdcall RegEnumValueAFixup(
         {
             try
             {
-                LogKeyPath(key);
+                LogKeyPath(RegLocalInstance, key);
                 LogFunctionResultInstance(RegLocalInstance, functionResult);
                 if (function_failed(functionResult))
                 {
@@ -183,7 +183,7 @@ LSTATUS __stdcall RegEnumValueWFixup(
         {
             try
             {
-                LogKeyPath(key);
+                LogKeyPath(RegLocalInstance, key);
                 LogFunctionResultInstance(RegLocalInstance, functionResult);
                 if (function_failed(functionResult))
                 {

@@ -191,11 +191,11 @@ LSTATUS __stdcall RegCreateKeyExGeneric(
             try
             {
                 LogCallingModuleInstance(RegLocalInstance);
-                LogKeyPath(key);
+                LogKeyPath(RegLocalInstance, key);
                 LogString(RegLocalInstance, L"Sub Key", subKey);
                 Log(L"[%d] Reserved=%d\n", RegLocalInstance, reserved);
-                if (classType) LogString(L"\tClass", classType);
-                LogRegKeyFlags(options);
+                if (classType) LogString(RegLocalInstance, L"\tClass", classType);
+                LogRegKeyFlags(RegLocalInstance, options);
                 Log(L"[%d] samDesired=%s\n", RegLocalInstance, widen(InterpretRegKeyAccess(samDesired)).c_str());
                 if (samDesired != samModified)
                 {
@@ -462,11 +462,11 @@ LSTATUS __stdcall RegCreateKeyExFixup(
             try
             {
                 LogCallingModuleInstance(RegLocalInstance);
-                LogKeyPath(key);
+                LogKeyPath(RegLocalInstance, key);
                 LogString(RegLocalInstance, L"Sub Key", subKey);
                 Log(L"[%d] Reserved=%d\n", RegLocalInstance, reserved);
-                if (classType) LogString(L"\tClass", classType);
-                LogRegKeyFlags(options);
+                if (classType) LogString(RegLocalInstance, L"\tClass", classType);
+                LogRegKeyFlags(RegLocalInstance, options);
                 Log(L"[%d] samDesired=%s\n", RegLocalInstance, widen(InterpretRegKeyAccess(samDesired)).c_str());
                 if (samDesired != samModified)
                 {

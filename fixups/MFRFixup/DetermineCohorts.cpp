@@ -34,7 +34,8 @@ void DetermineCohorts(std::wstring requestedPath, Cohorts *cohorts, bool UseMore
     cohorts->UsingNative = true;
 
     // Temporary debug code to help with a specific issue.
-    //if (requestedPath.find(L"AppVPackageDrive") != std::wstring::npos)
+    //if (requestedPath._Equal(L"C:\\Users") ||
+    //    requestedPath._Equal(L"C:\\Users\\"))
     //{
     //    UseMoreDebug = true;
     //}
@@ -47,7 +48,7 @@ void DetermineCohorts(std::wstring requestedPath, Cohorts *cohorts, bool UseMore
         {
             Log(L"[%d] %s: DetermineCohorts: Request is in_native_area.", dllInstance, FixupName);
         }
-        cohorts->map = mfr::Find_LocalRedirMapping_FromNativePath_ForwardSearch(cohorts->file_mfr.Request_NormalizedPath.c_str(), dllInstance);
+        cohorts->map = mfr::Find_RedirMapping_FromNativePath_ForwardSearch(cohorts->file_mfr.Request_NormalizedPath.c_str(), dllInstance);
         if (cohorts->map.Valid_mapping == mfr::mfr_enabled_types::enabled)
         {
             if (UseMoreDebug)
@@ -216,7 +217,7 @@ void DetermineCohorts(std::wstring requestedPath, Cohorts *cohorts, bool UseMore
         {
             Log(L"[%d] %s: DetermineCohorts: Request is in_package_vfs_area.", dllInstance, FixupName);
         }
-        cohorts->map = mfr::Find_LocalRedirMapping_FromPackagePath_ForwardSearch(cohorts->file_mfr.Request_NormalizedPath.c_str(), dllInstance);
+        cohorts->map = mfr::Find_RedirMapping_FromPackagePath_ForwardSearch(cohorts->file_mfr.Request_NormalizedPath.c_str(), dllInstance);
         if (cohorts->map.Valid_mapping == mfr::mfr_enabled_types::enabled)
         {
             if (UseMoreDebug)
@@ -402,7 +403,7 @@ void DetermineCohorts(std::wstring requestedPath, Cohorts *cohorts, bool UseMore
         {
             Log(L"[%d] %s: DetermineCohorts:   Cohort->WsRedirected %s", dllInstance, FixupName, cohorts->WsRedirected.c_str());
             Log(L"[%d] %s: DetermineCohorts:   Cohort->WsPackage    %s", dllInstance, FixupName, cohorts->WsPackage.c_str());
-            Log(L"[%d] %s: DetermineCohorts:   Cohort->WsNative %d   %s", dllInstance, FixupName, cohorts->UsingNative, cohorts->WsNative.c_str());
+            Log(L"[%d] %s: DetermineCohorts:   Cohort->WsNative UseNative=%d   %s", dllInstance, FixupName, cohorts->UsingNative, cohorts->WsNative.c_str());
         }
         else
         {

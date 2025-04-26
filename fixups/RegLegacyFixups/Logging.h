@@ -207,8 +207,8 @@ constexpr bool IsFlagSet(T value, U flag);
         Log(#expected); \
     }
 
-void LogCountedString(const char* name, const wchar_t* value, std::size_t length);
-void LogCountedString(const wchar_t* name, const wchar_t* value, std::size_t length);
+void LogCountedString(DWORD dllInstance, const char* name, const wchar_t* value, std::size_t length);
+void LogCountedString(DWORD cllInstance, const wchar_t* name, const wchar_t* value, std::size_t length);
 std::string InterpretStringA(const char* value);
 
 std::string InterpretStringA(const wchar_t* value);
@@ -236,7 +236,7 @@ void LogLastErrorInstance(DWORD dllInstance, const char* msg = "Last Error");
 
 std::string InterpretLastError(const char* msg = "Last Error");
 
-void LogKeyPath(HKEY key, const wchar_t* msg = L"Key");
+void LogKeyPath(DWORD dllInstance, HKEY key, const wchar_t* msg = L"Key");
 
 
 std::string InterpretKeyPath(HKEY key, const char* msg);
@@ -245,7 +245,7 @@ std::string InterpretKeyPath(HKEY key, const char* msg);
 
 std::string InterpretKeyPath(HKEY key);
 
-void LogRegKeyFlags(DWORD flags, const wchar_t* msg = L"Options");
+void LogRegKeyFlags(DWORD dllInstance, DWORD flags, const wchar_t* msg = L"Options");
 
 
 void LogRegKeyDisposition(DWORD disposition, const char* msg = "Disposition");

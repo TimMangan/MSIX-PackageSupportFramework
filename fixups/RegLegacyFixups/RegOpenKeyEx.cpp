@@ -119,12 +119,12 @@ LSTATUS __stdcall RegOpenKeyExAFixup(
             try
             {
                 LogCallingModuleInstance(RegLocalInstance);
-                LogKeyPath(key);
+                LogKeyPath(RegLocalInstance, key);
                 if (subKey != NULL)
                     LogString(RegLocalInstance, L" Sub Key", subKey);
                 else
                     LogString(RegLocalInstance, L" Sub Key", L"NULL");
-                LogRegKeyFlags(options);
+                LogRegKeyFlags(RegLocalInstance, options);
                 Log(L"[%d] samDesired=%s\n", RegLocalInstance, widen(InterpretRegKeyAccess(samDesired)).c_str());
                 if (samDesired != samModified)
                 {
@@ -221,18 +221,6 @@ LSTATUS __stdcall RegOpenKeyExWFixup(
     }
 
 
-
-#if _DEBUG
-    if (result != ERROR_SUCCESS)
-    {
-        Log("[%d] RegOpenKeyExW result=%d", RegLocalInstance, result);
-    }
-    else
-    {
-        Log("[%d] RegOpenKeyExW result=SUCCESS key=0x%x", RegLocalInstance, *resultKey);
-    }
-#endif
-
 #if _DEBUG
 #if MOREDEBUG
     if (true) //result == ERROR_ACCESS_DENIED)
@@ -243,12 +231,12 @@ LSTATUS __stdcall RegOpenKeyExWFixup(
             try
             {
                 LogCallingModuleInstance(RegLocalInstance);
-                LogKeyPath(key);
+                LogKeyPath(RegLocalInstance, key);
                 if (subKey != NULL)
                     LogString(RegLocalInstance, L" Sub Key", subKey);
                 else
                     LogString(RegLocalInstance, L" Sub Key", L"NULL");
-                LogRegKeyFlags(options);
+                LogRegKeyFlags(RegLocalInstance, options);
                 Log(L"[%d] samDesired=%s\n", RegLocalInstance, widen(InterpretRegKeyAccess(samDesired)).c_str());
                 if (samDesired != samModified)
                 {
@@ -272,6 +260,20 @@ LSTATUS __stdcall RegOpenKeyExWFixup(
     }
 #endif
 #endif
+
+
+
+#if _DEBUG
+    if (result != ERROR_SUCCESS)
+    {
+        Log("[%d] RegOpenKeyExW result=%d", RegLocalInstance, result);
+    }
+    else
+    {
+        Log("[%d] RegOpenKeyExW result=SUCCESS key=0x%x", RegLocalInstance, *resultKey);
+    }
+#endif
+
     return result;
 }
 DECLARE_FIXUP(impl::KernelBaseRegOpenKeyExW, RegOpenKeyExWFixup);
@@ -404,9 +406,9 @@ LSTATUS __stdcall RegOpenKeyExFixup(
             try
             {
                 LogCallingModuleInstance(RegLocalInstance);
-                LogKeyPath(key);
-                LogString(L" Sub Key", subKey);
-                LogRegKeyFlags(options);
+                LogKeyPath(RegLocalInstance, key);
+                LogString(RegLocalInstance, L" Sub Key", subKey);
+                LogRegKeyFlags(RegLocalInstance, options);
                 Log(L"[%d] samDesired=%s\n", RegLocalInstance, widen(InterpretRegKeyAccess(samDesired)).c_str());
                 if (samDesired != samModified)
                 {

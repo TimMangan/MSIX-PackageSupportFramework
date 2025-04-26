@@ -94,7 +94,7 @@ LSTATUS __stdcall RegEnumKeyExAFixup(
         {
             try
             {
-                LogKeyPath(key);
+                LogKeyPath(RegLocalInstance, key);
                 LogFunctionResultInstance(RegLocalInstance, functionResult);
                 if (function_failed(functionResult))
                 {
@@ -183,7 +183,7 @@ LSTATUS __stdcall RegEnumKeyExWFixup(
         {
             try
             {
-                LogKeyPath(key);
+                LogKeyPath(RegLocalInstance, key);
                 LogFunctionResultInstance(RegLocalInstance, functionResult);
                 if (function_failed(functionResult))
                 {
@@ -282,7 +282,7 @@ LSTATUS __stdcall RegEnumKeyExAFixup(
         {
             try
             {
-                LogKeyPath(key);
+                LogKeyPath(RegLocalInstance, key);
                 LogFunctionResult(RegLocalInstance, functionResult);
                 if (function_failed(functionResult))
                 {

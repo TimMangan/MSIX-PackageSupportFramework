@@ -8,6 +8,10 @@
 #include "PathRedirection.h"
 #include <psf_logging.h>
 
+#if _DEBUG
+void LogCountedStringW(DWORD dllInstance, const char* name, const wchar_t* value, std::size_t length);
+#endif
+
 
 // TODO: there are two functions  that the app may call to be notified about changes made under a directory.
 //       ReadDirectoryChangesW
@@ -74,7 +78,7 @@ BOOL _stdcall ReadDirectoryChangesWFixup(
                 BOOL res2 = GetFileInformationByHandleEx(hDirectory, FileNameInfo, pFileInformation, len);
                 if (res2 != 0)
                 {
-                    LogCountedStringW("       RDCW Handle Path is", pFileInformation->FileName, pFileInformation->FileNameLength / 2 );
+                    LogCountedStringW(Instance, "       RDCW Handle Path is", pFileInformation->FileName, pFileInformation->FileNameLength / 2 );
                 }
                 else
                 {
@@ -155,7 +159,7 @@ BOOL _stdcall ReadDirectoryChangesExWFixup(
                 BOOL res = GetFileInformationByHandleEx(hDirectory, FileNameInfo, pFileInformation, len);
                 if (res != 0)
                 {
-                    LogCountedStringW("       RDCWEx Handle Path is", pFileInformation->FileName, pFileInformation->FileNameLength);
+                    LogCountedStringW(Instance, "       RDCWEx Handle Path is", pFileInformation->FileName, pFileInformation->FileNameLength);
                 }
                 else
                 {

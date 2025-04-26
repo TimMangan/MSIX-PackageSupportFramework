@@ -64,26 +64,26 @@ constexpr bool IsFlagSet(T value, U flag)
 }
 
 
-void LogCountedString(const char* name, const wchar_t* value, std::size_t length)
+void LogCountedString(DWORD dllInstance, const char* name, const wchar_t* value, std::size_t length)
 {
     if (value != NULL)
     {
-        Log("\t%s=%.*ls\n", name, length, value);
+        Log("[%d]\t%s=%.*ls\n", dllInstance, name, length, value);
     }
     else
     {
-        Log("\t%s=NULL", name);
+        Log("[%d]\t%s=NULL", dllInstance, name);
     }
 }
-void LogCountedString(const wchar_t* name, const wchar_t* value, std::size_t length)
+void LogCountedString(DWORD dllInstance, const wchar_t* name, const wchar_t* value, std::size_t length)
 {
     if (value != NULL)
     {
-        Log(L"\t%s=%.*ls\n", name, length, value);
+        Log(L"[%d]\t%s=%.*ls\n", dllInstance, name, length, value);
     }
     else
     {
-        Log(L"\t%s=NULL", name);
+        Log(L"[%d]\t%s=NULL", dllInstance, name);
     }
 }
 std::string InterpretStringA(const char* value)
@@ -220,7 +220,7 @@ std::string InterpretLastError(const char* msg )
     return InterpretFrom_win32(err) + "\n" + InterpretWin32Error(err, msg);
 }
 
-void LogKeyPath(HKEY key, const wchar_t* msg )
+void LogKeyPath(DWORD dllInstance, HKEY key, const wchar_t* msg )
 {
     ULONG size;
     if (auto status = impl::NtQueryKey(key, winternl::KeyNameInformation, nullptr, 0, &size);
@@ -234,36 +234,36 @@ void LogKeyPath(HKEY key, const wchar_t* msg )
                 buffer[size] = 0x0;
                 buffer[size + 1] = 0x0;  // Add string termination character
                 auto info = reinterpret_cast<winternl::PKEY_NAME_INFORMATION>(buffer.get());
-                LogCountedString(msg, info->Name, info->NameLength / 2);
+                LogCountedString( dllInstance, msg, info->Name, info->NameLength / 2);
             }
         }
         catch (...)
         {
-            Log(L"%s Unable to log Key Path", msg);
+            Log(L"[%d]\t%s Unable to log Key Path", dllInstance, msg);
         }
     }
     else if (status == STATUS_INVALID_HANDLE)
     {
         if (key == HKEY_CURRENT_USER)
         {
-            Log(L"%s HKEY_CURRENT_USER", msg);
+            Log(L"[%d]\t%s HKEY_CURRENT_USER", dllInstance, msg);
         }
         else if (key == HKEY_LOCAL_MACHINE)
         {
-            Log(L"%s HKEY_LOCAL_MACHINE", msg);
+            Log(L"[%d]\t%s HKEY_LOCAL_MACHINE", dllInstance, msg);
         }
         else if (key == HKEY_CLASSES_ROOT)
         {
-            Log(L"%s HKEY_CLASSES_ROOT", msg);
+            Log(L"[%d]\t%s HKEY_CLASSES_ROOT", dllInstance, msg);
         }
         else
         {
-            Log(L"%s Unable to log Key Path: Invalid handle", msg);
+            Log(L"[%d]\t%s Unable to log Key Path: Invalid handle", dllInstance, msg);
         }
     }
     else
     {
-        Log(L"%s Unable to log Key Path 0x%x", msg, status);
+        Log(L"[%d]\t%s Unable to log Key Path 0x%x", dllInstance, msg, status);
     }
 }
 
@@ -361,13 +361,13 @@ std::string InterpretKeyPath(HKEY key)
 }
 
 
-void LogRegKeyFlags(DWORD flags, const wchar_t* msg )
+void LogRegKeyFlags(DWORD dllInstance, DWORD flags, const wchar_t* msg )
 {
-    Log(L"\t%s=%08X", msg, flags);
+    Log(L"[%d]\t%s=%08X", dllInstance, msg, flags);
     if (flags)
     {
         const char* prefix = "";
-        Log(L" (");
+        Log(L"[%d]\t(",dllInstance);
         LogIfFlagSet(flags, REG_OPTION_VOLATILE);           // 0x0001
         LogIfFlagSet(flags, REG_OPTION_CREATE_LINK);        // 0x0002
         LogIfFlagSet(flags, REG_OPTION_BACKUP_RESTORE);     // 0x0004
@@ -377,7 +377,7 @@ void LogRegKeyFlags(DWORD flags, const wchar_t* msg )
     }
     else
     {
-        Log(L" (REG_OPTION_NON_VOLATILE)"); // 0x0000
+        Log(L"[%d]\t(REG_OPTION_NON_VOLATILE)", dllInstance); // 0x0000
     }
 
     //Log(L"\n");

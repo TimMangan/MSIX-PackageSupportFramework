@@ -276,6 +276,14 @@ void LogCountedStringW(const char* name, const wchar_t* value, std::size_t lengt
         Log("\t%s=%.*ls\n", name, length, value);
     }
 }
+void LogCountedStringW(DWORD dllInstance, const char* name, const wchar_t* value, std::size_t length)
+{
+    if (!g_psf_NoLogging)
+    {
+        Log("[%d]\t%s=%.*ls\n", dllInstance, name, length, value);
+    }
+}
+
 
 void Loghexdump(void* pAddressIn, long  lSize, DWORD instance=0)
 {
