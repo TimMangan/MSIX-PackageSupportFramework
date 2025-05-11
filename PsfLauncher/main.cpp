@@ -28,6 +28,9 @@
 #include <proc_helper.h>
 
 #include <TlHelp32.h>
+#include "Config.h"
+
+const wchar_t* PsfLauncherName = L"l";
 
 TRACELOGGING_DECLARE_PROVIDER(g_Log_ETW_ComponentProvider);
 TRACELOGGING_DEFINE_PROVIDER(
@@ -47,7 +50,7 @@ void LaunchInBackgroundAsAdmin(const wchar_t executable[], const wchar_t argumen
 bool IsCurrentOSRS2OrGreater();
 std::wstring ReplaceMisleadingSlashVFS(std::wstring inputString);
 std::wstring ReplaceVariablesInString(std::wstring inputString, bool ReplaceEnvironmentVars, bool ReplacePseudoVars);
-std::wstring ArgumentVirtualization(const std::wstring input);
+std::wstring ArgumentVirtualization(const wchar_t* moduleName, DWORD instance, const std::wstring input);
 bool IsProcessRunningForThisUser(const std::filesystem::path path);
 
 static inline bool check_suffix_if(iwstring_view str, iwstring_view suffix) noexcept;
@@ -68,7 +71,7 @@ int __stdcall wWinMain(_In_ HINSTANCE , _In_opt_ HINSTANCE, _In_ PWSTR args, _In
 
 int launcher_main(PCWSTR args, int cmdShow) noexcept try
 {
-    Log(L"PSFLauncher started.");
+    Log(L"[%s%d] PSFLauncher started.", PsfLauncherName,0);
 
     
     //Log(L"DEBUG TEMP PsfLauncher waiting for debugger to attach to process...\n");
@@ -86,7 +89,7 @@ int launcher_main(PCWSTR args, int cmdShow) noexcept try
             bool waitSignal = waitSignalPtr->as_boolean().get(); 
             if (waitSignal) 
             { 
-                Log(L"PsfLauncher waiting for debugger to attach to process...\n"); 
+                Log(L"[%s%d] PsfLauncher waiting for debugger to attach to process...\n", PsfLauncherName, 0);
                 psf::wait_for_debugger(); 
             } 
         } 
@@ -202,11 +205,11 @@ int launcher_main(PCWSTR args, int cmdShow) noexcept try
     
     auto exeArgs = appConfig->try_get("arguments"); 
     std::wstring exeArgString = exeArgs ? exeArgs->as_string().wide() : (wchar_t*)L"";
-    LogString(L"Arguments Original", exeArgString.c_str());
+    LogString(PsfLauncherName, 0, L"Arguments Original", exeArgString.c_str());
     exeArgString = ReplaceVariablesInString(exeArgString, true, true);
-    LogString(L"Arguments Devariablized", exeArgString.c_str());
-    exeArgString = ArgumentVirtualization(exeArgString);
-    LogString(L"Arguments after ArgumentVirtualization", exeArgString.c_str());
+    LogString(PsfLauncherName, 0, L"Arguments Devariablized", exeArgString.c_str());
+    exeArgString = ArgumentVirtualization(PsfLauncherName, 0, exeArgString);
+    LogString(PsfLauncherName, 0, L"Arguments after ArgumentVirtualization", exeArgString.c_str());
 
     bool preventMultiple = false;
     auto preventMultipleObject = appConfig->try_get("preventMultipleInstances");
@@ -219,18 +222,18 @@ int launcher_main(PCWSTR args, int cmdShow) noexcept try
     {
         if (isHttp)
         {
-            Log(L"Prevent multiple instances is not supported for http(s) links.");
+            Log(L"[%s%d] Prevent multiple instances is not supported for http(s) links.", PsfLauncherName, 0);
         }
         else
         {
-            Log(L"Checking for existing instances of %ls", exePath.c_str());
+            Log(L"[%s%d] Checking for existing instances of %ls", PsfLauncherName, 0, exePath.c_str());
             if (IsProcessRunningForThisUser(exePath.c_str()))
             {
-                Log(L"Existing instance found, prompting user and exiting.");
+                Log(L"[%s%d] Existing instance found, prompting user and exiting.", PsfLauncherName, 0);
                 MessageBox(NULL, L"An instance of this application is already running.", L"Multiple Instances Not Allowed", MB_OK | MB_ICONINFORMATION);
                 return 0;
             }
-            Log(L"No existing instance found, continuing.");
+            Log(L"[%s%d] No existing instance found, continuing.", PsfLauncherName, 0);
         }
     }
 
@@ -248,10 +251,10 @@ int launcher_main(PCWSTR args, int cmdShow) noexcept try
         }
         std::wstring fullCommandLine = L"\"" + exePath.filename().native() + L"\" " + fullargs;
 
-        LogString(L"Process Launch: ", exePath.c_str());
-        LogString(L"     Arguments: ", fullargs.data());
-        LogString(L"Working Directory: ", currentDirectory.c_str());
-        LogString(L"Full Command Line: ", fullCommandLine.c_str());
+        LogString(PsfLauncherName, 0, L"Process Launch: ", exePath.c_str());
+        LogString(PsfLauncherName, 0, L"     Arguments: ", fullargs.data());
+        LogString(PsfLauncherName, 0, L"Working Directory: ", currentDirectory.c_str());
+        LogString(PsfLauncherName, 0, L"Full Command Line: ", fullCommandLine.c_str());
 
         //std::filesystem::path procmonMarker1 = packageRoot.append(L"MarkerBeforeLaunch.txt");
         //if (std::filesystem::exists(procmonMarker1)) {} // Do nothing, file doesn't exist, just here to set a marker in ProcessMonitor.
@@ -260,14 +263,14 @@ int launcher_main(PCWSTR args, int cmdShow) noexcept try
         //if (std::filesystem::exists(procmonMarker2)) {} // Do nothing, file doesn't exist, just here to set a marker in ProcessMonitor.
         if (hr != ERROR_SUCCESS)
         {
-            Log(L"Error return from launching process, try again 0x%x.", GetLastError());
+            Log(L"[%s%d] Error return from launching process, try again 0x%x.", PsfLauncherName, 0, GetLastError());
 
             ProcThreadAttributeList AttributeList;
             MyProcThreadAttributeList m_AttributeListInside = MyProcThreadAttributeList(true, true, false);
             hr = StartProcess(exePath.c_str(), fullCommandLine.data(), currentDirectory.c_str(), cmdShow, INFINITE, true, 0, AttributeList.get());
             if (hr != ERROR_SUCCESS)
             {
-                Log(L"Error return from launching process second try, try again 0x%x.", GetLastError());
+                Log(L"[%s%d] Error return from launching process second try, try again 0x%x.", PsfLauncherName, 0, GetLastError());
             }
             if (hr != ERROR_SUCCESS)
             {
@@ -277,13 +280,13 @@ int launcher_main(PCWSTR args, int cmdShow) noexcept try
     }
     else
     {
-        LogString(L"Shell Launch", exePath.c_str());
-        LogString(L"   Arguments", exeArgString.c_str());
-        LogString(L"Working Directory: ", currentDirectory.c_str());
+        LogString(PsfLauncherName, 0, L"Shell Launch", exePath.c_str());
+        LogString(PsfLauncherName, 0, L"\tArguments", exeArgString.c_str());
+        LogString(PsfLauncherName, 0, L"\\tWorking Directory: ", currentDirectory.c_str());
         
         if (check_suffix_if(exeName, L".cmd"_isv) || check_suffix_if(exeName, L".bat"_isv))
         {
-            Log(L"Shell Launch special case for cmd/bat files");
+            Log(L"[%s%d] Shell Launch special case for cmd/bat files", PsfLauncherName, 0);
             // To get the cmd process that runs this script we need to start it via a powershell process that uses Invoke-CommandInDesktopPackage with the -PreventBreakaway option.
             // This is currently done by using a powershell wrapper script that is part of the PSF.
             // Why another ps1 file?  
@@ -344,58 +347,78 @@ int launcher_main(PCWSTR args, int cmdShow) noexcept try
                 // Let the default browser handle it.
                 ext = L".html";
             }
-            Log(L"Looking for default command for FTA %ls", ext.c_str());
+            Log(L"[%s%d] Looking for default command for FTA %ls", PsfLauncherName, 0, ext.c_str());
             wchar_t szBuf[1024];
             DWORD cbBufSize = sizeof(szBuf);
 
             cbBufSize = sizeof(szBuf);  // resetting for second call...
             HRESULT hr = AssocQueryString(0, ASSOCSTR_EXECUTABLE,
-                ext.c_str(), NULL, szBuf, &cbBufSize);
+                                          ext.c_str(), NULL, szBuf, &cbBufSize);
             if (FAILED(hr))
             {
-                Log(L"Failed to get an FTA default command 0x0x", GetLastError());
-                StartWithShellExecute(nullptr, packageRoot, exePath, exeArgString, currentDirectory.c_str(), cmdShow, INFINITE);
+                Log(L"[%s%d] Failed to get an FTA default command 0x0x", PsfLauncherName, 0, GetLastError());
+                StartWithShellExecute(nullptr, packageRoot, exePath, exeArgString, currentDirectory.c_str(), cmdShow, INFINITE);   
             }
             else
             {
-                // We are going to assume this FTA takes the file as an unadorned argument.  Not perfect but should cover most of our cases.
-                // In a pinch, one could add command line arguments to the json.  
-                //      So the jason says executable: file.ext  and Arguments: /xxx
-                //      We construct a command that is:    DefaultExeForFTA.exe /xxx  file.ext
-                // Note: If there is no FTA, the query returns with OpenWith.exe, which means the user will be prompted with what they want to do.  
-                //       That is probably the best we can do.
-                Log(L"Default command for FTA is %ls, use StartMenuShellLaunchWrapperScript.ps1 to inject into container, if possible.", szBuf);
-                std::wstring newcmd = szBuf;
-
-                std::filesystem::path SSShellWrapper = packageRoot / L"StartMenuShellLaunchWrapperScript.ps1";
-                if (!std::filesystem::exists(SSShellWrapper))
+                // The original call to AssocQueryString only works for mappings to traditional exes.  Those with no mapping, or map to a packaged app fall back to the openwith.exe prompting to the user.
+                std::filesystem::path path2target = szBuf;
+                if (path2target.compare(L"C:\\WINDOWS\\system32\\OpenWith.exe")==0)
                 {
-                    // The wrapper isn't in this folder, so we should search for it elewhere in the package.
-                    for (const auto& file : std::filesystem::recursive_directory_iterator(packageRoot))
+                    // 5-11-2025: Include associations to packaged apps in the search.  Needed since notepad became packaged, for example.
+                    hr = AssocQueryString(ASSOCF_APP_TO_APP, ASSOCSTR_EXECUTABLE,  ext.c_str(), NULL, szBuf, &cbBufSize);
+                    path2target = szBuf;
+                }
+ 
+                if (FAILED(hr) ||
+                    path2target.compare(L"C:\\WINDOWS\\system32\\OpenWith.exe")==0)
+                {
+                    // ShellExecute (possibly using openwith.exe) will run outside of this container, unless the user picks an app in this container.  But as we have provided the full path
+                    // to the file it will get seen.
+                    Log(L"[%s%d] Failed to get an FTA default command or app 0x0x", PsfLauncherName, 0, GetLastError());
+                    StartWithShellExecute(nullptr, packageRoot, exePath, exeArgString, currentDirectory.c_str(), cmdShow, INFINITE);
+                }
+                else
+                {
+                    // We are going to assume this FTA takes the file as an unadorned argument.  Not perfect but should cover most of our cases.
+                    // In a pinch, one could add command line arguments to the json.  
+                    //      So the jason says executable: file.ext  and Arguments: /xxx
+                    //      We construct a command that is:    DefaultExeForFTA.exe /xxx  file.ext
+                    // Note: If there is no FTA, the query returns with OpenWith.exe, which means the user will be prompted with what they want to do.  
+                    //       That is probably the best we can do.
+                    Log(L"[%s%d] Default command for FTA is %ls, use StartMenuShellLaunchWrapperScript.ps1 to inject into container, if possible.", PsfLauncherName, 0, szBuf);
+                    std::wstring newcmd = szBuf;
+
+                    std::filesystem::path SSShellWrapper = packageRoot / L"StartMenuShellLaunchWrapperScript.ps1";
+                    if (!std::filesystem::exists(SSShellWrapper))
                     {
-                        if (file.path().filename().compare(SSShellWrapper.filename()) == 0)
+                        // The wrapper isn't in this folder, so we should search for it elewhere in the package.
+                        for (const auto& file : std::filesystem::recursive_directory_iterator(packageRoot))
                         {
-                            SSShellWrapper = file.path();
-                            break;
+                            if (file.path().filename().compare(SSShellWrapper.filename()) == 0)
+                            {
+                                SSShellWrapper = file.path();
+                                break;
+                            }
                         }
                     }
-                }
 
-                std::wstring wArgs = args;
-                wArgs.append(L" \"");
-                wArgs.append(exePath.c_str());
-                wArgs.append(L"\"");
-                powershellScriptRunner.RunOtherScript(SSShellWrapper.c_str(), currentDirectory.c_str(), newcmd.c_str(), wArgs.c_str(), false);
+                    std::wstring wArgs = args;
+                    wArgs.append(L" \"");
+                    wArgs.append(exePath.c_str());
+                    wArgs.append(L"\"");
+                    powershellScriptRunner.RunOtherScript(SSShellWrapper.c_str(), currentDirectory.c_str(), newcmd.c_str(), wArgs.c_str(), false);
+                }
             }
         }
     }
 
     if (IsCurrentOSRS2OrGreater())
     {
-        Log(L"Process Launch Ready to run any end scripts.");
+        Log(L"[%s%d] Process Launch Ready to run any end scripts.", PsfLauncherName, 0);
         // Launch the end PowerShell script if we are using one.
         powershellScriptRunner.RunEndingScript();
-        Log(L"Process Launch complete.");
+        Log(L"[%s%d] Process Launch complete.", PsfLauncherName, 0);
     }
 
     return 0;
@@ -424,7 +447,7 @@ void GetAndLaunchMonitor(const psf::json_object& monitor, std::filesystem::path 
         wait = monitorWait->as_boolean().get();
     }
 
-    Log(L"\tCreating the monitor: %ls", monitorExecutable->as_string().wide());
+    Log(L"[%s%d]\tCreating the monitor: %ls", PsfLauncherName, 0, monitorExecutable->as_string().wide());
     LaunchMonitorInBackground(packageRoot, monitorExecutable->as_string().wide(), monitorArguments->as_string().wide(), wait, asAdmin, cmdShow, dirStr);
 }
 
