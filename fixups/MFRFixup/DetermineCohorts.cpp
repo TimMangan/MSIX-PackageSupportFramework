@@ -7,6 +7,7 @@
 #include "DetermineCohorts.h"
 #include <psf_logging.h>
 #include "PathUtilities.h"
+#include "FunctionImplementations.h"
 
 
 
@@ -46,7 +47,7 @@ void DetermineCohorts(std::wstring requestedPath, Cohorts *cohorts, bool UseMore
         // This means we were given a path that was not a relative path.
         if (UseMoreDebug)
         {
-            Log(L"[%d] %s: DetermineCohorts: Request is in_native_area.", dllInstance, FixupName);
+            Log(L"[%s%d] %s: DetermineCohorts: Request is in_native_area.", g_MfrModuleName, dllInstance, FixupName);
         }
         cohorts->map = mfr::Find_RedirMapping_FromNativePath_ForwardSearch(cohorts->file_mfr.Request_NormalizedPath.c_str(), dllInstance);
         if (cohorts->map.Valid_mapping == mfr::mfr_enabled_types::enabled)
@@ -55,18 +56,18 @@ void DetermineCohorts(std::wstring requestedPath, Cohorts *cohorts, bool UseMore
             {
                 if (cohorts->map.IsExactMatchOnly == mfr::mfr_exactmatchonly_types::exactmatchonly)
                 {
-                    Log(L"[%d] %s: DetermineCohorts: ExactOnly Mapping match against local  %s", dllInstance, FixupName, cohorts->map.VFSFolderName.c_str());
+                    Log(L"[%s%d] %s: DetermineCohorts: ExactOnly Mapping match against local  %s", g_MfrModuleName, dllInstance, FixupName, cohorts->map.VFSFolderName.c_str());
                 }
                 else
                 {
-                    Log(L"[%d] %s: DetermineCohorts: Mapping match against local  %s", dllInstance, FixupName, cohorts->map.VFSFolderName.c_str());
+                    Log(L"[%s%d] %s: DetermineCohorts: Mapping match against local  %s", g_MfrModuleName, dllInstance, FixupName, cohorts->map.VFSFolderName.c_str());
                 }
             }
             if (cohorts->map.IsAnExclusionToRedirect == mfr::mfr_exclusion_types::not_excluded)
             {
                 if (UseMoreDebug)
                 {
-                    Log(L"[%d] %s: DetermineCohorts: Mapping is for redirection type %s", dllInstance, FixupName, RedirectFlagsName(cohorts->map.RedirectionFlags));
+                    Log(L"[%s%d] %s: DetermineCohorts: Mapping is for redirection type %s", g_MfrModuleName, dllInstance, FixupName, RedirectFlagsName(cohorts->map.RedirectionFlags));
                 }
                 //cohorts->WsRedirected = cohorts->WsRequested;
                 //cohorts->WsPackage = ReplacePathPart(cohorts->WsRequested.c_str(), cohorts->map.RedirectedPathBase, cohorts->map.PackagePathBase);
@@ -83,7 +84,7 @@ void DetermineCohorts(std::wstring requestedPath, Cohorts *cohorts, bool UseMore
             {
                 if (UseMoreDebug)
                 {
-                    Log(L"[%d] %s: DetermineCohorts: Maping is for EXCLUSION redirection type %s", dllInstance, FixupName, RedirectFlagsName(cohorts->map.RedirectionFlags));
+                    Log(L"[%s%d] %s: DetermineCohorts: Maping is for EXCLUSION redirection type %s", g_MfrModuleName, dllInstance, FixupName, RedirectFlagsName(cohorts->map.RedirectionFlags));
                 }
                 //cohorts->WsRedirected = cohorts->WsRequested;
                 //cohorts->WsPackage = cohorts->WsRequested;
@@ -98,7 +99,7 @@ void DetermineCohorts(std::wstring requestedPath, Cohorts *cohorts, bool UseMore
         {
             if (UseMoreDebug)
             {
-                Log(L"[%d] %s: DetermineCohorts: No redirect to local mapping matched.", dllInstance, FixupName);
+                Log(L"[%s%d] %s: DetermineCohorts: No redirect to local mapping matched.", g_MfrModuleName, dllInstance, FixupName);
             }
         }
 
@@ -110,18 +111,18 @@ void DetermineCohorts(std::wstring requestedPath, Cohorts *cohorts, bool UseMore
             {
                 if (cohorts->map.IsExactMatchOnly == mfr::mfr_exactmatchonly_types::exactmatchonly)
                 {
-                    Log(L"[%d] %s: DetermineCohorts: ExactOnly Mapping match against traditional  %s", dllInstance, FixupName, cohorts->map.VFSFolderName.c_str());
+                    Log(L"[%s%d] %s: DetermineCohorts: ExactOnly Mapping match against traditional  %s", g_MfrModuleName, dllInstance, FixupName, cohorts->map.VFSFolderName.c_str());
                 }
                 else
                 {
-                    Log(L"[%d] %s: DetermineCohorts: Mapping match against traditional  %s", dllInstance, FixupName, cohorts->map.VFSFolderName.c_str());
+                    Log(L"[%s%d] %s: DetermineCohorts: Mapping match against traditional  %s", g_MfrModuleName, dllInstance, FixupName, cohorts->map.VFSFolderName.c_str());
                 }
             }
             if (cohorts->map.IsAnExclusionToRedirect == mfr::mfr_exclusion_types::not_excluded)
             {
                 if (UseMoreDebug)
                 {
-                    Log(L"[%d] %s: DetermineCohorts: Mapping is for redirection type %s", dllInstance, FixupName, RedirectFlagsName(cohorts->map.RedirectionFlags));
+                    Log(L"[%s%d] %s: DetermineCohorts: Mapping is for redirection type %s", g_MfrModuleName, dllInstance, FixupName, RedirectFlagsName(cohorts->map.RedirectionFlags));
                 }
                 // Exception processing
                 // We shouln't redirect to traditional area if the call was only to the WindowsApps folder.
@@ -130,7 +131,7 @@ void DetermineCohorts(std::wstring requestedPath, Cohorts *cohorts, bool UseMore
                 if (comparei(cohorts->WsRequested, L"C:\\Program Files\\WindowsApps"))
                 {
 #if _DEBUG
-                    Log(L"[%d] %s: DetermineCohorts: Windows Apps special exclusion.", dllInstance, cohorts->WsRequested.c_str());
+                    Log(L"[%s%d] %s: DetermineCohorts: Windows Apps special exclusion.", g_MfrModuleName, dllInstance, cohorts->WsRequested.c_str());
 #endif
                     cohorts->WsPackage = cohorts->WsRequested; // ReplacePathPart(cohorts->WsRequested.c_str(), cohorts->map.NativePathBase, cohorts->map.PackagePathBase);
                     cohorts->WsRedirected = cohorts->WsPackage;
@@ -155,7 +156,7 @@ void DetermineCohorts(std::wstring requestedPath, Cohorts *cohorts, bool UseMore
                 // We a mapping, but it is marked for exclusion.  Just use as requested.
                 if (UseMoreDebug)
                 {
-                    Log(L"[%d] %s: DetermineCohorts: Mapping is for EXCLUSION redirection type %s.", dllInstance, FixupName, RedirectFlagsName(cohorts->map.RedirectionFlags));
+                    Log(L"[%s%d] %s: DetermineCohorts: Mapping is for EXCLUSION redirection type %s.", g_MfrModuleName, dllInstance, FixupName, RedirectFlagsName(cohorts->map.RedirectionFlags));
                 }
                 cohorts->WsRedirected = cohorts->WsRequested;
                 cohorts->WsPackage = cohorts->WsRequested;
@@ -166,14 +167,14 @@ void DetermineCohorts(std::wstring requestedPath, Cohorts *cohorts, bool UseMore
         {
             if (UseMoreDebug)
             {
-                Log(L"[%d] %s DetermineCohorts: No traditional mapping is valid.", dllInstance, FixupName);
+                Log(L"[%s%d] %s DetermineCohorts: No traditional mapping is valid.", g_MfrModuleName, dllInstance, FixupName);
             }
         }
         break;
     case mfr::mfr_path_types::in_package_pvad_area:
         if (UseMoreDebug)
         {
-            Log(L"[%d] %s: DetermineCohorts: Request is in package_pvad_area.", dllInstance, FixupName);
+            Log(L"[%s%d] %s: DetermineCohorts: Request is in package_pvad_area.", g_MfrModuleName, dllInstance, FixupName);
         }
         cohorts->WsPackage = cohorts->WsRequested;
         cohorts->map = mfr::Find_TraditionalRedirMapping_FromPackagePath_ForwardSearch(cohorts->file_mfr.Request_NormalizedPath.c_str(), dllInstance);
@@ -181,13 +182,13 @@ void DetermineCohorts(std::wstring requestedPath, Cohorts *cohorts, bool UseMore
         {
             if (UseMoreDebug)
             {
-                Log(L"[%d] %s: DetermineCohorts: Mapping match against traditional  %s", dllInstance, FixupName, cohorts->map.VFSFolderName.c_str());
+                Log(L"[%s%d] %s: DetermineCohorts: Mapping match against traditional  %s", g_MfrModuleName, dllInstance, FixupName, cohorts->map.VFSFolderName.c_str());
             }
             if (cohorts->map.IsAnExclusionToRedirect == mfr::mfr_exclusion_types::not_excluded)
             {
                 if (UseMoreDebug)
                 {
-                    Log(L"[%d] %s: DetermineCohorts: Maps with known traditional redirection type %s", dllInstance, FixupName, RedirectFlagsName(cohorts->map.RedirectionFlags));
+                    Log(L"[%s%d] %s: DetermineCohorts: Maps with known traditional redirection type %s", g_MfrModuleName, dllInstance, FixupName, RedirectFlagsName(cohorts->map.RedirectionFlags));
                 }
                 cohorts->WsPackage = cohorts->WsRequested;
                 cohorts->WsRedirected = ReplacePathPart(cohorts->WsRequested.c_str(), cohorts->map.PackagePathBase, cohorts->map.RedirectedPathBase);
@@ -198,7 +199,7 @@ void DetermineCohorts(std::wstring requestedPath, Cohorts *cohorts, bool UseMore
                 // We don't actually have any of these as it makes no sense.
                 if (UseMoreDebug)
                 {
-                    Log(L"[%d] %s: DetermineCohorts: Maps to a known traditional redirection exclusion path.", dllInstance, FixupName);
+                    Log(L"[%s%d] %s: DetermineCohorts: Maps to a known traditional redirection exclusion path.", g_MfrModuleName, dllInstance, FixupName);
                 }
                 cohorts->WsRedirected = cohorts->WsRequested;
                 cohorts->WsNative = cohorts->WsRequested;
@@ -208,14 +209,14 @@ void DetermineCohorts(std::wstring requestedPath, Cohorts *cohorts, bool UseMore
         {
             if (UseMoreDebug)
             {
-                Log(L"[%d] %s DetermineCohorts: No traditional mapping is valid.", dllInstance, FixupName);
+                Log(L"[%s%d] %s DetermineCohorts: No traditional mapping is valid.", g_MfrModuleName, dllInstance, FixupName);
             }
         }
         break;
     case mfr::mfr_path_types::in_package_vfs_area:
         if (UseMoreDebug)
         {
-            Log(L"[%d] %s: DetermineCohorts: Request is in_package_vfs_area.", dllInstance, FixupName);
+            Log(L"[%s%d] %s: DetermineCohorts: Request is in_package_vfs_area.", g_MfrModuleName, dllInstance, FixupName);
         }
         cohorts->map = mfr::Find_RedirMapping_FromPackagePath_ForwardSearch(cohorts->file_mfr.Request_NormalizedPath.c_str(), dllInstance);
         if (cohorts->map.Valid_mapping == mfr::mfr_enabled_types::enabled)
@@ -224,30 +225,33 @@ void DetermineCohorts(std::wstring requestedPath, Cohorts *cohorts, bool UseMore
             {
                 if (cohorts->map.IsExactMatchOnly == mfr::mfr_exactmatchonly_types::exactmatchonly)
                 {
-                    Log(L"[%d] %s: DetermineCohorts: ExactOnly Mapping match against local  %s", dllInstance, FixupName, cohorts->map.VFSFolderName.c_str());
+                    Log(L"[%s%d] %s: DetermineCohorts: ExactOnly Mapping match against local  %s", g_MfrModuleName, dllInstance, FixupName, cohorts->map.VFSFolderName.c_str());
                 }
                 else
                 {
-                    Log(L"[%d] %s: DetermineCohorts: Mapping match against local  %s", dllInstance, FixupName, cohorts->map.VFSFolderName.c_str());
+                    Log(L"[%s%d] %s: DetermineCohorts: Mapping match against local  %s", g_MfrModuleName, dllInstance, FixupName, cohorts->map.VFSFolderName.c_str());
                 }
             }
             if (cohorts->map.IsAnExclusionToRedirect == mfr::mfr_exclusion_types::not_excluded)
             {
-                if (UseMoreDebug)
+                if (cohorts->map.RedirectionFlags == mfr::mfr_redirect_flags::prefer_redirection_local)
                 {
-                    Log(L"[%d] %s: DetermineCohorts: Maps with known local redirection type %s", dllInstance, FixupName, RedirectFlagsName(cohorts->map.RedirectionFlags));
+                    if (UseMoreDebug)
+                    {
+                        Log(L"[%s%d] %s: DetermineCohorts: Maps with known local redirection type %s", g_MfrModuleName, dllInstance, FixupName, RedirectFlagsName(cohorts->map.RedirectionFlags));
+                    }
+                    cohorts->WsPackage = cohorts->WsRequested;
+                    cohorts->WsRedirected = ReplacePathPart(cohorts->WsRequested.c_str(), cohorts->map.PackagePathBase, cohorts->map.NativePathBase);
+                    cohorts->WsNative = ReplacePathPart(cohorts->WsRequested.c_str(), cohorts->map.PackagePathBase, cohorts->map.NativePathBase);
+                    //cohorts->UsingNative = false;
+                    break;
                 }
-                cohorts->WsPackage = cohorts->WsRequested;
-                cohorts->WsRedirected = ReplacePathPart(cohorts->WsRequested.c_str(), cohorts->map.PackagePathBase, cohorts->map.NativePathBase);
-                cohorts->WsNative = ReplacePathPart(cohorts->WsRequested.c_str(), cohorts->map.PackagePathBase, cohorts->map.NativePathBase);
-                //cohorts->UsingNative = false;
-                break;
             }
             else
             {
                 if (UseMoreDebug)
                 {
-                    Log(L"[%d] %s: DetermineCohorts: Maps to a known local redirection exclusion path.", dllInstance, FixupName);
+                    Log(L"[%s%d] %s: DetermineCohorts: Maps to a known local redirection exclusion path.", g_MfrModuleName, dllInstance, FixupName);
                 }
                 cohorts->WsRedirected = cohorts->WsRequested;
                 cohorts->WsPackage = cohorts->WsRequested;
@@ -259,7 +263,7 @@ void DetermineCohorts(std::wstring requestedPath, Cohorts *cohorts, bool UseMore
         {
             if (UseMoreDebug)
             {
-                Log(L"[%d] %s DetermineCohorts: No local mapping is valid.", dllInstance, FixupName);
+                Log(L"[%s%d] %s DetermineCohorts: No local mapping is valid.", g_MfrModuleName, dllInstance, FixupName);
             }
         }
 
@@ -270,18 +274,18 @@ void DetermineCohorts(std::wstring requestedPath, Cohorts *cohorts, bool UseMore
             {
                 if (cohorts->map.IsExactMatchOnly == mfr::mfr_exactmatchonly_types::exactmatchonly)
                 {
-                    Log(L"[%d] %s: DetermineCohorts: ExactOnly Mapping match against traditional  %s", dllInstance, FixupName, cohorts->map.VFSFolderName.c_str());
+                    Log(L"[%s%d] %s: DetermineCohorts: ExactOnly Mapping match against traditional  %s", g_MfrModuleName, dllInstance, FixupName, cohorts->map.VFSFolderName.c_str());
                 }
                 else
                 {
-                    Log(L"[%d] %s: DetermineCohorts: Mapping match against traditional  %s", dllInstance, FixupName, cohorts->map.VFSFolderName.c_str());
+                    Log(L"[%s%d] %s: DetermineCohorts: Mapping match against traditional  %s", g_MfrModuleName, dllInstance, FixupName, cohorts->map.VFSFolderName.c_str());
                 }
             }
             if (cohorts->map.IsAnExclusionToRedirect == mfr::mfr_exclusion_types::not_excluded)
             {
                 if (UseMoreDebug)
                 {
-                    Log(L"[%d] %s: DetermineCohorts: Maps with known traditional redirection type %s", dllInstance, FixupName, RedirectFlagsName(cohorts->map.RedirectionFlags));
+                    Log(L"[%s%d] %s: DetermineCohorts: Maps with known traditional redirection type %s", g_MfrModuleName, dllInstance, FixupName, RedirectFlagsName(cohorts->map.RedirectionFlags));
                 }
                 cohorts->WsPackage = cohorts->WsRequested;
                 cohorts->WsRedirected = ReplacePathPart(cohorts->WsRequested.c_str(), cohorts->map.PackagePathBase, cohorts->map.RedirectedPathBase);
@@ -293,7 +297,7 @@ void DetermineCohorts(std::wstring requestedPath, Cohorts *cohorts, bool UseMore
                 // or redirection area but look at the native path only
                 if (UseMoreDebug)
                 {
-                    Log(L"[%d] %s: DetermineCohorts: Maps to a known traditional redirection exclusion path.", dllInstance, FixupName);
+                    Log(L"[%s%d] %s: DetermineCohorts: Maps to a known traditional redirection exclusion path.", g_MfrModuleName, dllInstance, FixupName);
                 }
                 cohorts->WsRedirected = ReplacePathPart(cohorts->WsRequested.c_str(), cohorts->map.PackagePathBase, cohorts->map.NativePathBase);
                 cohorts->WsPackage = ReplacePathPart(cohorts->WsRequested.c_str(), cohorts->map.PackagePathBase, cohorts->map.NativePathBase);
@@ -304,14 +308,14 @@ void DetermineCohorts(std::wstring requestedPath, Cohorts *cohorts, bool UseMore
         {
             if (UseMoreDebug)
             {
-                Log(L"[%d] %s DetermineCohorts: No traditional mapping is valid.", dllInstance, FixupName);
+                Log(L"[%s%d] %s DetermineCohorts: No traditional mapping is valid.", g_MfrModuleName, dllInstance, FixupName);
             }
         }
         break;
     case mfr::mfr_path_types::in_redirection_area_writablepackageroot:
         if (UseMoreDebug)
         {
-            Log(L"[%d] %s: DetermineCohorts: Request is in_redirection_area_writablepackageroot.", dllInstance, FixupName);
+            Log(L"[%s%d] %s: DetermineCohorts: Request is in_redirection_area_writablepackageroot.", g_MfrModuleName, dllInstance, FixupName);
         }
         cohorts->map = mfr::Find_TraditionalRedirMapping_FromRedirectedPath_ForwardSearch(cohorts->file_mfr.Request_NormalizedPath.c_str(),dllInstance);
         if (cohorts->map.Valid_mapping == mfr::mfr_enabled_types::enabled)
@@ -320,18 +324,18 @@ void DetermineCohorts(std::wstring requestedPath, Cohorts *cohorts, bool UseMore
             {
                 if (cohorts->map.IsExactMatchOnly == mfr::mfr_exactmatchonly_types::exactmatchonly)
                 {
-                    Log(L"[%d] %s: DetermineCohorts: ExactOnly Mapping match against traditional  %s", dllInstance, FixupName, cohorts->map.VFSFolderName.c_str());
+                    Log(L"[%s%d] %s: DetermineCohorts: ExactOnly Mapping match against traditional  %s", g_MfrModuleName, dllInstance, FixupName, cohorts->map.VFSFolderName.c_str());
                 }
                 else
                 {
-                    Log(L"[%d] %s: DetermineCohorts: Mapping match against traditional  %s", dllInstance, FixupName, cohorts->map.VFSFolderName.c_str());
+                    Log(L"[%s%d] %s: DetermineCohorts: Mapping match against traditional  %s", g_MfrModuleName, dllInstance, FixupName, cohorts->map.VFSFolderName.c_str());
                 }
             }
             if (cohorts->map.IsAnExclusionToRedirect == mfr::mfr_exclusion_types::not_excluded)
             {
                 if (UseMoreDebug)
                 {
-                    Log(L"[%d] %s: DetermineCohorts: Maps with known traditional redirection type %s", dllInstance, FixupName, RedirectFlagsName(cohorts->map.RedirectionFlags));
+                    Log(L"[%s%d] %s: DetermineCohorts: Maps with known traditional redirection type %s", g_MfrModuleName, dllInstance, FixupName, RedirectFlagsName(cohorts->map.RedirectionFlags));
                 }
                 cohorts->WsRedirected = cohorts->WsRequested;
                 cohorts->WsPackage = ReplacePathPart(cohorts->WsRequested.c_str(), cohorts->map.RedirectedPathBase, cohorts->map.PackagePathBase);
@@ -348,7 +352,7 @@ void DetermineCohorts(std::wstring requestedPath, Cohorts *cohorts, bool UseMore
             {
                 if (UseMoreDebug)
                 {
-                    Log(L"[%d] %s: DetermineCohorts: Maps to a known traditional redirection exclusion path.", dllInstance, FixupName);
+                    Log(L"[%s%d] %s: DetermineCohorts: Maps to a known traditional redirection exclusion path.", g_MfrModuleName, dllInstance, FixupName);
                 }
                 cohorts->WsRedirected = cohorts->WsRequested;
                 cohorts->WsPackage = cohorts->WsRequested;
@@ -359,14 +363,14 @@ void DetermineCohorts(std::wstring requestedPath, Cohorts *cohorts, bool UseMore
         {
             if (UseMoreDebug)
             {
-                Log(L"[%d] %s DetermineCohorts: No traditional mapping is valid.", dllInstance, FixupName);
+                Log(L"[%s%d] %s DetermineCohorts: No traditional mapping is valid.", g_MfrModuleName, dllInstance, FixupName);
             }
         }
         break;
     case mfr::mfr_path_types::in_redirection_area_other:
         if (UseMoreDebug)
         {
-            Log(L"[%d] %s: DetermineCohorts: Request is in_redirection_area_other.", dllInstance, FixupName);
+            Log(L"[%s%d] %s: DetermineCohorts: Request is in_redirection_area_other.", g_MfrModuleName, dllInstance, FixupName);
         }
         cohorts->UsingNative = false;
         break;
@@ -380,7 +384,7 @@ void DetermineCohorts(std::wstring requestedPath, Cohorts *cohorts, bool UseMore
     default:
         if (UseMoreDebug)
         {
-            Log(L"[%d] %s: DetermineCohorts: Request is in_non_redirectable_areas.", dllInstance, FixupName);
+            Log(L"[%s%d] %s: DetermineCohorts: Request is in_non_redirectable_areas.", g_MfrModuleName, dllInstance, FixupName);
         }
         cohorts->UsingNative = false;
         break;
@@ -398,16 +402,16 @@ void DetermineCohorts(std::wstring requestedPath, Cohorts *cohorts, bool UseMore
 
     if (UseMoreDebug)
     {
-        Log(L"[%d] %s: DetermineCohorts:   Cohort->WsRequested  %s", dllInstance, FixupName, cohorts->WsRequested.c_str());
+        Log(L"[%s%d] %s: DetermineCohorts:   Cohort->WsRequested  %s", g_MfrModuleName, dllInstance, FixupName, cohorts->WsRequested.c_str());
         if (cohorts->map.Valid_mapping == mfr::mfr_enabled_types::enabled)
         {
-            Log(L"[%d] %s: DetermineCohorts:   Cohort->WsRedirected %s", dllInstance, FixupName, cohorts->WsRedirected.c_str());
-            Log(L"[%d] %s: DetermineCohorts:   Cohort->WsPackage    %s", dllInstance, FixupName, cohorts->WsPackage.c_str());
-            Log(L"[%d] %s: DetermineCohorts:   Cohort->WsNative UseNative=%d   %s", dllInstance, FixupName, cohorts->UsingNative, cohorts->WsNative.c_str());
+            Log(L"[%s%d] %s: DetermineCohorts:   Cohort->WsRedirected %s", g_MfrModuleName, dllInstance, FixupName, cohorts->WsRedirected.c_str());
+            Log(L"[%s%d] %s: DetermineCohorts:   Cohort->WsPackage    %s", g_MfrModuleName, dllInstance, FixupName, cohorts->WsPackage.c_str());
+            Log(L"[%s%d] %s: DetermineCohorts:   Cohort->WsNative UseNative=%d   %s", g_MfrModuleName, dllInstance, FixupName, cohorts->UsingNative, cohorts->WsNative.c_str());
         }
         else
         {
-            Log(L"[%d] %s: DetermineCohorts:   Cohort->map.Valid_Mapping %d", dllInstance, FixupName, cohorts->map.Valid_mapping);
+            Log(L"[%s%d] %s: DetermineCohorts:   Cohort->map.Valid_Mapping %d", g_MfrModuleName, dllInstance, FixupName, cohorts->map.Valid_mapping);
         }
     }
 
