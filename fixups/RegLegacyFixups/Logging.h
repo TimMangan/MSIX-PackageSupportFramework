@@ -89,7 +89,8 @@ struct result_configuration
 };
 
 
-extern DWORD g_RegIntceptInstance;
+extern DWORD g_RegInterceptInstance;
+extern const wchar_t* g_RegModuleName;
 
 std::wstring InterpretStringW(const char* value);
 std::wstring InterpretStringW(const wchar_t* value);
@@ -226,12 +227,10 @@ std::string InterpretFrom_win32(DWORD code);
 
 std::string win32_error_description(DWORD error);
 
-void LogWin32Error(DWORD error, const wchar_t* msg = L"Error");
 void LogWin32ErrorInstance(DWORD dllInstance, DWORD error, const wchar_t* msg = L"Error");
 
 std::string InterpretWin32Error(DWORD error, const char* msg = "Error");
 
-void LogLastError(const char* msg = "Last Error");
 void LogLastErrorInstance(DWORD dllInstance, const char* msg = "Last Error");
 
 std::string InterpretLastError(const char* msg = "Last Error");
@@ -248,7 +247,7 @@ std::string InterpretKeyPath(HKEY key);
 void LogRegKeyFlags(DWORD dllInstance, DWORD flags, const wchar_t* msg = L"Options");
 
 
-void LogRegKeyDisposition(DWORD disposition, const char* msg = "Disposition");
+void LogRegKeyDisposition(DWORD instance,DWORD disposition, const char* msg = "Disposition");
 
 
 void LogCommonAccess(ACCESS_MASK access, const char*& prefix);
@@ -261,37 +260,15 @@ std::string InterpretRegKeyAccess(DWORD access, const char* msg = "Access");
 
 const char* InterperetFunctionResult(function_result result);
 
-void LogFunctionResult(function_result result, const wchar_t* msg = L"Result");
 void LogFunctionResultInstance(DWORD dllInstance, function_result result, const wchar_t* msg = L"Result");
 
+#if STILLNEEDED
 void LogRegKeyAccess(DWORD access, const char* msg = "Access");
+#endif
 
 void LogSecurityAttributes(LPSECURITY_ATTRIBUTES securityAttributes, DWORD instance);
 
 
-#define LogCallingModule() \
-    { \
-        HMODULE moduleHandle; \
-        if (::GetModuleHandleExW( \
-            GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS | GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT, \
-            reinterpret_cast<const wchar_t*>(_ReturnAddress()), \
-            &moduleHandle)) \
-        { \
-            Log(L"\tCalling Module=%ls\n", psf::get_module_path(moduleHandle).c_str()); \
-        } \
-    }
-
-#define LogCallingModuleInstance(instance) \
-    { \
-        HMODULE moduleHandle; \
-        if (::GetModuleHandleExW( \
-            GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS | GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT, \
-            reinterpret_cast<const wchar_t*>(_ReturnAddress()), \
-            &moduleHandle)) \
-        { \
-            Log(L"[%d]\tCalling Module=%ls\n", instance, psf::get_module_path(moduleHandle).c_str()); \
-        } \
-    }
 
 function_result from_win32(DWORD code);
 
@@ -300,3 +277,4 @@ bool function_succeeded(function_result result);
 bool function_failed(function_result result);
 
 output_lock acquire_output_lock(function_type type, function_result result);
+

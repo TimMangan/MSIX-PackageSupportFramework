@@ -34,11 +34,11 @@ BOOL  WRAPPER_SETCURRENTDIRECTORY(std::wstring thePath, DWORD dllInstance, bool 
     {
         if (retfinal == 0)
         {
-            Log(L"[%d] SetCurrentDirectory returns result FAILURE 0x%x on file '%s'", dllInstance, GetLastError(), LongThePath.c_str());
+            Log(L"[%s%d] SetCurrentDirectory returns result FAILURE 0x%x on file '%s'", g_MfrModuleName, dllInstance, GetLastError(), LongThePath.c_str());
         }
         else
         {
-            Log(L"[%d] SetCurrentDirectory returns result SUCCESS 0x%x on file '%s'", dllInstance, retfinal, LongThePath.c_str());
+            Log(L"[%s%d] SetCurrentDirectory returns result SUCCESS 0x%x on file '%s'", g_MfrModuleName, dllInstance, retfinal, LongThePath.c_str());
         }
     }
     return retfinal;
@@ -69,7 +69,7 @@ BOOL __stdcall SetCurrentDirectoryFixup(_In_ const CharT* pathName) noexcept
 
 
 #if _DEBUG
-            LogString(dllInstance, L"SetCurrentDirectory for pathName", wPathName.c_str());
+            LogString(g_MfrModuleName, dllInstance, L"SetCurrentDirectory for pathName", wPathName.c_str());
 #endif
             ///if (MFRConfiguration.Ilv_Aware)
             {
@@ -124,11 +124,11 @@ BOOL __stdcall SetCurrentDirectoryFixup(_In_ const CharT* pathName) noexcept
     }
 #if _DEBUG
     // Fall back to assuming no redirection is necessary if exception
-    LOGGED_CATCHHANDLER(dllInstance, L"SetCurrentDirectoryFixup")
+    LOGGED_CATCHHANDLER_MIN(g_MfrModuleName, dllInstance, L"SetCurrentDirectoryFixup")
 #else
     catch (...)
     {
-        Log(L"[%d] SetCurrentDirectoryFixup Exception=0x%x", dllInstance, GetLastError());
+        Log(L"[%s%d] SetCurrentDirectoryFixup Exception=0x%x", g_MfrModuleName, dllInstance, GetLastError());
     }
 #endif
     if (pathName != nullptr)
@@ -142,7 +142,7 @@ BOOL __stdcall SetCurrentDirectoryFixup(_In_ const CharT* pathName) noexcept
         retfinal = 0; 
     }
 #if _DEBUG
-    Log(L"[%d] SetCurrentDirectoryFixup returns 0x%x", dllInstance, retfinal);
+    Log(L"[%s%d] SetCurrentDirectoryFixup returns 0x%x", g_MfrModuleName, dllInstance, retfinal);
 #endif
     return retfinal;
 }

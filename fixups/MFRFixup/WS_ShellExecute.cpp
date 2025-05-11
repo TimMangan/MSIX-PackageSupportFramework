@@ -86,8 +86,8 @@ HINSTANCE __stdcall WS_ShellExecuteAFixup(
                 // Release level logging for detection
                 bool temp = g_psf_NoLogging;
                 g_psf_NoLogging = false; 
-                Log(L"[%d] (Windows.Storage)ShellExecute(%ls, %ls, %ls, %ls, %d)", dllInstance, wcOperation, wcFile, wcParameters, wcDirectory, nShowCmd);
-                LogCallingModuleInstance(dllInstance);
+                Log(L"[%s%d] (Windows.Storage)ShellExecute(%ls, %ls, %ls, %ls, %d)", g_MfrModuleName, dllInstance, wcOperation, wcFile, wcParameters, wcDirectory, nShowCmd);
+                LogCallingModuleInstance(g_MfrModuleName, dllInstance);
                 g_psf_NoLogging = temp;
             }
             
@@ -96,7 +96,7 @@ HINSTANCE __stdcall WS_ShellExecuteAFixup(
                 std::wstring pwszOperation = widen(lpOperation);
                 if (pwszOperation._Equal(L"find"))
                 {
-                    Log(L"[%d] Debug here", dllInstance);
+                    Log(L"[%s%d] Debug here", g_MfrModuleName, dllInstance);
                 }
             }
             retfinal = ::ShellExecuteW(hwnd, wcOperation, wcFile, wcParameters, wcDirectory, nShowCmd);
@@ -105,7 +105,7 @@ HINSTANCE __stdcall WS_ShellExecuteAFixup(
     }
     catch (...)
     {
-        Log(L"[%d] (Windows.Storage)ShellExecute Exception=0x%x", dllInstance, GetLastError());
+        Log(L"[%s%d] (Windows.Storage)ShellExecute Exception=0x%x", g_MfrModuleName, , GetLastError());
     }
    
     retfinal = ::ShellExecute(hwnd, wcOperation, wcFile, wcParameters, wcDirectory, nShowCmd);
@@ -177,8 +177,8 @@ HINSTANCE __stdcall WS_ShellExecuteWFixup(
                 // Release level logging for detection
                 bool temp = g_psf_NoLogging;
                 g_psf_NoLogging = false;
-                Log(L"[%d] (Windows.Storage)ShellExecute(%ls, %ls, %ls, %ls, %d) unfixed", dllInstance, wcOperation, wcFile, wcParameters, wcDirectory, nShowCmd);
-                LogCallingModuleInstance(dllInstance);
+                Log(L"[%s%d] (Windows.Storage)ShellExecute(%ls, %ls, %ls, %ls, %d) unfixed", g_MfrModuleName, dllInstance, wcOperation, wcFile, wcParameters, wcDirectory, nShowCmd);
+                LogCallingModuleInstance(g_MfrModuleName, dllInstance);
                 g_psf_NoLogging = temp;
             }
 
@@ -187,7 +187,7 @@ HINSTANCE __stdcall WS_ShellExecuteWFixup(
                 std::wstring pwszOperation = widen(lpOperation);
                 if (pwszOperation._Equal(L"find"))
                 {
-                    Log(L"[%d] Debug here", dllInstance);
+                    Log(L"[%s%d] Debug here", g_MfrModuleName, dllInstance);
                 }
             }
             retfinal = ::ShellExecuteW(hwnd, wcOperation, wcFile, wcParameters, wcDirectory, nShowCmd);
@@ -196,7 +196,7 @@ HINSTANCE __stdcall WS_ShellExecuteWFixup(
     }
     catch (...)
     {
-        Log(L"[%d] (Windows.Storage)ShellExecute Exception=0x%x", dllInstance, GetLastError());
+        Log(L"[%s%d] (Windows.Storage)ShellExecute Exception=0x%x", g_MfrModuleName, dllInstance, GetLastError());
     }
 
     retfinal = ::ShellExecute(hwnd, wcOperation, wcFile, wcParameters, wcDirectory, nShowCmd);

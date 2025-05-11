@@ -19,6 +19,7 @@ extern bool                  g_dynf_forcepackagedlluse;
 extern std::vector<dll_location_spec> g_dynf_dllSpecs;
 
 DWORD g_LoadLibraryIntceptInstance = 30000;
+const wchar_t* g_LoadLibraryName = L"D";
 
 
 
@@ -63,7 +64,7 @@ HMODULE __stdcall LoadLibraryFixup(_In_ const CharT* libFileName)
     DWORD LoadLibraryInstance = ++g_LoadLibraryIntceptInstance;
 
 #if _DEBUG
-    LogString(LoadLibraryInstance, L"LoadLibraryFixup called for", libFileName);
+    LogString(g_LoadLibraryName, LoadLibraryInstance, L"LoadLibraryFixup called for", libFileName);
 #endif
     auto guard = g_reentrancyGuard.enter();
     HMODULE result;
@@ -71,7 +72,7 @@ HMODULE __stdcall LoadLibraryFixup(_In_ const CharT* libFileName)
     if (guard)
     {
 #if MOREDEBUG2
-        Log(L" [%d] LoadLibraryFixup unguarded.", LoadLibraryInstance);
+        Log(L" [%s%d] LoadLibraryFixup unguarded.", g_LoadLibraryName, LoadLibraryInstance);
 #endif
         // Check against known dlls in package.
         std::wstring libFileNameW = GetFilenameOnly(InterpretStringW(libFileName));
@@ -79,14 +80,14 @@ HMODULE __stdcall LoadLibraryFixup(_In_ const CharT* libFileName)
         if (g_dynf_forcepackagedlluse)
         {
 #if MOREDEBUG2
-            Log(L"[%d] LoadLibraryFixup forcepackagedlluse.", LoadLibraryInstance);
+            Log(L"[%s%d] LoadLibraryFixup forcepackagedlluse.", g_LoadLibraryName, LoadLibraryInstance);
 #endif
             for (dll_location_spec spec : g_dynf_dllSpecs)
             {
                 try
                 {
 #if MOREDEBUG2
-                    LogString(LoadLibraryInstance, L"LoadLibraryFixup: testing against", spec.filename.data());
+                    LogString(g_LoadLibraryName, LoadLibraryInstance, L"LoadLibraryFixup: testing against", spec.filename.data());
 #endif
                     if (compare_dllname(spec.filename.data(), libFileNameW) == 0)
                     {
@@ -97,14 +98,14 @@ HMODULE __stdcall LoadLibraryFixup(_In_ const CharT* libFileName)
                         case x86:
 #if defined(_WIN64)
 #if MOREDEBUG
-                            Log(L"[%d] LoadLibraryFixup:  We are in an x64 build and this match is 32bit.", LoadLibraryInstance);
+                            Log(L"[%s%d] LoadLibraryFixup:  We are in an x64 build and this match is 32bit.", g_LoadLibraryName, LoadLibraryInstance);
 #endif
                             if (IsWow64Process(GetCurrentProcess(), &procTest))
                             {
                                 if (procTest == TRUE)
                                 {
 #if MOREDEBUG
-                                    Log(L"[%d] LoadLibraryFixup:   we are in WOW so allow match.", LoadLibraryInstance);
+                                    Log(L"[%s%d] LoadLibraryFixup:   we are in WOW so allow match.", g_LoadLibraryName, LoadLibraryInstance);
 #endif
                                     // 32-bit process on an x64 OS
                                     useThis = true;
@@ -112,7 +113,7 @@ HMODULE __stdcall LoadLibraryFixup(_In_ const CharT* libFileName)
                                 else
                                 {
 #if MOREDEBUG
-                                    Log(L"[%d] LoadLibraryFixup:   we are NOT in WOW so dont allow match.", LoadLibraryInstance);
+                                    Log(L"[%s%d] LoadLibraryFixup:   we are NOT in WOW so dont allow match.", g_LoadLibraryName, LoadLibraryInstance);
 #endif
                                     // 64-bit process on 64-bit OS
                                     useThis = false;
@@ -121,14 +122,14 @@ HMODULE __stdcall LoadLibraryFixup(_In_ const CharT* libFileName)
                             else
                             {
 #if MOREDEBUG
-                                Log(L"[%d] LoadLibraryFixup:   WOW check failed.", LoadLibraryInstance);
+                                Log(L"[%s%d] LoadLibraryFixup:   WOW check failed.", g_LoadLibraryName, LoadLibraryInstance);
 #endif
                                 // This call should never fail.
                                 useThis = false;
                             }
 #else
 #if MOREDEBUG
-                            Log(L"[%d] LoadLibraryFixup:  We are in a 32-bit build and this match is 32bit.", LoadLibraryInstance);
+                            Log(L"[%s%d] LoadLibraryFixup:  We are in a 32-bit build and this match is 32bit.", g_LoadLibraryName, LoadLibraryInstance);
 #endif
                             // Only 32-bit is valid if we are built as 32-bit.
                             useThis = true;
@@ -137,14 +138,14 @@ HMODULE __stdcall LoadLibraryFixup(_In_ const CharT* libFileName)
                         case x64:
 #if defined(_WIN64)
 #if MOREDEBUG
-                            Log(L"[%d] LoadLibraryFixup:  We are in an x64 build and this match is 64bit.", LoadLibraryInstance);
+                            Log(L"[%s%d] LoadLibraryFixup:  We are in an x64 build and this match is 64bit.", g_LoadLibraryName, LoadLibraryInstance);
 #endif
                             if (IsWow64Process(GetCurrentProcess(), &procTest))
                             {
                                 if (procTest == FALSE)
                                 {
 #if MOREDEBUG
-                                    Log(L"[%d] LoadLibraryFixup:   we are not in WOW so allow match.", LoadLibraryInstance);
+                                    Log(L"[%s%d] LoadLibraryFixup:   we are not in WOW so allow match.", g_LoadLibraryName, LoadLibraryInstance);
 #endif
                                     // 64 bit process on an x64 OS
                                     useThis = true;
@@ -152,7 +153,7 @@ HMODULE __stdcall LoadLibraryFixup(_In_ const CharT* libFileName)
                                 else
                                 {
 #if MOREDEBUG
-                                    Log(L"[%d] LoadLibraryFixup:   we are in WOW so dont allow match.", LoadLibraryInstance);
+                                    Log(L"[%s%d] LoadLibraryFixup:   we are in WOW so dont allow match.", g_LoadLibraryName, LoadLibraryInstance);
 #endif
                                     // 32-bit process on 64-bit OS
                                     useThis = false;
@@ -161,14 +162,14 @@ HMODULE __stdcall LoadLibraryFixup(_In_ const CharT* libFileName)
                             else
                             {
 #if MOREDEBUG
-                                Log(L"[%d] LoadLibraryFixup:   WOW check failed.", LoadLibraryInstance);
+                                Log(L"[%s%d] LoadLibraryFixup:   WOW check failed.", g_LoadLibraryName, LoadLibraryInstance);
 #endif
                                 // This call should never fail.
                                 useThis = false;
                             }
 #else
 #if MOREDEBUG
-                            Log(L"[%d] LoadLibraryFixup:  We are in a 32-bit build and this match is 64bit.", LoadLibraryInstance);
+                            Log(L"[%s%d] LoadLibraryFixup:  We are in a 32-bit build and this match is 64bit.", g_LoadLibraryName, LoadLibraryInstance);
 #endif
                             // Can't use x64 dll if we are a 32-bit process
                             useThis = false;
@@ -191,7 +192,7 @@ HMODULE __stdcall LoadLibraryFixup(_In_ const CharT* libFileName)
                             {
 #if _DEBUG
                                 DWORD err = GetLastError();
-                                Log(L"[%d] LoadLibraryFixup: Dll not found(0x%x), try LdrLoadDll", LoadLibraryInstance,err);  
+                                Log(L"[%s%d] LoadLibraryFixup: Dll not found(0x%x), try LdrLoadDll", g_LoadLibraryName, LoadLibraryInstance,err);
 #endif
                                 if (LdrLoadDll == NULL)
                                     LdrLoadDll = (_LdrLoadDll)GetProcAddress(GetModuleHandleA("ntdll.dll"), "LdrLoadDll");
@@ -203,7 +204,7 @@ HMODULE __stdcall LoadLibraryFixup(_In_ const CharT* libFileName)
                                 // Maybe flag should be LOAD_WITH_ALTERED_SEARCH_PATH = 0x8?
 #if _DEBUG
                                 DWORD ns = LdrLoadDll(spec.full_filepath.parent_path().wstring().data(), 0, &name, &ModuleHandle);
-                                Log(L"[%d] LdrLoadDll: returns 0x%x Handle 0x%x", LoadLibraryInstance,ns, ModuleHandle);
+                                Log(L"[%s%d] LdrLoadDll: returns 0x%x Handle 0x%x", g_LoadLibraryName, LoadLibraryInstance,ns, ModuleHandle);
 #else
                                 LdrLoadDll(spec.full_filepath.parent_path().wstring().data(), 0, &name, &ModuleHandle);
 #endif
@@ -211,7 +212,7 @@ HMODULE __stdcall LoadLibraryFixup(_In_ const CharT* libFileName)
                             }
 #endif
 #if _DEBUG
-                            Log(L"[%d] LoadLibraryFixup: returns 0x%x using %s", LoadLibraryInstance, result, spec.full_filepath.c_str());
+                            Log(L"[%s%d] LoadLibraryFixup: returns 0x%x using %s", g_LoadLibraryName, LoadLibraryInstance, result, spec.full_filepath.c_str());
 #endif
                             return result;
                         }
@@ -219,18 +220,18 @@ HMODULE __stdcall LoadLibraryFixup(_In_ const CharT* libFileName)
                 }
                 catch (...)
                 {
-                    Log(L" [%d] LoadLibraryFixup: ERROR", LoadLibraryInstance);
+                    Log(L" [%s%d] LoadLibraryFixup: ERROR", g_LoadLibraryName, LoadLibraryInstance);
                 }
             }
 
 #if _DEBUG
-            Log(L" [%d] LoadLibraryFixup: found no match registered.", LoadLibraryInstance);
+            Log(L" [%s%d] LoadLibraryFixup: found no match registered.", g_LoadLibraryName, LoadLibraryInstance);
 #endif
         }
     }
     result = LoadLibraryImpl(libFileName);
 #if _DEBUG
-    Log(L" [%d] LoadLibraryFixup: fallthrough result=0x%x", LoadLibraryInstance, result);
+    Log(L" [%s%d] LoadLibraryFixup: fallthrough result=0x%x", g_LoadLibraryName, LoadLibraryInstance, result);
 #endif
     ///QueryPerformanceCounter(&TickEnd);
     return result;
@@ -244,10 +245,10 @@ HMODULE __stdcall LoadLibraryExFixup(_In_ const CharT* libFileName, _Reserved_ H
     DWORD LoadLibraryExInstance = ++g_LoadLibraryIntceptInstance;
 
 #if _DEBUG
-    LogString(LoadLibraryExInstance, L"LoadLibraryExFixup called on",libFileName);
+    LogString(g_LoadLibraryName, LoadLibraryExInstance, L"LoadLibraryExFixup called on",libFileName);
     if (flags != 0)
     {
-        Log(L" [%d] LoadLibraryExFixup flags=0x%x", LoadLibraryExInstance, flags);
+        Log(L" [%s%d] LoadLibraryExFixup flags=0x%x", g_LoadLibraryName, LoadLibraryExInstance, flags);
     }
 #endif
     auto guard = g_reentrancyGuard.enter();
@@ -256,7 +257,7 @@ HMODULE __stdcall LoadLibraryExFixup(_In_ const CharT* libFileName, _Reserved_ H
     if (guard)
     {
 #if MOREDEBUG2
-        Log(L" [%d] LoadLibraryExFixup unguarded.", LoadLibraryExInstance);
+        Log(L" [%s%d] LoadLibraryExFixup unguarded.", g_LoadLibraryName, LoadLibraryExInstance);
 #endif
         // Check against known dlls in package.
         std::wstring libFileNameW = InterpretStringW(libFileName);
@@ -268,8 +269,8 @@ HMODULE __stdcall LoadLibraryExFixup(_In_ const CharT* libFileName, _Reserved_ H
                 try
                 {
 #if MOREDEBUG2
-                    Log(L" [%d] LoadLibraryExFixup testing %ls against %ls", LoadLibraryExInstance, libFileNameW.c_str(), spec.full_filepath.native().c_str());
-                    LogString(LoadLibraryExInstance, L"LoadLibraryExFixup testing against", spec.filename.data());
+                    Log(L" [%s%d] LoadLibraryExFixup testing %ls against %ls", g_LoadLibraryName, LoadLibraryExInstance, libFileNameW.c_str(), spec.full_filepath.native().c_str());
+                    LogString(g_LoadLibraryName, LoadLibraryExInstance, L"LoadLibraryExFixup testing against", spec.filename.data());
 #endif
                     if (compare_dllname(spec.filename.data(), libFileNameW) == 0)
                     {
@@ -280,14 +281,14 @@ HMODULE __stdcall LoadLibraryExFixup(_In_ const CharT* libFileName, _Reserved_ H
                         case x86:
 #if defined(_WIN64)
 #if MOREDEBUG
-                            Log(L"[%d] LoadLibraryExFixup:  We are in an x64 build and this match is 32bit.", LoadLibraryExInstance);
+                            Log(L"[%s%d] LoadLibraryExFixup:  We are in an x64 build and this match is 32bit.", g_LoadLibraryName, LoadLibraryExInstance);
 #endif
                             if (IsWow64Process(GetCurrentProcess(), &procTest))
                             {
                                 if (procTest == TRUE)
                                 {
 #if MOREDEBUG
-                                    Log(L"[%d] LoadLibraryExFixup:   we are in WOW so allow match.", LoadLibraryExInstance);
+                                    Log(L"[%s%d] LoadLibraryExFixup:   we are in WOW so allow match.", g_LoadLibraryName, LoadLibraryExInstance);
 #endif
                                     // 32-bit process on an x64 OS
                                     useThis = true;
@@ -295,7 +296,7 @@ HMODULE __stdcall LoadLibraryExFixup(_In_ const CharT* libFileName, _Reserved_ H
                                 else
                                 {
 #if MOREDEBUG
-                                    Log(L"[%d] LoadLibraryExFixup:   we are NOT in WOW so dont allow match.", LoadLibraryExInstance);
+                                    Log(L"[%s%d] LoadLibraryExFixup:   we are NOT in WOW so dont allow match.", g_LoadLibraryName, LoadLibraryExInstance);
 #endif
                                     // 64-bit process on 64-bit OS
                                     useThis = false;
@@ -304,14 +305,14 @@ HMODULE __stdcall LoadLibraryExFixup(_In_ const CharT* libFileName, _Reserved_ H
                             else
                             {
 #if MOREDEBUG
-                                Log(L"[%d] LoadLibraryExFixup:   WOW check failed.", LoadLibraryExInstance);
+                                Log(L"[%s%d] LoadLibraryExFixup:   WOW check failed.", g_LoadLibraryName, LoadLibraryExInstance);
 #endif
                                 // This call should never fail.
                                 useThis = false;
                             }
 #else
 #if MOREDEBUG
-                            Log(L"[%d] LoadLibraryExFixup:  We are in a 32-bit build and this match is 32bit.", LoadLibraryExInstance);
+                            Log(L"[%s%d] LoadLibraryExFixup:  We are in a 32-bit build and this match is 32bit.", g_LoadLibraryName, LoadLibraryExInstance);
 #endif
                             // Only 32-bit is valid if we are built as 32-bit.
                             useThis = true;
@@ -320,14 +321,14 @@ HMODULE __stdcall LoadLibraryExFixup(_In_ const CharT* libFileName, _Reserved_ H
                         case x64:
 #if defined(_WIN64)
 #if MOREDEBUG
-                            Log(L"[%d] LoadLibraryExFixup:  We are in an x64 build and this match is 64bit.", LoadLibraryExInstance);
+                            Log(L"[%s%d] LoadLibraryExFixup:  We are in an x64 build and this match is 64bit.", g_LoadLibraryName, LoadLibraryExInstance);
 #endif
                             if (IsWow64Process(GetCurrentProcess(), &procTest))
                             {
                                 if (procTest == FALSE)
                                 {
 #if MOREDEBUG
-                                    Log(L"[%d] LoadLibraryExFixup:   we are not in WOW so allow match.", LoadLibraryExInstance);
+                                    Log(L"[%s%d] LoadLibraryExFixup:   we are not in WOW so allow match.", g_LoadLibraryName, LoadLibraryExInstance);
 #endif
                                     // 64 bit process on an x64 OS
                                     useThis = true;
@@ -335,7 +336,7 @@ HMODULE __stdcall LoadLibraryExFixup(_In_ const CharT* libFileName, _Reserved_ H
                                 else
                                 {
 #if MOREDEBUG
-                                    Log(L"[%d] LoadLibraryExFixup:   we are in WOW so dont allow match.", LoadLibraryExInstance);
+                                    Log(L"[%s%d] LoadLibraryExFixup:   we are in WOW so dont allow match.", g_LoadLibraryName, LoadLibraryExInstance);
 #endif
                                     // 32-bit process on 64-bit OS
                                     useThis = false;
@@ -344,14 +345,14 @@ HMODULE __stdcall LoadLibraryExFixup(_In_ const CharT* libFileName, _Reserved_ H
                             else
                             {
 #if MOREDEBUG
-                                Log(L"[%d] LoadLibraryExFixup:   WOW check failed.", LoadLibraryExInstance);
+                                Log(L"[%s%d] LoadLibraryExFixup:   WOW check failed.", g_LoadLibraryName, LoadLibraryExInstance);
 #endif
                                 // This call should never fail.
                                 useThis = false;
                             }
 #else
 #if MOREDEBUG
-                            Log(L"[%d] LoadLibraryExFixup:  We are in a 32-bit build and this match is 64bit.", LoadLibraryExInstance);
+                            Log(L"[%s%d] LoadLibraryExFixup:  We are in a 32-bit build and this match is 64bit.", g_LoadLibraryName, LoadLibraryExInstance);
 #endif
                             // Can't use x64 dll if we are a 32-bit process
                             useThis = false;
@@ -374,7 +375,7 @@ HMODULE __stdcall LoadLibraryExFixup(_In_ const CharT* libFileName, _Reserved_ H
                             {
 #if _DEBUG
                                 DWORD err = GetLastError();
-                                Log(L"[%d] LoadLibraryExFixup: Dll not found(0x%x), try LdrLoadDll", LoadLibraryExInstance,err);
+                                Log(L"[%s%d] LoadLibraryExFixup: Dll not found(0x%x), try LdrLoadDll", g_LoadLibraryName, LoadLibraryExInstance,err);
 #endif
                                 if (LdrLoadDll == NULL)
                                     LdrLoadDll = (_LdrLoadDll)GetProcAddress(GetModuleHandleA("ntdll.dll"), "LdrLoadDll");
@@ -385,7 +386,7 @@ HMODULE __stdcall LoadLibraryExFixup(_In_ const CharT* libFileName, _Reserved_ H
                                 PHANDLE ModuleHandle = NULL;
 #if _DEBUG
                                 DWORD ns = LdrLoadDll(spec.full_filepath.parent_path().wstring().data(), flags, &name, &ModuleHandle);
-                                Log(L"[%d] LdrLoadDll: returns 0x%x hmodule 0x%x", LoadLibraryExInstance, ns, ModuleHandle);
+                                Log(L"[%s%d] LdrLoadDll: returns 0x%x hmodule 0x%x", g_LoadLibraryName, LoadLibraryExInstance, ns, ModuleHandle);
 #else
                                 LdrLoadDll(spec.full_filepath.parent_path().wstring().data(), flags, &name, &ModuleHandle);     
 #endif
@@ -393,7 +394,7 @@ HMODULE __stdcall LoadLibraryExFixup(_In_ const CharT* libFileName, _Reserved_ H
                             }
 #endif
 #if _DEBUG
-                            Log(L"[%d] LoadLibraryExFixup: returns 0x%x using %s", LoadLibraryExInstance, result, spec.full_filepath.c_str());
+                            Log(L"[%s%d] LoadLibraryExFixup: returns 0x%x using %s", g_LoadLibraryName, LoadLibraryExInstance, result, spec.full_filepath.c_str());
 #endif
                             return result;
                         }
@@ -401,17 +402,17 @@ HMODULE __stdcall LoadLibraryExFixup(_In_ const CharT* libFileName, _Reserved_ H
                 }
                 catch (...)
                 {
-                    Log(L" [%d] LoadLibraryExFixup Error", LoadLibraryExInstance);
+                    Log(L" [%s%d] LoadLibraryExFixup Error", g_LoadLibraryName, LoadLibraryExInstance);
                 }
             }
 #if MOREDEBUG
-            Log(L" [%d] LoadLibraryExFixup: found no match registered.", LoadLibraryExInstance);
+            Log(L" [%s%d] LoadLibraryExFixup: found no match registered.", g_LoadLibraryName, LoadLibraryExInstance);
 #endif
         }
     }
     result = LoadLibraryExImpl(libFileName, file, flags);
 #if _DEBUG
-        Log(L" [%d] LoadLibraryExFixup fallthrough result=0x%x", LoadLibraryExInstance, result);
+        Log(L" [%s%d] LoadLibraryExFixup fallthrough result=0x%x", g_LoadLibraryName, LoadLibraryExInstance, result);
 #endif
     ///QueryPerformanceCounter(&TickEnd);
     return result;

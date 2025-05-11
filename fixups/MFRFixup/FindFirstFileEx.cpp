@@ -92,44 +92,44 @@ HANDLE __stdcall FindFirstFileExFixup(_In_ const CharT* fileName,
 #if _DEBUG
         if (psf::is_ansi<CharT>)
         {
-            LogString(dllInstance, L"\tFindFirstFileExAFixup: for fileName", fileName);
+            LogString(g_MfrModuleName, dllInstance, L"\tFindFirstFileExAFixup: for fileName", fileName);
         }
         else
         {
-            LogString(dllInstance, L"\tFindFirstFileExWFixup: for fileName", fileName);
+            LogString(g_MfrModuleName, dllInstance, L"\tFindFirstFileExWFixup: for fileName", fileName);
         }
 
         switch (infoLevelId)
         {
         case FindExInfoStandard:
-            Log(L"[%d]\t\tLevel FindExInfoStandard", dllInstance);
+            Log(L"[%s%d]\t\tLevel FindExInfoStandard", g_MfrModuleName, dllInstance);
             break;
         case FindExInfoBasic:
-            Log(L"[%d]\t\tLevel FindExInfoBasic", dllInstance);
+            Log(L"[%s%d]\t\tLevel FindExInfoBasic", g_MfrModuleName, dllInstance);
             break;
         case FindExInfoMaxInfoLevel:
-            Log(L"[%d]\t\tLevel FindExInfoMaxInfoLevel", dllInstance);
+            Log(L"[%s%d]\t\tLevel FindExInfoMaxInfoLevel", g_MfrModuleName, dllInstance);
             break;
         default:
-            Log(L"[%d]\t\tLevel unknown", dllInstance);
+            Log(L"[%s%d]\t\tLevel unknown", g_MfrModuleName, dllInstance);
             break;
         }
         switch (searchOp)
         {
         case FindExSearchNameMatch:
-            Log(L"[%d]\t\tSearchOp FindExSearchNameMatch", dllInstance);
+            Log(L"[%s%d]\t\tSearchOp FindExSearchNameMatch", g_MfrModuleName, dllInstance);
             break;
         case FindExSearchLimitToDirectories:
-            Log(L"[%d]\t\tSearchOp FindExSearchLimitToDirectories", dllInstance);
+            Log(L"[%s%d]\t\tSearchOp FindExSearchLimitToDirectories", g_MfrModuleName, dllInstance);
             break;
         case FindExSearchLimitToDevices:
-            Log(L"[%d]\t\tSearchOp FindExSearchLimitToDevices", dllInstance);
+            Log(L"[%s%d]\t\tSearchOp FindExSearchLimitToDevices", g_MfrModuleName, dllInstance);
             break;
         case FindExSearchMaxSearchOp:
-            Log(L"[%d]\t\tSearchOp FindExSearchMaxSearchOp", dllInstance);
+            Log(L"[%s%d]\t\tSearchOp FindExSearchMaxSearchOp", g_MfrModuleName, dllInstance);
             break;
         default:
-            Log(L"[%d]\t\tSearchOp Unknown=0x%x", dllInstance, searchOp);
+            Log(L"[%s%d]\t\tSearchOp Unknown=0x%x", g_MfrModuleName, dllInstance, searchOp);
             break;
         }
 #endif
@@ -140,15 +140,15 @@ HANDLE __stdcall FindFirstFileExFixup(_In_ const CharT* fileName,
         DetermineCohorts(wfileName, &cohorts, moreDebug, dllInstance, L"FindFirstFileExFixup");
 
 #if MOREDEBUG
-        Log(L"[%d] FindFirstFileExFixup:      RedirPath=%s", dllInstance, cohorts.WsRedirected.c_str());
-        Log(L"[%d] FindFirstFileExFixup:    PackagePath=%s", dllInstance, cohorts.WsPackage.c_str());
+        Log(L"[%s%d] FindFirstFileExFixup:      RedirPath=%s", g_MfrModuleName, dllInstance, cohorts.WsRedirected.c_str());
+        Log(L"[%s%d] FindFirstFileExFixup:    PackagePath=%s", g_MfrModuleName, dllInstance, cohorts.WsPackage.c_str());
         if (cohorts.UsingNative)
         {
-            Log(L"[%d] FindFirstFileExFixup:     NativePath=%s", dllInstance, cohorts.WsNative.c_str());
+            Log(L"[%s%d] FindFirstFileExFixup:     NativePath=%s", g_MfrModuleName, dllInstance, cohorts.WsNative.c_str());
         }
         else
         {
-            Log(L"[%d] FindFirstFileExFixup:  NO NativePath", dllInstance);
+            Log(L"[%s%d] FindFirstFileExFixup:  NO NativePath", g_MfrModuleName, dllInstance);
         }
 #endif
 
@@ -184,7 +184,7 @@ HANDLE __stdcall FindFirstFileExFixup(_In_ const CharT* fileName,
                 copy_find_data(*wideData, result->cached_data);
             }
 #if _DEBUG
-            Log(L"[%d] FindFirstFileExFixup[%d] (from redirected): had results %ls", dllInstance, Result_Redirected, findData->cFileName);
+            Log(L"[%s%d] FindFirstFileExFixup[%d] (from redirected): had results %ls", g_MfrModuleName, dllInstance, Result_Redirected, findData->cFileName);
 #endif
             //AnyValidPath = true;
             //AnyValidResult = true;
@@ -197,7 +197,7 @@ HANDLE __stdcall FindFirstFileExFixup(_In_ const CharT* fileName,
             // Path doesn't exist or match any files. We can safely get away without the redirected file exists check
             //result->redirect_path.clear();
 #if _DEBUG
-            Log(L"[%d] FindFirstFileExFixup[%d] (from redirected): no results.", dllInstance, Result_Redirected);
+            Log(L"[%s%d] FindFirstFileExFixup[%d] (from redirected): no results.", g_MfrModuleName, dllInstance, Result_Redirected);
 #endif
         }
         // save for next level
@@ -209,7 +209,7 @@ HANDLE __stdcall FindFirstFileExFixup(_In_ const CharT* fileName,
         if (result->find_handles[Result_Package])
         {
 #if _DEBUG
-            Log(L"[%d] FindFirstFileExFixup[%d] (from package):   had results %ls", dllInstance, Result_Package, findData->cFileName);
+            Log(L"[%s%d] FindFirstFileExFixup[%d] (from package):   had results %ls", g_MfrModuleName, dllInstance, Result_Package, findData->cFileName);
 #endif
             initialFindError = ERROR_SUCCESS;
         }
@@ -219,7 +219,7 @@ HANDLE __stdcall FindFirstFileExFixup(_In_ const CharT* fileName,
                 initialFindError = ERROR_FILE_NOT_FOUND;
             ///result->package_vfs_path.clear();
 #if _DEBUG
-            Log(L"[%d] FindFirstFileExFixup[%d] (from package):   no results.", dllInstance, Result_Package);
+            Log(L"[%s%d] FindFirstFileExFixup[%d] (from package):   no results.", g_MfrModuleName, dllInstance, Result_Package);
 #endif
         }
 
@@ -233,7 +233,7 @@ HANDLE __stdcall FindFirstFileExFixup(_In_ const CharT* fileName,
                     if (copy_find_data(*findData, *ansiData))
                     {
 #if _DEBUG
-                        Log(L"[%d] FindFirstFileEx error set by caller", dllInstance);
+                        Log(L"[%s%d] FindFirstFileEx error set by caller", g_MfrModuleName, dllInstance);
 #endif
                         // NOTE: Last error set by caller
                         return INVALID_HANDLE_VALUE;
@@ -258,7 +258,7 @@ HANDLE __stdcall FindFirstFileExFixup(_In_ const CharT* fileName,
             if (result->find_handles[Result_Native])
             {
 #if _DEBUG
-                Log(L"[%d] FindFirstFileExFixup[%d] (from native)    had results=%ls", dllInstance, Result_Native, findData->cFileName);
+                Log(L"[%s%d] FindFirstFileExFixup[%d] (from native)    had results=%ls", g_MfrModuleName, dllInstance, Result_Native, findData->cFileName);
 #endif
                 initialFindError = ERROR_SUCCESS;
             }
@@ -267,7 +267,7 @@ HANDLE __stdcall FindFirstFileExFixup(_In_ const CharT* fileName,
                 if (GetLastError() == ERROR_FILE_NOT_FOUND)
                     initialFindError = ERROR_FILE_NOT_FOUND;
 #if _DEBUG
-                Log(L"[%d] FindFirstFileExFixupV2[%d] (from native):   no results.", dllInstance, Result_Native);
+                Log(L"[%s%d] FindFirstFileExFixupV2[%d] (from native):   no results.", g_MfrModuleName, dllInstance, Result_Native);
 #endif
             }
             if (!result->find_handles[Result_Redirected] &&
@@ -280,7 +280,7 @@ HANDLE __stdcall FindFirstFileExFixup(_In_ const CharT* fileName,
                         if (copy_find_data(*findData, *ansiData))
                         {
 #if _DEBUG
-                            Log(L"[%d] FindFirstFileExFixup error set by caller", dllInstance);
+                            Log(L"[%s%d] FindFirstFileExFixup error set by caller", g_MfrModuleName, dllInstance);
 #endif
                             // NOTE: Last error set by caller
                             return INVALID_HANDLE_VALUE;
@@ -298,7 +298,7 @@ HANDLE __stdcall FindFirstFileExFixup(_In_ const CharT* fileName,
         else
         {
 #if _DEBUG
-            Log(L"[%d] FindFirstFileExFixup[%d] (from native):    no results possible.", dllInstance, Result_Native);
+            Log(L"[%s%d] FindFirstFileExFixup[%d] (from native):    no results possible.", g_MfrModuleName, dllInstance, Result_Native);
 #endif
         }
 
@@ -313,7 +313,7 @@ HANDLE __stdcall FindFirstFileExFixup(_In_ const CharT* fileName,
                 //result->cached_data = ansiData;  
             }
 #if _DEBUG
-            Log(L"[%d] FindFirstFileExFixup returns %ls", dllInstance, result->cached_data.cFileName);
+            Log(L"[%s%d] FindFirstFileExFixup returns %ls", g_MfrModuleName, dllInstance, result->cached_data.cFileName);
 #endif
             result->wsAlready_returned_list.push_back(result->cached_data.cFileName);
             ::SetLastError(ERROR_SUCCESS);
@@ -322,7 +322,7 @@ HANDLE __stdcall FindFirstFileExFixup(_In_ const CharT* fileName,
         else
         {
 #if _DEBUG
-            Log(L"[%d] FindFirstFileExFixup returns 0x%x", dllInstance, initialFindError);
+            Log(L"[%s%d] FindFirstFileExFixup returns 0x%x", g_MfrModuleName, dllInstance, initialFindError);
 #endif
             ::SetLastError(initialFindError);
             return INVALID_HANDLE_VALUE;
@@ -336,34 +336,34 @@ HANDLE __stdcall FindFirstFileExFixup(_In_ const CharT* fileName,
     switch (infoLevelId)
     {
     case FindExInfoStandard:
-        Log(L"[%d]\tFindFirstFileExFixup: (unguarded) Level FindExInfoStandard", dllInstance);
+        Log(L"[%s%d]\tFindFirstFileExFixup: (unguarded) Level FindExInfoStandard", g_MfrModuleName, dllInstance);
         break;
     case FindExInfoBasic:
-        Log(L"[%d]\tFindFirstFileExFixup: (unguarded) Level FindExInfoBasic", dllInstance);
+        Log(L"[%s%d]\tFindFirstFileExFixup: (unguarded) Level FindExInfoBasic", g_MfrModuleName, dllInstance);
         break;
     case FindExInfoMaxInfoLevel:
-        Log(L"[%d]\tFindFirstFileExFixup: (unguarded) Level FindExInfoMaxInfoLevel", dllInstance);
+        Log(L"[%s%d]\tFindFirstFileExFixup: (unguarded) Level FindExInfoMaxInfoLevel", g_MfrModuleName, dllInstance);
         break;
     default:
-        Log(L"[%d]\tFindFirstFileExFixup: (unguarded) Level unknown", dllInstance);
+        Log(L"[%s%d]\tFindFirstFileExFixup: (unguarded) Level unknown", g_MfrModuleName, dllInstance);
         break;
     }
     switch (searchOp)
     {
     case FindExSearchNameMatch:
-        Log(L"[%d]\tFindFirstFileExFixup: (unguarded) SearchOp FindExSearchNameMatch", dllInstance);
+        Log(L"[%s%d]\tFindFirstFileExFixup: (unguarded) SearchOp FindExSearchNameMatch", g_MfrModuleName, dllInstance);
         break;
     case FindExSearchLimitToDirectories:
-        Log(L"[%d]\tFindFirstFileExFixup: (unguarded) SearchOp FindExSearchLimitToDirectories", dllInstance);
+        Log(L"[%s%d]\tFindFirstFileExFixup: (unguarded) SearchOp FindExSearchLimitToDirectories", g_MfrModuleName, dllInstance);
         break;
     case FindExSearchLimitToDevices:
-        Log(L"[%d]\tFindFirstFileExFixup: (unguarded) SearchOp FindExSearchLimitToDevices", dllInstance);
+        Log(L"[%s%d]\tFindFirstFileExFixup: (unguarded) SearchOp FindExSearchLimitToDevices", g_MfrModuleName, dllInstance);
         break;
     case FindExSearchMaxSearchOp:
-        Log(L"[%d]\tFindFirstFileExFixup: (unguarded) SearchOp FindExSearchMaxSearchOp", dllInstance);
+        Log(L"[%s%d]\tFindFirstFileExFixup: (unguarded) SearchOp FindExSearchMaxSearchOp", g_MfrModuleName, dllInstance);
         break;
     default:
-        Log(L"[%d]\tFindFirstFileExFixup: (unguarded) SearchOp Unknown=0x%x", dllInstance, searchOp);
+        Log(L"[%s%d]\tFindFirstFileExFixup: (unguarded) SearchOp Unknown=0x%x", g_MfrModuleName, dllInstance, searchOp);
         break;
     }
 
@@ -372,11 +372,11 @@ HANDLE __stdcall FindFirstFileExFixup(_In_ const CharT* fileName,
 
     // If still here, call original.
 #if _DEBUG
-    LogString(dllInstance, L"\tFindFirstFileExFixup: (unguarded) for fileName", fileName);
+    LogString(g_MfrModuleName, dllInstance, L"\tFindFirstFileExFixup: (unguarded) for fileName", fileName);
 #endif
     retfinal = impl::FindFirstFileEx(fileName, infoLevelId, findFileData, searchOp, searchFilter, additionalFlags);
 #if _DEBUG
-    Log(L"[%d] FindFirstFileFixup returns 0x%x", dllInstance, retfinal);
+    Log(L"[%s%d] FindFirstFileFixup returns 0x%x", g_MfrModuleName, dllInstance, retfinal);
 #endif
     return retfinal;
 }

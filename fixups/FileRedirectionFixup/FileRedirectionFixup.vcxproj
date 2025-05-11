@@ -26,6 +26,7 @@
   <ItemGroup>
     <ClInclude Include="..\..\include\CatchHandler.h" />
     <ClInclude Include="FunctionImplementations.h" />
+    <ClInclude Include="Logging.h" />
     <ClInclude Include="PathRedirection.h" />
     <ClInclude Include="resource.h" />
   </ItemGroup>

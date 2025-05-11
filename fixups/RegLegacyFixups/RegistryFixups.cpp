@@ -25,7 +25,8 @@
 #endif
 #endif
 
-DWORD g_RegIntceptInstance = 50000;
+DWORD g_RegInterceptInstance = 50000;
+const wchar_t* g_RegModuleName = L"R";
 
 
 

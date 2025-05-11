@@ -46,22 +46,22 @@ DWORD __stdcall SearchPathFixup(
             {
                 if (lpExtension != NULL)
                 {
-                    Log(L"[%d]\tSearchPathFixup (unguarded): for folder=%s fileName=%s ext=%s", SearchPathInstance,lpPath, lpFileName, lpExtension);
+                    Log(L"[%s%d]\tSearchPathFixup (unguarded): for folder=%s fileName=%s ext=%s", g_FrfModuleName, SearchPathInstance,lpPath, lpFileName, lpExtension);
                 }
                 else
                 {
-                    Log(L"[%d]\tSearchPathFixup (unguarded): for folder=%s fileName=%s", SearchPathInstance, lpPath, lpFileName);
+                    Log(L"[%s%d]\tSearchPathFixup (unguarded): for folder=%s fileName=%s", g_FrfModuleName, SearchPathInstance, lpPath, lpFileName);
                 }
             }
             else
             {
                 if (lpExtension != NULL)
                 {
-                    Log(L"[%d]\tSearchPathFixup (unguarded): for  fileName=%s ext=%s", SearchPathInstance, lpFileName, lpExtension);
+                    Log(L"[%s%d]\tSearchPathFixup (unguarded): for  fileName=%s ext=%s", g_FrfModuleName, SearchPathInstance, lpFileName, lpExtension);
                 }
                 else
                 {
-                    Log(L"[%d]\tSearchPathFixup (unguarded): for  fileName=%s", SearchPathInstance, lpFileName);
+                    Log(L"[%s%d]\tSearchPathFixup (unguarded): for  fileName=%s", g_FrfModuleName, SearchPathInstance, lpFileName);
                 }
             }
 #endif
@@ -75,22 +75,22 @@ DWORD __stdcall SearchPathFixup(
         {
             if (lpExtension != NULL)
             {
-                Log(L"[%d]\tSearchPathFixup: for folder=%s fileName=%s ext=%s", SearchPathInstance, lpPath, lpFileName, lpExtension);
+                Log(L"[%s%d]\tSearchPathFixup: for folder=%s fileName=%s ext=%s", g_FrfModuleName, SearchPathInstance, lpPath, lpFileName, lpExtension);
             }
             else
             {
-                Log(L"[%d]\tSearchPathFixup: for folder=%s fileName=%s", SearchPathInstance, lpPath, lpFileName);
+                Log(L"[%s%d]\tSearchPathFixup: for folder=%s fileName=%s", g_FrfModuleName, SearchPathInstance, lpPath, lpFileName);
             }
         }
         else
         {
             if (lpExtension != NULL)
             {
-                Log(L"[%d]\tSearchPathFixup: for  fileName=%s ext=%s", SearchPathInstance, lpFileName, lpExtension);
+                Log(L"[%s%d]\tSearchPathFixup: for  fileName=%s ext=%s", g_FrfModuleName, SearchPathInstance, lpFileName, lpExtension);
             }
             else
             {
-                Log(L"[%d]\tSearchPathFixup: for  fileName=%s", SearchPathInstance, lpFileName);
+                Log(L"[%s%d]\tSearchPathFixup: for  fileName=%s", g_FrfModuleName, SearchPathInstance, lpFileName);
             }
         }
 #endif
@@ -99,11 +99,11 @@ DWORD __stdcall SearchPathFixup(
 #if _DEBUG
         if (dRet == 0)
         {
-            Log("[%d]\t\tSearchPathFixup: native not found.", SearchPathInstance);
+            Log("[%s%d]\t\tSearchPathFixup: native not found.", g_FrfModuleName, SearchPathInstance);
         }
         else
         {
-            Log("[%d]\t\tSearchPathFixup: native found.", SearchPathInstance);
+            Log("[%s%d]\t\tSearchPathFixup: native found.", g_FrfModuleName, SearchPathInstance);
         }
 #endif
 
@@ -125,12 +125,12 @@ DWORD __stdcall SearchPathFixup(
         wPathNormalized = NormalizePathV2(wPathRequested.c_str(), SearchPathInstance);
         if constexpr (psf::is_ansi<CharT>)
         {
-            Log("[%d]\t\tSearchPathFixup: ansi.", SearchPathInstance);
+            Log("[%s%d]\t\tSearchPathFixup: ansi.", g_FrfModuleName, SearchPathInstance);
             dRet = impl::SearchPath(narrow(wPathNormalized.full_path).c_str(), lpFileName, lpExtension, nBufferLength, lpBuffer, lpFilePart);
         }
         else
         {
-            Log("[%d]\t\tSearchPathFixup: wide.", SearchPathInstance);
+            Log("[%s%d]\t\tSearchPathFixup: wide.", g_FrfModuleName, SearchPathInstance);
             dRet = impl::SearchPath(wPathNormalized.full_path.c_str(), lpFileName, lpExtension, nBufferLength, lpBuffer, lpFilePart);
         }
         if (dRet == 0)
@@ -179,45 +179,45 @@ DWORD __stdcall SearchPathFixup(
                         }
                         if (dRet == 0)
                         {
-                            Log(L"[%d]\tSearchPathFixup: Not found under any path.", SearchPathInstance);
+                            Log(L"[%s%d]\tSearchPathFixup: Not found under any path.", g_FrfModuleName, SearchPathInstance);
                             SetLastError(ERROR_FILE_NOT_FOUND);
                         }
                         else
                         {
-                            LogString(SearchPathInstance, L"\tSearchPathFixup: Found under path", wPathDeRedirected.c_str());
+                            LogString(g_FrfModuleName, SearchPathInstance, L"\tSearchPathFixup: Found under path", wPathDeRedirected.c_str());
                         }
                     }
                     else
                     {
-                        LogString(SearchPathInstance, L"\tSearchPathFixup: Found under path", wPathRedirected.c_str());
+                        LogString(g_FrfModuleName, SearchPathInstance, L"\tSearchPathFixup: Found under path", wPathRedirected.c_str());
                     }
                 }
                 else
                 {
-                    LogString(SearchPathInstance, L"\tSearchPathFixup: Found under path", wPathDeVirtualized.c_str());
+                    LogString(g_FrfModuleName, SearchPathInstance, L"\tSearchPathFixup: Found under path", wPathDeVirtualized.c_str());
                 }
             }
             else
             {
-                LogString(SearchPathInstance, L"\tSearchPathFixup: Found under path", wPathVirtualized.c_str());
+                LogString(g_FrfModuleName, SearchPathInstance, L"\tSearchPathFixup: Found under path", wPathVirtualized.c_str());
             }
         }
         else
         {
-            LogString(SearchPathInstance, L"\tSearchPathFixup: Found under path", wPathNormalized.full_path.c_str());
+            LogString(g_FrfModuleName, SearchPathInstance, L"\tSearchPathFixup: Found under path", wPathNormalized.full_path.c_str());
         }
         
 
-        Log(L"[%d]\tSearchPathFixup: return value=0x%x GetLastError=0x%x", SearchPathInstance, dRet, GetLastError());
+        Log(L"[%s%d]\tSearchPathFixup: return value=0x%x GetLastError=0x%x", g_FrfModuleName, SearchPathInstance, dRet, GetLastError());
         return dRet;
     }
 #if _DEBUG
     // Fall back to assuming no redirection is necessary if exception
-    LOGGED_CATCHHANDLER(SearchPathInstance, L"SearchPath")
+    LOGGED_CATCHHANDLER_MIN(g_FrfModuleName, SearchPathInstance, L"SearchPath")
 #else
     catch (...)
     {
-        Log(L"[%d] SearchPath Exception=0x%x", SearchPathInstance, GetLastError());
+        Log(L"[%s%d] SearchPath Exception=0x%x", g_FrfModuleName, SearchPathInstance, GetLastError());
     }
 #endif 
     return 0;

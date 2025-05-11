@@ -7,11 +7,10 @@
 
 #include <errno.h>
 #include "FunctionImplementations.h"
-#include <psf_logging.h>
 
 #include "ManagedPathTypes.h"
 #include "PathUtilities.h"
-#include "FunctionImplementations.h"
+
 #include <psf_logging.h>
 #include <memory>
 #include "FindData3.h"

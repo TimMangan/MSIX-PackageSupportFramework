@@ -9,6 +9,8 @@
 #include "PathUtilities.h"
 #include <psf_logging.h>
 
+#include "FunctionImplementations.h"
+
 
 #if _DEBUG
 #define MOREDEBUG 1
@@ -35,11 +37,11 @@ namespace mfr
         FID_Initialize(); 
 
 #if MOREDEBUG
-        Log(L"\t\t\t\tMFRFixup FID_Initialize: FID_UserProfiles = %s", FID_UserProfiles.wstring().c_str());
-        Log(L"\t\t\t\tMFRFixup FID_Initialize: FID_UserFolder =   %s", FID_UserFolder.wstring().c_str());
-        Log(L"\t\t\t\tMFRFixup FID_Initialize: FID_Profile =      %s", FID_Profile.wstring().c_str());
+        Log(L"[%s%d]\t\t\t\tMFRFixup FID_Initialize: FID_UserProfiles = %s", g_MfrModuleName,0, FID_UserProfiles.wstring().c_str());
+        Log(L"[%s%d]\t\t\t\tMFRFixup FID_Initialize: FID_UserFolder =   %s", g_MfrModuleName, 0, FID_UserFolder.wstring().c_str());
+        Log(L"[%s%d]\t\t\t\tMFRFixup FID_Initialize: FID_Profile =      %s", g_MfrModuleName, 0, FID_Profile.wstring().c_str());
 
-        Log("\t\t\tMFRFixup Initialize_MFR_Mappings: post FID");
+        Log("[%s%d]\t\t\tMFRFixup Initialize_MFR_Mappings: post FID", g_MfrModuleName, 0);
 #endif  
         // This first set are a set of exact-match special exceptions that we need to be handled as native paths.  The system might layer into the package/redirected paths.
         g_MfrFolderMappings.push_back(mfr::mfr_folder_mapping{ mfr_enabled_types::enabled,
@@ -681,7 +683,7 @@ namespace mfr
 
 
 #if MOREDEBUG
-        Log(L"\t\t\tMFR Mappings initialized.");
+        Log(L"[%s%d]\t\t\tMFR Mappings initialized.", g_MfrModuleName, 0);
 #endif
     } // Initialize_MFR_Mappings()
 
@@ -712,16 +714,16 @@ namespace mfr
                             switch (map.RedirectionFlags)
                             {
                             case mfr_redirect_flags::prefer_redirection_local:
-                                Log(L"[%d]      MFR_Mappings: LocalFromNative Found exact match prefer_local index=%d for %s", dllInstance, i, WsPath.c_str());
+                                Log(L"[%s%d]      MFR_Mappings: LocalFromNative Found exact match prefer_local index=%d for %s", g_MfrModuleName, dllInstance, i, WsPath.c_str());
                                 break;
                             case mfr_redirect_flags::prefer_redirection_containerized:
-                                Log(L"[%d]      MFR_Mappings: LocalFromNative Found exact match prefer_containerized index=%d for %s", dllInstance, i, WsPath.c_str());
+                                Log(L"[%s%d]      MFR_Mappings: LocalFromNative Found exact match prefer_containerized index=%d for %s", g_MfrModuleName, dllInstance, i, WsPath.c_str());
                                 break;
                             case mfr_redirect_flags::prefer_redirection_if_package_vfs:
-                                Log(L"[%d]      MFR_Mappings: LocalFromNative Found exact match prefer_if_package index=%d for %s", dllInstance, i, WsPath.c_str());
+                                Log(L"[%s%d]      MFR_Mappings: LocalFromNative Found exact match prefer_if_package index=%d for %s", g_MfrModuleName, dllInstance, i, WsPath.c_str());
                                 break;
                             default:
-                                Log(L"[%d]      MFR_Mappings: LocalFromNative Found exact match none index=%d for %s", dllInstance, i, WsPath.c_str());
+                                Log(L"[%s%d]      MFR_Mappings: LocalFromNative Found exact match none index=%d for %s", g_MfrModuleName, dllInstance, i, WsPath.c_str());
                                 break;
                             }
 #endif
@@ -736,16 +738,16 @@ namespace mfr
                             switch (map.RedirectionFlags)
                             {
                             case mfr_redirect_flags::prefer_redirection_local:
-                                Log(L"[%d]      MFR_Mappings: LocalFromNative Found subset match prefer_local index=%d for %s", dllInstance, i, WsPath.c_str());
+                                Log(L"[%s%d]      MFR_Mappings: LocalFromNative Found subset match prefer_local index=%d for %s", g_MfrModuleName, dllInstance, i, WsPath.c_str());
                                 break;
                             case mfr_redirect_flags::prefer_redirection_containerized:
-                                Log(L"[%d]      MFR_Mappings: LocalFromNative Found subset match prefer_containerized index=%d for %s", dllInstance, i, WsPath.c_str());
+                                Log(L"[%s%d]      MFR_Mappings: LocalFromNative Found subset match prefer_containerized index=%d for %s", g_MfrModuleName, dllInstance, i, WsPath.c_str());
                                 break;
                             case mfr_redirect_flags::prefer_redirection_if_package_vfs:
-                                Log(L"[%d]      MFR_Mappings: LocalFromNative Found subset match prefer_if_package index=%d for %s", dllInstance, i, WsPath.c_str());
+                                Log(L"[%s%d]      MFR_Mappings: LocalFromNative Found subset match prefer_if_package index=%d for %s", g_MfrModuleName, dllInstance, i, WsPath.c_str());
                                 break;
                             default:
-                                Log(L"[%d]      MFR_Mappings: LocalFromNative Found subset match none index=%d for %s", dllInstance, i, WsPath.c_str());
+                                Log(L"[%s%d]      MFR_Mappings: LocalFromNative Found subset match none index=%d for %s", g_MfrModuleName, dllInstance, i, WsPath.c_str());
                                 break;
                             }
 #endif
@@ -758,7 +760,7 @@ namespace mfr
             i++;
         }
 #if MOREDEBUG
-        Log(L"[%d]      MFR_Mappings: LocalFromNative No mapping found for %s", dllInstance, WsPath.c_str());
+        Log(L"[%s%d]      MFR_Mappings: LocalFromNative No mapping found for %s", g_MfrModuleName, dllInstance, WsPath.c_str());
 #endif
         return MakeInvalidMapping();
     }  // Find_RedirMapping_FromNativePath_ForwardSearch() 
@@ -786,16 +788,16 @@ namespace mfr
                             switch (map.RedirectionFlags)
                             {
                             case mfr_redirect_flags::prefer_redirection_local:
-                                Log(L"[%d]      MFR_Mappings: LocalFromPackage Found exact match prefer_local index=%d for %s", dllInstance, i, WsPath.c_str());
+                                Log(L"[%s%d]      MFR_Mappings: LocalFromPackage Found exact match prefer_local index=%d for %s", g_MfrModuleName, dllInstance, i, WsPath.c_str());
                                 break;
                             case mfr_redirect_flags::prefer_redirection_containerized:
-                                Log(L"[%d]      MFR_Mappings: LocalFromPackage Found exact match prefer_containerized index=%d for %s", dllInstance, i, WsPath.c_str());
+                                Log(L"[%s%d]      MFR_Mappings: LocalFromPackage Found exact match prefer_containerized index=%d for %s", g_MfrModuleName, dllInstance, i, WsPath.c_str());
                                 break;
                             case mfr_redirect_flags::prefer_redirection_if_package_vfs:
-                                Log(L"[%d]      MFR_Mappings: LocalFromPackage Found exact match prefer_if_package index=%d for %s", dllInstance, i, WsPath.c_str());
+                                Log(L"[%s%d]      MFR_Mappings: LocalFromPackage Found exact match prefer_if_package index=%d for %s", g_MfrModuleName, dllInstance, i, WsPath.c_str());
                                 break;
                             default:
-                                Log(L"[%d]      MFR_Mappings: LocalFromPackage Found exact match none index=%d for %s", dllInstance, i, WsPath.c_str());
+                                Log(L"[%s%d]      MFR_Mappings: LocalFromPackage Found exact match none index=%d for %s", g_MfrModuleName, dllInstance, i, WsPath.c_str());
                                 break;
                             }
 #endif
@@ -810,16 +812,16 @@ namespace mfr
                             switch (map.RedirectionFlags)
                             {
                             case mfr_redirect_flags::prefer_redirection_local:
-                                Log(L"[%d]      MFR_Mappings: LocalFromPackage Found subset match prefer_local index=%d for %s", dllInstance, i, WsPath.c_str());
+                                Log(L"[%s%d]      MFR_Mappings: LocalFromPackage Found subset match prefer_local index=%d for %s", g_MfrModuleName, dllInstance, i, WsPath.c_str());
                                 break;
                             case mfr_redirect_flags::prefer_redirection_containerized:
-                                Log(L"[%d]      MFR_Mappings: LocalFromPackage Found subset match prefer_containerized index=%d for %s", dllInstance, i, WsPath.c_str());
+                                Log(L"[%s%d]      MFR_Mappings: LocalFromPackage Found subset match prefer_containerized index=%d for %s", g_MfrModuleName, dllInstance, i, WsPath.c_str());
                                 break;
                             case mfr_redirect_flags::prefer_redirection_if_package_vfs:
-                                Log(L"[%d]      MFR_Mappings: LocalFromPackage Found subset match prefer_if_package index=%d for %s", dllInstance, i, WsPath.c_str());
+                                Log(L"[%s%d]      MFR_Mappings: LocalFromPackage Found subset match prefer_if_package index=%d for %s", g_MfrModuleName, dllInstance, i, WsPath.c_str());
                                 break;
                             default:
-                                Log(L"[%d]      MFR_Mappings: LocalFromPackage Found subset match none index=%d for %s", dllInstance, i, WsPath.c_str());
+                                Log(L"[%s%d]      MFR_Mappings: LocalFromPackage Found subset match none index=%d for %s", g_MfrModuleName, dllInstance, i, WsPath.c_str());
                                 break;
                             }
 #endif
@@ -833,7 +835,7 @@ namespace mfr
         }
         // if still here, this might be PVAD, but PVADs don't map
 #if MOREDEBUG
-        Log(L"[%x]      MFR_Mappings: LocalFromPackage No mapping found for %s", dllInstance, WsPath.c_str());
+        Log(L"[%s%d]      MFR_Mappings: LocalFromPackage No mapping found for %s", g_MfrModuleName, dllInstance, WsPath.c_str());
 #endif
         return MakeInvalidMapping();
     } // Find_RedirMapping_FromPackagePath_ForwardSearch() 
@@ -856,7 +858,7 @@ namespace mfr
                         if (path_isExactMatchOf_String(map.NativePathBase, WsPath.c_str()))
                         {
 #if MOREDEBUG
-                            Log(L"[%d]      MFR_Mappings: TraditionalFromNative Found exact match prefer_local index=%d for %s", dllInstance, i, WsPath.c_str());
+                            Log(L"[%s%d]      MFR_Mappings: TraditionalFromNative Found exact match prefer_local index=%d for %s", g_MfrModuleName, dllInstance, i, WsPath.c_str());
 #endif
                             return map;
                         }
@@ -866,7 +868,7 @@ namespace mfr
                         if (path_isSubsetOf_String(map.NativePathBase, WsPath.c_str()))
                         {
 #if MOREDEBUG
-                            Log(L"[%d]      MFR_Mappings: TraditionalFromNative Found subset match prefer_local index=%d for %s", dllInstance, i, WsPath.c_str());
+                            Log(L"[%s%d]      MFR_Mappings: TraditionalFromNative Found subset match prefer_local index=%d for %s", g_MfrModuleName, dllInstance, i, WsPath.c_str());
 #endif
                             return map;
                         }
@@ -877,7 +879,7 @@ namespace mfr
             i++;
         }
 #if MOREDEBUG
-        Log(L"[%d]      MFR_Mappings: TraditionalFromNative No mapping found for %s", dllInstance, WsPath.c_str());
+        Log(L"[%s%d]      MFR_Mappings: TraditionalFromNative No mapping found for %s", g_MfrModuleName, dllInstance, WsPath.c_str());
 #endif
         return MakeInvalidMapping();
     }  // Find_TraditionalRedirMapping_FromNativePath_ForwardSearch() 
@@ -934,7 +936,7 @@ namespace mfr
                         if (path_isExactMatchOf_String(map.PackagePathBase, WsPath.c_str()))
                         {
 #if MOREDEBUG
-                            Log(L"[%d]      MFR_Mappings: TraditionalFromPackage Found exact match prefer_local index=%d for %s", dllInstance, i, WsPath.c_str());
+                            Log(L"[%s%d]      MFR_Mappings: TraditionalFromPackage Found exact match prefer_local index=%d for %s", g_MfrModuleName, dllInstance, i, WsPath.c_str());
 #endif
                             return map;
                         }
@@ -944,7 +946,7 @@ namespace mfr
                         if (path_isSubsetOf_String(map.PackagePathBase, WsPath.c_str()))
                         {
 #if MOREDEBUG
-                            Log(L"[%d]      MFR_Mappings: TraditionalFromPackage Found subset match prefer_local index=%d for %s", dllInstance, i, WsPath.c_str());
+                            Log(L"[%s%d]      MFR_Mappings: TraditionalFromPackage Found subset match prefer_local index=%d for %s", g_MfrModuleName, dllInstance, i, WsPath.c_str());
 #endif
                             return map;
                         }
@@ -975,12 +977,12 @@ namespace mfr
             packagemap.RedirectedPathBase = g_writablePackageRootPath;
             packagemap.RedirectionFlags = mfr_redirect_flags::prefer_redirection_containerized;
 #if MOREDEBUG
-            Log(L"[%d]      MFR_Mappings: TraditionalFromNative PVAD mapping found for %s", dllInstance, WsPath.c_str());
+            Log(L"[%s%d]      MFR_Mappings: TraditionalFromNative PVAD mapping found for %s", g_MfrModuleName, dllInstance, WsPath.c_str());
 #endif
             return packagemap;
         }
 #if MOREDEBUG
-        Log(L"[%d]      MFR_Mappings: TraditionalFromPackage No mapping found for %s", dllInstance, WsPath.c_str());
+        Log(L"[%s%d]      MFR_Mappings: TraditionalFromPackage No mapping found for %s", g_MfrModuleName, dllInstance, WsPath.c_str());
 #endif
         return MakeInvalidMapping();
     } // Find_TraditionalRedirMapping_FromPackagePath_ForwardSearch()
@@ -1003,7 +1005,7 @@ namespace mfr
                         if (path_isExactMatchOf_String(map.RedirectedPathBase, WsPath.c_str()))
                         {
 #if MOREDEBUG
-                            Log(L"[%d]      MFR_Mappings: TraditionalFromRedirected Found exact match prefer_local index=%d for %s", dllInstance, i, WsPath.c_str());
+                            Log(L"[%s%d]      MFR_Mappings: TraditionalFromRedirected Found exact match prefer_local index=%d for %s", g_MfrModuleName, dllInstance, i, WsPath.c_str());
 #endif
                             return map;
                         }
@@ -1013,7 +1015,7 @@ namespace mfr
                         if (path_isSubsetOf_String(map.RedirectedPathBase, WsPath.c_str()))
                         {
 #if MOREDEBUG
-                            Log(L"[%d]      MFR_Mappings: TraditionalFromRedirected Found subset match prefer_local index=%d for %s", dllInstance, i, WsPath.c_str());
+                            Log(L"[%s%d]      MFR_Mappings: TraditionalFromRedirected Found subset match prefer_local index=%d for %s", g_MfrModuleName, dllInstance, i, WsPath.c_str());
 #endif
                             return map;
                         }
@@ -1024,7 +1026,7 @@ namespace mfr
             i++;
         }
 #if MOREDEBUG
-        Log(L"[%d]      MFR_Mappings: TraditionalFromRedirected No mapping found for %s", dllInstance, WsPath.c_str());
+        Log(L"[%s%d]      MFR_Mappings: TraditionalFromRedirected No mapping found for %s", g_MfrModuleName, dllInstance, WsPath.c_str());
 #endif
         return MakeInvalidMapping();
     }  // Find_TraditionalRedirMapping_FromRedirectedPath_ForwardSearch()

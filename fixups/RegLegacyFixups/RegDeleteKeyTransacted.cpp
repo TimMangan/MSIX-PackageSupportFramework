@@ -11,6 +11,7 @@
 
 #include <psf_framework.h>
 #include <psf_logging.h>
+#include "Logging.h"
 
 #include "FunctionImplementations.h"
 #include "Framework.h"
@@ -36,7 +37,7 @@ LSTATUS __stdcall RegDeleteKeyTransactedFixup(
     PVOID  pExtendedParameter)
 {
 
-    DWORD RegLocalInstance = ++g_RegIntceptInstance;
+    DWORD RegLocalInstance = ++g_RegInterceptInstance;
 
 
     auto result = RegDeleteKeyTransactedImpl(key, subKey, viewDesired, Reserved, hTransaction, pExtendedParameter);
@@ -49,32 +50,32 @@ LSTATUS __stdcall RegDeleteKeyTransactedFixup(
             try
             {
 #if _DEBUG
-                Log(L"[%d] RegDeleteKeyTransacted:\n", RegLocalInstance);
+                Log(L"[%s%d] RegDeleteKeyTransacted:\n", g_RegModuleName, RegLocalInstance);
 #endif
                 std::string keyOnlyPath = InterpretStringA(subKey);
                 std::string keypath = ReplaceAppRegistrySyntax(InterpretKeyPath(key) + "\\" + keyOnlyPath);
 #if _DEBUG
-                Log(L"[%d] RegDeleteKeyTransacted: Path=%s", RegLocalInstance, keypath.c_str());
+                Log(L"[%s%d] RegDeleteKeyTransacted: Path=%s", g_RegModuleName, RegLocalInstance, keypath.c_str());
                 if (RegFixupFakeDelete(keypath, RegLocalInstance) == true)
 #else
                 if (RegFixupFakeDelete(keypath, RegLocalInstance) == true)
 #endif
                 {
 #if _DEBUG
-                    LogCallingModuleInstance(RegLocalInstance);
-                    Log(L"[%d] RegDeleteKeyTransacted:Fake Success\n", RegLocalInstance);
+                    LogCallingModuleInstanceCommon(g_RegModuleName,RegLocalInstance);
+                    Log(L"[%s%d] RegDeleteKeyTransacted:Fake Success\n", g_RegModuleName, RegLocalInstance);
 #endif
                     result = 0;
                 }
             }
             catch (...)
             {
-                Log(L"[%d] RegDeleteKeyTransacted logging failure.\n", RegLocalInstance);
+                Log(L"[%s%d] RegDeleteKeyTransacted logging failure.\n", g_RegModuleName, RegLocalInstance);
             }
         }
     }
 #if _DEBUG
-    Log(L"[%d] RegDeleteKeyTransacted:Fake returns %d\n", RegLocalInstance, result);
+    Log(L"[%s%d] RegDeleteKeyTransacted:Fake returns %d\n", g_RegModuleName, RegLocalInstance, result);
 #endif
     return result;
 }

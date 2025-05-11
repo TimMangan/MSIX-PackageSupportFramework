@@ -52,8 +52,8 @@ BOOL __stdcall MoveFileFixup(_In_ const CharT* existingFileName, _In_ const Char
         if (guard)
         {
 #if _DEBUG
-            LogString(dllInstance, L"MoveFileFixup From", existingFileName);
-            LogString(dllInstance, L"MoveFileFixup To", newFileName);
+            LogString(g_MfrModuleName, dllInstance, L"MoveFileFixup From", existingFileName);
+            LogString(g_MfrModuleName, dllInstance, L"MoveFileFixup To", newFileName);
 #endif
 
             std::wstring wNewFileName = widen(newFileName);
@@ -282,11 +282,11 @@ BOOL __stdcall MoveFileFixup(_In_ const CharT* existingFileName, _In_ const Char
                 }
 
 #if MOREDEBUG
-                Log(L"[%d] MoveFileFixup: Source      to be is %s", dllInstance, UseExistingFile.c_str());
-                Log(L"[%d] MoveFileFixup: Destination to be is %s", dllInstance, UseNewFile.c_str());
+                Log(L"[%s%d] MoveFileFixup: Source      to be is %s", g_MfrModuleName, dllInstance, UseExistingFile.c_str());
+                Log(L"[%s%d] MoveFileFixup: Destination to be is %s", g_MfrModuleName, dllInstance, UseNewFile.c_str());
                 if (ExistingFileIsPackagePath)
                 {
-                    Log(L"[%d] MoveFileFixup: ExistingIsInPackagePath", dllInstance);
+                    Log(L"[%s%d] MoveFileFixup: ExistingIsInPackagePath", g_MfrModuleName, dllInstance);
                 }
 #endif
 
@@ -297,18 +297,18 @@ BOOL __stdcall MoveFileFixup(_In_ const CharT* existingFileName, _In_ const Char
                     std::wstring rldUseNewFile = MakeLongPath(UseNewFile);
                     PreCreateFolders(rldUseNewFile, dllInstance, L"MoveFileFixup");
 #if MOREDEBUG
-                    Log(L"[%d] MoveFileFixup: from is %s", dllInstance, rldUseExistingFile.c_str());
-                    Log(L"[%d] MoveFileFixup:   to is %s", dllInstance, rldUseNewFile.c_str());
+                    Log(L"[%s%d] MoveFileFixup: from is %s", g_MfrModuleName, dllInstance, rldUseExistingFile.c_str());
+                    Log(L"[%s%d] MoveFileFixup:   to is %s", g_MfrModuleName, dllInstance, rldUseNewFile.c_str());
 #endif
                     retfinal = impl::MoveFile(rldUseExistingFile.c_str(), rldUseNewFile.c_str());
 #if _DEBUG
                     if (retfinal == 0)
                     {
-                        Log(L"[%d] MoveFileFixup returns FAILURE 0x%x", dllInstance, GetLastError());
+                        Log(L"[%s%d] MoveFileFixup returns FAILURE 0x%x", g_MfrModuleName, dllInstance, GetLastError());
                     }
                     else
                     {
-                        Log(L"[%d] MoveFileFixup returns SUCCESS 0x%x", dllInstance, retfinal);
+                        Log(L"[%s%d] MoveFileFixup returns SUCCESS 0x%x", g_MfrModuleName, dllInstance, retfinal);
                     }
 #endif
                     return retfinal;
@@ -326,8 +326,8 @@ BOOL __stdcall MoveFileFixup(_In_ const CharT* existingFileName, _In_ const Char
                         (atts & FILE_ATTRIBUTE_DIRECTORY) == 0)
                     {
 #if MOREDEBUG
-                        Log(L"[%d] MoveFileFixup: Implemeting stdcopy from is %s", dllInstance, rldUseExistingFile.c_str());
-                        Log(L"[%d] MoveFileFixup: Implemeting stdcopy   to is %s", dllInstance, rldUseNewFile.c_str());
+                        Log(L"[%s%d] MoveFileFixup: Implemeting stdcopy from is %s", g_MfrModuleName, dllInstance, rldUseExistingFile.c_str());
+                        Log(L"[%s%d] MoveFileFixup: Implemeting stdcopy   to is %s", g_MfrModuleName, dllInstance, rldUseNewFile.c_str());
 #endif
                         // std::filesystem::copy has some edge cases that might throw us for a loop requiring detection of edge
                         // cases that need to be handled differently.  
@@ -348,11 +348,11 @@ BOOL __stdcall MoveFileFixup(_In_ const CharT* existingFileName, _In_ const Char
 #if _DEBUG
                         if (retfinal == 0)
                         {
-                            Log(L"[%d] MoveFileFixup via copy(file) returns FAILURE 0x%x GetLastError 0x%x", dllInstance, eCode, GetLastError());
+                            Log(L"[%s%d] MoveFileFixup via copy(file) returns FAILURE 0x%x GetLastError 0x%x", g_MfrModuleName, dllInstance, eCode, GetLastError());
                         }
                         else
                         {
-                            Log(L"[%d] MoveFileFixup via copy(file) returns SUCCESS 0x%x", dllInstance, retfinal);
+                            Log(L"[%s%d] MoveFileFixup via copy(file) returns SUCCESS 0x%x", g_MfrModuleName, dllInstance, retfinal);
                         }
                         // TODO: remove old??
 #endif
@@ -380,11 +380,11 @@ BOOL __stdcall MoveFileFixup(_In_ const CharT* existingFileName, _In_ const Char
 #if _DEBUG
                         if (retfinal == 0)
                         {
-                            Log(L"[%d] MoveFileFixup via copy(dir) returns FAILURE 0x%x GetLastError 0x%x", dllInstance, eCode, GetLastError());
+                            Log(L"[%s%d] MoveFileFixup via copy(dir) returns FAILURE 0x%x GetLastError 0x%x", g_MfrModuleName, dllInstance, eCode, GetLastError());
                         }
                         else
                         {
-                            Log(L"[%d] MoveFileFixup via copy(dir) returns SUCCESS 0x%x", dllInstance, retfinal);
+                            Log(L"[%s%d] MoveFileFixup via copy(dir) returns SUCCESS 0x%x", g_MfrModuleName, dllInstance, retfinal);
                         }
                         // TODO: remove old???
 #endif
@@ -412,25 +412,25 @@ BOOL __stdcall MoveFileFixup(_In_ const CharT* existingFileName, _In_ const Char
                 PreCreatePackageFoldersIfIlvNeededForWrite(UseNewFile, dllInstance, debug, L"MoveFileFixup");
 
 #if MOREDEBUG
-                Log(L"[%d] MoveFileFixup: IlvAware Source      to be is %s", dllInstance, UseExistingFile.c_str());
-                Log(L"[%d] MoveFileFixup: IlvAware Destination to be is %s", dllInstance, UseNewFile.c_str());
+                Log(L"[%s%d] MoveFileFixup: IlvAware Source      to be is %s", g_MfrModuleName, dllInstance, UseExistingFile.c_str());
+                Log(L"[%s%d] MoveFileFixup: IlvAware Destination to be is %s", g_MfrModuleName, dllInstance, UseNewFile.c_str());
 #endif
 
                 std::wstring rldUseExistingFile = MakeLongPath(UseExistingFile);
                 std::wstring rldUseNewFile = MakeLongPath(UseNewFile);
 #if MOREDEBUG
-                Log(L"[%d] MoveFileFixup: from is %s", dllInstance, rldUseExistingFile.c_str());
-                Log(L"[%d] MoveFileFixup:   to is %s", dllInstance, rldUseNewFile.c_str());
+                Log(L"[%s%d] MoveFileFixup: from is %s", g_MfrModuleName, dllInstance, rldUseExistingFile.c_str());
+                Log(L"[%s%d] MoveFileFixup:   to is %s", g_MfrModuleName, dllInstance, rldUseNewFile.c_str());
 #endif
                 retfinal = impl::MoveFile(rldUseExistingFile.c_str(), rldUseNewFile.c_str());
 #if _DEBUG
                 if (retfinal == 0)
                 {
-                    Log(L"[%d] MoveFileFixup returns FAILURE 0x%x", dllInstance, GetLastError());
+                    Log(L"[%s%d] MoveFileFixup returns FAILURE 0x%x", g_MfrModuleName, dllInstance, GetLastError());
                 }
                 else
                 {
-                    Log(L"[%d] MoveFileFixup returns SUCCESS 0x%x", dllInstance, retfinal);
+                    Log(L"[%s%d] MoveFileFixup returns SUCCESS 0x%x", g_MfrModuleName, dllInstance, retfinal);
                 }
 #endif
                 return retfinal;
@@ -440,18 +440,18 @@ BOOL __stdcall MoveFileFixup(_In_ const CharT* existingFileName, _In_ const Char
         else
         {
 #if _DEBUG
-            LogString(dllInstance, L"MoveFileFixup Unguarded From", existingFileName);
-            LogString(dllInstance, L"MoveFileFixup Unguarded To", newFileName);
+            LogString(g_MfrModuleName, dllInstance, L"MoveFileFixup Unguarded From", existingFileName);
+            LogString(g_MfrModuleName, dllInstance, L"MoveFileFixup Unguarded To", newFileName);
 #endif
         }
     }
 #if _DEBUG
     // Fall back to assuming no redirection is necessary if exception
-    LOGGED_CATCHHANDLER(dllInstance, L"MoveFileFixup")
+    LOGGED_CATCHHANDLER_MIN(g_MfrModuleName, dllInstance, L"MoveFileFixup")
 #else
     catch (...)
     {
-        Log(L"[%d] MoveFileFixup Exception=0x%x", dllInstance, GetLastError());
+        Log(L"[%s%d] MoveFileFixup Exception=0x%x", g_MfrModuleName, dllInstance, GetLastError());
     }
 #endif
 
@@ -467,7 +467,7 @@ BOOL __stdcall MoveFileFixup(_In_ const CharT* existingFileName, _In_ const Char
         retfinal = 0; // impl::MoveFile(existingFileName, newFileName);
     }
 #if _DEBUG
-    Log(L"[%d] MoveFilFixup returns 0x%x", dllInstance, retfinal);
+    Log(L"[%s%d] MoveFilFixup returns 0x%x", g_MfrModuleName, dllInstance, retfinal);
 #endif
     return retfinal;
 }

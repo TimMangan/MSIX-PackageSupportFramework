@@ -50,11 +50,11 @@ HINSTANCE __stdcall ShellExecuteAFixup(_In_opt_ HWND   hwnd,
                 // Release level logging for detection
                 bool temp = g_psf_NoLogging;
                 g_psf_NoLogging = false;
-                Log(L"[%d] ShellExecuteA unguarded. Known compatibility issues exist in certain usages!", dllInstance);
-                LogString(dllInstance, L"ShellExecuteA: file", lpFile);
-                LogString(dllInstance, L"ShellExecuteA: verb", lpOperation);
-                LogString(dllInstance, L"ShellExecuteA: directory", lpDirectory);
-                LogCallingModuleInstance(dllInstance);
+                Log(L"[%s%d] ShellExecuteA unguarded. Known compatibility issues exist in certain usages!", g_MfrModuleName, dllInstance);
+                LogString(g_MfrModuleName, dllInstance, L"ShellExecuteA: file", lpFile);
+                LogString(g_MfrModuleName, dllInstance, L"ShellExecuteA: verb", lpOperation);
+                LogString(g_MfrModuleName, dllInstance, L"ShellExecuteA: directory", lpDirectory);
+                LogCallingModuleInstance(g_MfrModuleName, dllInstance);
                 g_psf_NoLogging = temp;
             }
             retfinal = impl::ShellExecuteA(hwnd, lpOperation, lpFile, lpParameters, lpDirectory, nShowCmd);
@@ -63,11 +63,11 @@ HINSTANCE __stdcall ShellExecuteAFixup(_In_opt_ HWND   hwnd,
     }
 #if _DEBUG
     // Fall back to assuming no redirection is necessary if exception
-    LOGGED_CATCHHANDLER(dllInstance, L"ShellExecuteA")
+    LOGGED_CATCHHANDLER_MIN(g_MfrModuleName, dllInstance, L"ShellExecuteA")
 #else
     catch (...)
     {
-        Log(L"[%d] ShellExecuteA Exception=0x%x", dllInstance, GetLastError());
+        Log(L"[%s%d] ShellExecuteA Exception=0x%x", g_MfrModuleName, dllInstance, GetLastError());
     }
 #endif
 
@@ -109,11 +109,11 @@ HINSTANCE __stdcall ShellExecuteWFixup(_In_opt_ HWND   hwnd,
                 // Release level logging for detection
                 bool temp = g_psf_NoLogging;
                 g_psf_NoLogging = false;
-                Log(L"[%d] ShellExecuteW unguarded informational. Known compatibility issues exist in certain usages!", dllInstance);
-                LogString(dllInstance, L"ShellExecuteW: file", lpFile);
-                LogString(dllInstance, L"ShellExecuteW: verb", lpOperation);
-                LogString(dllInstance, L"ShellExecuteW: directory", lpDirectory);
-                LogCallingModuleInstance(dllInstance);
+                Log(L"[%s%d] ShellExecuteW unguarded informational. Known compatibility issues exist in certain usages!", g_MfrModuleName, dllInstance);
+                LogString(g_MfrModuleName, dllInstance, L"ShellExecuteW: file", lpFile);
+                LogString(g_MfrModuleName, dllInstance, L"ShellExecuteW: verb", lpOperation);
+                LogString(g_MfrModuleName, dllInstance, L"ShellExecuteW: directory", lpDirectory);
+                LogCallingModuleInstance(g_MfrModuleName, dllInstance);
                 g_psf_NoLogging = temp;
             }
             retfinal = impl::ShellExecuteW(hwnd, lpOperation, lpFile, lpParameters, lpDirectory, nShowCmd);
@@ -122,11 +122,11 @@ HINSTANCE __stdcall ShellExecuteWFixup(_In_opt_ HWND   hwnd,
     }
 #if _DEBUG
     // Fall back to assuming no redirection is necessary if exception
-    LOGGED_CATCHHANDLER(dllInstance, L"ShellExecuteW")
+    LOGGED_CATCHHANDLER_MIN(g_MfrModuleName, dllInstance, L"ShellExecuteW")
 #else
     catch (...)
     {
-        Log(L"[%d] ShellExecuteW Exception=0x%x", dllInstance, GetLastError());
+        Log(L"[%s%d] ShellExecuteW Exception=0x%x", g_MfrModuleName, dllInstance, GetLastError());
     }
 #endif
 

@@ -36,7 +36,7 @@ LSTATUS __stdcall RegGetValueAFixup(
     _In_opt_ _Out_opt_  LPDWORD lpcchClass,
     _In_opt_ _Out_opt_ LPDWORD lpcbData)
 {
-    DWORD RegLocalInstance = ++g_RegIntceptInstance;
+    DWORD RegLocalInstance = ++g_RegInterceptInstance;
     LSTATUS result = -1;
 
 
@@ -50,7 +50,7 @@ LSTATUS __stdcall RegGetValueAFixup(
         sSubKey = lpSubKey;
     if (lpValue != NULL)
         sValue = lpValue;
-    Log(L"[%d] RegGetValueA:  key=0x%x keyname=%S SubKey=%S SubName=%S", RegLocalInstance, (ULONG)(ULONG_PTR)key, keyonlypath.c_str(), sSubKey.c_str(), sValue.c_str());
+    Log(L"[%s%d] RegGetValueA:  key=0x%x keyname=%S SubKey=%S SubName=%S", g_RegModuleName, RegLocalInstance, (ULONG)(ULONG_PTR)key, keyonlypath.c_str(), sSubKey.c_str(), sValue.c_str());
 #endif
 
     result = impl::KernelBaseRegGetValueA(key, lpSubKey, lpValue, dwFlags, lpDwType, lpData, lpcchClass, lpcbData);
@@ -63,7 +63,7 @@ LSTATUS __stdcall RegGetValueAFixup(
         if (result == ERROR_SUCCESS)
         {
 #if MOREDEBUG
-            Log(L"[%d] RegGetValue:  Returning success", RegLocalInstance);
+            Log(L"[%s%d] RegGetValue:  Returning success", g_RegModuleName, RegLocalInstance);
 #endif                
         }
         else
@@ -72,7 +72,7 @@ LSTATUS __stdcall RegGetValueAFixup(
             // When we return this value, a subsequent call by the app might ask for this new index, but we can probably assume it's OK to return it twice
             // because we do not have a way to remember this, like done in FindFirstFile.
 #if _DEBUG
-            Log(L"[%d] RegGetValue:  DeletionMarker Blocking this call.", RegLocalInstance);
+            Log(L"[%s%d] RegGetValue:  DeletionMarker Blocking this call.", g_RegModuleName, RegLocalInstance);
 #endif                
 
         }
@@ -80,7 +80,7 @@ LSTATUS __stdcall RegGetValueAFixup(
     else
     {
 #if _DEBUG
-        Log(L"[%d] RegGetValue:  Returning normal failure 0x%x.", RegLocalInstance, result);
+        Log(L"[%s%d] RegGetValue:  Returning normal failure 0x%x.", g_RegModuleName, RegLocalInstance, result);
 #endif                
     }
     return result;
@@ -97,7 +97,7 @@ LSTATUS __stdcall RegGetValueWFixup(
     _In_opt_ _Out_opt_  LPDWORD lpcchClass,
     _In_opt_ _Out_opt_ LPDWORD lpcbData)
 {
-    DWORD RegLocalInstance = ++g_RegIntceptInstance;
+    DWORD RegLocalInstance = ++g_RegInterceptInstance;
     LSTATUS result = -1;
 
 
@@ -111,7 +111,7 @@ LSTATUS __stdcall RegGetValueWFixup(
         sSubKey = narrow(lpSubKey);
     if (lpValue != NULL)
         sValue = narrow(lpValue);
-    Log(L"[%d] RegGetValueW:  key=0x%x keyname=%S SubKey=%S SubName=%S", RegLocalInstance, (ULONG)(ULONG_PTR)key, keyonlypath.c_str(), sSubKey.c_str(), sValue.c_str());
+    Log(L"[%s%d] RegGetValueW:  key=0x%x keyname=%S SubKey=%S SubName=%S", g_RegModuleName, RegLocalInstance, (ULONG)(ULONG_PTR)key, keyonlypath.c_str(), sSubKey.c_str(), sValue.c_str());
 #endif
 
     result = impl::KernelBaseRegGetValueW(key, lpSubKey, lpValue, dwFlags, lpDwType, lpData, lpcchClass, lpcbData);
@@ -124,7 +124,7 @@ LSTATUS __stdcall RegGetValueWFixup(
         if (result == ERROR_SUCCESS)
         {
 #if _DEBUG
-            Log(L"[%d] RegGetValue:  Returning success", RegLocalInstance);
+            Log(L"[%s%d] RegGetValue:  Returning success", g_RegModuleName, RegLocalInstance);
 #endif                
         }
         else
@@ -133,14 +133,14 @@ LSTATUS __stdcall RegGetValueWFixup(
             // When we return this value, a subsequent call by the app might ask for this new index, but we can probably assume it's OK to return it twice
             // because we do not have a way to remember this, like done in FindFirstFile.
 #if _DEBUG
-            Log(L"[%d] RegGetValue:  DeletionMarker Blocking this call.", RegLocalInstance);
+            Log(L"[%s%d] RegGetValue:  DeletionMarker Blocking this call.", g_RegModuleName, RegLocalInstance);
 #endif
         }
     }
     else
     {
 #if _DEBUG
-        Log(L"[%d] RegGetValue:  Returning normal failure 0x%x.", RegLocalInstance, result);
+        Log(L"[%s%d] RegGetValue:  Returning normal failure 0x%x.", g_RegModuleName, RegLocalInstance, result);
 #endif                
     }
     return result;

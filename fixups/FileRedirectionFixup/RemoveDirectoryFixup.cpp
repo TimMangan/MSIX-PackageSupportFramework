@@ -19,7 +19,7 @@ BOOL __stdcall RemoveDirectoryFixup(_In_ const CharT* pathName) noexcept
         {
             std::wstring wPathName = widen(pathName);
 #if _DEBUG
-            LogString(RemoveDirectoryInstance,L"RemoveDirectoryFixup for pathName", wPathName.c_str());
+            LogString(g_FrfModuleName, RemoveDirectoryInstance,L"RemoveDirectoryFixup for pathName", wPathName.c_str());
 #endif
             
             if (!IsUnderUserAppDataLocalPackages(wPathName.c_str()))
@@ -38,14 +38,14 @@ BOOL __stdcall RemoveDirectoryFixup(_In_ const CharT* pathName) noexcept
                             // If the directory does not exist in the redirected location, but does in the non-redirected
                             // location, then we want to give the "illusion" that the delete succeeded
 #if _DEBUG
-                            LogString(RemoveDirectoryInstance, L"RemoveDirectoryFixup In package but not redirected area.", L"Fake return true.");
+                            LogString(g_FrfModuleName, RemoveDirectoryInstance, L"RemoveDirectoryFixup In package but not redirected area.", L"Fake return true.");
 #endif
                             return TRUE;
                         }
                         else
                         {
 #if _DEBUG
-                            LogString(RemoveDirectoryInstance, L"RemoveDirectoryFixup Not present in redirected or requested path.", L"return false.");
+                            LogString(g_FrfModuleName, RemoveDirectoryInstance, L"RemoveDirectoryFixup Not present in redirected or requested path.", L"return false.");
 #endif
                             SetLastError(ERROR_PATH_NOT_FOUND);
                             return FALSE;
@@ -54,11 +54,11 @@ BOOL __stdcall RemoveDirectoryFixup(_In_ const CharT* pathName) noexcept
                     else
                     {
 #if _DEBUG
-                        LogString(RemoveDirectoryInstance, L"RemoveDirectoryFixup Use Folder", pri.redirect_path.c_str());
+                        LogString(g_FrfModuleName, RemoveDirectoryInstance, L"RemoveDirectoryFixup Use Folder", pri.redirect_path.c_str());
 #endif
                         BOOL bRet = impl::RemoveDirectory(rldRedirectPath.c_str());
 #if _DEBUG
-                        Log(L"[%d]RemoveDirectoryFixup deletes redirected with result: %d", RemoveDirectoryInstance, bRet);
+                        Log(L"[%s%d]RemoveDirectoryFixup deletes redirected with result: %d", g_FrfModuleName, RemoveDirectoryInstance, bRet);
 #endif
                         return bRet;
                     }
@@ -67,18 +67,18 @@ BOOL __stdcall RemoveDirectoryFixup(_In_ const CharT* pathName) noexcept
             else
             {
 #if _DEBUG
-                Log(L"[%d]RemoveDirectoryFixup Under LocalAppData\\Packages, don't redirect", RemoveDirectoryInstance);
+                Log(L"[%s%d]RemoveDirectoryFixup Under LocalAppData\\Packages, don't redirect", g_FrfModuleName, RemoveDirectoryInstance);
 #endif
             }
         }
     }
 #if _DEBUG
     // Fall back to assuming no redirection is necessary if exception
-    LOGGED_CATCHHANDLER(RemoveDirectoryInstance, L"RemoveDirectory")
+    LOGGED_CATCHHANDLER_MIN(g_FrfModuleName, RemoveDirectoryInstance, L"RemoveDirectory")
 #else
     catch (...)
     {
-        Log(L"[%d] RemoveDirectory Exception=0x%x", RemoveDirectoryInstance, GetLastError());
+        Log(L"[%s%d] RemoveDirectory Exception=0x%x", g_FrfModuleName, RemoveDirectoryInstance, GetLastError());
     }
 #endif
 
@@ -92,7 +92,7 @@ BOOL __stdcall RemoveDirectoryFixup(_In_ const CharT* pathName) noexcept
         retfinal = impl::RemoveDirectory(pathName);
     }
 #if _DEBUG
-    Log(L"[%d] RemoveDirectoryFixup returns 0x%x", RemoveDirectoryInstance, retfinal);
+    Log(L"[%s%d] RemoveDirectoryFixup returns 0x%x", g_FrfModuleName, RemoveDirectoryInstance, retfinal);
 #endif
     return retfinal;
 }

@@ -27,13 +27,13 @@ BOOL __stdcall ReplaceFileFixup(
         if (guard)
         {
 #if _DEBUG
-            LogString(ReplaceFileInstance,L"ReplaceFileFixup From", replacedFileName);
-            LogString(ReplaceFileInstance,L"ReplaceFileFixup To",   replacementFileName);
+            LogString(g_FrfModuleName, ReplaceFileInstance,L"ReplaceFileFixup From", replacedFileName);
+            LogString(g_FrfModuleName, ReplaceFileInstance,L"ReplaceFileFixup To",   replacementFileName);
             if (backupFileName != nullptr)
             {
-                LogString(ReplaceFileInstance, L"ReplaceFileFixup with backup", backupFileName);
+                LogString(g_FrfModuleName, ReplaceFileInstance, L"ReplaceFileFixup with backup", backupFileName);
             }
-            Log(L"[%d] ReplaceFileFixup replaceFlags 0x%x", ReplaceFileInstance, replaceFlags);
+            Log(L"[%s%d] ReplaceFileFixup replaceFlags 0x%x", g_FrfModuleName, ReplaceFileInstance, replaceFlags);
 #endif
 
             // NOTE: ReplaceFile will delete the "replacement file" (the file we're copying from), so therefore we need
@@ -47,12 +47,12 @@ BOOL __stdcall ReplaceFileFixup(
             path_redirect_info  priBackup = ShouldRedirectV2(backupFileName, redirect_flags::ensure_directory_structure | redirect_flags::ok_if_parent_in_pkg, ReplaceFileInstance);
 #if MOREDEBUG
             if (priTarget.should_redirect)
-                LogString(ReplaceFileInstance, L"ReplaceFileFixup RedirTarget ", priTarget.redirect_path.c_str());
+                LogString(g_FrfModuleName, ReplaceFileInstance, L"ReplaceFileFixup RedirTarget ", priTarget.redirect_path.c_str());
             if (priSource.should_redirect)
-                LogString(ReplaceFileInstance, L"ReplaceFileFixup RedirSource ", priSource.redirect_path.c_str());
+                LogString(g_FrfModuleName, ReplaceFileInstance, L"ReplaceFileFixup RedirSource ", priSource.redirect_path.c_str());
             if (priBackup.should_redirect)
-                LogString(ReplaceFileInstance, L"ReplaceFileFixup RedirBackup ", priBackup.redirect_path.c_str());
-            Log(L"[%d] Exists: %d %d %d", ReplaceFileInstance, priTarget.doesRedirectedExist, priSource.doesRedirectedExist, priBackup.doesRedirectedExist);
+                LogString(g_FrfModuleName, ReplaceFileInstance, L"ReplaceFileFixup RedirBackup ", priBackup.redirect_path.c_str());
+            Log(L"[%s%d] Exists: %d %d %d", g_FrfModuleName, ReplaceFileInstance, priTarget.doesRedirectedExist, priSource.doesRedirectedExist, priBackup.doesRedirectedExist);
 #endif
             if ( priTarget.should_redirect || priSource.should_redirect || priBackup.should_redirect)
             {
@@ -64,7 +64,7 @@ BOOL __stdcall ReplaceFileFixup(
                     BOOL b = impl::ReplaceFile(rldReplacedFileName.c_str(), rldReplacementFileName.c_str(), rldBackupFileName.c_str(), replaceFlags, exclude, reserved);
                     if (b == 0)
                     {
-                        Log(L"[%d] ReplaceFileFixup GetLastError 0x%x", ReplaceFileInstance, GetLastError());
+                        Log(L"[%s%d] ReplaceFileFixup GetLastError 0x%x", g_FrfModuleName, ReplaceFileInstance, GetLastError());
                     }
                     return b;
                 }
@@ -73,7 +73,7 @@ BOOL __stdcall ReplaceFileFixup(
                     BOOL b = impl::ReplaceFile(rldReplacedFileName.c_str(), rldReplacementFileName.c_str(), nullptr, replaceFlags, exclude, reserved);
                     if (b == 0)
                     {
-                        Log(L"[%d] ReplaceFileFixup GetLastError 0x%x", ReplaceFileInstance, GetLastError());
+                        Log(L"[%s%d] ReplaceFileFixup GetLastError 0x%x", g_FrfModuleName, ReplaceFileInstance, GetLastError());
                     }
                     return b;
                 }
@@ -82,11 +82,11 @@ BOOL __stdcall ReplaceFileFixup(
     }
 #if _DEBUG
     // Fall back to assuming no redirection is necessary if exception
-    LOGGED_CATCHHANDLER(ReplaceFileInstance, L"ReplaceFile")
+    LOGGED_CATCHHANDLER_MIN(g_FrfModuleName, ReplaceFileInstance, L"ReplaceFile")
 #else
     catch (...)
     {
-        Log(L"[%d] ReplaceFile Exception=0x%x", ReplaceFileInstance, GetLastError());
+        Log(L"[%s%d] ReplaceFile Exception=0x%x", g_FrfModuleName, ReplaceFileInstance, GetLastError());
     }
 #endif
 

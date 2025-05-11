@@ -53,8 +53,8 @@ BOOL __stdcall WS_ShellExecuteExAFixup(
                 // Release level logging for detection
                 bool temp = g_psf_NoLogging;
                 g_psf_NoLogging = false;
-                Log(L"[%d] (Windows.Storage)ShellExecutEx()", dllInstance);
-                LogCallingModuleInstance(dllInstance);
+                Log(L"[%s%d] (Windows.Storage)ShellExecutEx()", g_MfrModuleName, dllInstance);
+                LogCallingModuleInstance(g_MfrModuleName, dllInstance);
                 g_psf_NoLogging = temp;
             }
 
@@ -65,7 +65,7 @@ BOOL __stdcall WS_ShellExecuteExAFixup(
     }
     catch (...)
     {
-        Log(L"[%d] (Windows.Storage)ShellExecute Exception=0x%x", dllInstance, GetLastError());
+        Log(L"[%s%d] (Windows.Storage)ShellExecute Exception=0x%x", g_MfrModuleName, dllInstance, GetLastError());
     }
 
     retfinal = ::ShellExecuteExA(pExecInfo);
@@ -104,9 +104,9 @@ BOOL __stdcall WS_ShellExecuteExWFixup(
                 // Release level logging for detection
                 bool temp = g_psf_NoLogging;
                 g_psf_NoLogging = false; 
-                Log(L"[%d] (Windows.Storage)ShellExecutExW()", dllInstance);
-                Log(L"[%d] (Windows.Storage)ShellExecute() unfixed  dir=%ls, file=%ls, verb=%ls", dllInstance, pExecInfo->lpDirectory, pExecInfo->lpFile, pExecInfo->lpVerb);
-                LogCallingModuleInstance(dllInstance);
+                Log(L"[%s%d] (Windows.Storage)ShellExecutExW()", g_MfrModuleName, dllInstance);
+                Log(L"[%s%d] (Windows.Storage)ShellExecute() unfixed  dir=%ls, file=%ls, verb=%ls", g_MfrModuleName, dllInstance, pExecInfo->lpDirectory, pExecInfo->lpFile, pExecInfo->lpVerb);
+                LogCallingModuleInstance(g_MfrModuleName, dllInstance);
                 g_psf_NoLogging = temp;
             }
 
@@ -117,7 +117,7 @@ BOOL __stdcall WS_ShellExecuteExWFixup(
     }
     catch (...)
     {
-        Log(L"[%d] (Windows.Storage)ShellExecute Exception=0x%x", dllInstance, GetLastError());
+        Log(L"[%s%d] (Windows.Storage)ShellExecute Exception=0x%x", g_MfrModuleName, dllInstance, GetLastError());
     }
 
     retfinal = ::ShellExecuteExW(pExecInfo);

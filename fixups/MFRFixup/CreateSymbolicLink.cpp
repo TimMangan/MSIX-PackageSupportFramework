@@ -60,9 +60,9 @@ BOOLEAN __stdcall CreateSymbolicLinkFixup(
         if (guard)
         {
 #if _DEBUG
-            LogString(dllInstance, L"CreateSymbolicLinkFixup for", symlinkFileName);
-            LogString(dllInstance, L"CreateSymbolicLinkFixup target", targetFileName);
-            Log(L"[%d] CreateSymbolicLinkFixup flags=0x%x", dllInstance, flags);
+            LogString(g_MfrModuleName, dllInstance, L"CreateSymbolicLinkFixup for", symlinkFileName);
+            LogString(g_MfrModuleName, dllInstance, L"CreateSymbolicLinkFixup target", targetFileName);
+            Log(L"[%s%d] CreateSymbolicLinkFixup flags=0x%x", g_MfrModuleName, dllInstance, flags);
 #endif
 
             std::wstring wSymlinkFileName = widen(symlinkFileName);
@@ -89,26 +89,26 @@ BOOLEAN __stdcall CreateSymbolicLinkFixup(
                     if (PathExists(cohortsTarget.WsPackage.c_str()))
                     {
 #if _DEBUG
-                        Log(L"[%d] CreateSymbolicLinkFixup:  Copy target package file to redirection area.", dllInstance);
+                        Log(L"[%s%d] CreateSymbolicLinkFixup:  Copy target package file to redirection area.", g_MfrModuleName, dllInstance);
 #endif
                         if (!Cow(cohortsTarget.WsPackage, cohortsTarget.WsRedirected, dllInstance, L"CreateSymbolicLinkFixup"))
                         {
                             UseTarget = cohortsTarget.WsPackage;
 #if _DEBUG
-                            Log(L"[%d] CreateSymbolicLinkFixup:  Cow failure?", dllInstance);
+                            Log(L"[%s%d] CreateSymbolicLinkFixup:  Cow failure?", g_MfrModuleName, dllInstance);
 #endif
                         }
                     }
                     else if (cohortsTarget.UsingNative)
                     {
 #if _DEBUG
-                        Log(L"[%d] CreateSymbolicLinkFixup:  Copy target native file to redirection area.", dllInstance);
+                        Log(L"[%s%d] CreateSymbolicLinkFixup:  Copy target native file to redirection area.", g_MfrModuleName, dllInstance);
 #endif
                         if (!Cow(cohortsTarget.WsNative, cohortsTarget.WsRedirected, dllInstance, L"CreateSymbolicLinkFixup"))
                         {
                             UseTarget = cohortsTarget.WsNative;
 #if _DEBUG
-                            Log(L"[%d] CreateSymbolicLinkFixup:  Cow failure?", dllInstance);
+                            Log(L"[%s%d] CreateSymbolicLinkFixup:  Cow failure?", g_MfrModuleName, dllInstance);
 #endif
                         }
                     }
@@ -135,19 +135,19 @@ BOOLEAN __stdcall CreateSymbolicLinkFixup(
                 std::wstring rldTargetFileNameRedirected = MakeLongPath(UseTarget);
                 PreCreateFolders(rldSymlinkFileNameRedirected, dllInstance, L"CreateSymbolicLinkFixup");
 #if MOREDEBUG
-                Log(L"[%d] CreateSymbolicLinkFixup: link is to   %s", dllInstance, rldSymlinkFileNameRedirected.c_str());
-                Log(L"[%d] CreateSymbolicLinkFixup: link is from %s", dllInstance, rldTargetFileNameRedirected.c_str());
+                Log(L"[%s%d] CreateSymbolicLinkFixup: link is to   %s", g_MfrModuleName, dllInstance, rldSymlinkFileNameRedirected.c_str());
+                Log(L"[%s%d] CreateSymbolicLinkFixup: link is from %s", g_MfrModuleName, dllInstance, rldTargetFileNameRedirected.c_str());
 #endif
                 //retfinal = impl::CreateSymbolicLink(rldSymlinkFileNameRedirected.c_str(), rldTargetFileNameRedirected.c_str(), flags);
                 retfinal = impl::CreateSymbolicLink(rldSymlinkFileNameRedirected.c_str(), rldTargetFileNameRedirected.c_str(), flags | SYMBOLIC_LINK_FLAG_ALLOW_UNPRIVILEGED_CREATE);
 #if _DEBUG
                 if (retfinal == 0)
                 {
-                    Log(L"[%d] CreateSymbolicLinkFixup returns FAILURE 0x%x", dllInstance, GetLastError());
+                    Log(L"[%s%d] CreateSymbolicLinkFixup returns FAILURE 0x%x", g_MfrModuleName, dllInstance, GetLastError());
                 }
                 else
                 {
-                    Log(L"[%d] CreateSymbolicLinkFixup returns SUCCESS 0x%x", dllInstance, retfinal);
+                    Log(L"[%s%d] CreateSymbolicLinkFixup returns SUCCESS 0x%x", g_MfrModuleName, dllInstance, retfinal);
                 }
 #endif
                 return retfinal;
@@ -157,11 +157,11 @@ BOOLEAN __stdcall CreateSymbolicLinkFixup(
     }
 #if _DEBUG
     // Fall back to assuming no redirection is necessary if exception
-    LOGGED_CATCHHANDLER(dllInstance, L"CreateSymbolicLinkFixup")
+    LOGGED_CATCHHANDLER_MIN(g_MfrModuleName, dllInstance, L"CreateSymbolicLinkFixup")
 #else
     catch (...)
     {
-        Log(L"[%d] CreateSymbolicLinkFixup Exception=0x%x", dllInstance, GetLastError());
+        Log(L"[%s%d] CreateSymbolicLinkFixup Exception=0x%x", g_MfrModuleName, dllInstance, GetLastError());
     }
 #endif
 
@@ -177,7 +177,7 @@ BOOLEAN __stdcall CreateSymbolicLinkFixup(
         retfinal = 0; //impl::CreateSymbolicLink(symlinkFileName, targetFileName, flags | SYMBOLIC_LINK_FLAG_ALLOW_UNPRIVILEGED_CREATE);
     }
 #if _DEBUG
-    Log(L"[%d] CreateSymbolicLinkFixup (default) returns %d", dllInstance, retfinal);
+    Log(L"[%s%d] CreateSymbolicLinkFixup (default) returns %d", g_MfrModuleName, dllInstance, retfinal);
 #endif
     return retfinal;
 }

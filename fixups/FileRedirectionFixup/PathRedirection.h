@@ -183,6 +183,7 @@ std::filesystem::path path_from_package_vfs_relative_path(std::wstring package_v
 std::wstring GetVfsVarFromPackagePath(std::filesystem::path packagePath);
 
 extern DWORD g_FileIntceptInstance;
+extern const wchar_t* g_FrfModuleName;
 
 
 ///////////////////////////////////////

@@ -53,9 +53,6 @@
     <ClCompile Include="RegistryFixups.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\CommonSrc\psf_logging.cpp">
-      <Filter>CommonSrc</Filter>
-    </ClCompile>
     <ClCompile Include="RegRemediation.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -80,9 +77,6 @@
     <ClCompile Include="RegDeleteValue.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Logging.cpp">
-      <Filter>Header Files</Filter>
-    </ClCompile>
     <ClCompile Include="RegOpenKey.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -99,6 +93,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="RegQueryValueEx.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Logging.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

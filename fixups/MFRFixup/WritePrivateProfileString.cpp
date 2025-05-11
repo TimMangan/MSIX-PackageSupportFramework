@@ -30,7 +30,7 @@
             retfinal = impl::WritePrivateProfileString(appName, keyName, string, narrow(LongDestinationFilename).c_str()); \
             if (debug) \
             { \
-                Log(L"[%d] WritePrivateProfileString(A) returns %d on file %s", dllInstance, retfinal, LongDestinationFilename.c_str()); \
+                Log(L"[%s%d] WritePrivateProfileString(A) returns %d on file %s", g_MfrModuleName, dllInstance, retfinal, LongDestinationFilename.c_str()); \
             } \
             return retfinal; \
         } \
@@ -39,7 +39,7 @@
             retfinal = impl::WritePrivateProfileString(appName, keyName, string, LongDestinationFilename.c_str()); \
             if (debug) \
             { \
-                Log(L"[%d] WritePrivateProfileString(W) returns %d on file %s", dllInstance, retfinal, LongDestinationFilename.c_str()); \
+                Log(L"[%s%d] WritePrivateProfileString(W) returns %d on file %s", g_MfrModuleName, dllInstance, retfinal, LongDestinationFilename.c_str()); \
             } \
             return retfinal; \
         } \
@@ -72,7 +72,7 @@ BOOL __stdcall WritePrivateProfileStringFixup(
             if (fileName != NULL)
             {
 #if _DEBUG
-                LogString(dllInstance, L"WritePrivateProfileStringFixup for fileName", fileName);
+                LogString(g_MfrModuleName, dllInstance, L"WritePrivateProfileStringFixup for fileName", fileName);
 #endif
                 // This get is inheirently a write operation in all cases.
                 // We prefer to use the redirecton case, if present.
@@ -384,18 +384,18 @@ BOOL __stdcall WritePrivateProfileStringFixup(
             else
             {
 #if _DEBUG
-                Log(L"[%d] WritePrivateProfileStringFixup: null fileName, don't redirect", dllInstance);
+                Log(L"[%s%d] WritePrivateProfileStringFixup: null fileName, don't redirect", g_MfrModuleName, dllInstance);
 #endif
             }
         }
     }
 #if _DEBUG
     // Fall back to assuming no redirection is necessary if exception
-    LOGGED_CATCHHANDLER(dllInstance, L"WritePrivateProfileStringFixup")
+    LOGGED_CATCHHANDLER_MIN(g_MfrModuleName, dllInstance, L"WritePrivateProfileStringFixup")
 #else
     catch (...)
     {
-        Log(L"[%d] WritePrivateProfileStringFixup: Exception=0x%x", dllInstance, GetLastError());
+        Log(L"[%s%d] WritePrivateProfileStringFixup: Exception=0x%x", g_MfrModuleName, dllInstance, GetLastError());
     }
 #endif 
 

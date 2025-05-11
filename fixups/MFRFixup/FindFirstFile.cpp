@@ -38,11 +38,9 @@
 
 #include <errno.h>
 #include "FunctionImplementations.h"
-#include <psf_logging.h>
 
 #include "ManagedPathTypes.h"
 #include "PathUtilities.h"
-#include "FunctionImplementations.h"
 #include <psf_logging.h>
 #include <memory>
 #include "FindData3.h"
@@ -66,6 +64,7 @@ HANDLE __stdcall FindFirstFileFixup(_In_ const CharT* fileName, _Out_ win32_find
     bool moreDebug = false;
 #if _DEBUG
     debug = true;
+    moreDebug = true;
 #endif
 #if MOREDEBUG
     moreDebug = true;
@@ -80,7 +79,7 @@ HANDLE __stdcall FindFirstFileFixup(_In_ const CharT* fileName, _Out_ win32_find
         result->requested_path = wfileName;
 
 #if _DEBUG
-        LogString(dllInstance, L"FindFirstFileFixup: for fileName", fileName);
+        LogString(g_MfrModuleName, dllInstance, L"FindFirstFileFixup: for fileName", fileName);
 #endif
        
         wfileName = AdjustBadUNC(wfileName, dllInstance, L"FindFirstFileFixup");
@@ -91,16 +90,16 @@ HANDLE __stdcall FindFirstFileFixup(_In_ const CharT* fileName, _Out_ win32_find
 
 
 #if MOREDEBUG
-        Log(L"[%d] FindFirstFileFixup:  Adjusted Path=%s", dllInstance, wfileName.c_str());
-        Log(L"[%d] FindFirstFileFixup:      RedirPath=%s", dllInstance, cohorts.WsRedirected.c_str());
-        Log(L"[%d] FindFirstFileFixup:    PackagePath=%s", dllInstance, cohorts.WsPackage.c_str());
+        Log(L"[%s%d] FindFirstFileFixup:  Adjusted Path=%s", g_MfrModuleName, dllInstance, wfileName.c_str());
+        Log(L"[%s%d] FindFirstFileFixup:      RedirPath=%s", g_MfrModuleName, dllInstance, cohorts.WsRedirected.c_str());
+        Log(L"[%s%d] FindFirstFileFixup:    PackagePath=%s", g_MfrModuleName, dllInstance, cohorts.WsPackage.c_str());
         if (cohorts.UsingNative)
         {
-            Log(L"[%d] FindFirstFileFixup:     NativePath=%s", dllInstance, cohorts.WsNative.c_str());
+            Log(L"[%s%d] FindFirstFileFixup:     NativePath=%s", g_MfrModuleName, dllInstance, cohorts.WsNative.c_str());
         }
         else
         {
-            Log(L"[%d] FindFirstFileFixup:  NO NativePath", dllInstance);
+            Log(L"[%s%d] FindFirstFileFixup:  NO NativePath", g_MfrModuleName, dllInstance);
         }
 #endif
 
@@ -138,11 +137,11 @@ HANDLE __stdcall FindFirstFileFixup(_In_ const CharT* fileName, _Out_ win32_find
 #if _DEBUG
             if (findData->cAlternateFileName != NULL)
             {
-                Log(L"[%d] FindFirstFileFixup[%d] (from redirected): had results %ls %ls", dllInstance, Result_Redirected, findData->cFileName, findData->cAlternateFileName);
+                Log(L"[%s%d] FindFirstFileFixup[%d] (from redirected): had results %ls %ls", g_MfrModuleName, dllInstance, Result_Redirected, findData->cFileName, findData->cAlternateFileName);
             }
             else
             {
-                Log(L"[%d] FindFirstFileFixup[%d] (from redirected): had results %ls", dllInstance, Result_Redirected, findData->cFileName);
+                Log(L"[%s%d] FindFirstFileFixup[%d] (from redirected): had results %ls", g_MfrModuleName, dllInstance, Result_Redirected, findData->cFileName);
             }
 #endif
             //AnyValidPath = true;
@@ -156,7 +155,7 @@ HANDLE __stdcall FindFirstFileFixup(_In_ const CharT* fileName, _Out_ win32_find
             // Path doesn't exist or match any files. We can safely get away without the redirected file exists check
             //result->redirect_path.clear();
 #if _DEBUG
-            Log(L"[%d] FindFirstFileFixup[%d] (from redirected): no results.", dllInstance, Result_Redirected);
+            Log(L"[%s%d] FindFirstFileFixup[%d] (from redirected): no results.", g_MfrModuleName, dllInstance, Result_Redirected);
 #endif
         }
         // save for next level
@@ -170,11 +169,11 @@ HANDLE __stdcall FindFirstFileFixup(_In_ const CharT* fileName, _Out_ win32_find
 #if _DEBUG
             if (findData->cAlternateFileName != NULL)
             {
-                Log(L"[%d] FindFirstFileFixup[%d] (from package):   had results %ls %ls", dllInstance, Result_Package, findData->cFileName, findData->cAlternateFileName);
+                Log(L"[%s%d] FindFirstFileFixup[%d] (from package):   had results %ls %ls", g_MfrModuleName, dllInstance, Result_Package, findData->cFileName, findData->cAlternateFileName);
             }
             else
             {
-                Log(L"[%d] FindFirstFileFixup[%d] (from package):   had results %ls", dllInstance, Result_Package, findData->cFileName);
+                Log(L"[%s%d] FindFirstFileFixup[%d] (from package):   had results %ls", g_MfrModuleName, dllInstance, Result_Package, findData->cFileName);
             }
 #endif
             initialFindError = ERROR_SUCCESS;
@@ -185,7 +184,7 @@ HANDLE __stdcall FindFirstFileFixup(_In_ const CharT* fileName, _Out_ win32_find
                 initialFindError = ERROR_FILE_NOT_FOUND;
             ///result->package_vfs_path.clear();
 #if _DEBUG
-            Log(L"[%d] FindFirstFileFixup[%d] (from package):   no results.", dllInstance, Result_Package);
+            Log(L"[%s%d] FindFirstFileFixup[%d] (from package):   no results.", g_MfrModuleName, dllInstance, Result_Package);
 #endif
         }
 
@@ -199,7 +198,7 @@ HANDLE __stdcall FindFirstFileFixup(_In_ const CharT* fileName, _Out_ win32_find
                     if (copy_find_data(*findData, *ansiData))
                     {
 #if _DEBUG
-                        Log(L"[%d] FindFirstFile error set by caller", dllInstance);
+                        Log(L"[%s%d] FindFirstFile error set by caller", g_MfrModuleName, dllInstance);
 #endif
                         // NOTE: Last error set by caller
                         return INVALID_HANDLE_VALUE;
@@ -226,11 +225,11 @@ HANDLE __stdcall FindFirstFileFixup(_In_ const CharT* fileName, _Out_ win32_find
 #if _DEBUG
                 if (findData->cAlternateFileName != NULL)
                 {
-                    Log(L"[%d] FindFirstFileFixup[%d] (from native)    had results=%ls %ls", dllInstance, Result_Native, findData->cFileName, findData->cAlternateFileName);
+                    Log(L"[%s%d] FindFirstFileFixup[%d] (from native)    had results=%ls %ls", g_MfrModuleName, dllInstance, Result_Native, findData->cFileName, findData->cAlternateFileName);
                 }
                 else
                 {
-                    Log(L"[%d] FindFirstFileFixup[%d] (from native)    had results=%ls", dllInstance, Result_Native, findData->cFileName);
+                    Log(L"[%s%d] FindFirstFileFixup[%d] (from native)    had results=%ls", g_MfrModuleName, dllInstance, Result_Native, findData->cFileName);
                 }
 #endif
                 initialFindError = ERROR_SUCCESS;
@@ -240,7 +239,7 @@ HANDLE __stdcall FindFirstFileFixup(_In_ const CharT* fileName, _Out_ win32_find
                 if (initialFindError != ERROR_SUCCESS && GetLastError() == ERROR_FILE_NOT_FOUND)
                     initialFindError = ERROR_FILE_NOT_FOUND;
 #if _DEBUG
-                Log(L"[%d] FindFirstFileFixup[%d] (from native):   no results.", dllInstance, Result_Native);
+                Log(L"[%s%d] FindFirstFileFixup[%d] (from native):   no results.", g_MfrModuleName, dllInstance, Result_Native);
 #endif
             }
             if (!result->find_handles[Result_Redirected] &&
@@ -253,7 +252,7 @@ HANDLE __stdcall FindFirstFileFixup(_In_ const CharT* fileName, _Out_ win32_find
                         if (copy_find_data(*findData, *ansiData))
                         {
 #if _DEBUG
-                            Log(L"[%d] FindFirstFileFixup error set by caller", dllInstance);
+                            Log(L"[%s%d] FindFirstFileFixup error set by caller", g_MfrModuleName, dllInstance);
 #endif
                             // NOTE: Last error set by caller
                             return INVALID_HANDLE_VALUE;
@@ -271,7 +270,7 @@ HANDLE __stdcall FindFirstFileFixup(_In_ const CharT* fileName, _Out_ win32_find
         else
         {
 #if _DEBUG
-            Log(L"[%d] FindFirstFileFixup[%d] (from native):    no results possible.", dllInstance, Result_Native);
+            Log(L"[%s%d] FindFirstFileFixup[%d] (from native):    no results possible.", g_MfrModuleName, dllInstance, Result_Native);
 #endif
         }
 
@@ -288,11 +287,11 @@ HANDLE __stdcall FindFirstFileFixup(_In_ const CharT* fileName, _Out_ win32_find
 #if _DEBUG
             if (result->cached_data.cAlternateFileName != NULL)
             {
-                Log(L"[%d] FindFirstFileFixup returns %ls %ls", dllInstance, result->cached_data.cFileName, result->cached_data.cAlternateFileName);
+                Log(L"[%s%d] FindFirstFileFixup returns %ls %ls", g_MfrModuleName, dllInstance, result->cached_data.cFileName, result->cached_data.cAlternateFileName);
             }
             else
             {
-                Log(L"[%d] FindFirstFileFixup returns %ls", dllInstance, result->cached_data.cFileName);
+                Log(L"[%s%d] FindFirstFileFixup returns %ls", g_MfrModuleName, dllInstance, result->cached_data.cFileName);
             }
 #endif
             result->wsAlready_returned_list.push_back(result->cached_data.cFileName);
@@ -302,7 +301,7 @@ HANDLE __stdcall FindFirstFileFixup(_In_ const CharT* fileName, _Out_ win32_find
         else
         {
 #if _DEBUG
-            Log(L"[%d] FindFirstFileFixup returns 0x%x", dllInstance, initialFindError);
+            Log(L"[%s%d] FindFirstFileFixup returns 0x%x", g_MfrModuleName, dllInstance, initialFindError);
 #endif
             ::SetLastError(initialFindError);
             return INVALID_HANDLE_VALUE;
@@ -312,7 +311,7 @@ HANDLE __stdcall FindFirstFileFixup(_In_ const CharT* fileName, _Out_ win32_find
 
     // If still here, call original.
 #if _DEBUG
-    LogString(dllInstance, L"\tFindFirstFileFixup: (unguarded) for fileName", fileName);
+    LogString(g_MfrModuleName, dllInstance, L"\tFindFirstFileFixup: (unguarded) for fileName", fileName);
 #endif
     return impl::FindFirstFile(fileName, findFileData);
 }

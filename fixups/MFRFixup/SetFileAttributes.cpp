@@ -34,11 +34,11 @@ BOOL WRAPPER_SETFILEATTRIBUTES(std::wstring theDestinationFilename, DWORD fileAt
         { 
             if (retfinal == 0) 
             { 
-                Log(L"[%d] SetFileAttributes wrapper returns FAILURE 0x%x and file '%s'", dllInstance, GetLastError(), LongDestinationFilename.c_str()); 
+                Log(L"[%s%d] SetFileAttributes wrapper returns FAILURE 0x%x and file '%s'", g_MfrModuleName, dllInstance, GetLastError(), LongDestinationFilename.c_str());
             } 
             else 
             { 
-                Log(L"[%d] SetFileAttributes wrapper returns SUCCESS and file '%s'", dllInstance, LongDestinationFilename.c_str()); 
+                Log(L"[%s%d] SetFileAttributes wrapper returns SUCCESS and file '%s'", g_MfrModuleName, dllInstance, LongDestinationFilename.c_str());
             } 
         } 
         return retfinal; 
@@ -69,7 +69,7 @@ BOOL __stdcall SetFileAttributesFixup(_In_ const CharT* fileName, _In_ DWORD fil
             wfileName = AdjustSlashes(wfileName, dllInstance);
 
 #if _DEBUG
-            LogString(dllInstance, L"SetFileAttributesFixup for fileName", wfileName.c_str());
+            LogString(g_MfrModuleName, dllInstance, L"SetFileAttributesFixup for fileName", wfileName.c_str());
 #endif
 
             wfileName = AdjustBadUNC(wfileName, dllInstance, L"SetFileAttributesFixup");
@@ -128,7 +128,7 @@ BOOL __stdcall SetFileAttributesFixup(_In_ const CharT* fileName, _In_ DWORD fil
                             else
                             {
 #if MOREDEBUG
-                                Log(L"[%d] SetFileAttributesFixup: Native Local with ILV", dllInstance);
+                                Log(L"[%s%d] SetFileAttributesFixup: Native Local with ILV", g_MfrModuleName, dllInstance);
 #endif
                                 if (cohorts.map.IsAnExclusionToRedirect == mfr::mfr_exclusion_types::not_excluded && PathExists(cohorts.WsPackage.c_str()))
                                 {
@@ -137,7 +137,7 @@ BOOL __stdcall SetFileAttributesFixup(_In_ const CharT* fileName, _In_ DWORD fil
                                     {
                                         // ILV has issues with this, fake it.
 #if MOREDEBUG
-                                        Log(L"[%d] SetFileAttributeFixups: can't access package file; return fake success.", dllInstance);
+                                        Log(L"[%s%d] SetFileAttributeFixups: can't access package file; return fake success.", g_MfrModuleName, dllInstance);
 #endif
                                         SetLastError(0);
                                         return TRUE;
@@ -154,7 +154,7 @@ BOOL __stdcall SetFileAttributesFixup(_In_ const CharT* fileName, _In_ DWORD fil
                                     {
                                         // ILV has issues with this, fake it.
 #if MOREDEBUG
-                                        Log(L"[%d] SetFileAttributeFixups: can't access requested file; return fake success.", dllInstance);
+                                        Log(L"[%s%d] SetFileAttributeFixups: can't access requested file; return fake success.", g_MfrModuleName, dllInstance);
 #endif
                                         SetLastError(0);
                                         return TRUE;
@@ -224,7 +224,7 @@ BOOL __stdcall SetFileAttributesFixup(_In_ const CharT* fileName, _In_ DWORD fil
                             else
                             {
 #if MOREDEBUG
-                                Log(L"[%d] SetFileAttributeFixups: Native Traditional with ILV", dllInstance);
+                                Log(L"[%s%d] SetFileAttributeFixups: Native Traditional with ILV", g_MfrModuleName, dllInstance);
 #endif
                                 // WIth IlvAware, we can't set the attribute and get this specific error if the file is in the package.
                                 if (cohorts.map.IsAnExclusionToRedirect == mfr::mfr_exclusion_types::not_excluded && PathExists(cohorts.WsRedirected.c_str()))
@@ -239,7 +239,7 @@ BOOL __stdcall SetFileAttributesFixup(_In_ const CharT* fileName, _In_ DWORD fil
                                 {
                                     // ILV has issues with this, fake it.
 #if MOREDEBUG
-                                    Log(L"[%d] SetFileAttributeFixups: Can't access file; return fake success.", dllInstance);
+                                    Log(L"[%s%d] SetFileAttributeFixups: Can't access file; return fake success.", g_MfrModuleName, dllInstance);
 #endif
                                     SetLastError(0);
                                     return TRUE;
@@ -300,14 +300,14 @@ BOOL __stdcall SetFileAttributesFixup(_In_ const CharT* fileName, _In_ DWORD fil
                             else
                             {
 #if MOREDEBUG
-                                Log(L"[%d] SetFileAttributesFixup: PVAD Traditional with ILV", dllInstance);
+                                Log(L"[%s%d] SetFileAttributesFixup: PVAD Traditional with ILV", g_MfrModuleName, dllInstance);
 #endif
                                 retfinal = WRAPPER_SETFILEATTRIBUTES(cohorts.WsRedirected, fileAttributes, dllInstance, debug);
                                 if (!retfinal && GetLastError() == ERROR_CANT_ACCESS_FILE)
                                 {
                                     // ILV has issues with this, fake it.
 #if MOREDEBUG
-                                    Log(L"[%d] SetFileAttributeFixups: can't access redirected file; return fake success.", dllInstance);
+                                    Log(L"[%s%d] SetFileAttributeFixups: can't access redirected file; return fake success.", g_MfrModuleName, dllInstance);
 #endif
                                     SetLastError(0);
                                     return TRUE;
@@ -363,7 +363,7 @@ BOOL __stdcall SetFileAttributesFixup(_In_ const CharT* fileName, _In_ DWORD fil
                             else
                             {
 #if MOREDEBUG
-                                Log(L"[%d] SetFileAttributesFixup: VFS Local with ILV", dllInstance);
+                                Log(L"[%s%d] SetFileAttributesFixup: VFS Local with ILV", g_MfrModuleName, dllInstance);
 #endif
                                 if (cohorts.UsingNative)
                                 {
@@ -372,7 +372,7 @@ BOOL __stdcall SetFileAttributesFixup(_In_ const CharT* fileName, _In_ DWORD fil
                                     {
                                         // ILV has issues with this, fake it.
 #if MOREDEBUG
-                                        Log(L"[%d] SetFileAttributeFixups: can't access file; return fake success.", dllInstance);
+                                        Log(L"[%s%d] SetFileAttributeFixups: can't access file; return fake success.", g_MfrModuleName, dllInstance );
 #endif
                                         SetLastError(0);
                                         return TRUE;
@@ -389,7 +389,7 @@ BOOL __stdcall SetFileAttributesFixup(_In_ const CharT* fileName, _In_ DWORD fil
                                     {
                                         // ILV has issues with this, fake it.
 #if MOREDEBUG
-                                        Log(L"[%d] SetFileAttributeFixups: can't access requested file; return fake success.", dllInstance);
+                                        Log(L"[%s%d] SetFileAttributeFixups: can't access requested file; return fake success.", g_MfrModuleName, dllInstance);
 #endif
                                         SetLastError(0);
                                         return TRUE;
@@ -461,14 +461,14 @@ BOOL __stdcall SetFileAttributesFixup(_In_ const CharT* fileName, _In_ DWORD fil
                             else
                             {
 #if MOREDEBUG
-                                Log(L"[%d] SetFileAttributes: VFS Traditional with ILV", dllInstance);
+                                Log(L"[%s%d] SetFileAttributes: VFS Traditional with ILV", g_MfrModuleName, dllInstance);
 #endif
                                 retfinal = WRAPPER_SETFILEATTRIBUTES(cohorts.WsRedirected, fileAttributes, dllInstance, debug);
                                 if (!retfinal && GetLastError() == ERROR_CANT_ACCESS_FILE)
                                 {
                                     // ILV has issues with this, fake it.
 #if MOREDEBUG
-                                    Log(L"[%d] SetFileAttributeFixups: can't access redirected file; return fake success.", dllInstance);
+                                    Log(L"[%s%d] SetFileAttributeFixups: can't access redirected file; return fake success.", g_MfrModuleName, dllInstance);
 #endif
                                     SetLastError(0);
                                     return TRUE;
@@ -556,14 +556,14 @@ BOOL __stdcall SetFileAttributesFixup(_In_ const CharT* fileName, _In_ DWORD fil
                         else
                         {
 #if MOREDEBUG
-                            Log(L"[%d] SetFileAttributes: writablepackageroot area with ILV", dllInstance);
+                            Log(L"[%s%d] SetFileAttributes: writablepackageroot area with ILV", g_MfrModuleName, dllInstance);
 #endif
                             retfinal = WRAPPER_SETFILEATTRIBUTES(cohorts.WsRequested, fileAttributes, dllInstance, debug);
                             if (!retfinal && GetLastError() == ERROR_CANT_ACCESS_FILE)
                             {
                                 // ILV has issues with this, fake it.
 #if MOREDEBUG
-                                Log(L"[%d] SetFileAttributeFixups: can't access requested file; return fake success.", dllInstance);
+                                Log(L"[%s%d] SetFileAttributeFixups: can't access requested file; return fake success.", g_MfrModuleName, dllInstance);
 #endif
                                 SetLastError(0);
                                 return TRUE;
@@ -608,18 +608,18 @@ BOOL __stdcall SetFileAttributesFixup(_In_ const CharT* fileName, _In_ DWORD fil
     }
 #if _DEBUG
     // Fall back to assuming no redirection is necessary if exception
-    LOGGED_CATCHHANDLER(dllInstance, L"SetFileAttributes")
+    LOGGED_CATCHHANDLER_MIN(g_MfrModuleName, dllInstance, L"SetFileAttributes")
 #else
     catch (...)
     {
-        Log(L"[%d] SetFileAttributes Exception=0x%x", dllInstance, GetLastError());
+        Log(L"[%s%d] SetFileAttributes Exception=0x%x", g_MfrModuleName, dllInstance, GetLastError());
     }
 #endif
     if (fileName != nullptr)
     {
         std::wstring LongFileName = MakeLongPath(widen(fileName));
 #if MOREDEBUG
-        Log(L"[%d] SetFileAttributesFixup:unguarded call for %s", dllInstance, LongFileName.c_str());
+        Log(L"[%s%d] SetFileAttributesFixup:unguarded call for %s", g_MfrModuleName, dllInstance, LongFileName.c_str());
 #endif
         retfinal = impl::SetFileAttributes(LongFileName.c_str(), fileAttributes);
     }
@@ -629,10 +629,10 @@ BOOL __stdcall SetFileAttributesFixup(_In_ const CharT* fileName, _In_ DWORD fil
         retfinal = 0; //impl::SetFileAttributes(fileName, fileAttributes);
     }
 #if _DEBUG
-    Log(L"[%d] SetFileAttributes: returns retfinal=%d", dllInstance, retfinal);
+    Log(L"[%s%d] SetFileAttributes: returns retfinal=%d", g_MfrModuleName, dllInstance, retfinal);
     if (retfinal == 0)
     {
-        Log(L"[%d] SetFileAttributes: returns GetLastError=0x%x", dllInstance, GetLastError());
+        Log(L"[%s%d] SetFileAttributes: returns GetLastError=0x%x", g_MfrModuleName, dllInstance, GetLastError());
     }
 #endif
     return retfinal;

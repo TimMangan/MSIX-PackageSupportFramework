@@ -6,7 +6,8 @@
 
 #include <psf_utils.h>
 #include <psf_logging.h>
-#if BRINGBACK
+
+
 #define LogCallingModule() \
     { \
         if (!g_psf_NoLogging) \
@@ -21,9 +22,8 @@
             } \
         } \
     }
-#endif
 
-#define LogCallingModuleInstance(moduleName, instance) \
+#define LogCallingModuleInstance(instance) \
     { \
         if (!g_psf_NoLogging) \
         { \
@@ -33,7 +33,9 @@
                 reinterpret_cast<const wchar_t*>(_ReturnAddress()), \
                 &moduleHandle)) \
             { \
-                Log(L"[%s%d]\tCalling Module=%ls\n", moduleName, instance, psf::get_module_path(moduleHandle).c_str()); \
+                Log(L"[%s%d]\tCalling Module=%ls\n", g_FrfModuleName, instance, psf::get_module_path(moduleHandle).c_str()); \
             } \
         } \
     }
+
+

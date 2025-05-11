@@ -36,13 +36,14 @@ std::filesystem::path g_short_finalPackageRootPath;
 #define MOREDEBUG 1
 #endif
 
-DWORD g_InterceptInstance = 60000;
+DWORD g_InterceptInstance = 70000;
+const wchar_t* g_MfrModuleName = L"M";
 
 
 void InitializeMFRFixup()
 {
 #if MOREDEBUG
-    Log("\t\tMFRFixup InitializeMFRFixup: start");
+    Log("[%s%d]\t\tMFRFixup InitializeMFRFixup: start", g_MfrModuleName,0);
 #endif  
 
     // For path comparison's sake - and the fact that std::filesystem::path doesn't handle (root-)local device paths all
@@ -63,9 +64,9 @@ void InitializeMFRFixup()
     g_finalPackageRootPath = psf::remove_trailing_path_separators(finalPackageRootPath);  // has \\?\ prepended to PackageRootPath
 
 #if MOREDEBUG
-    Log(L"\t\t\tMFRFixup g_packageRootPath =      %s", g_packageRootPath.wstring().c_str());
-    Log(L"\t\t\tMFRFixup g_packageVfsRootPath =   %s", g_packageVfsRootPath.wstring().c_str());
-    //Log(L"\t\t\tMFRFixup g_finalPackageRootPath = %s", g_finalPackageRootPath.wstring().c_str());
+    Log(L"[%s%d]\t\t\tMFRFixup g_packageRootPath =      %s", g_MfrModuleName, 0, g_packageRootPath.wstring().c_str());
+    Log(L"[%s%d]\t\t\tMFRFixup g_packageVfsRootPath =   %s", g_MfrModuleName, 0, g_packageVfsRootPath.wstring().c_str());
+    //Log(L"[%s%d]\t\t\tMFRFixup g_finalPackageRootPath = %s", g_MfrModuleName, 0, g_finalPackageRootPath.wstring().c_str());
 #endif 
     // Ensure that the redirected root path exists
     // We see some issues with multiple processes starting up and making the create_directories call simultaniously causing the second one to hit an exception.
@@ -79,7 +80,7 @@ void InitializeMFRFixup()
     catch (...)
     {
 #ifdef _DEBUG
-        Log("\t\tMfrFixup ignorable exception creating directories.");
+        Log("[%s%d]\t\tMfrFixup ignorable exception creating directories.", g_MfrModuleName, 0);
 #endif
     }
 
@@ -91,7 +92,7 @@ void InitializeMFRFixup()
     catch (...)
     {
 #ifdef _DEBUG
-        Log("\t\tMfrFixup ignorable exception creating directories.");
+        Log("[%s%d]\t\tMfrFixup ignorable exception creating directories.", g_MfrModuleName, 0);
 #endif
     }
 
@@ -102,12 +103,12 @@ void InitializeMFRFixup()
     g_short_finalPackageRootPath = ConvertPathToShortPath(g_finalPackageRootPath);
 
 #if MOREDEBUG
-    Log("\t\tMFRFixup InitializeMFRFixup: mid");
+    Log("[%s%d]\t\tMFRFixup InitializeMFRFixup: mid", g_MfrModuleName, 0);
 #endif
 
     mfr::Initialize_MFR_Mappings();
 
 #if MOREDEBUG
-    Log("\t\tMFRFixup InitializeMFRFixup: end");
+    Log("[%s%d]\t\tMFRFixup InitializeMFRFixup: end", g_MfrModuleName, 0);
 #endif  
 }  //InitializeMFRFixup()

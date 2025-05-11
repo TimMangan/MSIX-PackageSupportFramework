@@ -81,7 +81,7 @@ std::wstring DetermineIlvPathForReadOperations(Cohorts cohorts, [[maybe_unused]]
     SetLastError(oldErr);
     if (moredebug)
     {
-        Log(L"[%d]        DetermineILVPaths Atts Req=[0]0x%x/0x%x Pkg=[%d]0x%x/0x%x Redir=[%d]0x%x/0x%x", dllInstance, RequestedAttributes, RequestedError, SkipPackage, PackageAttributes, PackageError, SkipRedirection, RedirectedAttributes, RedirectedError);
+        Log(L"[%s%d]        DetermineILVPaths Atts Req=[0]0x%x/0x%x Pkg=[%d]0x%x/0x%x Redir=[%d]0x%x/0x%x", g_MfrModuleName, dllInstance, RequestedAttributes, RequestedError, SkipPackage, PackageAttributes, PackageError, SkipRedirection, RedirectedAttributes, RedirectedError);
     }
     switch (cohorts.file_mfr.Request_MfrPathType)
     {
@@ -446,7 +446,7 @@ void PreCreateLocalFoldersIfNeededForWrite(std::wstring localPath, std::wstring 
             {
                 if (debug)
                 {
-                    Log(L"[%d] %s: Pre-create local parent path to match the package first %s", dllInstance, debugString.c_str(), packagePathAsPath.parent_path().c_str());
+                    Log(L"[%s%d] %s: Pre-create local parent path to match the package first %s", g_MfrModuleName, dllInstance, debugString.c_str(), packagePathAsPath.parent_path().c_str());
                 }
                 PreCreateFolders(localPath, dllInstance, debugString.c_str());
 
@@ -467,7 +467,7 @@ void PreCreatePackageFoldersIfIlvNeededForWrite(std::wstring filePath, DWORD dll
             {
                 if (debug)
                 {
-                    Log(L"[%d] %s: Pre-create package parent path to match the package first %s", dllInstance, debugString.c_str(), packagePathAsPath.parent_path().c_str());
+                    Log(L"[%s%d] %s: Pre-create package parent path to match the package first %s", g_MfrModuleName, dllInstance, debugString.c_str(), packagePathAsPath.parent_path().c_str());
                 }
                 PreCreateFolders(filePath, dllInstance, debugString.c_str());
             }
@@ -531,7 +531,7 @@ void CheckFileForIlvAnomoly(DWORD dllInstance, std::wstring filePath)
             //if (findlc._Equal(found))
             {
                 // got it
-                Log(L"[%d] CheckFileForIlvAnomoly %s %s 0x%x 0x%x 0x%x", dllInstance, filePath.c_str(), FindData.cFileName, FindData.dwFileAttributes, FindData.dwReserved0, FindData.dwReserved1);
+                Log(L"[%s%d] CheckFileForIlvAnomoly %s %s 0x%x 0x%x 0x%x", g_MfrModuleName, dllInstance, filePath.c_str(), FindData.cFileName, FindData.dwFileAttributes, FindData.dwReserved0, FindData.dwReserved1);
             }
             //else
             {
@@ -542,7 +542,7 @@ void CheckFileForIlvAnomoly(DWORD dllInstance, std::wstring filePath)
                     //if (findlc._Equal(found))
                     {
                         // got it
-                        Log(L"[%d] CheckFileForIlvAnomoly %s %s 0x%x 0x%x 0x%x", dllInstance, filePath.c_str(), FindData.cFileName, FindData.dwFileAttributes, FindData.dwReserved0, FindData.dwReserved1);
+                        Log(L"[%s%d] CheckFileForIlvAnomoly %s %s 0x%x 0x%x 0x%x", g_MfrModuleName, dllInstance, filePath.c_str(), FindData.cFileName, FindData.dwFileAttributes, FindData.dwReserved0, FindData.dwReserved1);
                         break;
                     } 
                 }

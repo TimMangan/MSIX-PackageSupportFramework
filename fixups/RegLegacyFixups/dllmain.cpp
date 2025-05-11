@@ -112,7 +112,7 @@ extern "C" {
         {
         case DLL_PROCESS_ATTACH:
 #if _DEBUG
-            Log(L"Attaching RegLegacyFixups\n");
+            Log(L"[R0] Attaching RegLegacyFixups\n");
 #endif
             InitializeFixups();
             InitializeConfiguration();
@@ -126,7 +126,7 @@ extern "C" {
     }
     catch (...)
     {
-        Log(L"RegLegacyFixups attach ERROR\n");
+        Log(L"[R0] RegLegacyFixups attach ERROR\n");
         ::SetLastError(win32_from_caught_exception());
         return FALSE;
     }

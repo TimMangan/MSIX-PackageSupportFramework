@@ -430,13 +430,13 @@ BOOL __stdcall ReplaceFileFixup(
 
 
 #if _DEBUG
-            LogString(dllInstance, L"ReplaceFileFixup replacing", replacedFileName);
-            LogString(dllInstance, L"ReplaceFileFixup with", replacementFileName);
+            LogString(g_MfrModuleName, dllInstance, L"ReplaceFileFixup replacing", replacedFileName);
+            LogString(g_MfrModuleName, dllInstance, L"ReplaceFileFixup with", replacementFileName);
             if (DoBackup)
             {
-                LogString(dllInstance, L"ReplaceFileFixup with backup", backupFileName);
+                LogString(g_MfrModuleName, dllInstance, L"ReplaceFileFixup with backup", backupFileName);
             }
-            Log(L"[%d] replaceFlags=0x%x", dllInstance, replaceFlags);
+            Log(L"[%s%d] replaceFlags=0x%x", g_MfrModuleName, dllInstance, replaceFlags);
 #endif
             std::wstring wReplacedFileName = widen(replacedFileName);
             std::wstring wReplacementFileName = widen(replacementFileName);
@@ -458,7 +458,7 @@ BOOL __stdcall ReplaceFileFixup(
             if (MFRConfiguration.Ilv_Aware)
             {
 #if MOREDEBUG
-                LogString(dllInstance, L"ReplaceFileFixup replacing", replacedFileName);
+                LogString(g_MfrModuleName, dllInstance, L"ReplaceFileFixup replacing", replacedFileName);
 #endif
                 // Determine if path of file to be replaced and use redirection area.
                 UseReplacedFile = DetermineIlvPathForWriteOperations(cohortsReplaced, dllInstance, moredebug);
@@ -475,8 +475,8 @@ BOOL __stdcall ReplaceFileFixup(
                 // In a redirect to local scenario, we are responsible for determing if source is local or in package
                 UseReplacementFile = SelectLocalOrPackageForRead(UseReplacementFile, cohortsReplacement.WsPackage);
 #if MOREDEBUG
-                LogString(dllInstance, L"ReplaceFileFixup IlvAware replacing", UseReplacedFile.c_str());
-                LogString(dllInstance, L"ReplaceFileFixup IlvAware with", UseReplacementFile.c_str());
+                LogString(g_MfrModuleName, dllInstance, L"ReplaceFileFixup IlvAware replacing", UseReplacedFile.c_str());
+                LogString(g_MfrModuleName, dllInstance, L"ReplaceFileFixup IlvAware with", UseReplacementFile.c_str());
 #endif
             }
             else
@@ -514,7 +514,7 @@ BOOL __stdcall ReplaceFileFixup(
                     UseBackupFile = DetermineNonIlvPathForBackup(cohortsBackup, dllInstance, moredebug);
                 }
 #if MOREDEBUG
-                LogString(dllInstance, L"ReplaceFileFixup: Backup to", UseBackupFile.c_str());
+                LogString(g_MfrModuleName, dllInstance, L"ReplaceFileFixup: Backup to", UseBackupFile.c_str());
 #endif
 
                 std::wstring rldUseReplacedFile;
@@ -542,18 +542,18 @@ BOOL __stdcall ReplaceFileFixup(
                     PreCreateFolders(rldUseBackupFile, dllInstance, L"ReplaceFileFixup");
 
 #if MOREDEBUG
-                    Log(L"[%d] ReplaceFileFixup: backup from is %s", dllInstance, rldUseReplacedFile.c_str());
-                    Log(L"[%d] ReplaceFileFixup: backup   to is %s", dllInstance, rldUseBackupFile.c_str());
+                    Log(L"[%s%d] ReplaceFileFixup: backup from is %s", g_MfrModuleName, dllInstance, rldUseReplacedFile.c_str());
+                    Log(L"[%s%d] ReplaceFileFixup: backup   to is %s", g_MfrModuleName, dllInstance, rldUseBackupFile.c_str());
 #endif               
                     retfinal = impl::CopyFile(rldUseReplacedFile.c_str(), rldUseBackupFile.c_str(), false);
 #if MOREDEBUG
                     if (retfinal != 0)
                     {
-                        Log(L"[%d] ReplaceFileFixup backup copy return is FAILURE 0x%x", dllInstance, GetLastError());
+                        Log(L"[%s%d] ReplaceFileFixup backup copy return is FAILURE 0x%x", g_MfrModuleName, dllInstance, GetLastError());
                     }
                     else
                     {
-                        Log(L"[%d] ReplaceFileFixup backup copy return is SUCCESS 0x%x", dllInstance, retfinal);
+                        Log(L"[%s%d] ReplaceFileFixup backup copy return is SUCCESS 0x%x", g_MfrModuleName, dllInstance, retfinal);
                     }
 #endif
                 }
@@ -565,8 +565,8 @@ BOOL __stdcall ReplaceFileFixup(
                 std::wstring rldUseReplacementFile = MakeLongPath(UseReplacementFile);
                 //PreCreateFolders(rldUseReplacedFile, dllInstance, L"ReplaceFileFixup");
 #if MOREDEBUG
-                Log(L"[%d] ReplaceFileFixup: from is %s", dllInstance, rldUseReplacementFile.c_str());
-                Log(L"[%d] ReplaceFileFixup:   to is %s", dllInstance, rldUseReplacedFile.c_str());
+                Log(L"[%s%d] ReplaceFileFixup: from is %s", g_MfrModuleName, dllInstance, rldUseReplacementFile.c_str());
+                Log(L"[%s%d] ReplaceFileFixup:   to is %s", g_MfrModuleName, dllInstance, rldUseReplacedFile.c_str());
 #endif
                 DWORD Replace_replaceFlags = replaceFlags;
                 if (replaceFlags == 0)
@@ -577,11 +577,11 @@ BOOL __stdcall ReplaceFileFixup(
 #if _DEBUG
                 if (retfinal == 0)
                 {
-                    Log(L"[%d] ReplaceFileFixup returnsFAILURE 0x%x", dllInstance, GetLastError());
+                    Log(L"[%s%d] ReplaceFileFixup returnsFAILURE 0x%x", g_MfrModuleName, dllInstance, GetLastError());
                 }
                 else
                 {
-                    Log(L"[%d] ReplaceFileFixup returns SUCCESS 0x%x", dllInstance, retfinal);
+                    Log(L"[%s%d] ReplaceFileFixup returns SUCCESS 0x%x", g_MfrModuleName, dllInstance, retfinal);
                 }
 #endif
             }
@@ -619,7 +619,7 @@ BOOL __stdcall ReplaceFileFixup(
                     else
                     {
 #if _DEBUG
-                        Log(L"[%d] ReplaceFileFixup: Return FAILURE 0 as Replaced file not found.", dllInstance);
+                        Log(L"[%s%d] ReplaceFileFixup: Return FAILURE 0 as Replaced file not found.", g_MfrModuleName, dllInstance);
 #endif
                         SetLastError(ERROR_FILE_NOT_FOUND);
                         return 0;
@@ -650,7 +650,7 @@ BOOL __stdcall ReplaceFileFixup(
                     else
                     {
 #if _DEBUG
-                        Log(L"[%d] ReplaceFileFixup: Return FAILURE as Replacementfile not found.", dllInstance);
+                        Log(L"[%s%d] ReplaceFileFixup: Return FAILURE as Replacementfile not found.", g_MfrModuleName, dllInstance);
 #endif
                         SetLastError(ERROR_FILE_NOT_FOUND);
                         return 0;
@@ -658,8 +658,8 @@ BOOL __stdcall ReplaceFileFixup(
                 }
 
 #if MOREDEBUG
-                Log(L"[%d] ReplaceFileFixup: Source      to be is %s", dllInstance, UseReplacementFile.c_str());
-                Log(L"[%d] ReplaceFileFixup: Destination to be is %s", dllInstance, UseReplacedFile.c_str());
+                Log(L"[%s%d] ReplaceFileFixup: Source      to be is %s", g_MfrModuleName, dllInstance, UseReplacementFile.c_str());
+                Log(L"[%s%d] ReplaceFileFixup: Destination to be is %s", g_MfrModuleName, dllInstance, UseReplacedFile.c_str());
 #endif
 
                 // Can try Replace
@@ -667,8 +667,8 @@ BOOL __stdcall ReplaceFileFixup(
                 std::wstring rldUseReplacementFile = MakeLongPath(UseReplacementFile);
                 PreCreateFolders(rldUseReplacedFile, dllInstance, L"ReplaceFileFixup");
 #if MOREDEBUG
-                Log(L"[%d] ReplaceFileFixup: from is %s", dllInstance, rldUseReplacementFile.c_str());
-                Log(L"[%d] ReplaceFileFixup:   to is %s", dllInstance, rldUseReplacedFile.c_str());
+                Log(L"[%s%d] ReplaceFileFixup: from is %s", g_MfrModuleName, dllInstance, rldUseReplacementFile.c_str());
+                Log(L"[%s%d] ReplaceFileFixup:   to is %s", g_MfrModuleName, dllInstance, rldUseReplacedFile.c_str());
 #endif
                 DWORD Replace_replaceFlags = replaceFlags;
                 if (replaceFlags == 0)
@@ -679,11 +679,11 @@ BOOL __stdcall ReplaceFileFixup(
 #if _DEBUG
                 if (retfinal == 0)
                 {
-                    Log(L"[%d] ReplaceFileFixup returnsFAILURE 0x%x", dllInstance, GetLastError());
+                    Log(L"[%s%d] ReplaceFileFixup returnsFAILURE 0x%x", g_MfrModuleName, dllInstance, GetLastError());
                 }
                 else
                 {
-                    Log(L"[%d] ReplaceFileFixup returns SUCCESS 0x%x", dllInstance, retfinal);
+                    Log(L"[%s%d] ReplaceFileFixup returns SUCCESS 0x%x", g_MfrModuleName, dllInstance, retfinal);
                 }
 #endif
             }
@@ -692,29 +692,29 @@ BOOL __stdcall ReplaceFileFixup(
         }
         else
         {
-            LogString(dllInstance, L"ReplaceFileFixup unguarded replacing", replacedFileName);
-            LogString(dllInstance, L"ReplaceFileFixup with", replacementFileName);
+            LogString(g_MfrModuleName, dllInstance, L"ReplaceFileFixup unguarded replacing", replacedFileName);
+            LogString(g_MfrModuleName, dllInstance, L"ReplaceFileFixup with", replacementFileName);
             if (backupFileName != nullptr)
             {
-                LogString(dllInstance, L"ReplaceFileFixup with backup", backupFileName);
+                LogString(g_MfrModuleName, dllInstance, L"ReplaceFileFixup with backup", backupFileName);
             }
-            Log(L"[%d] replaceFlags=0x%x", dllInstance, replaceFlags);
+            Log(L"[%s%d] replaceFlags=0x%x", g_MfrModuleName, dllInstance, replaceFlags);
         }
     }
 #if _DEBUG
         // Fall back to assuming no redirection is necessary if exception
-        LOGGED_CATCHHANDLER(dllInstance, L"MoveFileFixup")
+        LOGGED_CATCHHANDLER_MIN(g_MfrModuleName, dllInstance, L"MoveFileFixup")
 #else
     catch (...)
     {
-        Log(L"[%d] MoveFileFixup Exception=0x%x", dllInstance, GetLastError());
+        Log(L"[%s%d] MoveFileFixup Exception=0x%x", g_MfrModuleName, dllInstance, GetLastError());
     }
 #endif
 
 
     retfinal = impl::ReplaceFile(replacedFileName, replacementFileName, backupFileName, replaceFlags, exclude, reserved);
 #if _DEBUG
-    Log(L"[%d] ReplaceFileFixup returns 0x%x", dllInstance, retfinal);
+    Log(L"[%s%d] ReplaceFileFixup returns 0x%x", g_MfrModuleName, dllInstance, retfinal);
 #endif
     return retfinal;
 }

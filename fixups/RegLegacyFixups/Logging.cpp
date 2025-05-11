@@ -15,6 +15,219 @@
 #include "Logging.h"
 
 
+bool g_psf_NoLogging = false;
+
+void Log(const char* fmt, ...)
+{
+    if (!g_psf_NoLogging)
+    {
+        try
+        {
+            va_list args;
+            va_start(args, fmt);
+            std::string str;
+            str.resize(256);
+            std::size_t count = std::vsnprintf(str.data(), str.size() + 1, fmt, args);
+            assert(count >= 0);
+            va_end(args);
+
+            if (count > str.size())
+            {
+                count = 1024;       // vswprintf actually returns a negative number, let's just go with something big enough for our long strings; it is resized shortly.
+                str.resize(count);
+
+                va_list args2;
+                va_start(args2, fmt);
+                count = std::vsnprintf(str.data(), str.size() + 1, fmt, args2);
+                assert(count >= 0);
+                va_end(args2);
+            }
+
+            str.resize(count);
+            ::OutputDebugStringA(str.c_str());
+        }
+        catch (...)
+        {
+            ::OutputDebugStringA("Exception in Log()");
+            ::OutputDebugStringA(fmt);
+        }
+    }
+}
+
+void Log(const wchar_t* fmt, ...)
+{
+    if (!g_psf_NoLogging)
+    {
+        try
+        {
+            va_list args;
+            va_start(args, fmt);
+
+            std::wstring wstr;
+            wstr.resize(256);
+            std::size_t count = std::vswprintf(wstr.data(), wstr.size() + 1, fmt, args);
+            va_end(args);
+
+            if (count > wstr.size())
+            {
+                count = 1024;       // vswprintf actually returns a negative number, let's just go with something big enough for our long strings; it is resized shortly.
+                wstr.resize(count);
+                va_list args2;
+                va_start(args2, fmt);
+                count = std::vswprintf(wstr.data(), wstr.size() + 1, fmt, args2);
+                va_end(args2);
+            }
+            wstr.resize(count);
+            ::OutputDebugStringW(wstr.c_str());
+        }
+        catch (...)
+        {
+            ::OutputDebugStringA("Exception in wide Log()");
+            ::OutputDebugStringW(fmt);
+        }
+    }
+}
+
+#if MAYBENEEDED
+void LogString(DWORD inst, const char* name, const char* value)
+{
+    if (!g_psf_NoLogging)
+    {
+        if ((value != NULL && value[1] != 0x0))
+        {
+            Log(L"[%s%d] %S=%S\n", g_RegModuleName, inst, name, value);
+        }
+        else
+        {
+            Log(L"[%s%d] %S=%s", g_RegModuleName, inst, name, (wchar_t*)value);
+        }
+    }
+}
+
+void LogString(DWORD inst, const char* name, const wchar_t* value)
+{
+    if (!g_psf_NoLogging)
+    {
+        if ((value != NULL && ((char*)value)[1] == 0x0))
+        {
+            Log(L"[%s%d] %S=%s\n", g_RegModuleName, inst, name, value);
+        }
+        else
+        {
+            Log(L"[%s%d] %S=%S", g_RegModuleName, inst, name, (char*)value);
+        }
+    }
+}
+#endif
+void LogString(DWORD inst, const wchar_t* name, const char* value)
+{
+    if (!g_psf_NoLogging)
+    {
+        if ((value != NULL && value[1] != 0x0))
+        {
+            Log(L"[%s%d] %s=%S\n", g_RegModuleName, inst, name, value);
+        }
+        else
+        {
+            Log(L"[%s%d] %s=%s", g_RegModuleName,inst, name, (wchar_t*)value);
+        }
+    }
+}
+
+
+void LogString(DWORD inst, const wchar_t* name, const wchar_t* value)
+{
+    if (!g_psf_NoLogging) 
+    {
+        if ((value != NULL && ((char*)value)[1] == 0x0))
+        {
+            Log(L"[%s%d] %s=%s\n", g_RegModuleName, inst, name, value);
+        }
+        else
+        {
+            if (value != nullptr)
+            {
+                Log(L"[%s%d] %s=%S", g_RegModuleName, inst, name, (char*)value);
+            }
+            else
+            {
+                Log(L"[%s%d] %ls=NULL", g_RegModuleName, inst, name);
+            }
+        }
+    }
+}
+
+
+
+void LogString(const wchar_t * moduleName, DWORD inst, const char* name, const char* value)
+{
+    if (!g_psf_NoLogging)
+    {
+        if ((value != NULL && value[1] != 0x0))
+        {
+            Log(L"[%s%d] %S=%S\n", moduleName, inst, name, value);
+        }
+        else
+        {
+            Log(L"[%s%d] %S=%s", moduleName, inst, name, (wchar_t*)value);
+        }
+    }
+}
+
+void LogString(const wchar_t* moduleName, DWORD inst, const char* name, const wchar_t* value)
+{
+    if (!g_psf_NoLogging)
+    {
+        if ((value != NULL && ((char*)value)[1] == 0x0))
+        {
+            Log(L"[%s%d] %S=%s\n", moduleName, inst, name, value);
+        }
+        else
+        {
+            Log(L"[%s%d] %S=%S", moduleName, inst, name, (char*)value);
+        }
+    }
+}
+
+void LogString(const wchar_t * moduleName, DWORD inst, const wchar_t* name, const char* value)
+{
+    if (!g_psf_NoLogging)
+    {
+        if ((value != NULL && value[1] != 0x0))
+        {
+            Log(L"[%s%d] %s=%S\n", moduleName, inst, name, value);
+        }
+        else
+        {
+            Log(L"[%s%d] %s=%s", moduleName, inst, name, (wchar_t*)value);
+        }
+    }
+}
+
+
+void LogString(const wchar_t* moduleName, DWORD inst, const wchar_t* name, const wchar_t* value)
+{
+    if (!g_psf_NoLogging)
+    {
+        if ((value != NULL && ((char*)value)[1] == 0x0))
+        {
+            Log(L"[%s%d] %s=%s\n", moduleName, inst, name, value);
+        }
+        else
+        {
+            if (value != nullptr)
+            {
+                Log(L"[%s%d] %s=%S", moduleName, inst, name, (char*)value);
+            }
+            else
+            {
+                Log(L"[%s%d] %ls=NULL", moduleName, inst, name);
+            }
+        }
+    }
+}
+
+
 static trace_level configured_trace_level(function_type)
 {
     return trace_level::always;
@@ -68,22 +281,22 @@ void LogCountedString(DWORD dllInstance, const char* name, const wchar_t* value,
 {
     if (value != NULL)
     {
-        Log("[%d]\t%s=%.*ls\n", dllInstance, name, length, value);
+        Log("[%S%d]\t%s=%.*ls\n", g_RegModuleName, dllInstance, name, length, value);
     }
     else
     {
-        Log("[%d]\t%s=NULL", dllInstance, name);
+        Log("[%S%d]\t%s=NULL", g_RegModuleName, dllInstance, name);
     }
 }
 void LogCountedString(DWORD dllInstance, const wchar_t* name, const wchar_t* value, std::size_t length)
 {
     if (value != NULL)
     {
-        Log(L"[%d]\t%s=%.*ls\n", dllInstance, name, length, value);
+        Log(L"[%s%d]\t%s=%.*ls\n", g_RegModuleName, dllInstance, name, length, value);
     }
     else
     {
-        Log(L"[%d]\t%s=NULL", dllInstance, name);
+        Log(L"[%s%d]\t%s=NULL", g_RegModuleName, dllInstance, name);
     }
 }
 std::string InterpretStringA(const char* value)
@@ -190,25 +403,16 @@ std::string win32_error_description(DWORD error)
     return str;
 }
 
-void LogWin32Error(DWORD error, const wchar_t* msg )
-{
-    auto str = win32_error_description(error);
-    Log(L"\t%s=%d (%s)\n", msg, error, widen(str).c_str());
-}
 void LogWin32ErrorInstance(DWORD DllInstance, DWORD error, const wchar_t* msg)
 {
     auto str = win32_error_description(error);
-    Log(L"[%d]\t%s=%d (%s)\n", DllInstance, msg, error, widen(str).c_str());
+    Log(L"[%s%d]\t%s=%d (%s)\n", g_RegModuleName, DllInstance, msg, error, widen(str).c_str());
 }
 std::string InterpretWin32Error(DWORD error, const char* msg )
 {
     return InterpretAsHex(msg, error);
 }
 
-void LogLastError(const char* msg )
-{
-    LogWin32Error(::GetLastError(), widen(msg).c_str());
-}
 void LogLastErrorInstance(DWORD dllInstance, const char* msg)
 {
     LogWin32ErrorInstance(dllInstance, ::GetLastError(), widen(msg).c_str());
@@ -239,31 +443,31 @@ void LogKeyPath(DWORD dllInstance, HKEY key, const wchar_t* msg )
         }
         catch (...)
         {
-            Log(L"[%d]\t%s Unable to log Key Path", dllInstance, msg);
+            Log(L"[%s%d]\t%s Unable to log Key Path", g_RegModuleName, dllInstance, msg);
         }
     }
     else if (status == STATUS_INVALID_HANDLE)
     {
         if (key == HKEY_CURRENT_USER)
         {
-            Log(L"[%d]\t%s HKEY_CURRENT_USER", dllInstance, msg);
+            Log(L"[%s%d]\t%s HKEY_CURRENT_USER", g_RegModuleName, dllInstance, msg);
         }
         else if (key == HKEY_LOCAL_MACHINE)
         {
-            Log(L"[%d]\t%s HKEY_LOCAL_MACHINE", dllInstance, msg);
+            Log(L"[%s%d]\t%s HKEY_LOCAL_MACHINE", g_RegModuleName, dllInstance, msg);
         }
         else if (key == HKEY_CLASSES_ROOT)
         {
-            Log(L"[%d]\t%s HKEY_CLASSES_ROOT", dllInstance, msg);
+            Log(L"[%s%d]\t%s HKEY_CLASSES_ROOT", g_RegModuleName, dllInstance, msg);
         }
         else
         {
-            Log(L"[%d]\t%s Unable to log Key Path: Invalid handle", dllInstance, msg);
+            Log(L"[%s%d]\t%s Unable to log Key Path: Invalid handle", g_RegModuleName, dllInstance, msg);
         }
     }
     else
     {
-        Log(L"[%d]\t%s Unable to log Key Path 0x%x", dllInstance, msg, status);
+        Log(L"[%s%d]\t%s Unable to log Key Path 0x%x", g_RegModuleName, dllInstance, msg, status);
     }
 }
 
@@ -363,11 +567,11 @@ std::string InterpretKeyPath(HKEY key)
 
 void LogRegKeyFlags(DWORD dllInstance, DWORD flags, const wchar_t* msg )
 {
-    Log(L"[%d]\t%s=%08X", dllInstance, msg, flags);
+    Log(L"[%s%d]\t%s=%08X", g_RegModuleName, dllInstance, msg, flags);
     if (flags)
     {
         const char* prefix = "";
-        Log(L"[%d]\t(",dllInstance);
+        Log(L"[%s%d]\t(", g_RegModuleName, dllInstance);
         LogIfFlagSet(flags, REG_OPTION_VOLATILE);           // 0x0001
         LogIfFlagSet(flags, REG_OPTION_CREATE_LINK);        // 0x0002
         LogIfFlagSet(flags, REG_OPTION_BACKUP_RESTORE);     // 0x0004
@@ -377,16 +581,16 @@ void LogRegKeyFlags(DWORD dllInstance, DWORD flags, const wchar_t* msg )
     }
     else
     {
-        Log(L"[%d]\t(REG_OPTION_NON_VOLATILE)", dllInstance); // 0x0000
+        Log(L"[%s%d]\t(REG_OPTION_NON_VOLATILE)", g_RegModuleName, dllInstance); // 0x0000
     }
 
-    //Log(L"\n");
+    //Log(L"[R%s]\n",dllInstance);
 }
 
 
-void LogRegKeyDisposition(DWORD disposition, const char* msg )
+void LogRegKeyDisposition(DWORD instance, DWORD disposition, const char* msg )
 {
-    Log(L"\t%s=%d (", msg, disposition);
+    Log(L"[%s%d]\t%s=%d (", g_RegModuleName, instance,msg, disposition);
     LogIfEqual(disposition, REG_CREATED_NEW_KEY)
     else LogIfEqual(disposition, REG_OPENED_EXISTING_KEY)
     else Log(L"UNKNOWN");
@@ -566,21 +770,15 @@ const char* InterperetFunctionResult(function_result result)
     return resultMsg;
 }
 
-void LogFunctionResult(function_result result, const wchar_t* msg )
-{
-    const char* interp = InterperetFunctionResult(result);
-    std::wstring winterp = widen(interp);
-
-    Log(L"\t%s=%s\n", msg, winterp.c_str());
-}
 void LogFunctionResultInstance(DWORD dllInstance, function_result result, const wchar_t* msg)
 {
     const char* interp = InterperetFunctionResult(result);
     std::wstring winterp = widen(interp);
 
-    Log(L"[%d]\t%s=%s\n", dllInstance, msg, winterp.c_str());
+    Log(L"[%s%d]\t%s=%s\n", g_RegModuleName, dllInstance, msg, winterp.c_str());
 }
 
+#if STILLNEEDED
 void LogRegKeyAccess(DWORD access, const char* msg )
 {
     Log(L"\t%s=%08X", msg, access);
@@ -604,6 +802,7 @@ void LogRegKeyAccess(DWORD access, const char* msg )
 
     Log(L"\n");
 }
+#endif
 
 void LogSecurityAttributes(LPSECURITY_ATTRIBUTES securityAttributes, DWORD instance)
 {
@@ -622,22 +821,22 @@ void LogSecurityAttributes(LPSECURITY_ATTRIBUTES securityAttributes, DWORD insta
             );
             if (xverted)
             {
-                Log(L"[%d] SecurityAccess %d %d %Ls\n", instance, securityAttributes->nLength, securityAttributes->bInheritHandle, xvert);
+                Log(L"[%s%d] SecurityAccess %d %d %Ls\n", g_RegModuleName, instance, securityAttributes->nLength, securityAttributes->bInheritHandle, xvert);
                 LocalFree(xvert);
             }
             else
             {
-                Log(L"[%d] error to query security descriptor.\n", instance);
+                Log(L"[%s%d] error to query security descriptor.\n", g_RegModuleName, instance);
             }
         }
         else
         {
-            Log(L"[%d] No security descriptor provided.\n", instance);
+            Log(L"[%s%d] No security descriptor provided.\n", g_RegModuleName, instance);
         }
     }
     catch (...)
     {
-        Log(L"[%x] exception to query security descriptor.\n", instance);
+        Log(L"[%s%d] exception to query security descriptor.\n", g_RegModuleName, instance);
     }
 }
 

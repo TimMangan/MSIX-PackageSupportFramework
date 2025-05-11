@@ -28,11 +28,11 @@ BOOL  WRAPPER_DELETEFILE(std::wstring theDeletingFile, DWORD dllInstance, bool d
     {
         if (retfinal == 0)
         {
-            Log(L"[%d] DeleteFile returns result FAILURE 0x%x on file '%s'", dllInstance, GetLastError(), LongDeletingFile.c_str());
+            Log(L"[%s%d] DeleteFile returns result FAILURE 0x%x on file '%s'", g_MfrModuleName, dllInstance, GetLastError(), LongDeletingFile.c_str());
         }
         else
         {
-            Log(L"[%d] DeleteFile returns result SUCCESS 0x%x on file '%s'", dllInstance, retfinal, LongDeletingFile.c_str());
+            Log(L"[%s%d] DeleteFile returns result SUCCESS 0x%x on file '%s'", g_MfrModuleName, dllInstance, retfinal, LongDeletingFile.c_str());
         }
     }
     return retfinal;
@@ -62,7 +62,7 @@ BOOL __stdcall DeleteFileFixup(_In_ const CharT* pathName) noexcept
             wPathName = AdjustSlashes(wPathName, dllInstance);
 
 #if _DEBUG
-            LogString(dllInstance, L"DeleteFileFixup for pathName", wPathName.c_str());
+            LogString(g_MfrModuleName, dllInstance, L"DeleteFileFixup for pathName", wPathName.c_str());
 #endif
 
             wPathName = AdjustBadUNC(wPathName, dllInstance, L"DeleteFileFixup");
@@ -93,7 +93,7 @@ BOOL __stdcall DeleteFileFixup(_In_ const CharT* pathName) noexcept
                                 retfinal = FALSE;
                                 SetLastError(ERROR_ACCESS_DENIED);
 #if _DEBUG
-                                Log("[%d] DeleteFileFixup: Resetting return code to ERROR_ACCESS_DENIED.", dllInstance);
+                                Log("[%s%d] DeleteFileFixup: Resetting return code to ERROR_ACCESS_DENIED.", g_MfrModuleName, dllInstance);
 #endif
                             }
 #endif
@@ -104,7 +104,7 @@ BOOL __stdcall DeleteFileFixup(_In_ const CharT* pathName) noexcept
                             retfinal = FALSE;
                             SetLastError(ERROR_ACCESS_DENIED);
 #if _DEBUG
-                            Log("[%d] DeleteFileFixup: Setting return code to ERROR_ACCESS_DENIED.", dllInstance);
+                            Log("[%s%d] DeleteFileFixup: Setting return code to ERROR_ACCESS_DENIED.", g_MfrModuleName, dllInstance);
 #endif
                             return retfinal;
                         }
@@ -114,7 +114,7 @@ BOOL __stdcall DeleteFileFixup(_In_ const CharT* pathName) noexcept
                             retfinal = FALSE;
                             SetLastError(ERROR_FILE_NOT_FOUND);  // not important if PATH or FILE not found.
 #if _DEBUG
-                            Log("[%d] DeleteFileFixup: Setting return code to ERROR_FILE_NOT_FOUND.");
+                            Log("[%s%d] DeleteFileFixup: Setting return code to ERROR_FILE_NOT_FOUND.", g_MfrModuleName, dllInstance);
 #endif
                             return retfinal;
                         }
@@ -135,7 +135,7 @@ BOOL __stdcall DeleteFileFixup(_In_ const CharT* pathName) noexcept
                             retfinal = FALSE;
                             SetLastError(ERROR_ACCESS_DENIED);
 #if _DEBUG
-                            Log("[%d] DeleteFileFixup: Setting return code to ERROR_ACCESS_DENIED.", dllInstance);
+                            Log("[%s%d] DeleteFileFixup: Setting return code to ERROR_ACCESS_DENIED.", g_MfrModuleName, dllInstance);
 #endif
                             return retfinal;
                         }
@@ -167,7 +167,7 @@ BOOL __stdcall DeleteFileFixup(_In_ const CharT* pathName) noexcept
                             retfinal = FALSE;
                             SetLastError(ERROR_ACCESS_DENIED);
 #if _DEBUG
-                            Log("[%d] DeleteFileFixup: Ssetting return code to ERROR_ACCESS_DENIED.", dllInstance);
+                            Log("[%s%d] DeleteFileFixup: Ssetting return code to ERROR_ACCESS_DENIED.", g_MfrModuleName, dllInstance);
 #endif
                             return retfinal;
                         }
@@ -177,7 +177,7 @@ BOOL __stdcall DeleteFileFixup(_In_ const CharT* pathName) noexcept
                             retfinal = false;
                             SetLastError(ERROR_FILE_NOT_FOUND); // doesn't matter if path or file not found.
 #if _DEBUG
-                            Log("[%d] DeleteFileFixup: Ssetting return code to ERROR_FILE_NOT_FOUND.");
+                            Log("[%s%d] DeleteFileFixup: Ssetting return code to ERROR_FILE_NOT_FOUND.", g_MfrModuleName, dllInstance);
 #endif
                             return retfinal;
                         }
@@ -199,7 +199,7 @@ BOOL __stdcall DeleteFileFixup(_In_ const CharT* pathName) noexcept
                             retfinal = false;
                             SetLastError(ERROR_ACCESS_DENIED);
 #if _DEBUG
-                            Log("[%d] DeleteFileFixup: Setting return code to ERROR_ACCESS_DENIED.", dllInstance);
+                            Log("[%s%d] DeleteFileFixup: Setting return code to ERROR_ACCESS_DENIED.", g_MfrModuleName, dllInstance);
 #endif
                             return retfinal;
                         }
@@ -209,7 +209,7 @@ BOOL __stdcall DeleteFileFixup(_In_ const CharT* pathName) noexcept
                             retfinal = false;
                             SetLastError(ERROR_FILE_NOT_FOUND); // not important if file or path
 #if _DEBUG
-                            Log("[%d] DeleteFileFixup: Setting return code to ERROR_FILE_NOT_FOUND.");
+                            Log("[%s%d] DeleteFileFixup: Setting return code to ERROR_FILE_NOT_FOUND.", g_MfrModuleName, dllInstance);
 #endif
                             return retfinal;
                         }
@@ -230,7 +230,7 @@ BOOL __stdcall DeleteFileFixup(_In_ const CharT* pathName) noexcept
                             retfinal = FALSE;
                             SetLastError(ERROR_ACCESS_DENIED);
 #if _DEBUG
-                            Log("[%d] DeleteFileFixup: Setting return code to ERROR_ACCESS_DENIED.", dllInstance);
+                            Log("[%s%d] DeleteFileFixup: Setting return code to ERROR_ACCESS_DENIED.", g_MfrModuleName, dllInstance);
 #endif
                             return retfinal;
                         }
@@ -245,7 +245,7 @@ BOOL __stdcall DeleteFileFixup(_In_ const CharT* pathName) noexcept
                             retfinal = FALSE;
                             SetLastError(ERROR_FILE_NOT_FOUND);
 #if _DEBUG
-                            Log("[%d] DeleteFileFixup: Setting return code to ERROR_FILE_NOT_FOUND.", dllInstance);
+                            Log("[%s%d] DeleteFileFixup: Setting return code to ERROR_FILE_NOT_FOUND.", g_MfrModuleName, dllInstance);
 #endif
                             return retfinal;
                         }
@@ -265,7 +265,7 @@ BOOL __stdcall DeleteFileFixup(_In_ const CharT* pathName) noexcept
                             retfinal = FALSE;
                             SetLastError(ERROR_ACCESS_DENIED);
 #if _DEBUG
-                            Log("[%d] DeleteFileFixup: Setting return code to ERROR_ACCESS_DENIED.", dllInstance);
+                            Log("[%s%d] DeleteFileFixup: Setting return code to ERROR_ACCESS_DENIED.", g_MfrModuleName, dllInstance);
 #endif
                             return retfinal;
                         }
@@ -281,7 +281,7 @@ BOOL __stdcall DeleteFileFixup(_In_ const CharT* pathName) noexcept
                             retfinal = FALSE;
                             SetLastError(ERROR_FILE_NOT_FOUND);
 #if _DEBUG
-                            Log("[%d] DeleteFileFixup: Setting return code to ERROR_FILE_NOT_FOUND.", dllInstance);
+                            Log("[%s%d] DeleteFileFixup: Setting return code to ERROR_FILE_NOT_FOUND.", g_MfrModuleName, dllInstance);
 #endif
                             return retfinal;
                         }
@@ -313,11 +313,11 @@ BOOL __stdcall DeleteFileFixup(_In_ const CharT* pathName) noexcept
     }
 #if _DEBUG
     // Fall back to assuming no redirection is necessary if exception
-    LOGGED_CATCHHANDLER(dllInstance, L"DeleteFile")
+    LOGGED_CATCHHANDLER_MIN(g_MfrModuleName, dllInstance, L"DeleteFile")
 #else
     catch (...)
     {
-        Log(L"[%d] DeleteFileFixup Exception=0x%x", dllInstance, GetLastError());
+        Log(L"[%s%d] DeleteFileFixup Exception=0x%x", g_MfrModuleName, dllInstance, GetLastError());
     }
 #endif
     if (pathName != nullptr)
@@ -331,7 +331,7 @@ BOOL __stdcall DeleteFileFixup(_In_ const CharT* pathName) noexcept
         retfinal = 0; //  impl::DeleteFile(pathName);
     }
 #if _DEBUG
-    Log(L"[%d] DeleteFileFixup returns 0x%x", dllInstance, retfinal);
+    Log(L"[%s%d] DeleteFileFixup returns 0x%x", g_MfrModuleName, dllInstance, retfinal);
 #endif
     return retfinal;
 }

@@ -10,11 +10,9 @@
 
 #include <errno.h>
 #include "FunctionImplementations.h"
-#include <psf_logging.h>
 
 #include "ManagedPathTypes.h"
 #include "PathUtilities.h"
-#include "FunctionImplementations.h"
 #include <psf_logging.h>
 #include <memory>
 #include "FindData3.h"
@@ -32,7 +30,7 @@ BOOL __stdcall FindCloseFixup(_Inout_ HANDLE findHandle) noexcept
     if (!guard)
     {
 #if _DEBUG
-        Log(L"FindCloseFixup");
+        Log(L"[%s%d] FindCloseFixup", g_MfrModuleName, g_InterceptInstance);
 #endif
         return impl::FindClose(findHandle);
     }
@@ -48,9 +46,9 @@ BOOL __stdcall FindCloseFixup(_Inout_ HANDLE findHandle) noexcept
 
     auto data3 = reinterpret_cast<FindData3*>(findHandle);
 #if _DEBUG
-    Log(L"[%d][%d] FindCloseFixup handle=0x%x.", data3->RememberedInstance, dllInstance, findHandle);
+    Log(L"[%s%d][%s%d] FindCloseFixup handle=0x%x.", g_MfrModuleName, data3->RememberedInstance, g_MfrModuleName, dllInstance, findHandle);
 #endif
-    if ((int)data3->RememberedInstance > 60000)
+    if ((int)data3->RememberedInstance > 70000)
     {
         if (data3->find_handles[Result_Redirected])
         {

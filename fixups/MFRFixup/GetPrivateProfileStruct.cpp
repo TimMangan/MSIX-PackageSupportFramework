@@ -35,7 +35,7 @@
         } \
         if (debug) \
         { \
-            Log(L"[%d] GetPrivateProfileStructFixup Returned is: %d from '%s' ", dllInstance, retfinal, LongDestinationFilename.c_str()); \
+            Log(L"[%s%d] GetPrivateProfileStructFixup Returned is: %d from '%s' ", g_MfrModuleName, dllInstance, retfinal, LongDestinationFilename.c_str()); \
         } \
         return retfinal; \
     }
@@ -69,7 +69,7 @@ BOOL __stdcall GetPrivateProfileStructFixup(
             if (fileName != NULL)
             {
 #if DEBUG
-                LogString(dllInstance, L"GetPrivateProfileStructFixup for fileName", fileName);
+                LogString(g_MfrModuleName, dllInstance, L"GetPrivateProfileStructFixup for fileName", fileName);
 #endif
 
                 // This get is inheirently a read-only operation in all cases.
@@ -289,24 +289,24 @@ BOOL __stdcall GetPrivateProfileStructFixup(
             }
             else
             {
-                Log(L"[%d]GetPrivateProfileStructFixup: null fileName, don't redirect", dllInstance);
+                Log(L"[%s%d]GetPrivateProfileStructFixup: null fileName, don't redirect", g_MfrModuleName, dllInstance);
             }
         }
     }
 #if _DEBUG
     // Fall back to assuming no redirection is necessary if exception
-    LOGGED_CATCHHANDLER(dllInstance, L"GetPrivateProfileStruct")
+    LOGGED_CATCHHANDLER_MIN(g_MfrModuleName, dllInstance, L"GetPrivateProfileStruct")
 #else
     catch (...)
     {
-        Log(L"[%d] GetPrivateProfileStructFixup Exception=0x%x", dllInstance, GetLastError());
+        Log(L"[%s%d] GetPrivateProfileStructFixup Exception=0x%x", g_MfrModuleName, dllInstance, GetLastError());
     }
 #endif 
 
 
     retfinal =  impl::GetPrivateProfileStruct(sectionName, key, structArea, uSizeStruct, fileName);
 #if MOREDEBUG
-    Log(L"[%d] GetPrivateProfileStructFixup Returned %d from unfixed call.", dllInstance, retfinal);
+    Log(L"[%s%d] GetPrivateProfileStructFixup Returned %d from unfixed call.", g_MfrModuleName, dllInstance, retfinal);
 #endif
     return retfinal;
 }

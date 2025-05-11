@@ -8,9 +8,6 @@
 #include "PathRedirection.h"
 #include <psf_logging.h>
 
-#if _DEBUG
-void LogCountedStringW(DWORD dllInstance, const char* name, const wchar_t* value, std::size_t length);
-#endif
 
 
 // TODO: there are two functions  that the app may call to be notified about changes made under a directory.
@@ -54,7 +51,7 @@ BOOL _stdcall ReadDirectoryChangesWFixup(
     auto guard = g_reentrancyGuard.enter();
     try
     {
-        Log(L"[%d] ReadDirectoryChangesW Fixup Handle=0x%x ", Instance, hDirectory);
+        Log(L"[%s%d] ReadDirectoryChangesW Fixup Handle=0x%x ", g_FrfModuleName, Instance, hDirectory);
 
 
         if (guard)
@@ -65,11 +62,11 @@ BOOL _stdcall ReadDirectoryChangesWFixup(
             BOOL res1 = GetFileInformationByHandleEx(hDirectory, FileBasicInfo, &FileBasicInfoData, sizeof(FileBasicInfoData));
             if (res1 != 0)
             {
-                Log(L"[%d] RDCW Handle FileBasicInfo OK Attributes=0x%x", Instance, FileBasicInfoData.FileAttributes);
+                Log(L"[%s%d] RDCW Handle FileBasicInfo OK Attributes=0x%x", g_FrfModuleName, Instance, FileBasicInfoData.FileAttributes);
             }
             else
             {
-                Log(L"[%d] RDCW Handle FileBasicInfo Fail err=0x%x", Instance, GetLastError());
+                Log(L"[%s%d] RDCW Handle FileBasicInfo Fail err=0x%x", g_FrfModuleName, Instance, GetLastError());
             }
             DWORD len = 512;
             PFILE_NAME_INFO pFileInformation = (PFILE_NAME_INFO)malloc(len);
@@ -78,11 +75,11 @@ BOOL _stdcall ReadDirectoryChangesWFixup(
                 BOOL res2 = GetFileInformationByHandleEx(hDirectory, FileNameInfo, pFileInformation, len);
                 if (res2 != 0)
                 {
-                    LogCountedStringW(Instance, "       RDCW Handle Path is", pFileInformation->FileName, pFileInformation->FileNameLength / 2 );
+                    LogCountedStringW(g_FrfModuleName, Instance, "       RDCW Handle Path is", pFileInformation->FileName, pFileInformation->FileNameLength / 2 );
                 }
                 else
                 {
-                    Log(L"[%d]  RDCW Handle Path did not get returned err=0x%x.", Instance, GetLastError());
+                    Log(L"[%s%d]  RDCW Handle Path did not get returned err=0x%x.", g_FrfModuleName, Instance, GetLastError());
                 }
                 free(pFileInformation);
             }
@@ -94,18 +91,18 @@ BOOL _stdcall ReadDirectoryChangesWFixup(
 #if _DEBUG
         if (bRet == 0)
         {
-            Log(L"[%d] ReadDirectoryChangesW returns Failerror=0x%x", Instance, GetLastError());
+            Log(L"[%s%d] ReadDirectoryChangesW returns Failerror=0x%x", g_FrfModuleName, Instance, GetLastError());
         }
         else
         {
-            Log(L"[%d] ReadDirectoryChangesW returns Success", Instance);
+            Log(L"[%s%d] ReadDirectoryChangesW returns Success", g_FrfModuleName, Instance);
         }
 #endif
         return bRet;
     }
     catch (...)
     {
-        Log(L"[%d] ReadDirectoryChangesW Exception Fail", Instance);
+        Log(L"[%s%d] ReadDirectoryChangesW Exception Fail", g_FrfModuleName, Instance);
         return 0;
     }
 }
@@ -142,7 +139,7 @@ BOOL _stdcall ReadDirectoryChangesExWFixup(
     auto guard = g_reentrancyGuard.enter();
     try
     {
-        Log(L"[%d] ReadDirectoryChangesExW Fixup Handle=0x%x ", Instance, hDirectory);
+        Log(L"[%s%d] ReadDirectoryChangesExW Fixup Handle=0x%x ", g_FrfModuleName, Instance, hDirectory);
         if (guard)
         {
 #if _DEBUG
@@ -150,7 +147,7 @@ BOOL _stdcall ReadDirectoryChangesExWFixup(
             BOOL res1 = GetFileInformationByHandleEx(hDirectory, FileBasicInfo, &FileBasicInfoData, sizeof(FileBasicInfoData));
             if (res1 != 0)
             {
-                Log(L"[%d] RDCWEx RDCWEx Handle FileBasicInfo Fail err=0x%x", Instance, GetLastError());
+                Log(L"[%s%d] RDCWEx RDCWEx Handle FileBasicInfo Fail err=0x%x", g_FrfModuleName, Instance, GetLastError());
             }
             DWORD len = 512;
             PFILE_NAME_INFO pFileInformation = (PFILE_NAME_INFO)malloc(len);
@@ -159,11 +156,11 @@ BOOL _stdcall ReadDirectoryChangesExWFixup(
                 BOOL res = GetFileInformationByHandleEx(hDirectory, FileNameInfo, pFileInformation, len);
                 if (res != 0)
                 {
-                    LogCountedStringW(Instance, "       RDCWEx Handle Path is", pFileInformation->FileName, pFileInformation->FileNameLength);
+                    LogCountedStringW(g_FrfModuleName, Instance, "       RDCWEx Handle Path is", pFileInformation->FileName, pFileInformation->FileNameLength);
                 }
                 else
                 {
-                    Log(L"[%d]  RDCWEx Path did not get returned.", Instance);
+                    Log(L"[%s%d]  RDCWEx Path did not get returned.", g_FrfModuleName, Instance);
         }
                 free(pFileInformation);
     }
@@ -174,18 +171,18 @@ BOOL _stdcall ReadDirectoryChangesExWFixup(
 #if _DEBUG
         if (bRet == 0)
         {
-            Log(L"[%d] ReadDirectoryChangesExW returns Fail error=0x%x", Instance, GetLastError());
+            Log(L"[%s%d] ReadDirectoryChangesExW returns Fail error=0x%x", g_FrfModuleName, Instance, GetLastError());
         }
         else
         {
-            Log(L"[%d] ReadDirectoryChangesExW returns Success", Instance);
+            Log(L"[%s%d] ReadDirectoryChangesExW returns Success", g_FrfModuleName, Instance);
         }
 #endif
         return bRet;
     }
     catch (...)
     {
-        Log(L"[%d] ReadDirectoryChangesExW Exception Fail", Instance);
+        Log(L"[%s%d] ReadDirectoryChangesExW Exception Fail", g_FrfModuleName, Instance);
         return 0;
     }
 }

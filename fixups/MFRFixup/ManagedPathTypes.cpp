@@ -92,7 +92,7 @@ namespace mfr
             return mfr_path_types::in_package_pvad_area;
         }
 
-        //Log(L"FID_RootDrive  %s", FID_RootDrive.generic_wstring().c_str());
+        //Log(L"[%s%d] FID_RootDrive  %s", g_MfrModuleName, dllInstance, FID_RootDrive.generic_wstring().c_str());
         //if (!pathString_isSubsetOf_Path(FID_RootDrive.generic_wstring().c_str(), path))
         if (!pathString_isSubsetOf_Path(FID_RootDrive.generic_wstring().c_str(), forwardPath))
         {

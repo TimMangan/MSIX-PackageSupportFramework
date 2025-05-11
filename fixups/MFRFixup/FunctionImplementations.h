@@ -27,6 +27,7 @@
 
 
 extern DWORD g_InterceptInstance;
+extern const wchar_t* g_MfrModuleName;
 
 // A much bigger hammer to avoid reentrancy. Still, the impl::* functions are good to have around to prevent the
 // unnecessary invocation of the fixup

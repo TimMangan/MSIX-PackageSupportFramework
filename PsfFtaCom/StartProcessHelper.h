@@ -140,7 +140,7 @@ void StartWithShellExecute(LPCWSTR verb, std::filesystem::path packageRoot, std:
         , static_cast<WORD>(cmdShow)
     };
 
-    Log("\tUsing Shell launch: %ls %ls", shex.lpFile, shex.lpParameters);
+    Log("\tPsfFtaCom Using Shell launch: %ls %ls", shex.lpFile, shex.lpParameters);
     THROW_LAST_ERROR_IF_MSG(
         !ShellExecuteEx(&shex),
         "ERROR: Failed to create detoured shell process");
@@ -149,7 +149,7 @@ void StartWithShellExecute(LPCWSTR verb, std::filesystem::path packageRoot, std:
     DWORD exitCode = ::WaitForSingleObject(shex.hProcess, timeout);
 
     // Don't throw an error as we should assume that the process would have appropriately made indications to the user.  Log for debug purposes only.
-    Log("PsfLauncher: Shell Launch: process returned exit code 0x%x", exitCode);
+    Log("PsfFtaCom: Shell Launch: process returned exit code 0x%x", exitCode);
 
     CloseHandle(shex.hProcess);
 }

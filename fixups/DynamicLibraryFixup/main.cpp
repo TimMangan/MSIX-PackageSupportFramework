@@ -12,7 +12,10 @@
 void InitializeFixups();
 void InitializeConfiguration();
 
+extern const wchar_t* g_LoadLibraryName;
+
 extern "C" {
+
 
     BOOL __stdcall DllMain(HINSTANCE, DWORD reason, LPVOID) noexcept try
     {
@@ -30,7 +33,7 @@ extern "C" {
     }
     catch (...)
     {
-        Log(L"RuntDynamicLibraryFixup attach ERROR");
+        Log(L"[%s%d] DynamicLibraryFixup attach ERROR", g_LoadLibraryName, 0);
         ::SetLastError(win32_from_caught_exception());
         return FALSE;
     }

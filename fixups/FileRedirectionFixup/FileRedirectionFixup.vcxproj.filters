@@ -22,6 +22,9 @@
       <Filter>inc</Filter>
     </ClInclude>
     <ClInclude Include="resource.h" />
+    <ClInclude Include="Logging.h">
+      <Filter>inc</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="readme.md" />

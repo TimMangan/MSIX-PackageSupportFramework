@@ -237,7 +237,6 @@
     <ClInclude Include="resource.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\CommonSrc\psf_logging.cpp" />
     <ClCompile Include="dllmain.cpp" />
     <ClCompile Include="InitializeFixup.cpp" />
     <ClCompile Include="Logging.cpp" />

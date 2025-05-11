@@ -34,7 +34,7 @@ LSTATUS __stdcall RegQueryValueExAFixup(
     _Out_opt_ PVOID lpData,
     _In_opt_ _Out_opt_ LPDWORD lpcbData)
 {
-    DWORD RegLocalInstance = ++g_RegIntceptInstance;
+    DWORD RegLocalInstance = ++g_RegInterceptInstance;
     LSTATUS result = -1;
 
     try
@@ -46,7 +46,7 @@ LSTATUS __stdcall RegQueryValueExAFixup(
         std::string sValueName = "NULL";
         if (lpValueName != NULL)
             sValueName = lpValueName;
-        Log(L"[%d] RegQueryValueExA:  key=0x%x keyname=%S ValueName=%S", RegLocalInstance, (ULONG)(ULONG_PTR)key, keyonlypath.c_str(), sValueName.c_str());
+        Log(L"[%s%d] RegQueryValueExA:  key=0x%x keyname=%S ValueName=%S", g_RegModuleName, RegLocalInstance, (ULONG)(ULONG_PTR)key, keyonlypath.c_str(), sValueName.c_str());
 #endif
         DWORD dwType;
         result = impl::KernelBaseRegQueryValueExA(key, lpValueName, lpReservered, &dwType, lpData, lpcbData);
@@ -71,31 +71,31 @@ LSTATUS __stdcall RegQueryValueExAFixup(
                             char* rstring = new char[(*lpcbData) + 1];
                             FillMemory(rstring, (*lpcbData) + 1, 0);
                             memcpy(rstring, lpData, *lpcbData);
-                            LogString(RegLocalInstance, L"RegQueryValueExA: Returning success with value", rstring);
+                            LogString(g_RegModuleName, RegLocalInstance, L"RegQueryValueExA: Returning success with value", rstring);
                         }
                         else
                         {
-                            Log(L"[%d] RegQueryValueExA:  Returning success with no data", RegLocalInstance);
+                            Log(L"[%s%d] RegQueryValueExA:  Returning success with no data", g_RegModuleName, RegLocalInstance);
                         }
                         break;
                     case REG_DWORD:
                         if (lpData != NULL)
                         {
-                            Log(L"[% d] RegQueryValueExA:  Returning success with DWORD x0x%x", RegLocalInstance, *((DWORD*)lpData));
+                            Log(L"[%s%d] RegQueryValueExA:  Returning success with DWORD x0x%x", g_RegModuleName, RegLocalInstance, *((DWORD*)lpData));
                         }
                         else
                         {
-                            Log(L"[% d] RegQueryValueExA:  Returning success with DWORD", RegLocalInstance);
+                            Log(L"[%s%d] RegQueryValueExA:  Returning success with DWORD", g_RegModuleName, RegLocalInstance);
                         }
                         break;
                     default:
-                        Log(L"[%d] RegQueryValueExA:  Returning success of type 0x%x", RegLocalInstance, dwType);
+                        Log(L"[%s%d] RegQueryValueExA:  Returning success of type 0x%x", g_RegModuleName, RegLocalInstance, dwType);
                         break;
                     }
                 }
                 else
                 {
-                    Log(L"[%d] RegQueryValueExA:  Returning success", RegLocalInstance);
+                    Log(L"[%s%d] RegQueryValueExA:  Returning success", g_RegModuleName, RegLocalInstance);
                 }
 #endif                
             }
@@ -105,20 +105,20 @@ LSTATUS __stdcall RegQueryValueExAFixup(
                 // When we return this value, a subsequent call by the app might ask for this new index, but we can probably assume it's OK to return it twice
                 // because we do not have a way to remember this, like done in FindFirstFile.
 #if _DEBUG
-                Log(L"[%d] RegQueryValueExA:  DeletionMarker Blocking this call.", RegLocalInstance);
+                Log(L"[%s%d] RegQueryValueExA:  DeletionMarker Blocking this call.", g_RegModuleName, RegLocalInstance);
 #endif                
             }
         }
         else
         {
 #if _DEBUG
-            Log(L"[%d] RegQueryValueExA:  Returning normal failure 0x%x.", RegLocalInstance, result);
+            Log(L"[%s%d] RegQueryValueExA:  Returning normal failure 0x%x.", g_RegModuleName, RegLocalInstance, result);
 #endif                
         }
     }
     catch (...)
     {
-        Log(L"[%d] RegQueryValueExA:  Exception thrown.", RegLocalInstance);
+        Log(L"[%s%d] RegQueryValueExA:  Exception thrown.", g_RegModuleName, RegLocalInstance);
     }
     return result;
 }
@@ -132,7 +132,7 @@ LSTATUS __stdcall RegQueryValueExWFixup(
     _Out_opt_ PVOID lpData,
     _In_opt_ _Out_opt_ LPDWORD lpcbData)
 {
-    DWORD RegLocalInstance = ++g_RegIntceptInstance;
+    DWORD RegLocalInstance = ++g_RegInterceptInstance;
     LSTATUS result = -1;
 
     try
@@ -144,7 +144,7 @@ LSTATUS __stdcall RegQueryValueExWFixup(
         std::string sValueName = "NULL";
         if (lpValueName != NULL)
             sValueName = narrow(lpValueName);
-        Log(L"[%d] RegQueryValueExW:  key=0x%x keyname=%S ValueName=%S", RegLocalInstance, (ULONG)(ULONG_PTR)key, keyonlypath.c_str(), sValueName.c_str());
+        Log(L"[%s%d] RegQueryValueExW:  key=0x%x keyname=%S ValueName=%S", g_RegModuleName, RegLocalInstance, (ULONG)(ULONG_PTR)key, keyonlypath.c_str(), sValueName.c_str());
 #endif
         DWORD dwType;
         result = impl::KernelBaseRegQueryValueExW(key, lpValueName, lpReservered, &dwType, lpData, lpcbData);
@@ -173,28 +173,29 @@ LSTATUS __stdcall RegQueryValueExWFixup(
                         }
                         else
                         {
-                            Log(L"[%d] RegQueryValueExW:  Returning success with no data", RegLocalInstance);
+                            g_RegModuleName, 
+                            Log(L"[%s%d] RegQueryValueExW:  Returning success with no data", g_RegModuleName, RegLocalInstance);
                         }
                         break;
                     case REG_DWORD:
                         if (lpData != NULL)
                         {
-                            Log(L"[% d] RegQueryValueExW:  Returning success with DWORD x0x%x", RegLocalInstance, *((DWORD*)lpData));
+                            Log(L"[%s%d] RegQueryValueExW:  Returning success with DWORD x0x%x", g_RegModuleName, RegLocalInstance, *((DWORD*)lpData));
                         }
                         else
                         {
-                            Log(L"[% d] RegQueryValueExW:  Returning success with DWORD", RegLocalInstance);
+                            Log(L"[%s%d] RegQueryValueExW:  Returning success with DWORD", g_RegModuleName, RegLocalInstance);
                         }
 
                         break;
                     default:
-                        Log(L"[%d] RegQueryValueExW:  Returning success of type 0x%x", RegLocalInstance, dwType);
+                        Log(L"[%s%d] RegQueryValueExW:  Returning success of type 0x%x", g_RegModuleName, RegLocalInstance, dwType);
                         break;
                     }
                 }
                 else
                 {
-                    Log(L"[%d] RegQueryValueExW:  Returning success", RegLocalInstance);
+                    Log(L"[%s%d] RegQueryValueExW:  Returning success", g_RegModuleName, RegLocalInstance);
                 }
 #endif                
             }
@@ -204,7 +205,7 @@ LSTATUS __stdcall RegQueryValueExWFixup(
                 // When we return this value, a subsequent call by the app might ask for this new index, but we can probably assume it's OK to return it twice
                 // because we do not have a way to remember this, like done in FindFirstFile.
 #if _DEBUG
-                Log(L"[%d] RegQueryValueExW:  DeletionMarker Blocking this call.", RegLocalInstance);
+                Log(L"[%s%d] RegQueryValueExW:  DeletionMarker Blocking this call.", g_RegModuleName, RegLocalInstance);
 #endif                
 
             }
@@ -212,13 +213,13 @@ LSTATUS __stdcall RegQueryValueExWFixup(
         else
         {
 #if _DEBUG
-            Log(L"[%d] RegQueryValueExW:  Returning normal failure 0x%x.", RegLocalInstance, result);
+            Log(L"[%s%d] RegQueryValueExW:  Returning normal failure 0x%x.", g_RegModuleName, RegLocalInstance, result);
 #endif                
         }
     }
     catch (...)
     {
-        Log(L"[%d] RegQueryValueEx:  Exception thrown.", RegLocalInstance);
+        Log(L"[%s%d] RegQueryValueEx:  Exception thrown.", g_RegModuleName, RegLocalInstance);
     }
     return result;
 }

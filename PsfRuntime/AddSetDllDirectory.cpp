@@ -26,6 +26,7 @@ using namespace std::literals;
 #include <reentrancy_guard.h>
 #include <psf_framework.h>
 
+extern const wchar_t* g_PsfRunTimeName;
 inline thread_local psf::reentrancy_guard g_reentrancyGuard;
 
 namespace impl
@@ -48,7 +49,7 @@ BOOL WINAPI SetDefaultDllDirectoriesFixup(
     {
 #ifdef _DEBUG
         DWORD AddSetDllDirectoryInstance = ++g_AddSetDllDirectoryIntceptInstance;
-        Log(L" [%d] SetDefaultDllDirectoriesFixup: (Informational) 0x%x", AddSetDllDirectoryInstance, DirectoryFlags);
+        Log(L" [%s%d] SetDefaultDllDirectoriesFixup: (Informational) 0x%x", g_PsfRunTimeName, AddSetDllDirectoryInstance, DirectoryFlags);
 #endif
     }
     return impl::SetDefaultDllDirectories(DirectoryFlags);
@@ -71,11 +72,11 @@ DLL_DIRECTORY_COOKIE WINAPI AddDllDirectoryFixup(
         DWORD AddSetDllDirectoryInstance = ++g_AddSetDllDirectoryIntceptInstance;
         if (path == NULL)
         {
-            Log(L" [%d] AddDllDirectoryFixup: (Informational) Input path is null", AddSetDllDirectoryInstance);
+            Log(L" [%s%d] AddDllDirectoryFixup: (Informational) Input path is null", g_PsfRunTimeName, AddSetDllDirectoryInstance);
         }
         else
         {
-            LogString(AddSetDllDirectoryInstance, L"AddDllDirectoryFixup: Input path", path);
+            LogString(g_PsfRunTimeName, AddSetDllDirectoryInstance, L"AddDllDirectoryFixup: Input path", path);
         }
         // We may need to alter the path in some cases.  But first we need to trap an app
         // needing this.
@@ -111,7 +112,7 @@ BOOL WINAPI SetDllDirectoryFixup(
         // needing this.
         if (path == NULL)
         {
-            Log(L"\t[%d] SetDllDirectoryFixup: (Informational) Input path is null (restores search order)", AddSetDllDirectoryInstance);
+            Log(L"\t[%s%d] SetDllDirectoryFixup: (Informational) Input path is null (restores search order)", g_PsfRunTimeName, AddSetDllDirectoryInstance);
         }
         else
         {
@@ -119,22 +120,22 @@ BOOL WINAPI SetDllDirectoryFixup(
             {
                 if (strlen(path) == 0)
                 {
-                    Log(L"\t[%d] SetDllDirectoryFixup: (Informational) Input path is empty (remove current directory from list)", AddSetDllDirectoryInstance);
+                    Log(L"\t[%s%d] SetDllDirectoryFixup: (Informational) Input path is empty (remove current directory from list)", g_PsfRunTimeName, AddSetDllDirectoryInstance);
                 }
                 else
                 {
-                    LogString(AddSetDllDirectoryInstance, "SetDllDirectoryFixupA: (Informational) Input path", path);
+                    LogString(g_PsfRunTimeName, AddSetDllDirectoryInstance, "SetDllDirectoryFixupA: (Informational) Input path", path);
                 }
             }
             else
             {
                 if (wcslen(path) == 0)
                 {
-                    Log(L"\t[%d] SetDllDirectoryFixup: (Informational) Input path is empty (remove current directory from list)", AddSetDllDirectoryInstance);
+                    Log(L"\t[%s%d] SetDllDirectoryFixup: (Informational) Input path is empty (remove current directory from list)", g_PsfRunTimeName, AddSetDllDirectoryInstance);
                 }
                 else
                 {
-                    LogString(AddSetDllDirectoryInstance, L"SetDllDirectoryFixupW: (Informational) Input path", path);
+                    LogString(g_PsfRunTimeName, AddSetDllDirectoryInstance, L"SetDllDirectoryFixupW: (Informational) Input path", path);
                 }
             }
         }

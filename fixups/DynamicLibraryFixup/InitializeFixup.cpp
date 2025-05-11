@@ -32,10 +32,12 @@ bool                  g_dynf_forcepackagedlluse = false;
 
 std::vector<dll_location_spec> g_dynf_dllSpecs;
 
+extern const wchar_t* g_LoadLibraryName;
+
 void InitializeFixups()
 {
 #if _DEBUG
-    Log(L"Initializing DynamicLibraryFixup");
+    Log(L"[%s%d] Initializing DynamicLibraryFixup", g_LoadLibraryName, 0);
 #endif
     // For path comparison's sake - and the fact that std::filesystem::path doesn't handle (root-)local device paths all
     // that well - ensure that these paths are drive-absolute
@@ -55,7 +57,7 @@ void InitializeFixups()
 void InitializeConfiguration()
 {
 #if _DEBUG
-    Log(L"DynamicLibraryFixup InitializeConfiguration()");
+    Log(L"[%s%d] DynamicLibraryFixup InitializeConfiguration()", g_LoadLibraryName, 0);
 #endif
     if (auto rootConfig = ::PSFQueryCurrentDllConfig())
     {
@@ -72,7 +74,7 @@ void InitializeConfiguration()
         if (g_dynf_forcepackagedlluse == true)
         {
 #if _DEBUG
-            Log(L"DynamicLibraryFixup ForcePackageDllUse=true");
+            Log(L"[%s%d] DynamicLibraryFixup ForcePackageDllUse=true", g_LoadLibraryName, 0);
 #endif
             if (auto relativeDllsValue = rootObject.try_get("relativeDllPaths"))
             {
@@ -112,19 +114,19 @@ void InitializeConfiguration()
                         g_dynf_dllSpecs.back().filename = filename;
                         g_dynf_dllSpecs.back().architecture = bitness;
 #if MOREDEBUG
-                        Log(L"DynamicLibraryFixup: %s : (%s=%d) : %s", filename.data(), wArch.c_str(), bitness, fullpath.c_str());
+                        Log(L"[%s%d] DynamicLibraryFixup: %s : (%s=%d) : %s", g_LoadLibraryName, 0, filename.data(), wArch.c_str(), bitness, fullpath.c_str());
 #endif
                         count++;
                     };
 #if _DEBUG
-                    Log(L"DynamicLibraryFixup: %d relative items read.", count);
+                    Log(L"[%s%d] DynamicLibraryFixup: %d relative items read.", g_LoadLibraryName, 0, count);
 #endif
                 }
             }
             else
             {
 #if _DEBUG
-                Log(L"DynamicLibraryFixup ForcePackageDllUse=false");
+                Log(L"[%s%d] DynamicLibraryFixup ForcePackageDllUse=false", g_LoadLibraryName, 0);
 #endif
             }
         }

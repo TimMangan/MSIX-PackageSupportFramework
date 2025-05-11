@@ -27,18 +27,18 @@
         retfinal = impl::CopyFileEx(LongExistingFileWs.c_str(), LongNewFileWs.c_str(), progressRoutine, data, cancel, dwCopyFlags); \
         if (moredebug) \
         { \
-            LogString(dllInstance, L"CopyFileExFixup: Actual From", LongExistingFileWs.c_str()); \
-            LogString(dllInstance, L"CopyFileExFixup: Actual To", LongNewFileWs.c_str()); \
+            LogString(g_MfrModuleName, dllInstance, L"CopyFileExFixup: Actual From", LongExistingFileWs.c_str()); \
+            LogString(g_MfrModuleName, dllInstance, L"CopyFileExFixup: Actual To", LongNewFileWs.c_str()); \
         } \
         if (debug) \
         { \
             if (retfinal) \
             { \
-                Log(L"[%d] CopyFileExFixup: return SUCCESS", dllInstance); \
+                Log(L"[%s%d] CopyFileExFixup: return SUCCESS", g_MfrModuleName, dllInstance); \
             } \
             else \
             { \
-                Log(L"[%d] CopyFileExFixup: return FAILURE err=0x%x", dllInstance, GetLastError()); \
+                Log(L"[%s%d] CopyFileExFixup: return FAILURE err=0x%x", g_MfrModuleName, dllInstance, GetLastError()); \
             } \
         } \
         return retfinal; \
@@ -72,9 +72,9 @@ BOOL __stdcall CopyFileExFixup(
         if (guard)
         {
 #if _DEBUG
-            LogString(dllInstance, L"CopyFileExFixup from", existingFileName);
-            LogString(dllInstance, L"CopyFileExFixup to", newFileName);
-            Log(L"[%d] CopyFileExFixup FailIfExists 0x%x", dllInstance, copyFlags);
+            LogString(g_MfrModuleName, dllInstance, L"CopyFileExFixup from", existingFileName);
+            LogString(g_MfrModuleName, dllInstance, L"CopyFileExFixup to", newFileName);
+            Log(L"[%s%d] CopyFileExFixup FailIfExists 0x%x", g_MfrModuleName, dllInstance, copyFlags);
 #endif
             std::wstring wExistingFileName = widen(existingFileName);
             std::wstring wNewFileName = widen(newFileName);
@@ -159,7 +159,7 @@ BOOL __stdcall CopyFileExFixup(
                     break;
                 }
 #if MOREDEBUG
-                Log(L"[%d] CopyFileExFixup: redirected destination=%s", dllInstance, newFileWsRedirected.c_str());
+                Log(L"[%s%d] CopyFileExFixup: redirected destination=%s", g_MfrModuleName, dllInstance, newFileWsRedirected.c_str());
 #endif
 
                 switch (cohortsExisting.file_mfr.Request_MfrPathType)
@@ -335,7 +335,7 @@ BOOL __stdcall CopyFileExFixup(
                 // ILV
                 std::wstring usePathNew = DetermineIlvPathForWriteOperations(cohortsNew, dllInstance, moredebug);
 #if MOREDEBUG
-                LogString(dllInstance, L"CopyFileExFixup ILV UseTo", usePathNew.c_str());
+                LogString(g_MfrModuleName, dllInstance, L"CopyFileExFixup ILV UseTo", usePathNew.c_str());
 #endif
                 // In a redirect to local scenario, we are responsible for pre-creating the local parent folders
                 // if-and-only-if they are present in the package.
@@ -347,7 +347,7 @@ BOOL __stdcall CopyFileExFixup(
 
                 std::wstring usePathExisting = DetermineIlvPathForReadOperations(cohortsExisting, dllInstance, moredebug);
 #if MOREDEBUG
-                LogString(dllInstance, L"CopyFileExFixup ILV UseFrom", usePathExisting.c_str());
+                LogString(g_MfrModuleName, dllInstance, L"CopyFileExFixup ILV UseFrom", usePathExisting.c_str());
 #endif                
                 // In a redirect to local scenario, we are responsible for determing if source is local or in package
                 usePathExisting = SelectLocalOrPackageForRead(usePathExisting, cohortsExisting.WsPackage);
@@ -359,11 +359,11 @@ BOOL __stdcall CopyFileExFixup(
     }
 #if _DEBUG
     // Fall back to assuming no redirection is necessary if exception
-    LOGGED_CATCHHANDLER(dllInstance, L"CopyFileExFixup")
+    LOGGED_CATCHHANDLER_MIN(g_MfrModuleName, dllInstance, L"CopyFileExFixup")
 #else
     catch (...)
     {
-        Log(L"[%d] CopyFileExFixup Exception=0x%x", dllInstance, GetLastError());
+        Log(L"[%s%d] CopyFileExFixup Exception=0x%x", g_MfrModuleName, dllInstance, GetLastError());
     }
 #endif
     if (existingFileName != nullptr && newFileName != nullptr)
@@ -378,7 +378,7 @@ BOOL __stdcall CopyFileExFixup(
         retfinal = 0; //impl::CopyFileEx(existingFileName, newFileName, progressRoutine, data, cancel, copyFlags);
     }
 #if _DEBUG
-    Log(L"[%d] CopyFileFixup returns 0x%x", dllInstance, retfinal);
+    Log(L"[%s%d] CopyFileFixup returns 0x%x", g_MfrModuleName, dllInstance, retfinal);
 #endif
     return retfinal;
 }

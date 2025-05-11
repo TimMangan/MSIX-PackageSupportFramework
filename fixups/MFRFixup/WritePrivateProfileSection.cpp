@@ -35,7 +35,7 @@
         } \
         if (debug) \
         { \
-            Log(L"[%d] WritePrivateProfileSection returns %d on file %s", dllInstance, retfinal, LongDestinationFilename.c_str()); \
+            Log(L"[%s%d] WritePrivateProfileSection returns %d on file %s", g_MfrModuleName, dllInstance, retfinal, LongDestinationFilename.c_str()); \
         } \
         return retfinal; \
     }
@@ -66,7 +66,7 @@ BOOL __stdcall WritePrivateProfileSectionFixup(
             if (fileName != NULL)
             {
 #if _DEBUG
-                LogString(dllInstance, L"WritePrivateProfileSectionFixup for fileName", fileName);
+                LogString(g_MfrModuleName, dllInstance, L"WritePrivateProfileSectionFixup for fileName", fileName);
 #endif
                 // This get is inheirently a write operation in all cases.
                 // We prefer to use the redirecton case, if present.
@@ -377,18 +377,18 @@ BOOL __stdcall WritePrivateProfileSectionFixup(
             else
             {
 #if _DEBUG
-                Log(L"[%d] WritePrivateProfileSectionFixup: null fileName, don't redirect", dllInstance);
+                Log(L"[%s%d] WritePrivateProfileSectionFixup: null fileName, don't redirect", g_MfrModuleName, dllInstance);
 #endif
             }
         }
     }
 #if _DEBUG
     // Fall back to assuming no redirection is necessary if exception
-    LOGGED_CATCHHANDLER(dllInstance, L"WritePrivateProfileSectionFixup")
+    LOGGED_CATCHHANDLER_MIN(g_MfrModuleName, dllInstance, L"WritePrivateProfileSectionFixup")
 #else
     catch (...)
     {
-        Log(L"[%d] WritePrivateProfileSectionFixup: Exception=0x%x", dllInstance, GetLastError());
+        Log(L"[%s%d] WritePrivateProfileSectionFixup: Exception=0x%x", g_MfrModuleName, dllInstance, GetLastError());
     }
 #endif 
 

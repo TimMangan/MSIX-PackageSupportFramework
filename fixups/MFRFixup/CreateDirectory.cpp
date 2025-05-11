@@ -60,11 +60,11 @@ BOOL  WRAPPER_CREATEDIRECTORY(std::wstring theDestinationDirectory, LPSECURITY_A
     {
         if (retfinal == 0)
         {
-            Log(L"[%d] CreateDirectory returns FAILURE 0x%x GetLastError=0x%x and file '%s'", dllInstance, retfinal, GetLastError(), LongDestinationDirectory.c_str());
+            Log(L"[%s%d] CreateDirectory returns FAILURE 0x%x GetLastError=0x%x and file '%s'", g_MfrModuleName, dllInstance, retfinal, GetLastError(), LongDestinationDirectory.c_str());
         }
         else
         {
-            Log(L"[%d] CreateDirectory returns SUCCESS 0x%x and file '%s'", dllInstance, retfinal, LongDestinationDirectory.c_str());
+            Log(L"[%s%d] CreateDirectory returns SUCCESS 0x%x and file '%s'", g_MfrModuleName, dllInstance, retfinal, LongDestinationDirectory.c_str());
         }
     }
     return retfinal; 
@@ -97,7 +97,7 @@ BOOL __stdcall CreateDirectoryFixup(_In_ const CharT* pathName, _In_opt_ LPSECUR
             wPathName = AdjustSlashes(wPathName, dllInstance);
 
 #if _DEBUG
-            LogString(dllInstance, L"CreateDirectoryFixup for path", pathName);
+            LogString(g_MfrModuleName, dllInstance, L"CreateDirectoryFixup for path", pathName);
 #endif
             
             wPathName = AdjustBadUNC(wPathName, dllInstance, L"CreateDirectoryFixup");
@@ -129,7 +129,7 @@ BOOL __stdcall CreateDirectoryFixup(_In_ const CharT* pathName, _In_opt_ LPSECUR
                                 {
                                     SetLastError(ERROR_ALREADY_EXISTS);
 #if _DEBUG
-                                    Log("[%d] CreateDirectoryFixup: Resetting return code to ERROR_ALREADY_EXISTS.");
+                                    Log("[%s%d] CreateDirectoryFixup: Resetting return code to ERROR_ALREADY_EXISTS.", g_MfrModuleName, dllInstance);
 #endif
                                 }
                             }
@@ -146,7 +146,7 @@ BOOL __stdcall CreateDirectoryFixup(_In_ const CharT* pathName, _In_opt_ LPSECUR
                             {
                                 SetLastError(ERROR_ALREADY_EXISTS);
 #if _DEBUG
-                                Log("[%d] CreateDirectoryFixup: Resetting return code to ERROR_ALREADY_EXISTS.");
+                                Log("[%s%d] CreateDirectoryFixup: Resetting return code to ERROR_ALREADY_EXISTS.", g_MfrModuleName, dllInstance);
 #endif
                             }
 #endif
@@ -177,7 +177,7 @@ BOOL __stdcall CreateDirectoryFixup(_In_ const CharT* pathName, _In_opt_ LPSECUR
                                     retfinal = FALSE;
                                     SetLastError(ERROR_ALREADY_EXISTS);
 #if _DEBUG
-                                    Log("[%d] CreateDirectoryFixup: Resetting return code to ERROR_ALREADY_EXISTS.");
+                                    Log("[%s%d] CreateDirectoryFixup: Resetting return code to ERROR_ALREADY_EXISTS.", g_MfrModuleName, dllInstance);
 #endif
                                 }
                             }
@@ -193,7 +193,7 @@ BOOL __stdcall CreateDirectoryFixup(_In_ const CharT* pathName, _In_opt_ LPSECUR
                             {
                                 SetLastError(ERROR_ALREADY_EXISTS);
 #if _DEBUG
-                                Log("[%d] CreateDirectoryFixup: Resetting return code to ERROR_ALREADY_EXISTS.");
+                                Log("[%s%d] CreateDirectoryFixup: Resetting return code to ERROR_ALREADY_EXISTS.", g_MfrModuleName, dllInstance);
 #endif
                             }
 #endif
@@ -209,7 +209,7 @@ BOOL __stdcall CreateDirectoryFixup(_In_ const CharT* pathName, _In_opt_ LPSECUR
                             {
                                 SetLastError(ERROR_ALREADY_EXISTS);
 #if _DEBUG
-                                Log("[%d] CreateDirectoryFixup: Resetting return code to ERROR_ALREADY_EXISTS.");
+                                Log("[%s%d] CreateDirectoryFixup: Resetting return code to ERROR_ALREADY_EXISTS.", g_MfrModuleName, dllInstance);
 #endif
                             }
 #endif
@@ -240,7 +240,7 @@ BOOL __stdcall CreateDirectoryFixup(_In_ const CharT* pathName, _In_opt_ LPSECUR
                                     retfinal = FALSE;
                                     SetLastError(ERROR_ALREADY_EXISTS);
 #if _DEBUG
-                                    Log("[%d] CreateDirectoryFixup: Resetting return code to ERROR_ALREADY_EXISTS.");
+                                    Log("[%s%d] CreateDirectoryFixup: Resetting return code to ERROR_ALREADY_EXISTS.", g_MfrModuleName, dllInstance);
 #endif
                                 }
                             }
@@ -256,7 +256,7 @@ BOOL __stdcall CreateDirectoryFixup(_In_ const CharT* pathName, _In_opt_ LPSECUR
                             {
                                 SetLastError(ERROR_ALREADY_EXISTS);
 #if _DEBUG
-                                Log("[%d] CreateDirectoryFixup: Resetting return code to ERROR_ALREADY_EXISTS.");
+                                Log("[%s%d] CreateDirectoryFixup: Resetting return code to ERROR_ALREADY_EXISTS.", g_MfrModuleName, dllInstance);
 #endif
                             }
 #endif
@@ -287,7 +287,7 @@ BOOL __stdcall CreateDirectoryFixup(_In_ const CharT* pathName, _In_opt_ LPSECUR
                                 {
                                     SetLastError(ERROR_ALREADY_EXISTS);
 #if _DEBUG
-                                    Log("[%d] CreateDirectoryFixup: Resetting return code to ERROR_ALREADY_EXISTS.");
+                                    Log("[%s%d] CreateDirectoryFixup: Resetting return code to ERROR_ALREADY_EXISTS.", g_MfrModuleName, dllInstance);
 #endif
                                 }
                             }
@@ -303,7 +303,7 @@ BOOL __stdcall CreateDirectoryFixup(_In_ const CharT* pathName, _In_opt_ LPSECUR
                             {
                                 SetLastError(ERROR_ALREADY_EXISTS);
 #if _DEBUG
-                                Log("[%d] CreateDirectoryFixup: Resetting return code to ERROR_ALREADY_EXISTS.");
+                                Log("[%s%d] CreateDirectoryFixup: Resetting return code to ERROR_ALREADY_EXISTS.", g_MfrModuleName, dllInstance);
 #endif
                             }
 #endif
@@ -333,7 +333,7 @@ BOOL __stdcall CreateDirectoryFixup(_In_ const CharT* pathName, _In_opt_ LPSECUR
                                 {
                                     SetLastError(ERROR_ALREADY_EXISTS);
 #if _DEBUG
-                                    Log("[%d] CreateDirectoryFixup: Resetting return code to ERROR_ALREADY_EXISTS.");
+                                    Log("[%s%d] CreateDirectoryFixup: Resetting return code to ERROR_ALREADY_EXISTS.", g_MfrModuleName, dllInstance);
 #endif
                                 }
                             }
@@ -349,7 +349,7 @@ BOOL __stdcall CreateDirectoryFixup(_In_ const CharT* pathName, _In_opt_ LPSECUR
                             {
                                 SetLastError(ERROR_ALREADY_EXISTS);
 #if _DEBUG
-                                Log("[%d] CreateDirectoryFixup: Resetting return code to ERROR_ALREADY_EXISTS.");
+                                Log("[%s%d] CreateDirectoryFixup: Resetting return code to ERROR_ALREADY_EXISTS.", g_MfrModuleName, dllInstance);
 #endif
                             }
 #endif
@@ -365,7 +365,7 @@ BOOL __stdcall CreateDirectoryFixup(_In_ const CharT* pathName, _In_opt_ LPSECUR
                             {
                                 SetLastError(ERROR_ALREADY_EXISTS);
 #if _DEBUG
-                                Log("[%d] CreateDirectoryFixup: Resetting return code to ERROR_ALREADY_EXISTS.");
+                                Log("[%s%d] CreateDirectoryFixup: Resetting return code to ERROR_ALREADY_EXISTS.", g_MfrModuleName, dllInstance);
 #endif
                             }
 #endif
@@ -397,7 +397,7 @@ BOOL __stdcall CreateDirectoryFixup(_In_ const CharT* pathName, _In_opt_ LPSECUR
                                     retfinal = FALSE;
                                     SetLastError(ERROR_ALREADY_EXISTS);
 #if _DEBUG
-                                    Log("[%d] CreateDirectoryFixup: Resetting return code to ERROR_ALREADY_EXISTS.");
+                                    Log("[%s%d] CreateDirectoryFixup: Resetting return code to ERROR_ALREADY_EXISTS.", g_MfrModuleName, dllInstance);
 #endif
                                 }
                             }
@@ -413,7 +413,7 @@ BOOL __stdcall CreateDirectoryFixup(_In_ const CharT* pathName, _In_opt_ LPSECUR
                             {
                                 SetLastError(ERROR_ALREADY_EXISTS);
 #if _DEBUG
-                                Log("[%d] CreateDirectoryFixup: Resetting return code to ERROR_ALREADY_EXISTS.");
+                                Log("[%s%d] CreateDirectoryFixup: Resetting return code to ERROR_ALREADY_EXISTS.", g_MfrModuleName, dllInstance);
 #endif
                             }
 #endif
@@ -429,7 +429,7 @@ BOOL __stdcall CreateDirectoryFixup(_In_ const CharT* pathName, _In_opt_ LPSECUR
                             {
                                 SetLastError(ERROR_ALREADY_EXISTS);
 #if _DEBUG
-                                Log("[%d] CreateDirectoryFixup: Resetting return code to ERROR_ALREADY_EXISTS.");
+                                Log("[%s%d] CreateDirectoryFixup: Resetting return code to ERROR_ALREADY_EXISTS.", g_MfrModuleName, dllInstance);
 #endif
                             }
 #endif
@@ -485,11 +485,11 @@ BOOL __stdcall CreateDirectoryFixup(_In_ const CharT* pathName, _In_opt_ LPSECUR
     }
 #if _DEBUG
     // Fall back to assuming no redirection is necessary if exception
-    LOGGED_CATCHHANDLER(dllInstance, L"CreateDirectoryFixup")
+    LOGGED_CATCHHANDLER_MIN(g_MfrModuleName, dllInstance, L"CreateDirectoryFixup")
 #else
     catch (...)
     {
-        Log(L"[%d] CreateDirectoryFixup Exception=0x%x", dllInstance, GetLastError());
+        Log(L"[%s%d] CreateDirectoryFixup Exception=0x%x", g_MfrModuleName, dllInstance, GetLastError());
     }
 #endif
     if (pathName != nullptr)
@@ -503,7 +503,7 @@ BOOL __stdcall CreateDirectoryFixup(_In_ const CharT* pathName, _In_opt_ LPSECUR
         retfinal = 0; // impl::CreateDirectory(pathName, securityAttributes);
     }
 #if _DEBUG
-    LogString(dllInstance, L"CreateDirectoryFixup (unguarded) for path", pathName);
+    LogString(g_MfrModuleName, dllInstance, L"CreateDirectoryFixup (unguarded) for path", pathName);
 #endif
 #if _DEBUG
     if (retfinal == 0)
@@ -511,16 +511,16 @@ BOOL __stdcall CreateDirectoryFixup(_In_ const CharT* pathName, _In_opt_ LPSECUR
         DWORD eCode = GetLastError();
         if (eCode  == ERROR_ALREADY_EXISTS)
         {
-            Log(L"[%d] CreateDirectoryFixup (unguarded) returns 0x%x (ERROR_ALREADY_EXISTS)", dllInstance, retfinal);
+            Log(L"[%s%d] CreateDirectoryFixup (unguarded) returns 0x%x (ERROR_ALREADY_EXISTS)", g_MfrModuleName, dllInstance, retfinal);
         }
         else
         {
-            Log(L"[%d] CreateDirectoryFixup (unguarded) returns 0x%x with error=0x%x", dllInstance, retfinal, eCode);
+            Log(L"[%s%d] CreateDirectoryFixup (unguarded) returns 0x%x with error=0x%x", g_MfrModuleName, dllInstance, retfinal, eCode);
         }
     }
     else
     {
-        Log(L"[%d] CreateDirectoryFixup (unguarded) returns 0x%x (ERROR_SUCCESS)", dllInstance, retfinal);
+        Log(L"[%s%d] CreateDirectoryFixup (unguarded) returns 0x%x (ERROR_SUCCESS)", g_MfrModuleName, dllInstance, retfinal);
     }
 #endif
     return retfinal;

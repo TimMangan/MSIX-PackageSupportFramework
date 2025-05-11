@@ -29,12 +29,14 @@ bool                  g_envvar_forcepackagedlluse = false;
 
 std::vector<env_var_spec> g_envvar_envVarSpecs;
 
+extern const wchar_t* g_EnvVarName;
+
 void InitializeFixups()
 {
 
 
 #if _DEBUG
-    Log(L"Initializing EnvVarFixup");
+    Log(L"[%s%d] Initializing EnvVarFixup", g_EnvVarName, 0);
 #endif
 
     // For path comparison's sake - and the fact that std::filesystem::path doesn't handle (root-)local device paths all
@@ -55,7 +57,7 @@ void InitializeFixups()
 void InitializeConfiguration()
 {
 #if _DEBUG
-    Log(L"EnvVarFixup InitializeConfiguration()");
+    Log(L"[%s%d] EnvVarFixup InitializeConfiguration()", g_EnvVarName, 0);
 #endif
     if (auto rootConfig = ::PSFQueryCurrentDllConfig())
     {
@@ -78,9 +80,9 @@ void InitializeConfiguration()
 
                     auto useregistry = specObject.get("useregistry").as_string().wstring();
 #if _DEBUG
-                    LogString(0, L"GetEnvFixup Config: name", variablenamePattern.data());
-                    LogString(0, L"GetEnvFixup Config: value", variablevalue.data());
-                    LogString(0, L"GetEnvFixup Config: useregistry", useregistry.data());
+                    LogString(g_EnvVarName, 0, L"GetEnvFixup Config: name", variablenamePattern.data());
+                    LogString(g_EnvVarName, 0, L"GetEnvFixup Config: value", variablevalue.data());
+                    LogString(g_EnvVarName, 0, L"GetEnvFixup Config: useregistry", useregistry.data());
 #endif
                     g_envvar_envVarSpecs.emplace_back();
                     g_envvar_envVarSpecs.back().variablename.assign(variablenamePattern.data(), variablenamePattern.length());
@@ -98,14 +100,14 @@ void InitializeConfiguration()
                     count++;
                 };
 #if _DEBUG
-                Log(L"EnvVarFixup: %d config items read.", count);
+                Log(L"[%s%d] EnvVarFixup: %d config items read.", g_EnvVarName, 0, count);
 #endif
             }
         }
         if (g_envvar_envVarSpecs.size() == 0)
         {
 #if _DEBUG
-            Log(L"EnvVarFixup: Zero config items read.");
+            Log(L"[%s%d] EnvVarFixup: Zero config items read.", g_EnvVarName, 0);
 #endif
         }
     }

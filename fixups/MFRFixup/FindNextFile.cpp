@@ -11,11 +11,9 @@
 
 #include <errno.h>
 #include "FunctionImplementations.h"
-#include <psf_logging.h>
 
 #include "ManagedPathTypes.h"
 #include "PathUtilities.h"
-#include "FunctionImplementations.h"
 #include <psf_logging.h>
 #include <memory>
 #include "FindData3.h"
@@ -47,7 +45,7 @@ BOOL __stdcall FindNextFileFixup(_In_ HANDLE findFile, _Out_ win32_find_data_t<C
         if (findFile == INVALID_HANDLE_VALUE)
         {
 #if _DEBUG
-            Log(L"[%d] FindNextFileFixup invaid handle.", dllInstance);
+            Log(L"%s%d] FindNextFileFixup invalid handle.", g_MfrModuleName, dllInstance);
 #endif
             ::SetLastError(ERROR_INVALID_PARAMETER);
             return FALSE;
@@ -57,24 +55,24 @@ BOOL __stdcall FindNextFileFixup(_In_ HANDLE findFile, _Out_ win32_find_data_t<C
         auto data = reinterpret_cast<FindData3*>(findFile);
 
 #if _DEBUG
-        Log(L"[%d][%d] FindNextFileFixup is against original request=%ls", data->RememberedInstance, dllInstance, data->requested_path.c_str());
+        Log(L"[%s%d][%s%d] FindNextFileFixup is against original request=%ls", g_MfrModuleName, data->RememberedInstance, g_MfrModuleName, dllInstance, data->requested_path.c_str());
 #ifdef MOREDEBUG
-        //Log(L"[%d][%d] FindNextFileFixup is against redir    =%ls", data->RememberedInstance, dllInstance, data->redirect_path.c_str());
-        //Log(L"[%d][%d] FindNextFileFixup is against pkgVfs   =%ls", data->RememberedInstance, dllInstance, data->package_vfs_path.c_str());
-        //Log(L[%d]"[%d] FindNextFileFixup is against deVfs    =%ls", data->RememberedInstance, dllInstance, data->package_devfs_path.c_str());
+        //Log(L"[%s%d][%s%d] FindNextFileFixup is against redir    =%ls", g_MfrModuleName, data->RememberedInstance, g_MfrModuleName, dllInstance, data->redirect_path.c_str());
+        //Log(L"[%s%d][%s%d] FindNextFileFixup is against pkgVfs   =%ls", g_MfrModuleName, data->RememberedInstance, g_MfrModuleName, dllInstance, data->package_vfs_path.c_str());
+        //Log(L"[%s%d][%s%d] FindNextFileFixup is against deVfs    =%ls", g_MfrModuleName, data->RememberedInstance, g_MfrModuleName, dllInstance, data->package_devfs_path.c_str());
 #endif
 #endif
 
         auto wasFileAlreadyProvided = [&](std::wstring findrequest, auto filename)
         {
 #if _DEBUG
-            LogString(data->RememberedInstance, dllInstance, L"\tFindNextFileFixup wasFileAlreadyProvided versus ", filename);
+            LogString(g_MfrModuleName, data->RememberedInstance, dllInstance, L"\tFindNextFileFixup wasFileAlreadyProvided versus ", filename);
 #endif
 
             if (data->wsAlready_returned_list.empty())
             {
 #if _DEBUG
-                Log(L"[%d][%d]\tFindNextFileFixup wasFileAlreadyProvided returns false.", data->RememberedInstance, dllInstance);
+                Log(L"[%s%d][%s%d]\tFindNextFileFixup wasFileAlreadyProvided returns false.", g_MfrModuleName, data->RememberedInstance, g_MfrModuleName, dllInstance);
 #endif
                 return false;
             }
@@ -103,7 +101,7 @@ BOOL __stdcall FindNextFileFixup(_In_ HANDLE findFile, _Out_ win32_find_data_t<C
                 if (_wcsicmp_l(check.c_str(), wFilename.c_str(), locale) == 0)
                 {
 #if MOREDEBUG
-                    Log(L"[%d][%d]\tFindNextFileFixup A wasFileAlreadyProvided returns true %ls", data->RememberedInstance, dllInstance, wFilename.c_str());
+                    Log(L"[%s%d][%s%d]\tFindNextFileFixup A wasFileAlreadyProvided returns true %ls", g_MfrModuleName, data->RememberedInstance, g_MfrModuleName, dllInstance, wFilename.c_str());
 #endif
                     _free_locale(locale);
                     return true;
@@ -112,7 +110,7 @@ BOOL __stdcall FindNextFileFixup(_In_ HANDLE findFile, _Out_ win32_find_data_t<C
             _free_locale(locale);
 
 #if MOREDEBUG
-            Log(L"[%d][%d]\tFindNextFileFixup wasFileAlreadyProvided returns false", data->RememberedInstance, dllInstance);
+            Log(L"[%s%d][%s%d]\tFindNextFileFixup wasFileAlreadyProvided returns false", g_MfrModuleName, data->RememberedInstance, g_MfrModuleName, dllInstance);
 #endif
             return false;
         };
@@ -126,7 +124,7 @@ BOOL __stdcall FindNextFileFixup(_In_ HANDLE findFile, _Out_ win32_find_data_t<C
                 if (!wasFileAlreadyProvided(data->requested_path, findFileData->cFileName))
                 {
 #if _DEBUG
-                    Log(L"[%d][%d] FindNextFileFixup[%d] returns TRUE with ERROR_SUCCESS and file %ls", data->RememberedInstance, dllInstance, Result_Redirected, widen(findFileData->cFileName).c_str());
+                    Log(L"[%s%d][%s%d] FindNextFileFixup[%d] returns TRUE with ERROR_SUCCESS and file %ls", g_MfrModuleName, data->RememberedInstance, g_MfrModuleName, dllInstance, Result_Redirected, widen(findFileData->cFileName).c_str());
 #endif
                     data->wsAlready_returned_list.push_back(widen(findFileData->cFileName));
                     ::SetLastError(ERROR_SUCCESS);
@@ -136,13 +134,13 @@ BOOL __stdcall FindNextFileFixup(_In_ HANDLE findFile, _Out_ win32_find_data_t<C
                 {
                     // Otherwise, skip this file and check the next one
 #if _DEBUG
-                    Log(L"[%d][%d] FindNextFileFixup[%d] skips file %ls", data->RememberedInstance, dllInstance, Result_Redirected, widen(findFileData->cFileName).c_str());
+                    Log(L"[%s%d][%s%d] FindNextFileFixup[%d] skips file %ls", g_MfrModuleName, data->RememberedInstance, g_MfrModuleName, dllInstance, Result_Redirected, widen(findFileData->cFileName).c_str());
 #endif
                 }
             }
             else if (::GetLastError() == ERROR_NO_MORE_FILES)
             {
-                ///Log(L"[%d][%d] FindNextFileFixup[%d] had FALSE with ERROR_NO_MORE_FILES.", data->RememberedInstance, dllInstance, Result_Redirected);
+                ///Log(L"[%s%d][%s%d] FindNextFileFixup[%d] had FALSE with ERROR_NO_MORE_FILES.", g_MfrModuleName, data->RememberedInstance, g_MfrModuleName, dllInstance, Result_Redirected);
                 data->find_handles[Result_Redirected].reset();
                 ::SetLastError(ERROR_NO_MORE_FILES);
                 // now check next
@@ -150,7 +148,7 @@ BOOL __stdcall FindNextFileFixup(_In_ HANDLE findFile, _Out_ win32_find_data_t<C
             else
             {
 #if _DEBUG
-                Log(L"[%d][%d] FindNextFileFixup[%d] returns FALSE 0x%x", data->RememberedInstance, dllInstance, Result_Redirected, ::GetLastError());
+                Log(L"[%s%d][%s%d] FindNextFileFixup[%d] returns FALSE 0x%x", g_MfrModuleName, data->RememberedInstance, g_MfrModuleName, dllInstance, Result_Redirected, ::GetLastError());
 #endif
                 // Error due to something other than reaching the end
                 return FALSE;
@@ -166,7 +164,7 @@ BOOL __stdcall FindNextFileFixup(_In_ HANDLE findFile, _Out_ win32_find_data_t<C
                 if (!wasFileAlreadyProvided(data->requested_path, findFileData->cFileName))
                 {
 #if _DEBUG
-                    Log(L"[%d][%d] FindNextFileFixup[%d] returns TRUE with ERROR_SUCCESS and file %ls", data->RememberedInstance, dllInstance, Result_Package, widen(findFileData->cFileName).c_str());
+                    Log(L"[%s%d][%s%d] FindNextFileFixup[%d] returns TRUE with ERROR_SUCCESS and file %ls", g_MfrModuleName, data->RememberedInstance, g_MfrModuleName, dllInstance, Result_Package, widen(findFileData->cFileName).c_str());
 #endif
                     data->wsAlready_returned_list.push_back(widen(findFileData->cFileName));
                     ::SetLastError(ERROR_SUCCESS);
@@ -176,13 +174,13 @@ BOOL __stdcall FindNextFileFixup(_In_ HANDLE findFile, _Out_ win32_find_data_t<C
                 {
                     // Otherwise, skip this file and check the next one
 #if _DEBUG
-                    Log(L"[%d][%d] FindNextFileFixup[%d] skips file %ls", data->RememberedInstance, dllInstance, Result_Package, widen(findFileData->cFileName).c_str());
+                    Log(L"[%s%d][%s%d] FindNextFileFixup[%d] skips file %ls", g_MfrModuleName, data->RememberedInstance, g_MfrModuleName, dllInstance, Result_Package, widen(findFileData->cFileName).c_str());
 #endif
                 }
         }
             else if (::GetLastError() == ERROR_NO_MORE_FILES)
             {
-                ///Log(L"[%d][%d] FindNextFileFixup[%d] had FALSE with ERROR_NO_MORE_FILES.", data->RememberedInstance, dllInstance, Result_Package);
+                ///Log(L"[%s%d][%s%d] FindNextFileFixup[%d] had FALSE with ERROR_NO_MORE_FILES.", g_MfrModuleName, data->RememberedInstance, g_MfrModuleName, dllInstance, Result_Package);
                 data->find_handles[Result_Package].reset();
                 ::SetLastError(ERROR_NO_MORE_FILES);
                 // now check next
@@ -190,7 +188,7 @@ BOOL __stdcall FindNextFileFixup(_In_ HANDLE findFile, _Out_ win32_find_data_t<C
             else
             {
 #if _DEBUG
-                Log(L"[%d][%d] FindNextFileFixup[%d] returns FALSE 0x%x", data->RememberedInstance, dllInstance, Result_Package, ::GetLastError());
+                Log(L"[%s%d][%s%d] FindNextFileFixup[%d] returns FALSE 0x%x", g_MfrModuleName, data->RememberedInstance, g_MfrModuleName, dllInstance, Result_Package, ::GetLastError());
 #endif
                 // Error due to something other than reaching the end
                 return FALSE;
@@ -206,7 +204,7 @@ BOOL __stdcall FindNextFileFixup(_In_ HANDLE findFile, _Out_ win32_find_data_t<C
                 if (!wasFileAlreadyProvided(data->requested_path, findFileData->cFileName))
                 {
 #if _DEBUG
-                    Log(L"[%d][%d] FindNextFileFixup[%d] returns TRUE with ERROR_SUCCESS and file %ls", data->RememberedInstance, dllInstance, Result_Native, widen(findFileData->cFileName).c_str());
+                    Log(L"[%s%d][%s%d] FindNextFileFixup[%d] returns TRUE with ERROR_SUCCESS and file %ls", g_MfrModuleName, data->RememberedInstance, g_MfrModuleName, dllInstance, Result_Native, widen(findFileData->cFileName).c_str());
 #endif
                     data->wsAlready_returned_list.push_back(widen(findFileData->cFileName));
                     ::SetLastError(ERROR_SUCCESS);
@@ -216,13 +214,13 @@ BOOL __stdcall FindNextFileFixup(_In_ HANDLE findFile, _Out_ win32_find_data_t<C
                 {
                     // Otherwise, skip this file and check the next one
 #if _DEBUG
-                    Log(L"[%d][%d] FindNextFileFixup[%d] skips file %ls", data->RememberedInstance, dllInstance, Result_Native, widen(findFileData->cFileName).c_str());
+                    Log(L"[%s%d][%s%d] FindNextFileFixup[%d] skips file %ls", g_MfrModuleName, data->RememberedInstance, g_MfrModuleName, dllInstance, Result_Native, widen(findFileData->cFileName).c_str());
 #endif
                 }
             }
             else if (::GetLastError() == ERROR_NO_MORE_FILES)
             {
-                ///Log(L"[%d][%d] FindNextFileFixup[%d] had FALSE with ERROR_NO_MORE_FILES.", data->RememberedInstance, dllInstance, Result_Native);
+                ///Log(L"[%s%d][%s%d] FindNextFileFixup[%d] had FALSE with ERROR_NO_MORE_FILES.", g_MfrModuleName, data->RememberedInstance, g_MfrModuleName, dllInstance, Result_Native);
                 data->find_handles[Result_Native].reset();
                 ::SetLastError(ERROR_NO_MORE_FILES);
                 // now check next
@@ -230,7 +228,7 @@ BOOL __stdcall FindNextFileFixup(_In_ HANDLE findFile, _Out_ win32_find_data_t<C
             else
             {
 #if _DEBUG
-                Log(L"[%d][%d] FindNextFileFixup[%d] returns FALSE 0x%x", data->RememberedInstance, dllInstance, Result_Native, ::GetLastError());
+                Log(L"[%s%d][%s%d] FindNextFileFixup[%d] returns FALSE 0x%x", g_MfrModuleName, data->RememberedInstance, g_MfrModuleName, dllInstance, Result_Native, ::GetLastError());
 #endif
                 // Error due to something other than reaching the end
                 return FALSE;
@@ -240,7 +238,7 @@ BOOL __stdcall FindNextFileFixup(_In_ HANDLE findFile, _Out_ win32_find_data_t<C
 
         // We ran out of data either on a previous call, or by ignoring files that have been redirected
 #if _DEBUG
-        Log(L"[%d][%d] FindNextFileFixu[ returns FALSE with ERROR_NO_MORE_FILES.", data->RememberedInstance, dllInstance);
+        Log(L"[%s%d][%s%d] FindNextFileFixu[ returns FALSE with ERROR_NO_MORE_FILES.", g_MfrModuleName, data->RememberedInstance, g_MfrModuleName, dllInstance);
 #endif
         ::SetLastError(ERROR_NO_MORE_FILES);
         return FALSE;
@@ -248,7 +246,7 @@ BOOL __stdcall FindNextFileFixup(_In_ HANDLE findFile, _Out_ win32_find_data_t<C
     }
 
 #if _DEBUG
-    Log(L"FindNextFileFixup (unguarded) for file.");
+    Log(L"[%s%d] FindNextFileFixup (unguarded) for file.", g_MfrModuleName, dllInstance );
 #endif
     return impl::FindNextFile(findFile, findFileData);
 }

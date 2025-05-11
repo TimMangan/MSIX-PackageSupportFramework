@@ -19,7 +19,7 @@ BOOL __stdcall CreateDirectoryFixup(_In_ const CharT* pathName, _In_opt_ LPSECUR
         {
             std::wstring wPathName = widen(pathName);
 #if _DEBUG
-            LogString(CreateDirectoryInstance,L"CreateDirectoryFixup for path", pathName);
+            LogString(g_FrfModuleName, CreateDirectoryInstance,L"CreateDirectoryFixup for path", pathName);
 #endif
             std::replace(wPathName.begin(), wPathName.end(), L'/', L'\\');
 
@@ -27,7 +27,7 @@ BOOL __stdcall CreateDirectoryFixup(_In_ const CharT* pathName, _In_opt_ LPSECUR
             {
                 wPathName = ReverseRedirectedToPackage(wPathName.c_str());
 #if _DEBUG
-                LogString(CreateDirectoryInstance, L"Use ReverseRedirected fileName", wPathName.c_str());
+                LogString(g_FrfModuleName, CreateDirectoryInstance, L"Use ReverseRedirected fileName", wPathName.c_str());
 #endif
             }
 
@@ -39,18 +39,18 @@ BOOL __stdcall CreateDirectoryFixup(_In_ const CharT* pathName, _In_opt_ LPSECUR
                 if (pri.should_redirect)
                 {
 #if _DEBUG
-                    LogString(CreateDirectoryInstance, L"CreateDirectoryFixup Use Folder", pri.redirect_path.c_str());
+                    LogString(g_FrfModuleName, CreateDirectoryInstance, L"CreateDirectoryFixup Use Folder", pri.redirect_path.c_str());
 #endif
                     BOOL bRet = impl::CreateDirectory(pri.redirect_path.c_str(), securityAttributes);
 #if _DEBUG
                     if (bRet != 0)
                     {
-                        Log(L"[%d] CreateDirectory returns SUCCESS", CreateDirectoryInstance);
+                        Log(L"[%s%d] CreateDirectory returns SUCCESS", g_FrfModuleName, CreateDirectoryInstance);
 
                     }
                     else
                     {
-                        Log(L"[%d] CreateDirectory returns FAIL with GetLastError=0x%x", CreateDirectoryInstance, GetLastError());
+                        Log(L"[%s%d] CreateDirectory returns FAIL with GetLastError=0x%x", g_FrfModuleName, CreateDirectoryInstance, GetLastError());
                     }
 #endif
                     return bRet;
@@ -59,18 +59,18 @@ BOOL __stdcall CreateDirectoryFixup(_In_ const CharT* pathName, _In_opt_ LPSECUR
             else
             {
 #if _DEBUG
-                Log(L"[%d]Under LocalAppData\\Packages, don't redirect", CreateDirectoryInstance);
+                Log(L"[%s%d]Under LocalAppData\\Packages, don't redirect", g_FrfModuleName, CreateDirectoryInstance);
 #endif
             }
         }
     }
 #if _DEBUG
     // Fall back to assuming no redirection is necessary if exception
-    LOGGED_CATCHHANDLER(CreateDirectoryInstance, L"CreateDirectory")
+    LOGGED_CATCHHANDLER_MIN(g_FrfModuleName, CreateDirectoryInstance, L"CreateDirectory")
 #else
     catch (...)
     {
-        Log(L"[%d] CreateDirectory Exception=0x%x", CreateDirectoryInstance, GetLastError());
+        Log(L"[%s%d] CreateDirectory Exception=0x%x", g_FrfModuleName, CreateDirectoryInstance, GetLastError());
     }
 #endif
 
@@ -102,8 +102,8 @@ BOOL __stdcall CreateDirectoryExFixup(
         if (guard)
         {
 #if _DEBUG
-            LogString(CreateDirectoryExInstance,L"CreateDirectoryExFixup using template", templateDirectory);
-            LogString(CreateDirectoryExInstance,L"CreateDirectoryExFixup to",  newDirectory);
+            LogString(g_FrfModuleName, CreateDirectoryExInstance,L"CreateDirectoryExFixup using template", templateDirectory);
+            LogString(g_FrfModuleName, CreateDirectoryExInstance,L"CreateDirectoryExFixup to",  newDirectory);
 #endif
             std::wstring WtemplateDirectory = widen(templateDirectory);
             std::wstring WnewDirectory = widen(newDirectory);
@@ -114,14 +114,14 @@ BOOL __stdcall CreateDirectoryExFixup(
             {
                 WtemplateDirectory = ReverseRedirectedToPackage(WtemplateDirectory.c_str());
 #if _DEBUG
-                LogString(CreateDirectoryExInstance, L"Use ReverseRedirected templateDirectory", WtemplateDirectory.c_str());
+                LogString(g_FrfModuleName, CreateDirectoryExInstance, L"Use ReverseRedirected templateDirectory", WtemplateDirectory.c_str());
 #endif
             }
             if (IsUnderUserPackageWritablePackageRoot(WnewDirectory.c_str()))
             {
                 WnewDirectory = ReverseRedirectedToPackage(WtemplateDirectory.c_str());
 #if _DEBUG
-                LogString(CreateDirectoryExInstance, L"Use ReverseRedirected newDirectory", WnewDirectory.c_str());
+                LogString(g_FrfModuleName, CreateDirectoryExInstance, L"Use ReverseRedirected newDirectory", WnewDirectory.c_str());
 #endif
             }
 
@@ -136,12 +136,12 @@ BOOL __stdcall CreateDirectoryExFixup(
 #if _DEBUG
                 if (bRet != 0)
                 {
-                    Log(L"[%d] CreateDirectoryEx returns SUCCESS", CreateDirectoryExInstance);
+                    Log(L"[%s%d] CreateDirectoryEx returns SUCCESS", g_FrfModuleName, CreateDirectoryExInstance);
 
             }
                 else
                 {
-                    Log(L"[%d] CreateDirectoryEx returns FAIL with GetLastError=0x%x", CreateDirectoryExInstance, GetLastError());
+                    Log(L"[%s%d] CreateDirectoryEx returns FAIL with GetLastError=0x%x", g_FrfModuleName, CreateDirectoryExInstance, GetLastError());
                 }
 #endif
                 return bRet;
@@ -150,11 +150,11 @@ BOOL __stdcall CreateDirectoryExFixup(
     }
 #if _DEBUG
     // Fall back to assuming no redirection is necessary if exception
-    LOGGED_CATCHHANDLER(CreateDirectoryExInstance, L"CreateDirectoryEx")
+    LOGGED_CATCHHANDLER_MIN(g_FrfModuleName, CreateDirectoryExInstance, L"CreateDirectoryEx")
 #else
     catch (...)
     {
-        Log(L"[%d] CreateDirectoryEx Exception=0x%x", CreateDirectoryExInstance, GetLastError());
+        Log(L"[%s%d] CreateDirectoryEx Exception=0x%x", g_FrfModuleName, CreateDirectoryExInstance, GetLastError());
     }
 #endif
 
@@ -171,7 +171,7 @@ BOOL __stdcall CreateDirectoryExFixup(
     catch (...)
     {
         // Fall back to assuming no redirection is necessary
-        LogString(L"CreateDirectoryExFixup ", L"*** Exception; use requested folder.***");
+        LogString(g_FrfModuleName, g_FileIntceptInstance, L"CreateDirectoryExFixup ", L"*** Exception; use requested folder.***");
     }
     return impl::CreateDirectoryEx(templateDirectory, newDirectory, securityAttributes);
 }

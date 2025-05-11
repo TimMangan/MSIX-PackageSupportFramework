@@ -24,18 +24,18 @@
 #endif
 
 
-void LogAttributesEx(DWORD dllInstance, LPVOID fileInformation)
+void LogAttributesEx(const wchar_t* MfrModuleName, DWORD dllInstance, LPVOID fileInformation)
 {
     if (fileInformation != NULL)
     {
-        Log(L"[%d] GetFileAttributesExFixup         Attributes 0x%x", dllInstance, ((LPWIN32_FILE_ATTRIBUTE_DATA)fileInformation)->dwFileAttributes);
-        Log(L"[%d] GetFileAttributesExFixup         Creation 0x%x 0x%x", dllInstance, ((LPWIN32_FILE_ATTRIBUTE_DATA)fileInformation)->ftCreationTime.dwHighDateTime,
+        Log(L"[%s%d] GetFileAttributesExFixup         Attributes 0x%x", MfrModuleName, dllInstance, ((LPWIN32_FILE_ATTRIBUTE_DATA)fileInformation)->dwFileAttributes);
+        Log(L"[%s%d] GetFileAttributesExFixup         Creation 0x%x 0x%x", MfrModuleName, dllInstance, ((LPWIN32_FILE_ATTRIBUTE_DATA)fileInformation)->ftCreationTime.dwHighDateTime,
             ((LPWIN32_FILE_ATTRIBUTE_DATA)fileInformation)->ftCreationTime.dwLowDateTime);
-        Log(L"[%d] GetFileAttributesExFixup         Access   0x%x 0x%x", dllInstance, ((LPWIN32_FILE_ATTRIBUTE_DATA)fileInformation)->ftLastAccessTime.dwHighDateTime,
+        Log(L"[%s%d] GetFileAttributesExFixup         Access   0x%x 0x%x", MfrModuleName, dllInstance, ((LPWIN32_FILE_ATTRIBUTE_DATA)fileInformation)->ftLastAccessTime.dwHighDateTime,
             ((LPWIN32_FILE_ATTRIBUTE_DATA)fileInformation)->ftLastAccessTime.dwLowDateTime);
-        Log(L"[%d] GetFileAttributesExFixup         Write    0x%x 0x%x", dllInstance, ((LPWIN32_FILE_ATTRIBUTE_DATA)fileInformation)->ftLastWriteTime.dwHighDateTime,
+        Log(L"[%s%d] GetFileAttributesExFixup         Write    0x%x 0x%x", MfrModuleName, dllInstance, ((LPWIN32_FILE_ATTRIBUTE_DATA)fileInformation)->ftLastWriteTime.dwHighDateTime,
             ((LPWIN32_FILE_ATTRIBUTE_DATA)fileInformation)->ftLastWriteTime.dwLowDateTime);
-        Log(L"[%d] GetFileAttributesExFixup         Size     0x%x 0x%x", dllInstance, ((LPWIN32_FILE_ATTRIBUTE_DATA)fileInformation)->nFileSizeHigh,
+        Log(L"[%s%d] GetFileAttributesExFixup         Size     0x%x 0x%x", MfrModuleName, dllInstance, ((LPWIN32_FILE_ATTRIBUTE_DATA)fileInformation)->nFileSizeHigh,
             ((LPWIN32_FILE_ATTRIBUTE_DATA)fileInformation)->nFileSizeLow);
     }
 }
@@ -52,8 +52,8 @@ void LogAttributesEx(DWORD dllInstance, LPVOID fileInformation)
         { \
             if (debug) \
             { \
-                Log(L"[%d] GetFileAttributesExFixup returns result SUCCESS and file '%s'", dllInstance, LongDestinationFilename.c_str()); \
-                LogAttributesEx(dllInstance, fileInformation); \
+                Log(L"[%s%d] GetFileAttributesExFixup returns result SUCCESS and Attr 0x%x on file '%s'", g_MfrModuleName, dllInstance , retfinal, LongDestinationFilename.c_str()); \
+                LogAttributesEx(g_MfrModuleName, dllInstance, fileInformation); \
             } \
             SetLastError(0); \
             return retfinal; \
@@ -66,9 +66,9 @@ void LogAttributesEx(DWORD dllInstance, LPVOID fileInformation)
         { \
             anyPathNotFound = true; \
         } \
-        if (moredebug) \
+        if (debug) \
         { \
-           Log(L"[%d] GetFileAttributesExFixup FAILED 0x%x for %s and file %s.", dllInstance, error, wsWhich,LongDestinationFilename.c_str() ); \
+           Log(L"[%s%d] GetFileAttributesExFixup FAILED 0x%x for %s and file %s.", g_MfrModuleName, dllInstance, error, wsWhich,LongDestinationFilename.c_str() ); \
         } \
     }
 
@@ -99,7 +99,7 @@ BOOL __stdcall GetFileAttributesExFixup(
             wfileName = AdjustSlashes(wfileName, dllInstance);
             
 #if _DEBUG
-            Log(L"[%d] GetFileAttributesExFixup level 0x%x for fileName '%s' ", dllInstance, infoLevelId, wfileName.c_str());
+            Log(L"[%s%d] GetFileAttributesExFixup level 0x%x for fileName '%s' ", g_MfrModuleName, dllInstance, infoLevelId, wfileName.c_str());
 #endif
             wfileName = AdjustBadUNC(wfileName, dllInstance, L"GetFileAttributesExFixup");
             
@@ -153,7 +153,7 @@ BOOL __stdcall GetFileAttributesExFixup(
                                 SetLastError(ERROR_PATH_NOT_FOUND);
                             }
 #if _DEBUG
-                            Log(L"[%d] GetFileAttributesExFixup returns with result 0x%x and error =0x%x", dllInstance, retfinal, GetLastError());
+                            Log(L"[%s%d] GetFileAttributesExFixup returns with result 0x%x and error =0x%x", g_MfrModuleName, dllInstance, retfinal, GetLastError());
 #endif
                             return retfinal;
                         case mfr::mfr_redirect_flags::prefer_redirection_containerized:
@@ -191,7 +191,7 @@ BOOL __stdcall GetFileAttributesExFixup(
                                 SetLastError(ERROR_PATH_NOT_FOUND);
                             }
 #if _DEBUG
-                            Log(L"[%d] GetFileAttributesExFixup returns with result 0x%x and error =0x%x", dllInstance, retfinal, GetLastError());
+                            Log(L"[%s%d] GetFileAttributesExFixup returns with result 0x%x and error =0x%x", g_MfrModuleName, dllInstance, retfinal, GetLastError());
 #endif
                             return retfinal;
                         case mfr::mfr_redirect_flags::prefer_redirection_none:
@@ -230,7 +230,7 @@ BOOL __stdcall GetFileAttributesExFixup(
                             SetLastError(ERROR_PATH_NOT_FOUND);
                         }
 #if _DEBUG
-                        Log(L"[%d] GetFileAttributesExFixup returns with result 0x%x and error =0x%x", dllInstance, retfinal, GetLastError());
+                        Log(L"[%s%d] GetFileAttributesExFixup returns with result 0x%x and error =0x%x", g_MfrModuleName, dllInstance, retfinal, GetLastError());
 #endif
                         return retfinal;
                     }
@@ -261,7 +261,7 @@ BOOL __stdcall GetFileAttributesExFixup(
                                 SetLastError(ERROR_PATH_NOT_FOUND);
                             }
 #if _DEBUG
-                            Log(L"[%d] GetFileAttributesExFixup returns with result 0x%x and error =0x%x", dllInstance, retfinal, GetLastError());
+                            Log(L"[%s%d] GetFileAttributesExFixup returns with result 0x%x and error =0x%x", g_MfrModuleName, dllInstance, retfinal, GetLastError());
 #endif
                             return retfinal;
                         case mfr::mfr_redirect_flags::prefer_redirection_containerized:
@@ -300,7 +300,7 @@ BOOL __stdcall GetFileAttributesExFixup(
                                 SetLastError(ERROR_PATH_NOT_FOUND);
                             }
 #if _DEBUG
-                            Log(L"[%d] GetFileAttributesExFixup returns with result 0x%x and error =0x%x", dllInstance, retfinal, GetLastError());
+                            Log(L"[%s%d] GetFileAttributesExFixup returns with result 0x%x and error =0x%x", g_MfrModuleName, dllInstance, retfinal, GetLastError());
 #endif
                             return retfinal;
                         case mfr::mfr_redirect_flags::prefer_redirection_none:
@@ -354,7 +354,7 @@ BOOL __stdcall GetFileAttributesExFixup(
                             SetLastError(ERROR_PATH_NOT_FOUND);
                         }
 #if _DEBUG
-                        Log(L"[%d] GetFileAttributesExFixup returns with result 0x%x and error =0x%x", dllInstance, retfinal, GetLastError());
+                        Log(L"[%s%d] GetFileAttributesExFixup returns with result 0x%x and error =0x%x", g_MfrModuleName, dllInstance, retfinal, GetLastError());
 #endif
                         return retfinal;
                     }
@@ -370,7 +370,7 @@ BOOL __stdcall GetFileAttributesExFixup(
                 case mfr::mfr_path_types::unknown:
                 default:
 #if _DEBUG
-                    Log(L"[%d] GetFileAttributesExFixup has mfr_path_type 0x%x", dllInstance, cohorts.file_mfr.Request_MfrPathType);
+                    Log(L"[%s%d] GetFileAttributesExFixup has mfr_path_type 0x%x", g_MfrModuleName, dllInstance, cohorts.file_mfr.Request_MfrPathType);
 #endif
                     break;
                 }
@@ -389,11 +389,11 @@ BOOL __stdcall GetFileAttributesExFixup(
     }
 #if _DEBUG
     // Fall back to assuming no redirection is necessary if exception
-    LOGGED_CATCHHANDLER(dllInstance, L"GetFileAttributesExFixup")
+    LOGGED_CATCHHANDLER_MIN(g_MfrModuleName, dllInstance, L"GetFileAttributesExFixup")
 #else
     catch (...)
     {
-        Log(L"[%d] GetFileAttributesEx Exception=0x%x", dllInstance, GetLastError());
+        Log(L"[%s%d] GetFileAttributesEx Exception=0x%x", g_MfrModuleName, dllInstance, GetLastError());
     }
 #endif
 
@@ -402,7 +402,7 @@ BOOL __stdcall GetFileAttributesExFixup(
     {
         std::wstring LongFileName = MakeLongPath(widen(fileName));
 #if MOREDEBUG
-        Log(L"[%d] GetFileAttributesEx: unfixed versus %s", dllInstance, LongFileName.c_str());
+        Log(L"[%s%d] GetFileAttributesEx: unfixed versus %s", g_MfrModuleName, dllInstance, LongFileName.c_str());
 #endif
         retfinal = impl::GetFileAttributesEx(LongFileName.c_str(), infoLevelId, fileInformation);
     }
@@ -412,28 +412,28 @@ BOOL __stdcall GetFileAttributesExFixup(
         retfinal = INVALID_FILE_ATTRIBUTES; //impl::GetFileAttributesEx(fileName, infoLevelId, fileInformation);
     }
 #if _DEBUG
-    Log(L"[%d] GetFileAttributesEx: returns retfinal=%d", dllInstance, retfinal);
+    Log(L"[%s%d] GetFileAttributesEx: returns retfinal=%d", g_MfrModuleName, dllInstance, retfinal);
     if (retfinal == 0)
     {
-        Log(L"[%d] GetFileAttributesEx: returns GetLastError=0x%x", dllInstance, GetLastError());
+        Log(L"[%s%d] GetFileAttributesEx: returns GetLastError=0x%x", g_MfrModuleName, dllInstance, GetLastError());
         if (GetLastError() == 2)
         {
             retfinal = impl::GetFileAttributesEx(fileName, infoLevelId, fileInformation);
-            Log(L"[%d] GetFileAttributesEx: returns retry retfinal=%d", dllInstance, retfinal);
+            Log(L"[%s%d] GetFileAttributesEx: returns retry retfinal=%d", g_MfrModuleName, dllInstance, retfinal);
         }
     }
     else
     {
         if (fileInformation != NULL)
         {
-            Log(L"[%d] GetFileAttributesEx         Attributes %s", dllInstance, Log_FlagsAndAttributes(((LPWIN32_FILE_ATTRIBUTE_DATA)fileInformation)->dwFileAttributes).c_str());
-            Log(L"[%d] GetFileAttributesEx         Creation 0x%x 0x%x", dllInstance, ((LPWIN32_FILE_ATTRIBUTE_DATA)fileInformation)->ftCreationTime.dwHighDateTime,
+            Log(L"[%s%d] GetFileAttributesEx         Attributes %s", g_MfrModuleName, dllInstance, Log_FlagsAndAttributes(((LPWIN32_FILE_ATTRIBUTE_DATA)fileInformation)->dwFileAttributes).c_str());
+            Log(L"[%s%d] GetFileAttributesEx         Creation 0x%x 0x%x", g_MfrModuleName, dllInstance, ((LPWIN32_FILE_ATTRIBUTE_DATA)fileInformation)->ftCreationTime.dwHighDateTime,
                 ((LPWIN32_FILE_ATTRIBUTE_DATA)fileInformation)->ftCreationTime.dwLowDateTime);
-            Log(L"[%d] GetFileAttributesEx         Access   0x%x 0x%x", dllInstance, ((LPWIN32_FILE_ATTRIBUTE_DATA)fileInformation)->ftLastAccessTime.dwHighDateTime,
+            Log(L"[%s%d] GetFileAttributesEx         Access   0x%x 0x%x", g_MfrModuleName, dllInstance, ((LPWIN32_FILE_ATTRIBUTE_DATA)fileInformation)->ftLastAccessTime.dwHighDateTime,
                 ((LPWIN32_FILE_ATTRIBUTE_DATA)fileInformation)->ftLastAccessTime.dwLowDateTime);
-            Log(L"[%d] GetFileAttributesEx         Write    0x%x 0x%x", dllInstance, ((LPWIN32_FILE_ATTRIBUTE_DATA)fileInformation)->ftLastWriteTime.dwHighDateTime,
+            Log(L"[%s%d] GetFileAttributesEx         Write    0x%x 0x%x", g_MfrModuleName, dllInstance, ((LPWIN32_FILE_ATTRIBUTE_DATA)fileInformation)->ftLastWriteTime.dwHighDateTime,
                 ((LPWIN32_FILE_ATTRIBUTE_DATA)fileInformation)->ftLastWriteTime.dwLowDateTime);
-            Log(L"[%d] GetFileAttributesEx         Size     0x%I64x 0x%I64x", dllInstance, ((LPWIN32_FILE_ATTRIBUTE_DATA)fileInformation)->nFileSizeHigh,
+            Log(L"[%s%d] GetFileAttributesEx         Size     0x%I64x 0x%I64x", g_MfrModuleName, dllInstance, ((LPWIN32_FILE_ATTRIBUTE_DATA)fileInformation)->nFileSizeHigh,
                 ((LPWIN32_FILE_ATTRIBUTE_DATA)fileInformation)->nFileSizeLow);
         }
     }

@@ -22,8 +22,8 @@ FILE * __cdecl fopenFixup(
     {
 #if _DEBUG
         DWORD Instance = ++g_FileIntceptInstance;
-        LogString(Instance, L"fopen Fixup filename", fileName);
-        LogString(Instance, L"fopen Fixup mode", mode);
+        LogString(g_FrfModuleName, Instance, L"fopen Fixup filename", fileName);
+        LogString(g_FrfModuleName, Instance, L"fopen Fixup mode", mode);
 #endif
         if (guard)
         {
@@ -33,11 +33,11 @@ FILE * __cdecl fopenFixup(
 #if _DEBUG
         if (file == NULL)
         {
-            Log(L"[%d]\tfopenFixup returns NULL", Instance);
+            Log(L"[%s%d]\tfopenFixup returns NULL", g_FrfModuleName, Instance);
         }
         else
         {
-            Log(L"[%d]\tfopenFixup returns handle", Instance);
+            Log(L"[%s%d]\tfopenFixup returns handle", g_FrfModuleName, Instance);
         }
 #endif
         return file;
@@ -60,8 +60,8 @@ FILE * __cdecl _wfopenFixup(
     {
 #if _DEBUG
         DWORD Instance = ++g_FileIntceptInstance;
-        LogString(Instance, L"_wfopenFixup filename", fileName);
-        LogString(Instance, L"_wfopenFixup mode", mode);
+        LogString(g_FrfModuleName, Instance, L"_wfopenFixup filename", fileName);
+        LogString(g_FrfModuleName, Instance, L"_wfopenFixup mode", mode);
 #endif
         if (guard)
         {
@@ -71,11 +71,11 @@ FILE * __cdecl _wfopenFixup(
 #if _DEBUG
         if (file == NULL)
         {
-            Log(L"[%d]\t_wfopenFixup returns NULL", Instance);
+            Log(L"[%s%d]\t_wfopenFixup returns NULL", g_FrfModuleName, Instance);
         }
         else
         {
-            Log(L"[%d]\t_wfopenFixup returns handle", Instance);
+            Log(L"[%s%d]\t_wfopenFixup returns handle", g_FrfModuleName, Instance);
         }
 #endif
         return file;
@@ -99,8 +99,8 @@ errno_t __cdecl fopen_sFixup(
     {
 #if _DEBUG
         DWORD Instance = ++g_FileIntceptInstance;
-        LogString(Instance, L"fopen_s Fixup filename", fileName);
-        LogString(Instance, L"fopen_s Fixup mode", mode);
+        LogString(g_FrfModuleName, Instance, L"fopen_s Fixup filename", fileName);
+        LogString(g_FrfModuleName, Instance, L"fopen_s Fixup mode", mode);
 #endif
         if (guard)
         {
@@ -110,11 +110,11 @@ errno_t __cdecl fopen_sFixup(
 #if _DEBUG
         if (err != ERROR_SUCCESS)
         {
-            Log(L"[%d]\tfopen_s returns NULL with error=0x%x", Instance, err);
+            Log(L"[%s%d]\tfopen_s returns NULL with error=0x%x", g_FrfModuleName, Instance, err);
         }
         else
         {
-            Log(L"[%d]\tfopen_s returns handle", Instance);
+            Log(L"[%s%d]\tfopen_s returns handle", g_FrfModuleName, Instance);
         }
 #endif       
         return err;
@@ -138,8 +138,8 @@ errno_t __cdecl _wfopen_sFixup(
     {
 #if _DEBUG
         DWORD Instance = ++g_FileIntceptInstance;
-        LogString(Instance, L"_wfopen_s Fixup filename", fileName);
-        LogString(Instance, L"_wfopen_s Fixup mode", mode);
+        LogString(g_FrfModuleName, Instance, L"_wfopen_s Fixup filename", fileName);
+        LogString(g_FrfModuleName, Instance, L"_wfopen_s Fixup mode", mode);
 #endif
         if (guard)
         {
@@ -149,11 +149,11 @@ errno_t __cdecl _wfopen_sFixup(
 #if _DEBUG
         if (err != ERROR_SUCCESS)
         {
-            Log(L"[%d]\t_wfopen_s returns NULL with error=0x%x", Instance, err);
+            Log(L"[%s%d]\t_wfopen_s returns NULL with error=0x%x", g_FrfModuleName, Instance, err);
         }
         else
         {
-            Log(L"[%d]\t_wfopen_s returns handle", Instance);
+            Log(L"[%s%d]\t_wfopen_s returns handle", g_FrfModuleName, Instance);
         }
 #endif           
         return err;
@@ -176,7 +176,7 @@ intptr_t __cdecl _wfindfirst32Fixup(
         auto guard = g_reentrancyGuard.enter();
 #if _DEBUG
         DWORD Instance = ++g_FileIntceptInstance;
-        LogString(Instance, L"_wfindfirst32Fixup filename", filespec);
+        LogString(g_FrfModuleName, Instance, L"_wfindfirst32Fixup filename", filespec);
 #endif
         if (guard)
         {
@@ -186,11 +186,11 @@ intptr_t __cdecl _wfindfirst32Fixup(
 #if _DEBUG
         if (iRet == -1)
         {
-            Log(L"[%d]\t_wfindfirst32Fixup returns NULL with error=0x%x", Instance, GetLastError());
+            Log(L"[%s%d]\t_wfindfirst32Fixup returns NULL with error=0x%x", g_FrfModuleName, Instance, GetLastError());
         }
         else
         {
-            Log(L"[%d]\t_wfindfirst32Fixup returns handle", Instance);
+            Log(L"[%s%d]\t_wfindfirst32Fixup returns handle", g_FrfModuleName, Instance);
         }
 #endif           
         return iRet;
@@ -213,7 +213,7 @@ intptr_t __cdecl _wfindfirst32i64Fixup(
         auto guard = g_reentrancyGuard.enter();
 #if _DEBUG
         DWORD Instance = ++g_FileIntceptInstance;
-        LogString(Instance, L"_wfindfirst32i64Fixup filename", filespec);
+        LogString(g_FrfModuleName, Instance, L"_wfindfirst32i64Fixup filename", filespec);
 #endif
             if (guard)
             {
@@ -223,11 +223,11 @@ intptr_t __cdecl _wfindfirst32i64Fixup(
 #if _DEBUG
         if (iRet == -1)
         {
-            Log(L"[%d]\t_wfindfirst32i64Fixup returns NULL with error=0x%x", Instance, GetLastError());
+            Log(L"[%s%d]\t_wfindfirst32i64Fixup returns NULL with error=0x%x", g_FrfModuleName, Instance, GetLastError());
         }
         else
         {
-            Log(L"[%d]\t_wfindfirst32i64Fixup returns handle", Instance);
+            Log(L"[%s%d]\t_wfindfirst32i64Fixup returns handle", g_FrfModuleName, Instance);
         }
 #endif           
         return iRet;
@@ -250,7 +250,7 @@ intptr_t __cdecl _wfindfirst64Fixup(
         auto guard = g_reentrancyGuard.enter();
 #if _DEBUG
         DWORD Instance = ++g_FileIntceptInstance;
-        LogString(Instance, L"_wfindfirst64Fixup filename", filespec);
+        LogString(g_FrfModuleName, Instance, L"_wfindfirst64Fixup filename", filespec);
 #endif
             if (guard)
             {
@@ -260,11 +260,11 @@ intptr_t __cdecl _wfindfirst64Fixup(
 #if _DEBUG
         if (iRet == -1)
         {
-            Log(L"[%d]\t_wfindfirst64Fixup returns NULL with error=0x%x", Instance, GetLastError());
+            Log(L"[%s%d]\t_wfindfirst64Fixup returns NULL with error=0x%x", g_FrfModuleName, Instance, GetLastError());
         }
         else
         {
-            Log(L"[%d]\t_wfindfirst64Fixup returns handle", Instance);
+            Log(L"[%s%d]\t_wfindfirst64Fixup returns handle", g_FrfModuleName, Instance);
         }
 #endif           
         return iRet;
@@ -287,7 +287,7 @@ intptr_t __cdecl _wfindfirst64i32Fixup(
         auto guard = g_reentrancyGuard.enter();
 #if _DEBUG
         DWORD Instance = ++g_FileIntceptInstance;
-        LogString(Instance, L"_wfindfirst64i32Fixup filename", filespec);
+        LogString(g_FrfModuleName, Instance, L"_wfindfirst64i32Fixup filename", filespec);
 #endif
             if (guard)
             {
@@ -297,11 +297,11 @@ intptr_t __cdecl _wfindfirst64i32Fixup(
 #if _DEBUG
         if (iRet == -1)
         {
-            Log(L"[%d]\t_wfindfirst64i32Fixup returns NULL with error=0x%x", Instance, GetLastError());
+            Log(L"[%s%d]\t_wfindfirst64i32Fixup returns NULL with error=0x%x", g_FrfModuleName, Instance, GetLastError());
         }
         else
         {
-            Log(L"[%d]\t_wfindfirst64i32Fixup returns handle", Instance);
+            Log(L"[%s%d]\t_wfindfirst64i32Fixup returns handle", g_FrfModuleName, Instance);
         }
 #endif           
         return iRet;
@@ -323,7 +323,7 @@ int __cdecl _wmkdirFixup(
     {
 #if _DEBUG
         DWORD Instance = ++g_FileIntceptInstance;
-        LogString(Instance, L"_wmkdir Fixup dirname", dirname);
+        LogString(g_FrfModuleName, Instance, L"_wmkdir Fixup dirname", dirname);
 #endif
         if (guard)
         {
@@ -333,11 +333,11 @@ int __cdecl _wmkdirFixup(
 #if _DEBUG
         if (iRet != ERROR_SUCCESS)
         {
-            Log(L"[%d]\t_wmkdir Fixup returns NULL with error=0x%x", Instance, GetLastError());
+            Log(L"[%s%d]\t_wmkdir Fixup returns NULL with error=0x%x", g_FrfModuleName, Instance, GetLastError());
         }
         else
         {
-            Log(L"[%d]\t_wmkdir Fixup returns ERROR_SUCCESS", Instance);
+            Log(L"[%s%d]\t_wmkdir Fixup returns ERROR_SUCCESS", g_FrfModuleName, Instance);
         }
 #endif           
         return iRet;
@@ -361,7 +361,7 @@ int __cdecl _wopenFixup(
     {
 #if _DEBUG
         DWORD Instance = ++g_FileIntceptInstance;
-        LogString(Instance, L"_wopen Fixup filename", filename);
+        LogString(g_FrfModuleName, Instance, L"_wopen Fixup filename", filename);
 #endif
         if (guard)
         {
@@ -371,11 +371,11 @@ int __cdecl _wopenFixup(
 #if _DEBUG
         if (iRet == -1)
         {
-            Log(L"[%d]\t_wopen Fixup returns NULL with error=0x%x", Instance, GetLastError());
+            Log(L"[%s%d]\t_wopen Fixup returns NULL with error=0x%x", g_FrfModuleName, Instance, GetLastError());
         }
         else
         {
-            Log(L"[%d]\t_wopen Fixup returns handle", Instance);
+            Log(L"[%s%d]\t_wopen Fixup returns handle", g_FrfModuleName, Instance);
         }
 #endif           
         return iRet;
@@ -397,7 +397,7 @@ int __cdecl _wrmdirFixup(
     {
 #if _DEBUG
         DWORD Instance = ++g_FileIntceptInstance;
-        LogString(Instance, L"_wrmdir Fixup dirname", dirname);
+        LogString(g_FrfModuleName, Instance, L"_wrmdir Fixup dirname", dirname);
 #endif
         if (guard)
         {
@@ -407,11 +407,11 @@ int __cdecl _wrmdirFixup(
 #if _DEBUG
         if (iRet != ERROR_SUCCESS)
         {
-            Log(L"[%d]\t_wrmdir Fixup returns NULL with error=0x%x", Instance, GetLastError());
+            Log(L"[%s%d]\t_wrmdir Fixup returns NULL with error=0x%x", g_FrfModuleName, Instance, GetLastError());
         }
         else
         {
-            Log(L"[%d]\t_wrmdir Fixup returns ERROR_SUCCESS", Instance);
+            Log(L"[%s%d]\t_wrmdir Fixup returns ERROR_SUCCESS", g_FrfModuleName, Instance);
         }
 #endif           
         return iRet;
@@ -436,7 +436,7 @@ int __cdecl _wsopenFixup(
     {
 #if _DEBUG
         DWORD Instance = ++g_FileIntceptInstance;
-        LogString(Instance, L"_wsopen Fixup filename", filename);
+        LogString(g_FrfModuleName, Instance, L"_wsopen Fixup filename", filename);
 #endif
         if (guard)
         {
@@ -446,11 +446,11 @@ int __cdecl _wsopenFixup(
 #if _DEBUG
         if (iRet == -1)
         {
-            Log(L"[%d]\t_wsopen Fixup returns NULL with error=0x%x", Instance, GetLastError());
+            Log(L"[%s%d]\t_wsopen Fixup returns NULL with error=0x%x", g_FrfModuleName, Instance, GetLastError());
         }
         else
         {
-            Log(L"[%d]\t_wsopen Fixup returns handle", Instance);
+            Log(L"[%s%d]\t_wsopen Fixup returns handle", g_FrfModuleName, Instance);
         }
 #endif           
         return iRet;
@@ -476,7 +476,7 @@ errno_t  __cdecl _wsopen_sFixup(
     {
 #if _DEBUG
         DWORD Instance = ++g_FileIntceptInstance;
-        LogString(Instance, L"_wsopen_s Fixup filename", filename);
+        LogString(g_FrfModuleName, Instance, L"_wsopen_s Fixup filename", filename);
 #endif
         if (guard)
         {
@@ -486,11 +486,11 @@ errno_t  __cdecl _wsopen_sFixup(
 #if _DEBUG
         if (iRet == -1)
         {
-            Log(L"[%d]\t_wsopen_s Fixup returns NULL with error=0x%x", Instance, GetLastError());
+            Log(L"[%s%d]\t_wsopen_s Fixup returns NULL with error=0x%x", g_FrfModuleName, Instance, GetLastError());
         }
         else
         {
-            Log(L"[%d]\t_wsopen_s Fixup returns handle", Instance);
+            Log(L"[%s%d]\t_wsopen_s Fixup returns handle", g_FrfModuleName, Instance);
         }
 #endif           
         return iRet;
@@ -514,7 +514,7 @@ int __cdecl _unlinkFixup(
         auto guard = g_reentrancyGuard.enter();
         DWORD Instance = ++g_FileIntceptInstance;
 #if _DEBUG
-        LogString(Instance, L"_unlink Fixup dirname", dirname);
+        LogString(g_FrfModuleName, Instance, L"_unlink Fixup dirname", dirname);
 #endif
         if (guard)
         {
@@ -524,11 +524,11 @@ int __cdecl _unlinkFixup(
 #if _DEBUG
         if (iRet != ERROR_SUCCESS)
         {
-            Log(L"[%d]\t_unlink Fixup returns NULL with error=0x%x", Instance, GetLastError());
+            Log(L"[%s%d]\t_unlink Fixup returns NULL with error=0x%x", g_FrfModuleName, Instance, GetLastError());
         }
         else
         {
-            Log(L"[%d]\t_unlink Fixup returns ERROR_SUCCESS", Instance);
+            Log(L"[%s%d]\t_unlink Fixup returns ERROR_SUCCESS", g_FrfModuleName, Instance);
         }
 #endif           
         return iRet;
@@ -551,7 +551,7 @@ int __cdecl _wunlinkFixup(
     {
 #if _DEBUG
         DWORD Instance = ++g_FileIntceptInstance;
-        LogString(Instance, L"_wunlink Fixup dirname", dirname);
+        LogString(g_FrfModuleName, Instance, L"_wunlink Fixup dirname", dirname);
 #endif
         if (guard)
         {
@@ -561,11 +561,11 @@ int __cdecl _wunlinkFixup(
 #if _DEBUG
         if (iRet != ERROR_SUCCESS)
         {
-            Log(L"[%d]\t_wunlink Fixup returns NULL with error=0x%x", Instance, GetLastError());
+            Log(L"[%s%d]\t_wunlink Fixup returns NULL with error=0x%x", g_FrfModuleName, Instance, GetLastError());
         }
         else
         {
-            Log(L"[%d]\t_wunlink Fixup returns ERROR_SUCCESS", Instance);
+            Log(L"[%s%d]\t_wunlink Fixup returns ERROR_SUCCESS", g_FrfModuleName, Instance);
         }
 #endif           
         return iRet;

@@ -26,38 +26,38 @@ UINT __stdcall GetPrivateProfileIntFixup(
             {
                 if (fileName != NULL)
                 {
-                    LogString(GetPrivateProfileIntInstance,L"GetPrivateProfileIntFixup for fileName", widen_argument(fileName).c_str());
+                    LogString(g_FrfModuleName, GetPrivateProfileIntInstance,L"GetPrivateProfileIntFixup for fileName", widen_argument(fileName).c_str());
                 }
                 else
                 {
-                    Log(L"[%d] GetPrivateProfileIntFixup for null file.", GetPrivateProfileIntInstance);
+                    Log(L"[%s%d] GetPrivateProfileIntFixup for null file.", g_FrfModuleName, GetPrivateProfileIntInstance);
                 }
                 if (sectionName != NULL)
                 {
-                    LogString(GetPrivateProfileIntInstance,L" Section", widen_argument(sectionName).c_str());
+                    LogString(g_FrfModuleName, GetPrivateProfileIntInstance,L" Section", widen_argument(sectionName).c_str());
                 }
                 if (key != NULL)
                 {
-                    LogString(GetPrivateProfileIntInstance,L" Key", widen_argument(key).c_str());
+                    LogString(g_FrfModuleName, GetPrivateProfileIntInstance,L" Key", widen_argument(key).c_str());
                 }
             }
             else
             {
                 if (fileName != NULL)
                 {
-                    LogString(GetPrivateProfileIntInstance,L"GetPrivateProfileIntFixup for fileName", fileName);
+                    LogString(g_FrfModuleName, GetPrivateProfileIntInstance,L"GetPrivateProfileIntFixup for fileName", fileName);
                 }
                 else
                 {
-                    Log(L"[%d] GetPrivateProfileIntFixup for null file.", GetPrivateProfileIntInstance);
+                    Log(L"[%s%d] GetPrivateProfileIntFixup for null file.", g_FrfModuleName, GetPrivateProfileIntInstance);
                 }
                 if (sectionName != NULL)
                 {
-                    LogString(GetPrivateProfileIntInstance,L" Section", sectionName);
+                    LogString(g_FrfModuleName, GetPrivateProfileIntInstance,L" Section", sectionName);
                 }
                 if (key != NULL)
                 {
-                    LogString(GetPrivateProfileIntInstance,L" Key", key);
+                    LogString(g_FrfModuleName, GetPrivateProfileIntInstance,L" Key", key);
                 }
             }
 #endif
@@ -72,7 +72,7 @@ UINT __stdcall GetPrivateProfileIntFixup(
                         {
                             UINT retval = impl::GetPrivateProfileIntW(widen_argument(sectionName).c_str(), widen_argument(key).c_str(), nDefault, pri.redirect_path.c_str());
 #if _DEBUG
-                            Log(L" [%d] Returned uint: %d ", GetPrivateProfileIntInstance, retval);
+                            Log(L" [%s%d] Returned uint: %d ", g_FrfModuleName, GetPrivateProfileIntInstance, retval);
 #endif
                             return retval;
                         }
@@ -80,7 +80,7 @@ UINT __stdcall GetPrivateProfileIntFixup(
                         {
                             UINT retval = impl::GetPrivateProfileIntW(sectionName, key, nDefault, pri.redirect_path.c_str());
 #if _DEBUG
-                            Log(L" [%d] Returned uint: %d ", GetPrivateProfileIntInstance, retval);
+                            Log(L" [%s%d] Returned uint: %d ", g_FrfModuleName, GetPrivateProfileIntInstance, retval);
 #endif
                             return retval;
                         }
@@ -89,31 +89,31 @@ UINT __stdcall GetPrivateProfileIntFixup(
                 else
                 {
 #if _DEBUG
-                    Log(L"[%d]  Under LocalAppData\\Packages, don't redirect", GetPrivateProfileIntInstance);
+                    Log(L"[%s%d]  Under LocalAppData\\Packages, don't redirect", g_FrfModuleName, GetPrivateProfileIntInstance);
 #endif
                 }
             }
             else
             {
 #if _DEBUG
-                Log(L"[%d]  null filename, don't redirect as may be registry based or default.", GetPrivateProfileIntInstance);
+                Log(L"[%s%d]  null filename, don't redirect as may be registry based or default.", g_FrfModuleName, GetPrivateProfileIntInstance);
 #endif
             }
         }
     }
 #if _DEBUG
     // Fall back to assuming no redirection is necessary if exception
-    LOGGED_CATCHHANDLER(GetPrivateProfileIntInstance, L"GetPrivateProfileInt")
+    LOGGED_CATCHHANDLER_MIN(g_FrfModuleName, GetPrivateProfileIntInstance, L"GetPrivateProfileInt")
 #else
     catch (...)
     {
-        Log(L"[%d] GetPrivateProfileInt Exception=0x%x", GetPrivateProfileIntInstance, GetLastError());
+        Log(L"[%s%d] GetPrivateProfileInt Exception=0x%x", g_FrfModuleName, GetPrivateProfileIntInstance, GetLastError());
     }
 #endif
 
     UINT uVal = impl::GetPrivateProfileInt(sectionName, key, nDefault, fileName);
 #if _DEBUG
-    Log( L"[%d] Returning 0x%x", GetPrivateProfileIntInstance,uVal);
+    Log( L"[%s%d] Returning 0x%x", g_FrfModuleName, GetPrivateProfileIntInstance,uVal);
 #endif
     return uVal;
 

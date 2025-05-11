@@ -67,9 +67,9 @@ BOOL __stdcall Kb_MoveFileExWFixup(
         if (guard)
         {
 #if _DEBUG
-            LogString(dllInstance, L"Kb_MoveFileExWFixup From", existingFileName);
-            LogString(dllInstance, L"Kb_MoveFileExWFixup To", newFileName);
-            Log(L"[%d] Kb_MoveFileExWFixup with flags 0x%x", dllInstance, flags);
+            LogString(g_MfrModuleName, dllInstance, L"Kb_MoveFileExWFixup From", existingFileName);
+            LogString(g_MfrModuleName, dllInstance, L"Kb_MoveFileExWFixup To", newFileName);
+            Log(L"[%s%d] Kb_MoveFileExWFixup with flags 0x%x", g_MfrModuleName, dllInstance, flags);
 #endif            
             //std::wstring wNewFileName = widen(newFileName);
             //std::wstring wExistingFileName = widen(existingFileName);
@@ -294,11 +294,11 @@ BOOL __stdcall Kb_MoveFileExWFixup(
                 }
 
 #if MOREDEBUG
-                Log(L"[%d] Kb_MoveFileExWFixup: Source      to be is %s", dllInstance, UseExistingFile.c_str());
-                Log(L"[%d] Kb_MoveFileExWFixup: Destination to be is %s", dllInstance, UseNewFile.c_str());
+                Log(L"[%s%d] Kb_MoveFileExWFixup: Source      to be is %s", g_MfrModuleName, dllInstance, UseExistingFile.c_str());
+                Log(L"[%s%d] Kb_MoveFileExWFixup: Destination to be is %s", g_MfrModuleName, , UseNewFile.c_str());
                 if (ExistingFileIsPackagePath)
                 {
-                    Log(L"[%d] Kb_MoveFileExWFixup: ExistingIsInPackagePath", dllInstance);
+                    Log(L"[%s%d] Kb_MoveFileExWFixup: ExistingIsInPackagePath", g_MfrModuleName, dllInstance);
                 }
 #endif
 
@@ -310,18 +310,18 @@ BOOL __stdcall Kb_MoveFileExWFixup(
                     std::wstring rldUseNewFile = MakeLongPath(UseNewFile);
                     PreCreateFolders(rldUseNewFile, dllInstance, L"Kb_MoveFileExWFixup");
 #if MOREDEBUG
-                    Log(L"[%d] Kb_MoveFileExWFixup: from is %s", dllInstance, rldUseExistingFile.c_str());
-                    Log(L"[%d] Kb_MoveFileExWFixup:   to is %s", dllInstance, rldUseNewFile.c_str());
+                    Log(L"[%s%d] Kb_MoveFileExWFixup: from is %s", g_MfrModuleName, dllInstance, rldUseExistingFile.c_str());
+                    Log(L"[%s%d] Kb_MoveFileExWFixup:   to is %s", g_MfrModuleName, dllInstance, rldUseNewFile.c_str());
 #endif
                     retfinal = kernelbaseimpl::MoveFileExWImpl(rldUseExistingFile.c_str(), rldUseNewFile.c_str(), flags);
 #if _DEBUG
                     if (retfinal == 0)
                     {
-                        Log(L"[%d] Kb_MoveFileExWFixup returns FAILURE 0x%x", dllInstance, GetLastError());
+                        Log(L"[%s%d] Kb_MoveFileExWFixup returns FAILURE 0x%x", g_MfrModuleName, dllInstance, GetLastError());
                     }
                     else
                     {
-                        Log(L"[%d] Kb_MoveFileExWFixup returns SUCCESS 0x%x", dllInstance, retfinal);
+                        Log(L"[%s%d] Kb_MoveFileExWFixup returns SUCCESS 0x%x", g_MfrModuleName, dllInstance, retfinal);
                     }
 #endif
                     return retfinal;
@@ -339,8 +339,8 @@ BOOL __stdcall Kb_MoveFileExWFixup(
                         (atts & FILE_ATTRIBUTE_DIRECTORY) == 0)
                     {
 #if MOREDEBUG
-                        Log(L"[%d] Kb_MoveFileExWFixup: Implemeting stdcopy from is %s", dllInstance, rldUseExistingFile.c_str());
-                        Log(L"[%d] Kb_MoveFileExWFixup: Implemeting stdcopy   to is %s", dllInstance, rldUseNewFile.c_str());
+                        Log(L"[%s%d] Kb_MoveFileExWFixup: Implemeting stdcopy from is %s", g_MfrModuleName, dllInstance, rldUseExistingFile.c_str());
+                        Log(L"[%s%d] Kb_MoveFileExWFixup: Implemeting stdcopy   to is %s", g_MfrModuleName, dllInstance, rldUseNewFile.c_str());
 #endif
                         // std::filesystem::copy has some edge cases that might throw us for a loop requiring detection of edge
                         // cases that need to be handled differently.  
@@ -361,11 +361,11 @@ BOOL __stdcall Kb_MoveFileExWFixup(
 #if _DEBUG
                         if (retfinal == 0)
                         {
-                            Log(L"[%d] Kb_MoveFileExWFixup via copy(file) returns FAILURE 0x%x GetLastError 0x%x", dllInstance, eCode, GetLastError());
+                            Log(L"[%s%d] Kb_MoveFileExWFixup via copy(file) returns FAILURE 0x%x GetLastError 0x%x", g_MfrModuleName, dllInstance, eCode, GetLastError());
                         }
                         else
                         {
-                            Log(L"[%d] Kb_MoveFileExWFixup via copy(file) returns SUCCESS 0x%x", dllInstance, retfinal);
+                            Log(L"[%s%d] Kb_MoveFileExWFixup via copy(file) returns SUCCESS 0x%x", g_MfrModuleName, dllInstance, retfinal);
                         }
                         // TODO: remove old???
 #endif
@@ -393,11 +393,11 @@ BOOL __stdcall Kb_MoveFileExWFixup(
 #if _DEBUG
                         if (retfinal == 0)
                         {
-                            Log(L"[%d] Kb_MoveFileExWFixup via copy(dir) returns FAILURE 0x%x GetLastError 0x%x", dllInstance, eCode, GetLastError());
+                            Log(L"[%s%d] Kb_MoveFileExWFixup via copy(dir) returns FAILURE 0x%x GetLastError 0x%x", g_MfrModuleName, dllInstance, eCode, GetLastError());
                         }
                         else
                         {
-                            Log(L"[%d] Kb_MoveFileExWFixup via copy(dir) returns SUCCESS 0x%x", dllInstance, retfinal);
+                            Log(L"[%s%d] Kb_MoveFileExWFixup via copy(dir) returns SUCCESS 0x%x", g_MfrModuleName, dllInstance, retfinal);
                         }
                         // TODO: Remove old???
 #endif
@@ -426,25 +426,25 @@ BOOL __stdcall Kb_MoveFileExWFixup(
                 PreCreatePackageFoldersIfIlvNeededForWrite(UseNewFile, dllInstance, debug, L"Kb_MoveFileExWFixup");
 
 #if MOREDEBUG
-                    Log(L"[%d] Kb_MoveFileExWFixup: IlvAware Source      to be is %s", dllInstance, UseExistingFile.c_str());
-                    Log(L"[%d] Kb_MoveFileExWFixup: IlvAware Destination to be is %s", dllInstance, UseNewFile.c_str());
+                    Log(L"[%s%d] Kb_MoveFileExWFixup: IlvAware Source      to be is %s", g_MfrModuleName, dllInstance, UseExistingFile.c_str());
+                    Log(L"[%s%d] Kb_MoveFileExWFixup: IlvAware Destination to be is %s", g_MfrModuleName, dllInstance, UseNewFile.c_str());
 #endif
 
                     std::wstring rldUseExistingFile = MakeLongPath(UseExistingFile);
                     std::wstring rldUseNewFile = MakeLongPath(UseNewFile);
 #if MOREDEBUG
-                    Log(L"[%d] Kb_MoveFileExWFixup: from is %s", dllInstance, rldUseExistingFile.c_str());
-                    Log(L"[%d] Kb_MoveFileExWFixup:   to is %s", dllInstance, rldUseNewFile.c_str());
+                    Log(L"[%s%d] Kb_MoveFileExWFixup: from is %s", g_MfrModuleName, dllInstance, rldUseExistingFile.c_str());
+                    Log(L"[%s%d] Kb_MoveFileExWFixup:   to is %s", g_MfrModuleName, dllInstance, rldUseNewFile.c_str());
 #endif
                     retfinal = kernelbaseimpl::MoveFileExWImpl(rldUseExistingFile.c_str(), rldUseNewFile.c_str(), flags);
 #if _DEBUG
                     if (retfinal == 0)
                     {
-                        Log(L"[%d] Kb_MoveFileExWFixup returns FAILURE 0x%x", dllInstance, GetLastError());
+                        Log(L"[%s%d] Kb_MoveFileExWFixup returns FAILURE 0x%x", g_MfrModuleName, dllInstance, GetLastError());
                     }
                     else
                     {
-                        Log(L"[%d] Kb_MoveFileExWFixup returns SUCCESS 0x%x", dllInstance, retfinal);
+                        Log(L"[%s%d] Kb_MoveFileExWFixup returns SUCCESS 0x%x", g_MfrModuleName, dllInstance, retfinal);
                     }
 #endif
                     return retfinal;
@@ -454,24 +454,24 @@ BOOL __stdcall Kb_MoveFileExWFixup(
         else
         {
 #if _DEBUG
-            LogString(dllInstance, L"Kb_MoveFileExWFixup Unguarded From", existingFileName);
-            LogString(dllInstance, L"Kb_MoveFileExWFixup Unguarded To", newFileName);
+            LogString(g_MfrModuleName, dllInstance, L"Kb_MoveFileExWFixup Unguarded From", existingFileName);
+            LogString(g_MfrModuleName, dllInstance, L"Kb_MoveFileExWFixup Unguarded To", newFileName);
 #endif
         }
     }
 #if _DEBUG
     // Fall back to assuming no redirection is necessary if exception
-    LOGGED_CATCHHANDLER(dllInstance, L"Kb_MoveFileExWFixup")
+    LOGGED_CATCHHANDLER_MIN(g_MfrModuleName, dllInstance, L"Kb_MoveFileExWFixup")
 #else
     catch (...)
     {
-        Log(L"[%d] Kb_MoveFileExWFixup Exception=0x%x", dllInstance, GetLastError());
+        Log(L"[%s%d] Kb_MoveFileExWFixup Exception=0x%x", g_MfrModuleName, dllInstance, GetLastError());
     }
 #endif
 
     retfinal = kernelbaseimpl::MoveFileExWImpl(existingFileName, newFileName, flags);
 #if _DEBUG
-    Log(L"[%d] Kb_MoveFileExWFixup returns 0x%x", dllInstance, retfinal);
+    Log(L"[%s%d] Kb_MoveFileExWFixup returns 0x%x", g_MfrModuleName, dllInstance, retfinal);
 #endif
     return retfinal;
 

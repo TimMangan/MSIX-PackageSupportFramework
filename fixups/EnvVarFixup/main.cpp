@@ -11,6 +11,7 @@
 
 void InitializeFixups();
 void InitializeConfiguration();
+extern const wchar_t* g_EnvVarName;
 
 extern "C" {
 
@@ -19,7 +20,7 @@ extern "C" {
         if (reason == DLL_PROCESS_ATTACH)
         {
 #if _DEBUG
-            Log(L"Attaching EnvVarFixup");
+            Log(L"[%s%d] Attaching EnvVarFixup", g_EnvVarName, 0);
 #endif
 
             InitializeFixups();
@@ -30,7 +31,7 @@ extern "C" {
     }
     catch (...)
     {
-        Log(L"EnvVarFixup attach ERROR");
+        Log(L"[%s%d] EnvVarFixup attach ERROR", g_EnvVarName, 0);
         ::SetLastError(win32_from_caught_exception());
         return FALSE;
     }

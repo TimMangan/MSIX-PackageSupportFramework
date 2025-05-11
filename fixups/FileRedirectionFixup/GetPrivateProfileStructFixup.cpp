@@ -25,7 +25,7 @@ BOOL __stdcall GetPrivateProfileStructFixup(
             if (fileName != NULL)
             {
 #if _DEBUG
-                LogString(GetPrivateProfileStructInstance,L"GetPrivateProfileStructFixup for fileName", widen(fileName, CP_ACP).c_str());
+                LogString(g_FrfModuleName, GetPrivateProfileStructInstance,L"GetPrivateProfileStructFixup for fileName", widen(fileName, CP_ACP).c_str());
 #endif
                 if (!IsUnderUserAppDataLocalPackages(fileName))
                 {
@@ -46,25 +46,25 @@ BOOL __stdcall GetPrivateProfileStructFixup(
                 else
                 {
 #if _DEBUG
-                    Log(L"[%d]  Under LocalAppData\\Packages, don't redirect", GetPrivateProfileStructInstance);
+                    Log(L"[%s%d]  Under LocalAppData\\Packages, don't redirect", g_FrfModuleName, GetPrivateProfileStructInstance);
 #endif
                 }
             }
             else
             {
 #if _DEBUG
-                Log(L"[%d]  null fileName, don't redirect as may be registry based or default.", GetPrivateProfileStructInstance);
+                Log(L"[%s%d]  null fileName, don't redirect as may be registry based or default.", g_FrfModuleName, GetPrivateProfileStructInstance);
 #endif
             }
         }
     }
 #if _DEBUG
     // Fall back to assuming no redirection is necessary if exception
-    LOGGED_CATCHHANDLER(GetPrivateProfileStructInstance, L"GetPrivateProfileStruct")
+    LOGGED_CATCHHANDLER_MIN(g_FrfModuleName, GetPrivateProfileStructInstance, L"GetPrivateProfileStruct")
 #else
     catch (...)
     {
-        Log(L"[%d] GetPrivateProfileStruct Exception=0x%x", GetPrivateProfileStructInstance, GetLastError());
+        Log(L"[%s%d] GetPrivateProfileStruct Exception=0x%x", g_FrfModuleName, GetPrivateProfileStructInstance, GetLastError());
     }
 #endif
 

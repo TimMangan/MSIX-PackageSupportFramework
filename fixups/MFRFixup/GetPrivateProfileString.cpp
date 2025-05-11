@@ -30,10 +30,10 @@
             retfinal = impl::GetPrivateProfileString(appName, keyName, defaultString, string, stringLength, narrow(LongDestinationFilename.c_str()).c_str()); \
             if (debug) \
             { \
-                Log(L"[%d] GetPrivateProfileStringFixup: Ansi Returned length=0x%x from %s", dllInstance, retfinal, LongDestinationFilename.c_str()); \
+                Log(L"[%s%d] GetPrivateProfileStringFixup: Ansi Returned length=0x%x from %s", g_MfrModuleName, dllInstance, retfinal, LongDestinationFilename.c_str()); \
                 if (retfinal > 0) \
                 { \
-                    LogString(dllInstance, L"GetPrivateProfileStringFixup: Ansi Returned string", string); \
+                    LogString(g_MfrModuleName, dllInstance, L"GetPrivateProfileStringFixup: Ansi Returned string", string); \
                 } \
             } \
             return retfinal; \
@@ -45,12 +45,12 @@
             { \
                 if (retfinal > 0) \
                 { \
-                    Log(L"[%d] GetPrivateProfileStringFixup: Wide Returned length=0x%x from %s", dllInstance, retfinal, LongDestinationFilename.c_str()); \
-                    LogString(dllInstance, L"GetPrivateProfileStringFixup: Returned string", string); \
+                    Log(L"[%s%d] GetPrivateProfileStringFixup: Wide Returned length=0x%x from %s", g_MfrModuleName, dllInstance, retfinal, LongDestinationFilename.c_str()); \
+                    LogString(g_MfrModuleName, dllInstance, L"GetPrivateProfileStringFixup: Returned string", string); \
                 } \
                 else \
                 { \
-                    Log(L"[%d] GetPrivateProfileStringFixup: Returned string zero length from %s", dllInstance, LongDestinationFilename.c_str()); \
+                    Log(L"[%s%d] GetPrivateProfileStringFixup: Returned string zero length from %s", g_MfrModuleName, dllInstance, LongDestinationFilename.c_str()); \
                 } \
             } \
             return retfinal; \
@@ -91,40 +91,40 @@ DWORD __stdcall GetPrivateProfileStringFixup(
                 {
                     if (fileName != NULL)
                     {
-                        LogString(dllInstance, L"GetPrivateProfileStringFixup (A) for fileName", widen(fileName, CP_ACP).c_str());
+                        LogString(g_MfrModuleName, dllInstance, L"GetPrivateProfileStringFixup (A) for fileName", widen(fileName, CP_ACP).c_str());
                     }
                     else
                     {
-                        Log(L"[%d] GetPrivateProfileStringFixup for null file.", dllInstance);
+                        Log(L"[%s%d] GetPrivateProfileStringFixup for null file.", g_MfrModuleName, dllInstance);
                     }
                     if (appName != NULL)
                     {
 
-                        LogString(dllInstance, L" Section", widen_argument(appName).c_str());
+                        LogString(g_MfrModuleName, dllInstance, L" Section", widen_argument(appName).c_str());
                     }
                     if (keyName != NULL)
                     {
-                        LogString(dllInstance, L" Key", widen_argument(keyName).c_str());
+                        LogString(g_MfrModuleName, dllInstance, L" Key", widen_argument(keyName).c_str());
                     }
                 }
                 else
                 {
                     if (fileName != NULL)
                     {
-                        LogString(dllInstance, L"GetPrivateProfileStringFixup (W) for fileName", widen(fileName, CP_ACP).c_str());
+                        LogString(g_MfrModuleName, dllInstance, L"GetPrivateProfileStringFixup (W) for fileName", widen(fileName, CP_ACP).c_str());
                     }
                     else
                     {
-                        Log(L"[%d] GetPrivateProfileStringFixup for null file.", dllInstance);
+                        Log(L"[%s%d] GetPrivateProfileStringFixup for null file.", g_MfrModuleName, dllInstance);
                     }
                     if (appName != NULL)
                     {
 
-                        LogString(dllInstance, L" Section", appName);
+                        LogString(g_MfrModuleName, dllInstance, L" Section", appName);
                     }
                     if (keyName != NULL)
                     {
-                        LogString(dllInstance, L" Key", keyName);
+                        LogString(g_MfrModuleName, dllInstance, L" Key", keyName);
                     }
                 }
 #endif
@@ -345,24 +345,24 @@ DWORD __stdcall GetPrivateProfileStringFixup(
             }
             else
             {
-                Log(L"[%d] GetPrivateProfileStringFixup: null fileName, don't redirect", dllInstance);
+                Log(L"[%s%d] GetPrivateProfileStringFixup: null fileName, don't redirect", g_MfrModuleName, dllInstance);
             }
         }
     }
 #if _DEBUG
     // Fall back to assuming no redirection is necessary if exception
-    LOGGED_CATCHHANDLER(dllInstance, L"GetPrivateProfileString")
+    LOGGED_CATCHHANDLER_MIN(g_MfrModuleName, dllInstance, L"GetPrivateProfileString")
 #else
     catch (...)
     {
-        Log(L"[%d] GetPrivateProfileString: Exception=0x%x", dllInstance, GetLastError());
+        Log(L"[%s%d] GetPrivateProfileString: Exception=0x%x", g_MfrModuleName, dllInstance, GetLastError());
     }
 #endif 
 
 
     retfinal = impl::GetPrivateProfileString(appName, keyName, defaultString, string, stringLength, fileName);
 #if MOREDEBUG
-    LogString(dllInstance, L" Returning from unfixed call.", string);
+    LogString(g_MfrModuleName, dllInstance, L" Returning from unfixed call.", string);
 #endif
     return retfinal;
 }

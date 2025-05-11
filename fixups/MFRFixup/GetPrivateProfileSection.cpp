@@ -35,11 +35,11 @@
                 ::WideCharToMultiByte(CP_ACP, 0, wideString.get(), stringLength, string, stringLength, nullptr, nullptr); \
                 if (debug) \
                 { \
-                    Log(L"[%d] GetPriviateProfileSectionFixup returns %x characters from %s.", dllInstance, retfinal, LongDestinationFilename.c_str()); \
+                    Log(L"[%s%d] GetPriviateProfileSectionFixup returns %x characters from %s.", g_MfrModuleName, dllInstance, retfinal, LongDestinationFilename.c_str()); \
                 } \
                 if (retfinal != 0 && moredebug) \
                 { \
-                    Log(L"[%d] GetPriviateProfileSectionFixup data %s.", dllInstance, string); \
+                    Log(L"[%s%d] GetPriviateProfileSectionFixup data %s.", g_MfrModuleName, dllInstance, string); \
                 } \
                 return retfinal; \
             } \
@@ -49,11 +49,11 @@
             retfinal = impl::GetPrivateProfileSectionW(appName, string, stringLength, LongDestinationFilename.c_str()); \
             if (debug) \
             { \
-                Log(L"[%d] GetPriviateProfileSectionFixup returns %x characters from %s.", dllInstance, retfinal, LongDestinationFilename.c_str()); \
+                Log(L"[%s%d] GetPriviateProfileSectionFixup returns %x characters from %s.", g_MfrModuleName, dllInstance, retfinal, LongDestinationFilename.c_str()); \
             } \
             if (retfinal != 0 && moredebug) \
             { \
-                Log(L"[%d] GetPriviateProfileSectionFixup data %s.", dllInstance, string); \
+                Log(L"[%s%d] GetPriviateProfileSectionFixup data %s.", g_MfrModuleName, dllInstance, string); \
             } \
             return retfinal; \
         } \
@@ -84,7 +84,7 @@ DWORD __stdcall GetPrivateProfileSectionFixup(
             if (fileName != NULL)
             {
 #if _DEBUG
-                LogString(dllInstance, L"GetPrivateProfileSectionFixup for fileName", widen(fileName, CP_ACP).c_str());
+                LogString(g_MfrModuleName, dllInstance, L"GetPrivateProfileSectionFixup for fileName", widen(fileName, CP_ACP).c_str());
 #endif
                 // This get is inheirently a read-only operation in all cases.
                 // We prefer to use the redirecton case, if present.
@@ -305,24 +305,24 @@ DWORD __stdcall GetPrivateProfileSectionFixup(
             else
             {
 #if _DEBUG
-            Log(L"[%d]  GetPrivateProfileSectionFixup: null filename, don't redirect as may be registry based or default.", dllInstance);
+            Log(L"[%s%d]  GetPrivateProfileSectionFixup: null filename, don't redirect as may be registry based or default.", g_MfrModuleName, dllInstance);
 #endif
             }
         }
     }
 #if _DEBUG
     // Fall back to assuming no redirection is necessary if exception
-    LOGGED_CATCHHANDLER(dllInstance, L"GetPrivateProfileSectionFixup")
+    LOGGED_CATCHHANDLER_MIN(g_MfrModuleName, dllInstance, L"GetPrivateProfileSectionFixup")
 #else
     catch (...)
     {
-        Log(L"[%d] GetPrivateProfileSectionFixup Exception=0x%x", dllInstance, GetLastError());
+        Log(L"[%s%d] GetPrivateProfileSectionFixup Exception=0x%x", g_MfrModuleName, dllInstance, GetLastError());
     }
 #endif
 
     UINT uVal = impl::GetPrivateProfileSection(appName, string, stringLength, fileName);
 #if MOREDEBUG
-    Log(L"[%d] GetPrivateProfileSectionFixup Returning 0x%x from unfixed call.", dllInstance, uVal);
+    Log(L"[%s%d] GetPrivateProfileSectionFixup Returning 0x%x from unfixed call.", g_MfrModuleName, dllInstance, uVal);
 #endif
     return uVal;
 }

@@ -27,18 +27,18 @@
         retfinal = impl::CopyFile2(LongExistingFileWs.c_str(), LongNewFileWs.c_str(), extendedParameters); \
         if (moredebug) \
         { \
-            LogString(dllInstance, L"CopyFile2Fixup: Actual From", LongExistingFileWs.c_str()); \
-            LogString(dllInstance, L"CopyFile2Fixup: Actual To", LongNewFileWs.c_str()); \
+            LogString(g_MfrModuleName, dllInstance, L"CopyFile2Fixup: Actual From", LongExistingFileWs.c_str()); \
+            LogString(g_MfrModuleName, dllInstance, L"CopyFile2Fixup: Actual To", LongNewFileWs.c_str()); \
         } \
         if (debug) \
         { \
             if (retfinal == ERROR_SUCCESS) \
             { \
-                Log(L"[%d] CopyFile2Fixup: return SUCCESS", dllInstance); \
+                Log(L"[%s%d] CopyFile2Fixup: return SUCCESS", g_MfrModuleName, dllInstance); \
             } \
             else \
             { \
-                Log(L"[%d] CopyFile2Fixup: return FAILURE err=0x%x", dllInstance, GetLastError()); \
+                Log(L"[%s%d] CopyFile2Fixup: return FAILURE err=0x%x", g_MfrModuleName, dllInstance, GetLastError()); \
             } \
         } \
         return (retfinal); \
@@ -67,8 +67,8 @@ HRESULT __stdcall CopyFile2Fixup(
         if (guard)
         {
 #if _DEBUG
-            LogString(dllInstance, L"CopyFile2Fixup from", existingFileName);
-            LogString(dllInstance, L"CopyFile2Fixup to", newFileName);
+            LogString(g_MfrModuleName, dllInstance, L"CopyFile2Fixup from", existingFileName);
+            LogString(g_MfrModuleName, dllInstance, L"CopyFile2Fixup to", newFileName);
 #endif
             std::wstring wExistingFileName = widen(existingFileName);
             std::wstring wNewFileName = widen(newFileName);
@@ -156,7 +156,7 @@ HRESULT __stdcall CopyFile2Fixup(
                     break;
                 }
 #if MOREDEBUG
-                Log(L"[%d] CopyFile2Fixup: redirected destination=%s", dllInstance, newFileWsRedirected.c_str());
+                Log(L"[%s%d] CopyFile2Fixup: redirected destination=%s", g_MfrModuleName, dllInstance, newFileWsRedirected.c_str());
 #endif
 
 
@@ -332,7 +332,7 @@ HRESULT __stdcall CopyFile2Fixup(
                 // ILV
                 std::wstring usePathNew = DetermineIlvPathForWriteOperations(cohortsNew, dllInstance, moredebug);
 #if MOREDEBUG
-                LogString(dllInstance, L"CopyFile2Fixup ILV UseTo", usePathNew.c_str());
+                LogString(g_MfrModuleName, dllInstance, L"CopyFile2Fixup ILV UseTo", usePathNew.c_str());
 #endif
                 // In a redirect to local scenario, we are responsible for pre-creating the local parent folders
                 // if-and-only-if they are present in the package.
@@ -346,7 +346,7 @@ HRESULT __stdcall CopyFile2Fixup(
                 // In a redirect to local scenario, we are responsible for determing if source is local or in package
                 usePathExisting = SelectLocalOrPackageForRead(usePathExisting, cohortsExisting.WsPackage);
 #if MOREDEBUG
-                LogString(dllInstance, L"CopyFile2Fixup ILV UseFrom", usePathExisting.c_str());
+                LogString(g_MfrModuleName, dllInstance, L"CopyFile2Fixup ILV UseFrom", usePathExisting.c_str());
 #endif
 
                 WRAPPER_COPYFILE2(usePathExisting, usePathNew, extendedParameters, debug, moredebug);
@@ -355,11 +355,11 @@ HRESULT __stdcall CopyFile2Fixup(
     }
 #if _DEBUG
     // Fall back to assuming no redirection is necessary if exception
-    LOGGED_CATCHHANDLER(dllInstance, L"CopyFile2Fixup")
+    LOGGED_CATCHHANDLER_MIN(g_MfrModuleName, dllInstance, L"CopyFile2Fixup")
 #else
     catch (...)
     {
-        Log(L"[%d] CopyFile2Fixup Exception=0x%x", dllInstance, GetLastError());
+        Log(L"[%s%d] CopyFile2Fixup Exception=0x%x", g_MfrModuleName, dllInstance, GetLastError());
     }
 #endif
     if (existingFileName != nullptr && newFileName != nullptr)
@@ -374,7 +374,7 @@ HRESULT __stdcall CopyFile2Fixup(
         retfinal = HRESULT_FROM_WIN32(ERROR_INVALID_PARAMETER); //impl::CopyFile2(existingFileName, newFileName, extendedParameters);
     }
 #if _DEBUG
-    Log(L"[%d] CopyFile2Fixup returns 0x%x", dllInstance, retfinal);
+    Log(L"[%s%d] CopyFile2Fixup returns 0x%x", g_MfrModuleName, dllInstance, retfinal);
 #endif
     return retfinal;
 }

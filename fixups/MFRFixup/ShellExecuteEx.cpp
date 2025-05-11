@@ -55,19 +55,19 @@ BOOL __stdcall  ShellExecuteExAFixup(_Inout_ SHELLEXECUTEINFOA* pExecInfo)
                     // Release level logging for detection
                     bool temp = g_psf_NoLogging;
                     g_psf_NoLogging = false;
-                    Log(L"[%d] ShellExecuteExA unguarded informational. Known compatibility issues exist in certain usages!", dllInstance);
-                    LogString(dllInstance, L"ShellExecuteExA: file", pExecInfo->lpFile);
-                    LogString(dllInstance, L"ShellExecuteExA: verb", pExecInfo->lpVerb);
-                    LogString(dllInstance, L"ShellExecuteExA: directory", pExecInfo->lpDirectory);
-                    LogString(dllInstance, L"ShellExecuteExA: parameters", pExecInfo->lpParameters);
+                    Log(L"[%s%d] ShellExecuteExA unguarded informational. Known compatibility issues exist in certain usages!", g_MfrModuleName, dllInstance);
+                    LogString(g_MfrModuleName, dllInstance, L"ShellExecuteExA: file", pExecInfo->lpFile);
+                    LogString(g_MfrModuleName, dllInstance, L"ShellExecuteExA: verb", pExecInfo->lpVerb);
+                    LogString(g_MfrModuleName, dllInstance, L"ShellExecuteExA: directory", pExecInfo->lpDirectory);
+                    LogString(g_MfrModuleName, dllInstance, L"ShellExecuteExA: parameters", pExecInfo->lpParameters);
 ///#ifdef MOREDEBUG
-                    Log(L"[%d] ShellExecuteExA fMask=0x%x", dllInstance, pExecInfo->fMask);
+                    Log(L"[%s%d] ShellExecuteExA fMask=0x%x", g_MfrModuleName, dllInstance, pExecInfo->fMask);
                     if ((pExecInfo->fMask & SEE_MASK_CLASSNAME) != 0)
                     {
-                        LogString(dllInstance, L"ShellExecuteExA: class", pExecInfo->lpClass);
+                        LogString(g_MfrModuleName, dllInstance, L"ShellExecuteExA: class", pExecInfo->lpClass);
                     }
 ///#endif
-                    LogCallingModuleInstance(dllInstance);
+                    LogCallingModuleInstance(g_MfrModuleName, dllInstance);
                     g_psf_NoLogging = temp;
                 }
             }
@@ -77,11 +77,11 @@ BOOL __stdcall  ShellExecuteExAFixup(_Inout_ SHELLEXECUTEINFOA* pExecInfo)
     }
 #if _DEBUG
     // Fall back to assuming no redirection is necessary if exception
-    LOGGED_CATCHHANDLER(dllInstance, L"ShellExecuteExA")
+    LOGGED_CATCHHANDLER_MIN(g_MfrModuleName, dllInstance, L"ShellExecuteExA")
 #else
     catch (...)
     {
-        Log(L"[%d] ShellExecuteExA Exception=0x%x", dllInstance, GetLastError());
+        Log(L"[%s%d] ShellExecuteExA Exception=0x%x", g_MfrModuleName, dllInstance, GetLastError());
     }
 #endif
 
@@ -120,19 +120,19 @@ BOOL __stdcall  ShellExecuteExAFixup(_Inout_ SHELLEXECUTEINFOA* pExecInfo)
                      // Release level logging for detection
                      bool temp = g_psf_NoLogging;
                      g_psf_NoLogging = false;
-                     Log(L"[%d] ShellExecuteExW unguarded. Known compatibility issues exist in certain usages!", dllInstance);
-                     LogString(dllInstance, L"ShellExecuteExW: verb", pExecInfo->lpVerb);
-                     LogString(dllInstance, L"ShellExecuteExW: file", pExecInfo->lpFile);
-                     LogString(dllInstance, L"ShellExecuteExW: directory", pExecInfo->lpDirectory);
-                     LogString(dllInstance, L"ShellExecuteExW: parameters", pExecInfo->lpParameters);
+                     Log(L"[%s%d] ShellExecuteExW unguarded. Known compatibility issues exist in certain usages!", g_MfrModuleName, dllInstance);
+                     LogString(g_MfrModuleName, dllInstance, L"ShellExecuteExW: verb", pExecInfo->lpVerb);
+                     LogString(g_MfrModuleName, dllInstance, L"ShellExecuteExW: file", pExecInfo->lpFile);
+                     LogString(g_MfrModuleName, dllInstance, L"ShellExecuteExW: directory", pExecInfo->lpDirectory);
+                     LogString(g_MfrModuleName, dllInstance, L"ShellExecuteExW: parameters", pExecInfo->lpParameters);
 ///#if MOREDEBUG
-                     Log(L"[%d] ShellExecuteExW fMask=0x%x", dllInstance, pExecInfo->fMask);
+                     Log(L"[%s%d] ShellExecuteExW fMask=0x%x", g_MfrModuleName, dllInstance, pExecInfo->fMask);
                      if ((pExecInfo->fMask & SEE_MASK_CLASSNAME) != 0)
                      {
-                         LogString(dllInstance, L"ShellExecuteExW: class", pExecInfo->lpClass);
+                         LogString(g_MfrModuleName, dllInstance, L"ShellExecuteExW: class", pExecInfo->lpClass);
                      }
 ///#endif
-                     LogCallingModuleInstance(dllInstance);
+                     LogCallingModuleInstance(g_MfrModuleName, dllInstance);
                      g_psf_NoLogging = temp;
                  }
              }
@@ -142,11 +142,11 @@ BOOL __stdcall  ShellExecuteExAFixup(_Inout_ SHELLEXECUTEINFOA* pExecInfo)
      }
 #if _DEBUG
      // Fall back to assuming no redirection is necessary if exception
-     LOGGED_CATCHHANDLER(dllInstance, L"ShellExecuteExW")
+     LOGGED_CATCHHANDLER_MIN(g_MfrModuleName, dllInstance, L"ShellExecuteExW")
 #else
      catch (...)
      {
-         Log(L"[%d] ShellExecuteExW Exception=0x%x", dllInstance, GetLastError());
+         Log(L"[%s%d] ShellExecuteExW Exception=0x%x", g_MfrModuleName, dllInstance, GetLastError());
      }
 #endif
 

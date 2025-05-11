@@ -32,7 +32,7 @@ LSTATUS __stdcall RegOpenKeyFixup(
     _In_ const CharT* subKey,
     _Out_ PHKEY resultKey)
 {
-    DWORD RegLocalInstance = ++g_RegIntceptInstance;
+    DWORD RegLocalInstance = ++g_RegInterceptInstance;
     LSTATUS result = -1;
     bool isBlocked = false;
 
@@ -40,11 +40,11 @@ LSTATUS __stdcall RegOpenKeyFixup(
 #if _DEBUG
     if constexpr (psf::is_ansi<CharT>)
     {
-        Log(L"[%d] RegOpenKey:  key=0x%x subkey=%S", RegLocalInstance, (ULONG)(ULONG_PTR)key, subKey);
+        Log(L"[%s%d] RegOpenKey:  key=0x%x subkey=%S", g_RegModuleName, RegLocalInstance, (ULONG)(ULONG_PTR)key, subKey);
     }
     else
     {
-        Log(L"[%d] RegOpenKey: key=0x%x subKey=%ls", RegLocalInstance, (ULONG)(ULONG_PTR)key, subKey);
+        Log(L"[%s%d] RegOpenKey: key=0x%x subKey=%ls", g_RegModuleName, RegLocalInstance, (ULONG)(ULONG_PTR)key, subKey);
     }
 #endif
 
@@ -82,7 +82,7 @@ LSTATUS __stdcall RegOpenKeyFixup(
                 RegCloseKey(altkey);
                 hasRedirection = true;
 #if _DEBUG
-                LogString(RegLocalInstance, L"\tRegOpenKey Redirecting to HKCU", subKey);
+                LogString(g_RegModuleName, RegLocalInstance, L"\tRegOpenKey Redirecting to HKCU", subKey);
 #endif
             }
         }
@@ -98,7 +98,7 @@ LSTATUS __stdcall RegOpenKeyFixup(
 
 
 #if MOREDEBUG
-            Log(L"[%d] RegOpenKey:  JavaBlocker checking path=%S", RegLocalInstance, keypath.c_str());
+            Log(L"[%s%d] RegOpenKey:  JavaBlocker checking path=%S", g_RegModuleName, RegLocalInstance, keypath.c_str());
 #endif
 
             if (!RegFixupJavaBlocker(keypath, RegLocalInstance))
@@ -108,7 +108,7 @@ LSTATUS __stdcall RegOpenKeyFixup(
             else
             {
 #if _DEBUG
-                Log(L"[%d] RegOpenKey:  JavaBlocker Blocking path=%S", RegLocalInstance, keypath.c_str());
+                Log(L"[%s%d] RegOpenKey:  JavaBlocker Blocking path=%S", g_RegModuleName, RegLocalInstance, keypath.c_str());
 #endif
                 result = ERROR_PATH_NOT_FOUND;
                 resultKey = NULL;
@@ -118,7 +118,7 @@ LSTATUS __stdcall RegOpenKeyFixup(
         else
         {
 #if _DEBUG
-            Log(L"[%d] RegOpenKey:  DeletionMarker Blocking path=%S", RegLocalInstance, keypath.c_str());
+            Log(L"[%s%d] RegOpenKey:  DeletionMarker Blocking path=%S", g_RegModuleName, RegLocalInstance, keypath.c_str());
 #endif            
             result = ERROR_PATH_NOT_FOUND;
             resultKey = NULL;
@@ -129,11 +129,11 @@ LSTATUS __stdcall RegOpenKeyFixup(
 #if _DEBUG
     if (result != ERROR_SUCCESS)
     {
-        Log(L"[%d] RegOpenKey result=%d", RegLocalInstance, result);
+        Log(L"[%s%d] RegOpenKey result=%d", g_RegModuleName, RegLocalInstance, result);
     }
     else
     {
-        Log(L"[%d] RegOpenKey result=SUCCESS key=0x%x", RegLocalInstance, *resultKey);
+        Log(L"[%s%d] RegOpenKey result=SUCCESS key=0x%x", g_RegModuleName, RegLocalInstance, *resultKey);
     }
 #endif
 
@@ -147,18 +147,18 @@ LSTATUS __stdcall RegOpenKeyFixup(
             try
             {
                 LogKeyPath(RegLocalInstance, key);
-                LogString(L" Sub Key", subKey);
-                LogFunctionResult(RegLocalInstance, functionResult);
+                LogString(g_RegModuleName, RegLocalInstance, L" Sub Key", subKey);
+                LogFunctionResultInstance(RegLocalInstance, functionResult);
                 if (function_failed(functionResult))
                 {
                     LogWin32Error(RegLocalInstance, result);
                 }
-                LogCallingModuleInstance(RegLocalInstance);
-                Log("[%d] This error often indicates that the key must be added to the original package.", RegLocalInstance);
+                LogCallingModuleInstanceCommon(g_RegModuleName,RegLocalInstance);
+                Log(L"[%s%d] This error often indicates that the key must be added to the original package.", g_RegModuleName, RegLocalInstance);
             }
             catch (...)
             {
-                Log(L"[%d] RegOpenKey logging failure.\n", RegLocalInstance);
+                Log(L"[%s%d] RegOpenKey logging failure.\n", g_RegModuleName, RegLocalInstance);
             }
         }
     }

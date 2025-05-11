@@ -28,7 +28,7 @@
         retfinal = impl::GetPrivateProfileIntW(widen_argument(sectionName).c_str(), widen_argument(key).c_str(), nDefault, LongDestinationFilename.c_str()); \
         if (debug) \
         { \
-        Log(L"[%d] GetPrivateProfileIntFixup Returned uint: %d from '%s' ", dllInstance, retfinal, LongDestinationFilename.c_str()); \
+        Log(L"[%s%d] GetPrivateProfileIntFixup Returned uint: %d from '%s' ", g_MfrModuleName, dllInstance, retfinal, LongDestinationFilename.c_str()); \
         } \
         return retfinal; \
     }
@@ -61,38 +61,38 @@ UINT __stdcall GetPrivateProfileIntFixup(
             {
                 if (fileName != NULL)
                 {
-                    LogString(dllInstance, L"GetPrivateProfileIntFixup for fileName", widen_argument(fileName).c_str());
+                    LogString(g_MfrModuleName, dllInstance, L"GetPrivateProfileIntFixup for fileName", widen_argument(fileName).c_str());
                 }
                 else
                 {
-                    Log(L"[%d] GetPrivateProfileIntFixup for null file.", dllInstance);
+                    Log(L"[%s%d] GetPrivateProfileIntFixup for null file.", g_MfrModuleName, dllInstance);
                 }
                 if (sectionName != NULL)
                 {
-                    LogString(dllInstance, L"       Section", widen_argument(sectionName).c_str());
+                    LogString(g_MfrModuleName, dllInstance, L"       Section", widen_argument(sectionName).c_str());
                 }
                 if (key != NULL)
                 {
-                    LogString(dllInstance, L"       Key", widen_argument(key).c_str());
+                    LogString(g_MfrModuleName, dllInstance, L"       Key", widen_argument(key).c_str());
                 }
             }
             else
             {
                 if (fileName != NULL)
                 {
-                    LogString(dllInstance, L"GetPrivateProfileIntFixup for fileName", fileName);
+                    LogString(g_MfrModuleName, dllInstance, L"GetPrivateProfileIntFixup for fileName", fileName);
                 }
                 else
                 {
-                    Log(L"[%d] GetPrivateProfileIntFixup for null file.", dllInstance);
+                    Log(L"[%s%d] GetPrivateProfileIntFixup for null file.", g_MfrModuleName, dllInstance);
                 }
                 if (sectionName != NULL)
                 {
-                    LogString(dllInstance, L"       Section", sectionName);
+                    LogString(g_MfrModuleName, dllInstance, L"       Section", sectionName);
                 }
                 if (key != NULL)
                 {
-                    LogString(dllInstance, L"       Key", key);
+                    LogString(g_MfrModuleName, dllInstance, L"       Key", key);
                 }
             }
 #endif
@@ -314,24 +314,24 @@ UINT __stdcall GetPrivateProfileIntFixup(
             else
             {
 #if _DEBUG
-                Log(L"[%d] GetPrivateProfileIntFixup: null filename, don't redirect as may be registry based or default.", dllInstance);
+                Log(L"[%s%d] GetPrivateProfileIntFixup: null filename, don't redirect as may be registry based or default.", g_MfrModuleName, dllInstance);
 #endif
             }
         }
     }
 #if _DEBUG
     // Fall back to assuming no redirection is necessary if exception
-    LOGGED_CATCHHANDLER(dllInstance, L"GetPrivateProfileInt")
+    LOGGED_CATCHHANDLER_MIN(g_MfrModuleName, dllInstance, L"GetPrivateProfileInt")
 #else
     catch (...)
     {
-        Log(L"[%d] GetPrivateProfileIntFixup Exception=0x%x", dllInstance, GetLastError());
+        Log(L"[%s%d] GetPrivateProfileIntFixup Exception=0x%x", g_MfrModuleName, dllInstance, GetLastError());
     }
 #endif
 
     UINT uVal = impl::GetPrivateProfileInt(sectionName, key, nDefault, fileName);
 #if MOREDEBUG
-    Log(L"[%d] GetPrivateProfileIntFixup Returning 0x%x from unfixed call.", dllInstance, uVal);
+    Log(L"[%s%d] GetPrivateProfileIntFixup Returning 0x%x from unfixed call.", g_MfrModuleName, dllInstance, uVal);
 #endif 
     return uVal;
 }

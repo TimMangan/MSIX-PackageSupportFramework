@@ -104,7 +104,7 @@ DWORD copy_find_data(const WIN32_FIND_DATAW& from, WIN32_FIND_DATAW& to) noexcep
 
 void LogNormalizedPath(normalized_path np, std::wstring desc, DWORD instance)
 {
-    Log(L"[%d]\tNormalized_path %ls Type=%x, Full=%ls, Abs=%ls", instance, desc.c_str(), (int)np.path_type, np.full_path.c_str(), np.drive_absolute_path);
+    Log(L"[%s%d]\tNormalized_path %ls Type=%x, Full=%ls, Abs=%ls", g_FrfModuleName, instance, desc.c_str(), (int)np.path_type, np.full_path.c_str(), np.drive_absolute_path);
 }
 
 template <typename CharT>
@@ -117,32 +117,32 @@ HANDLE __stdcall FindFirstFileExFixup(
     _In_ DWORD additionalFlags) noexcept try
 {
     auto guard = g_reentrancyGuard.enter();
+    DWORD FindFirstFileExInstance = ++g_FileIntceptInstance;
     if (!guard)
     {
-        LogString(L"\tFindFirstFileExFixup: for fileName", fileName);
+        LogString(g_FrfModuleName, FindFirstFileExInstance, L"\tFindFirstFileExFixup: for fileName", fileName);
 
         return impl::FindFirstFileEx(fileName, infoLevelId, findFileData, searchOp, searchFilter, additionalFlags);
     }
-    DWORD FindFirstFileExInstance = ++g_FileIntceptInstance;
-
+    
 
     // Split the input into directory and pattern
     auto wPath = widen(fileName);
     auto wfileName = widen(fileName);
-    LogString(FindFirstFileExInstance,L" \tFindFirstFileEx: for fileName", wfileName.c_str());
-    Log(L"[%d]\tFindFirstFileEx: InfoLevel=0x%x searchOp=0x%x addtionalFlags=0x%x ", FindFirstFileExInstance, infoLevelId, searchOp, additionalFlags);
+    LogString(g_FrfModuleName, FindFirstFileExInstance,L" \tFindFirstFileEx: for fileName", wfileName.c_str());
+    Log(L"[%s%d]\tFindFirstFileEx: InfoLevel=0x%x searchOp=0x%x addtionalFlags=0x%x ", g_FrfModuleName, FindFirstFileExInstance, infoLevelId, searchOp, additionalFlags);
 
     normalized_path dir;
     const wchar_t* pattern = nullptr;
     wchar_t dal[512];
     if (auto dirPos = wPath.find_last_of(LR"(\/)"); dirPos != std::wstring::npos)
     {
-        Log("[%d]\tFindFirstFileEx: has slash", FindFirstFileExInstance);
+        Log("[%s%d]\tFindFirstFileEx: has slash", g_FrfModuleName, FindFirstFileExInstance);
         // Special case for single separator at beginning of the wPath "/foo.txt"
         if (dirPos == 0)
         {
             auto nextChar = std::exchange(wPath[dirPos + 1], L'\0');
-            Log("[%d]\tdir comes from single char case =%ls", FindFirstFileExInstance,  wPath.c_str() );
+            Log("[%s%d]\tdir comes from single char case =%ls", g_FrfModuleName, FindFirstFileExInstance,  wPath.c_str() );
             dir = NormalizePath(wPath.c_str(), FindFirstFileExInstance);
             wPath[dirPos + 1] = nextChar;
         }
@@ -150,10 +150,10 @@ HANDLE __stdcall FindFirstFileExFixup(
         {
             // Ensure dir path_type is absolute drive and not drive relative
             auto nextChar = std::exchange(wPath[dirPos + 1], L'\0');
-            Log("[%d]\tdir comes from driveroot case=%ls", FindFirstFileExInstance, wPath.c_str() );
+            Log("[%s%d]\tdir comes from driveroot case=%ls", g_FrfModuleName, FindFirstFileExInstance, wPath.c_str() );
             dir = NormalizePath(wPath.c_str(), FindFirstFileExInstance);
             // Avoid bug in NormalizePath causing absolute_path to fail.
-            Log(L"[%d]\t\tnormalabs prefix=%ls", FindFirstFileExInstance, dir.drive_absolute_path);
+            Log(L"[%s%d]\t\tnormalabs prefix=%ls", g_FrfModuleName, FindFirstFileExInstance, dir.drive_absolute_path);
             if (dir.drive_absolute_path == nullptr)
             {
                 size_t dirlen = wcslen(wPath.c_str());
@@ -165,12 +165,12 @@ HANDLE __stdcall FindFirstFileExFixup(
                 }
             }
             wPath[dirPos + 1] = nextChar;
-            Log(L"[%d]\t\tnormalabs postfix=%ls", FindFirstFileExInstance, dir.drive_absolute_path);
+            Log(L"[%s%d]\t\tnormalabs postfix=%ls", g_FrfModuleName, FindFirstFileExInstance, dir.drive_absolute_path);
         }
         else
         {
             auto separator = std::exchange(wPath[dirPos], L'\0');
-            Log("[%d]\tdir comes from =%ls", FindFirstFileExInstance, wPath.c_str() );
+            Log("[%s%d]\tdir comes from =%ls", g_FrfModuleName, FindFirstFileExInstance, wPath.c_str() );
             dir = NormalizePath(wPath.c_str(), FindFirstFileExInstance);
             wPath[dirPos] = separator;
         }
@@ -178,7 +178,7 @@ HANDLE __stdcall FindFirstFileExFixup(
     }
     else
     {
-        Log("[%d]\tFindFirstFileEx: no slash, assume cwd based.", FindFirstFileExInstance);
+        Log("[%s%d]\tFindFirstFileEx: no slash, assume cwd based.", g_FrfModuleName, FindFirstFileExInstance);
         // TODO: This is a messy situation and the code I am replacing doen't handle it well and can crash the app later on in PathRedirection.
         // While FindFirstFileEx is usually passed a regular (unique) filepath in the first parameter, 
         // it is permissible for the caller to use wildcards to select multiple subfolders or files to be searched.
@@ -190,12 +190,12 @@ HANDLE __stdcall FindFirstFileExFixup(
         //     dir = NormalizePath(L".",FindFirstFileExInstance);
         //     pattern = path.c_str();
         std::filesystem::path cwd = std::filesystem::current_path();
-        Log("[%d]\tFindFirstFileEx: swap to cwd: %ls", FindFirstFileExInstance,cwd.c_str());
+        Log("[%s%d]\tFindFirstFileEx: swap to cwd: %ls", g_FrfModuleName, FindFirstFileExInstance,cwd.c_str());
         dir = NormalizePath(cwd.c_str(), FindFirstFileExInstance);
         pattern = wPath.c_str();
-        Log("[%d]\tFindFirstFileEx: no slash, assumed cwd based type=x%x dap=%ls", FindFirstFileExInstance, psf::path_type(cwd.c_str()),dir.drive_absolute_path);
+        Log("[%s%d]\tFindFirstFileEx: no slash, assumed cwd based type=x%x dap=%ls", g_FrfModuleName, FindFirstFileExInstance, psf::path_type(cwd.c_str()),dir.drive_absolute_path);
     }
-    Log("[%d]\tpattern=%ls wPath=%ls", FindFirstFileExInstance, pattern, wPath.c_str());
+    Log("[%s%d]\tpattern=%ls wPath=%ls", g_FrfModuleName, FindFirstFileExInstance, pattern, wPath.c_str());
 
     // If you change the below logic, or
 	// you you change what goes into RedirectedPath
@@ -234,8 +234,8 @@ HANDLE __stdcall FindFirstFileExFixup(
     //{
     //   result->requested_path.push_back(L'\\');
     //}
-    Log(L"[%d]FindFirstFile requested_path for [2] (from original) is", FindFirstFileExInstance);
-    Log(result->requested_path.c_str());
+    Log(L"[%s%d] FindFirstFile requested_path for [2] (from original) is", g_FrfModuleName, FindFirstFileExInstance);
+    Log(g_FrfModuleName, FindFirstFileExInstance, result->requested_path.c_str());
 
     result->redirect_path = RedirectedPath(dir,false, g_writablePackageRootPath.native(), FindFirstFileExInstance);
     //if (result->redirect_path.back() != L'\\')
@@ -243,27 +243,27 @@ HANDLE __stdcall FindFirstFileExFixup(
     //    result->redirect_path.push_back(L'\\');
     //}
 
-    Log(L"[%d]FindFirstFile redirected_path for [0] (from redirected) is", FindFirstFileExInstance);
-    Log(result->redirect_path.c_str());
+    Log(L"[%s%d] FindFirstFile redirected_path for [0] (from redirected) is", g_FrfModuleName, FindFirstFileExInstance);
+    Log(g_FrfModuleName, FindFirstFileExInstance, result->redirect_path.c_str());
     
     size_t foundWA = wPath.find(L"\\WindowsApps");
     size_t foundVFS = wPath.find(L"\\VFS");
     if (foundWA == std::wstring::npos || foundVFS == std::wstring::npos)
     {
-        Log(L"[%d]FindFirstFile wPath not in package.", FindFirstFileExInstance);
+        Log(L"[%s%d] FindFirstFile wPath not in package.", g_FrfModuleName, FindFirstFileExInstance);
         std::filesystem::path vfspath = GetPackageVFSPath(wPath.c_str());
-        Log(L"[%d]debug FindFirstFile wPath after GetPackageVFSPath.", FindFirstFileExInstance);
+        Log(L"[%s%d]debug FindFirstFile wPath after GetPackageVFSPath.", g_FrfModuleName, FindFirstFileExInstance);
         if (wcslen(vfspath.c_str()) > 0)
         {
             result->package_vfs_path = vfspath.c_str();
-            Log(L"[%d]FindFirstFile package_vfs_path for [1] (from vfs_path) is", FindFirstFileExInstance);
+            Log(L"[%s%d] FindFirstFile package_vfs_path for [1] (from vfs_path) is", g_FrfModuleName, FindFirstFileExInstance);
             Log(result->package_vfs_path.c_str());
         }
         else
         {
             result->package_vfs_path = result->redirect_path; //dir.full_path.c_str();
-            Log(L"[%d]FindFirstFile package_vfs_path for [1] (from vfs_path) is (non AppData) so not applicable", FindFirstFileExInstance);
-            Log(result->package_vfs_path.c_str());
+            Log(L"[%s%d] FindFirstFile package_vfs_path for [1] (from vfs_path) is (non AppData) so not applicable", g_FrfModuleName, FindFirstFileExInstance);
+            Log(g_FrfModuleName, FindFirstFileExInstance, result->package_vfs_path.c_str());
         }
         
 
@@ -276,7 +276,7 @@ HANDLE __stdcall FindFirstFileExFixup(
         //{
         //    result->package_vfs_path.push_back(L'\\');
         //}
-        Log(L"[%d]FindFirstFile package_vfs_path for [1] (from vfs_path) is not applicable", FindFirstFileExInstance);
+        Log(L"[%s%d] FindFirstFile package_vfs_path for [1] (from vfs_path) is not applicable", g_FrfModuleName, FindFirstFileExInstance);
     }
 
     [[maybe_unused]] auto ansiData = reinterpret_cast<WIN32_FIND_DATAA*>(findFileData);
@@ -309,13 +309,13 @@ HANDLE __stdcall FindFirstFileExFixup(
             // No need to copy since we wrote directly into the output buffer
             assert(findData == wideData);
         }
-        Log(L"[%d]FindFirstFile[0] (from redirected): had results", FindFirstFileExInstance);
+        Log(L"[%s%d] FindFirstFile[0] (from redirected): had results", g_FrfModuleName, FindFirstFileExInstance);
     }
     else
     {
         // Path doesn't exist or match any files. We can safely get away without the redirected file exists check
         result->redirect_path.clear();
-        Log(L"[%d]FindFirstFile[0] (from redirected): no results", FindFirstFileExInstance);
+        Log(L"[%s%d] FindFirstFile[0] (from redirected): no results", g_FrfModuleName, FindFirstFileExInstance);
     }
 
     findData = (result->find_handles[0] || psf::is_ansi<CharT>) ? &result->cached_data : wideData;
@@ -332,12 +332,12 @@ HANDLE __stdcall FindFirstFileExFixup(
         ///result->package_vfs_path.resize(vfspathSize);
         if (result->find_handles[1])
         {
-            Log(L"[%d]FindFirstFile[1] (from vfs_path):   had results", FindFirstFileExInstance);
+            Log(L"[%s%d] FindFirstFile[1] (from vfs_path):   had results", g_FrfModuleName, FindFirstFileExInstance);
         }
         else
         {
             result->package_vfs_path.clear();
-            Log(L"[%d]FindFirstFile[1] (from vfs_path):   no results", FindFirstFileExInstance);
+            Log(L"[%s%d] FindFirstFile[1] (from vfs_path):   no results", g_FrfModuleName, FindFirstFileExInstance);
         }
         if (!result->find_handles[0])
         {
@@ -345,7 +345,7 @@ HANDLE __stdcall FindFirstFileExFixup(
             {
                 if (copy_find_data(*findData, *ansiData))
                 {
-                    Log(L"[%d]FindFirstFile error set by caller", FindFirstFileExInstance);
+                    Log(L"[%s%d] FindFirstFile error set by caller", g_FrfModuleName, FindFirstFileExInstance);
                     // NOTE: Last error set by caller
                     return INVALID_HANDLE_VALUE;
                 }
@@ -363,12 +363,12 @@ HANDLE __stdcall FindFirstFileExFixup(
     result->find_handles[2].reset(impl::FindFirstFileEx(result->requested_path.c_str(), infoLevelId, findData, searchOp, searchFilter, additionalFlags));
     if (result->find_handles[2])
     {
-        Log(L"[%d]FindFirstFile[2] (from origial):    had results", FindFirstFileExInstance);
+        Log(L"[%s%d] FindFirstFile[2] (from origial):    had results", g_FrfModuleName, FindFirstFileExInstance);
     }
     else
     {
         result->requested_path.clear();
-        Log(L"[%d]FindFirstFile[2] (from original):   no results", FindFirstFileExInstance);
+        Log(L"[%s%d] FindFirstFile[2] (from original):   no results", g_FrfModuleName, FindFirstFileExInstance);
     }
     if (!result->find_handles[0] &&
         !result->find_handles[1])
@@ -379,7 +379,7 @@ HANDLE __stdcall FindFirstFileExFixup(
             // if it indicates that the redirected directory structure exists
             if (initialFindError == ERROR_FILE_NOT_FOUND)
             {
-                Log(L"[%d]FindFirstFile error 0x%x", FindFirstFileExInstance, initialFindError);
+                Log(L"[%s%d] FindFirstFile error 0x%x", g_FrfModuleName, FindFirstFileExInstance, initialFindError);
                 ::SetLastError(initialFindError);
             }
 
@@ -391,7 +391,7 @@ HANDLE __stdcall FindFirstFileExFixup(
             {
                 if (copy_find_data(*findData, *ansiData))
                 {
-                    Log(L"[%d]FindFirstFile error set by caller", FindFirstFileExInstance);
+                    Log(L"[%s%d] FindFirstFile error set by caller", g_FrfModuleName, FindFirstFileExInstance);
                     // NOTE: Last error set by caller
                     return INVALID_HANDLE_VALUE;
                 }
@@ -404,7 +404,7 @@ HANDLE __stdcall FindFirstFileExFixup(
         }
     }
 
-    Log(L"[%d]FindFirstFile returns %ls", FindFirstFileExInstance, result->cached_data.cFileName);
+    Log(L"[%s%d] FindFirstFile returns %ls", g_FrfModuleName, FindFirstFileExInstance, result->cached_data.cFileName);
     ::SetLastError(ERROR_SUCCESS);
     return reinterpret_cast<HANDLE>(result.release());
 
@@ -431,9 +431,10 @@ template <typename CharT>
 BOOL __stdcall FindNextFileFixup(_In_ HANDLE findFile, _Out_ win32_find_data_t<CharT>* findFileData) noexcept try
 {
     auto guard = g_reentrancyGuard.enter();
+    DWORD FindNextFileInstance = ++g_FileIntceptInstance;
     if (!guard)
     {
-        Log(L"FindNextFileFixup for file.");
+        Log(g_FrfModuleName, FindNextFileInstance, L"FindNextFileFixup for file.");
 
         return impl::FindNextFile(findFile, findFileData);
     }
@@ -451,16 +452,16 @@ BOOL __stdcall FindNextFileFixup(_In_ HANDLE findFile, _Out_ win32_find_data_t<C
 
     auto data = reinterpret_cast<find_data*>(findFile);
 
-    Log(L"[%d]FindNextFileFixup is against redir  =%ls", FindNextFileInstance, data->redirect_path.c_str());
-    Log(L"[%d]FindNextFileFixup is against pkgVfs =%ls", FindNextFileInstance, data->package_vfs_path.c_str());
-    Log(L"[%d]FindNextFileFixup is against request=%ls", FindNextFileInstance, data->requested_path.c_str());
+    Log(L"[%s%d] FindNextFileFixup is against redir  =%ls", g_FrfModuleName, FindNextFileInstance, data->redirect_path.c_str());
+    Log(L"[%s%d] FindNextFileFixup is against pkgVfs =%ls", g_FrfModuleName, FindNextFileInstance, data->package_vfs_path.c_str());
+    Log(L"[%s%d] FindNextFileFixup is against request=%ls", g_FrfModuleName, FindNextFileInstance, data->requested_path.c_str());
 
 
     auto redirectedFileExists = [&](auto filename)
     {
         if (data->redirect_path.empty())
         {
-            Log(L"[%d]FindNextFile redirectedFileExists returns false.", FindNextFileInstance);
+            Log(L"[%s%d] FindNextFile redirectedFileExists returns false.", g_FrfModuleName, FindNextFileInstance);
             return false;
         }
 
@@ -480,14 +481,14 @@ BOOL __stdcall FindNextFileFixup(_In_ HANDLE findFile, _Out_ win32_find_data_t<C
 
         auto result = impl::PathExists(data->redirect_path.c_str());
         data->redirect_path.resize(revertSize);
-        Log(L"[%d]FindNextFile redirectedFileExists returns %ls", FindNextFileInstance, data->redirect_path.c_str());
+        Log(L"[%s%d] FindNextFile redirectedFileExists returns %ls", g_FrfModuleName, FindNextFileInstance, data->redirect_path.c_str());
         return result;
     };
     auto vfspathFileExists = [&](auto filename)
     {
         if (data->package_vfs_path.empty())
         {
-            Log(L"[%d]FindNextFile vfspathFileExists returns false.", FindNextFileInstance);
+            Log(L"[%s%d] FindNextFile vfspathFileExists returns false.", g_FrfModuleName, FindNextFileInstance);
             return false;
         }
 
@@ -507,7 +508,7 @@ BOOL __stdcall FindNextFileFixup(_In_ HANDLE findFile, _Out_ win32_find_data_t<C
 
         auto result = impl::PathExists(data->package_vfs_path.c_str());
         data->package_vfs_path.resize(revertSize);
-        Log(L"[%d]FindNextFile vfspathFileExists returns %ls", FindNextFileInstance, data->package_vfs_path.c_str());
+        Log(L"[%s%d] FindNextFile vfspathFileExists returns %ls", g_FrfModuleName, FindNextFileInstance, data->package_vfs_path.c_str());
         return result;
     };
 
@@ -515,23 +516,23 @@ BOOL __stdcall FindNextFileFixup(_In_ HANDLE findFile, _Out_ win32_find_data_t<C
     {
         if (data->find_handles[0])
         {
-            Log(L"[%d]FindNextFile[0] to be checked.", FindNextFileInstance);
+            Log(L"[%s%d] FindNextFile[0] to be checked.", g_FrfModuleName, FindNextFileInstance);
             if (impl::FindNextFile(data->find_handles[0].get(), findFileData))
             {
-                Log(L"[%d]FindNextFile[0] returns TRUE: %ls", FindNextFileInstance, data->cached_data.cFileName);
+                Log(L"[%s%d] FindNextFile[0] returns TRUE: %ls", g_FrfModuleName, FindNextFileInstance, data->cached_data.cFileName);
                 return TRUE;
             }
             else if (::GetLastError() == ERROR_NO_MORE_FILES)
             {
-                Log(L"[%d]FindNextFile[0] had FALSE with ERROR_NO_MORE_FILES.", FindNextFileInstance);
+                Log(L"[%s%d] FindNextFile[0] had FALSE with ERROR_NO_MORE_FILES.", g_FrfModuleName, FindNextFileInstance);
                 data->find_handles[0].reset();
 
                 if (data->package_vfs_path.empty() || !data->find_handles[1])
                 {
-                    Log(L"[%d]FindNextFile[1] not in use.", FindNextFileInstance);
+                    Log(L"[%s%d] FindNextFile[1] not in use.", g_FrfModuleName, FindNextFileInstance);
                     if (data->requested_path.empty() || !data->find_handles[2])
                     {
-                        Log(L"[%d]FindNextFile[2] not in use, so return ERROR_NO_MORE_FILES.", FindNextFileInstance);
+                        Log(L"[%s%d] FindNextFile[2] not in use, so return ERROR_NO_MORE_FILES.", g_FrfModuleName, FindNextFileInstance);
                         // NOTE: Last error scribbled over by closing find_handles[0]
                         ::SetLastError(ERROR_NO_MORE_FILES);
                         return FALSE;
@@ -543,12 +544,12 @@ BOOL __stdcall FindNextFileFixup(_In_ HANDLE findFile, _Out_ win32_find_data_t<C
                 {
                     if (copy_find_data(data->cached_data, *findFileData))
                     {
-                        Log(L"[%d]FindNextFile[0] returns FALSE with last error set by caller", FindNextFileInstance);
+                        Log(L"[%s%d] FindNextFile[0] returns FALSE with last error set by caller", g_FrfModuleName, FindNextFileInstance);
                         // NOTE: Last error set by caller
                         return FALSE;
                     }
 
-                    Log( L"[%x] FindNextFile[0] returns TRUE with ERROR_SUCCESS and file %ls", FindNextFileInstance, data->cached_data.cFileName);
+                    Log( L"[%s%d] FindNextFile[0] returns TRUE with ERROR_SUCCESS and file %ls", g_FrfModuleName, FindNextFileInstance, data->cached_data.cFileName);
                     ::SetLastError(ERROR_SUCCESS);
                     return TRUE;
                 }
@@ -556,7 +557,7 @@ BOOL __stdcall FindNextFileFixup(_In_ HANDLE findFile, _Out_ win32_find_data_t<C
             else
             {
                 // Error due to something other than reaching the end 
-                Log(L"[%d]FindNextFile[0] returns FALSE", FindNextFileInstance);
+                Log(L"[%s%d] FindNextFile[0] returns FALSE", g_FrfModuleName, FindNextFileInstance);
                 return FALSE;
             }
         }
@@ -571,7 +572,7 @@ BOOL __stdcall FindNextFileFixup(_In_ HANDLE findFile, _Out_ win32_find_data_t<C
                 // Skip the file if it exists in the redirected path
                 if (!redirectedFileExists(findFileData->cFileName))
                 {
-                    Log(L"[%x] FindNextFile[1] returns TRUE with ERROR_SUCCESS and file %ls", FindNextFileInstance, findFileData->cFileName);
+                    Log(L"[%s%x] FindNextFile[1] returns TRUE with ERROR_SUCCESS and file %ls", g_FrfModuleName, FindNextFileInstance, findFileData->cFileName);
                     ::SetLastError(ERROR_SUCCESS);
                     return TRUE;
                 }
@@ -579,13 +580,13 @@ BOOL __stdcall FindNextFileFixup(_In_ HANDLE findFile, _Out_ win32_find_data_t<C
             }
             else if (::GetLastError() == ERROR_NO_MORE_FILES)
             {
-                Log(L"[%d]FindNextFile[1] returns FALSE with ERROR_NO_MORE_FILES_FOUND.", FindNextFileInstance);
+                Log(L"[%s%d] FindNextFile[1] returns FALSE with ERROR_NO_MORE_FILES_FOUND.", g_FrfModuleName, FindNextFileInstance);
                 data->find_handles[1].reset();
                 // now check [2]
             }
             else
             {
-                Log(L"[%d]FindNextFile[1] returns FALSE", FindNextFileInstance);
+                Log(L"[%s%d] FindNextFile[1] returns FALSE", g_FrfModuleName, FindNextFileInstance);
                 // Error due to something other than reaching the end
                 return FALSE;
             }
@@ -602,7 +603,7 @@ BOOL __stdcall FindNextFileFixup(_In_ HANDLE findFile, _Out_ win32_find_data_t<C
                 if (!redirectedFileExists(findFileData->cFileName) &&
                     !vfspathFileExists(findFileData->cFileName))
                 {
-                    Log(L"[%x] FindNextFile[2] returns TRUE with ERROR_SUCCESS and file %ls", FindNextFileInstance, findFileData->cFileName);
+                    Log(L"[%s%x] FindNextFile[2] returns TRUE with ERROR_SUCCESS and file %ls", g_FrfModuleName, FindNextFileInstance, findFileData->cFileName);
                     ::SetLastError(ERROR_SUCCESS);
                     return TRUE;
                 }
@@ -610,14 +611,14 @@ BOOL __stdcall FindNextFileFixup(_In_ HANDLE findFile, _Out_ win32_find_data_t<C
             }
             else if (::GetLastError() == ERROR_NO_MORE_FILES)
             {
-                Log(L"[%d]FindNextFile[2] returns FALSE with ERROR_NO_MORE_FILES_FOUND.", FindNextFileInstance);
+                Log(L"[%s%d] FindNextFile[2] returns FALSE with ERROR_NO_MORE_FILES_FOUND.", g_FrfModuleName, FindNextFileInstance);
                 data->find_handles[2].reset();
                 ::SetLastError(ERROR_NO_MORE_FILES);
                 return FALSE;
             }
             else
             {
-                Log(L"[%d]FindNextFile[2] returns FALSE", FindNextFileInstance);
+                Log(L"[%s%d] FindNextFile[2] returns FALSE", g_FrfModuleName, FindNextFileInstance);
                 // Error due to something other than reaching the end
                 return FALSE;
             }

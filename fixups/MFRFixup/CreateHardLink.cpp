@@ -50,8 +50,8 @@ BOOL __stdcall CreateHardLinkFixup(
         if (guard)
         {
 #if _DEBUG
-            LogString(dllInstance, L"CopyHardLinkFixup for", fileName);
-            LogString(dllInstance, L"CopyHardLinkFixup pointing to target", existingFileName);
+            LogString(g_MfrModuleName, dllInstance, L"CopyHardLinkFixup for", fileName);
+            LogString(g_MfrModuleName, dllInstance, L"CopyHardLinkFixup pointing to target", existingFileName);
 #endif
             std::wstring wNewFileName = widen(fileName);
             std::wstring wExistingFileName = widen(existingFileName);
@@ -75,26 +75,26 @@ BOOL __stdcall CreateHardLinkFixup(
                 if (PathExists(cohortsExisting.WsPackage.c_str()))
                 {
 #if _DEBUG
-                    Log(L"[%d] CreateHardLinkFixup:  Copy existing package file to redirection area.", dllInstance);
+                    Log(L"[%s%d] CreateHardLinkFixup:  Copy existing package file to redirection area.", g_MfrModuleName, dllInstance);
 #endif
                     if (!Cow(cohortsExisting.WsPackage, cohortsExisting.WsRedirected, dllInstance, L"CreateHardLinkFixup"))
                     {
                         UseExisting = cohortsExisting.WsPackage;
 #if _DEBUG
-                        Log(L"[%d] CreateHardLinkFixup:  Cow failure?", dllInstance);
+                        Log(L"[%s%d] CreateHardLinkFixup:  Cow failure?", g_MfrModuleName, dllInstance);
 #endif
                     }
                 }
                 else if (cohortsExisting.UsingNative)
                 {
 #if _DEBUG
-                    Log(L"[%d] CreateHardLinkFixup:  Copy existing native file to redirection area.", dllInstance);
+                    Log(L"[%s%d] CreateHardLinkFixup:  Copy existing native file to redirection area.", g_MfrModuleName, dllInstance);
 #endif
                     if (!Cow(cohortsExisting.WsNative, cohortsExisting.WsRedirected, dllInstance, L"CreateHardLinkFixup"))
                     {
                         UseExisting = cohortsExisting.WsNative;
 #if _DEBUG
-                        Log(L"[%d] CreateHardLinkFixup:  Cow failure?", dllInstance);
+                        Log(L"[%s%d] CreateHardLinkFixup:  Cow failure?", g_MfrModuleName, dllInstance);
 #endif
                     }
                 }
@@ -116,18 +116,18 @@ BOOL __stdcall CreateHardLinkFixup(
                 std::wstring rldExistingFileNameRedirected = MakeLongPath(UseExisting);
                 PreCreateFolders(rldNewFileNameRedirected, dllInstance, L"CreateHardLinkFixup");
 #if MOREDEBUG
-                Log(L"[%d] CreateHardLinkFixup: link is to   %s", dllInstance, rldNewFileNameRedirected.c_str());
-                Log(L"[%d] CreateHardLinkFixup: link is from %s", dllInstance, rldExistingFileNameRedirected.c_str());
+                Log(L"[%s%d] CreateHardLinkFixup: link is to   %s", g_MfrModuleName, dllInstance, rldNewFileNameRedirected.c_str());
+                Log(L"[%s%d] CreateHardLinkFixup: link is from %s", g_MfrModuleName, dllInstance, rldExistingFileNameRedirected.c_str());
 #endif
                 retfinal = impl::CreateHardLink(rldNewFileNameRedirected.c_str(), rldExistingFileNameRedirected.c_str(), securityAttributes);
 #if _DEBUG
                 if (retfinal == 0)
                 {
-                    Log(L"[%d] CreateHardLinkFixup returns Failure 0x%x", dllInstance, GetLastError());
+                    Log(L"[%s%d] CreateHardLinkFixup returns Failure 0x%x", g_MfrModuleName, dllInstance, GetLastError());
                 }
                 else
                 {
-                    Log(L"[%d] CreateHardLinkFixup returns SUCCESS 0x%x", dllInstance, retfinal);
+                    Log(L"[%s%d] CreateHardLinkFixup returns SUCCESS 0x%x", g_MfrModuleName, dllInstance, retfinal);
                 }
 #endif
                 return retfinal;
@@ -136,11 +136,11 @@ BOOL __stdcall CreateHardLinkFixup(
     }
 #if _DEBUG
     // Fall back to assuming no redirection is necessary if exception
-    LOGGED_CATCHHANDLER(dllInstance, L"CreateHardlinkFixup")
+    LOGGED_CATCHHANDLER_MIN(g_MfrModuleName, dllInstance, L"CreateHardlinkFixup")
 #else
     catch (...)
     {
-        Log(L"[%d] CreateHardLinkFixup Exception=0x%x", dllInstance, GetLastError());
+        Log(L"[%s%d] CreateHardLinkFixup Exception=0x%x", g_MfrModuleName, dllInstance, GetLastError());
     }
 #endif
 
@@ -157,7 +157,7 @@ BOOL __stdcall CreateHardLinkFixup(
         retfinal = 0; //impl::CreateHardLink(fileName, existingFileName, securityAttributes);
     }
 #if _DEBUG
-    Log(L"[%d] CreateHardLinkFixup (default) returns %d", dllInstance, retfinal);
+    Log(L"[%s%d] CreateHardLinkFixup (default) returns %d", g_MfrModuleName, dllInstance, retfinal);
 #endif
     return retfinal;
 }

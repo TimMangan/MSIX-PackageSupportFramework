@@ -11,6 +11,7 @@
 
 #include <psf_framework.h>
 #include <psf_logging.h>
+#include "Logging.h"
 
 #include "FunctionImplementations.h"
 #include "Framework.h"
@@ -39,10 +40,10 @@ LSTATUS __stdcall RegOpenKeyTransactedFixup(
 {
 
 
-    DWORD RegLocalInstance = ++g_RegIntceptInstance;
+    DWORD RegLocalInstance = ++g_RegInterceptInstance;
 
 #if _DEBUG
-    Log(L"[%d] RegOpenKeyTransacted:\n", RegLocalInstance);
+    Log(L"[%s%d] RegOpenKeyTransacted:\n", g_RegModuleName, RegLocalInstance);
 #endif
     std::string keyOnlyath = InterpretStringA(subKey);
     std::string keypath = InterpretKeyPath(key) + "\\" + keyOnlyath;
@@ -73,7 +74,7 @@ LSTATUS __stdcall RegOpenKeyTransactedFixup(
     }
 
 #if _DEBUG
-    Log("[%d] RegOpenKeyTransacted result=%d", RegLocalInstance, result);
+    Log(L"[%s%d] RegOpenKeyTransacted result=%d", g_RegModuleName, RegLocalInstance, result);
 #endif
 
 #if MOREDEBUG
@@ -83,14 +84,14 @@ LSTATUS __stdcall RegOpenKeyTransactedFixup(
         try
         {
             LogKeyPath(RegLocalInstance, key);
-            if (subKey) LogString(RegLocalInstance, L"Sub Key", subKey);
+            if (subKey) LogString(g_RegModuleName, RegLocalInstance, L"Sub Key", subKey);
             LogRegKeyFlags(RegLocalInstance, options);
-            Log(L"\n[%d] SamDesired=%s\n", RegLocalInstance, InterpretRegKeyAccess(samDesired).c_str());
+            Log(L"\n[%s%d] SamDesired=%s\n", g_RegModuleName, RegLocalInstance, InterpretRegKeyAccess(samDesired).c_str());
             if (samDesired != samModified)
             {
-                Log(L"[%d] ModifiedSam=%s\n", RegLocalInstance, InterpretRegKeyAccess(samModified).c_str());
+                Log(L"[%s%d] ModifiedSam=%s\n", g_RegModuleName, RegLocalInstance, InterpretRegKeyAccess(samModified).c_str());
             }
-            LogCallingModuleInstance(RegLocalInstance);
+            LogCallingModuleInstanceCommon(g_RegModuleName,RegLocalInstance);
             LogFunctionResultInstance(RegLocalInstance, functionResult);
             if (function_failed(functionResult))
             {
@@ -99,7 +100,7 @@ LSTATUS __stdcall RegOpenKeyTransactedFixup(
         }
         catch (...)
         {
-            Log(L"[%d] RegOpenKeyTransacted logging failure.\n", RegLocalInstance);
+            Log(L"[%s%d] RegOpenKeyTransacted logging failure.\n", g_RegModuleName, RegLocalInstance);
         }
     }
 #endif

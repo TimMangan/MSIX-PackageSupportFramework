@@ -31,17 +31,17 @@ BOOL WRAPPER_CREATEDIRECTORYEX(std::wstring theTemplateDirectory, std::wstring t
         BOOL retfinal = impl::CreateDirectoryExW(LongTemplateDirectory.c_str(), LongDestinationDirectory.c_str(), securityAttributes); 
         if (moredebug) 
         { 
-            Log(L"[%d] CreateDirectoryEx uses template '%s'", dllInstance, LongTemplateDirectory.c_str()); 
+            Log(L"[%s%d] CreateDirectoryEx uses template '%s'", g_MfrModuleName, dllInstance, LongTemplateDirectory.c_str());
         } 
         if (debug) 
         { 
             if (retfinal == 0) 
             { 
-                Log(L"[%d] CreateDirectoryEx returns FAILURE 0x%x and directory '%s'", dllInstance, retfinal, LongDestinationDirectory.c_str()); 
+                Log(L"[%s%d] CreateDirectoryEx returns FAILURE 0x%x and directory '%s'", g_MfrModuleName, dllInstance, retfinal, LongDestinationDirectory.c_str());
             } 
             else 
             { 
-                Log(L"[%d] CreateDirectoryEx returns SUCCESS 0x%x and directory '%s'", dllInstance, retfinal, LongDestinationDirectory.c_str()); 
+                Log(L"[%s%d] CreateDirectoryEx returns SUCCESS 0x%x and directory '%s'", g_MfrModuleName, dllInstance, retfinal, LongDestinationDirectory.c_str());
             } 
         } 
         return retfinal; 
@@ -73,8 +73,8 @@ BOOL __stdcall CreateDirectoryExFixup(
             // This function is very much like CopyFile, except that we have a folder instead.
             dllInstance = ++g_InterceptInstance;
 #if _DEBUG
-            LogString(dllInstance, L"CreateDirectoryExFixup using template", templateDirectory);
-            LogString(dllInstance, L"CreateDirectoryExFixup to", newDirectory);
+            LogString(g_MfrModuleName, dllInstance, L"CreateDirectoryExFixup using template", templateDirectory);
+            LogString(g_MfrModuleName, dllInstance, L"CreateDirectoryExFixup to", newDirectory);
 #endif
             std::wstring WtemplateDirectory = widen(templateDirectory);
             std::wstring WnewDirectory = widen(newDirectory);
@@ -153,7 +153,7 @@ BOOL __stdcall CreateDirectoryExFixup(
                     break;
                 }
 #if MOREDEBUG
-                Log(L"[%d] CreateDirectoryExFixup: redirected destination=%s", dllInstance, newDirectoryWsRedirected.c_str());
+                Log(L"[%s%d] CreateDirectoryExFixup: redirected destination=%s", g_MfrModuleName, dllInstance, newDirectoryWsRedirected.c_str());
 #endif
 
 
@@ -176,7 +176,7 @@ BOOL __stdcall CreateDirectoryExFixup(
                                 {
                                     SetLastError(ERROR_ALREADY_EXISTS);
 #if _DEBUG
-                                    Log("[%d] CreateDirectoryExFixup: Resetting return code to ERROR_ALREADY_EXISTS.");
+                                    Log("[%s%d] CreateDirectoryExFixup: Resetting return code to ERROR_ALREADY_EXISTS.", g_MfrModuleName, dllInstance);
 #endif
                                 }
                             }
@@ -194,7 +194,7 @@ BOOL __stdcall CreateDirectoryExFixup(
                                 {
                                     SetLastError(ERROR_ALREADY_EXISTS);
 #if _DEBUG
-                                    Log("[%d] CreateDirectoryExFixup: Resetting return code to ERROR_ALREADY_EXISTS.");
+                                    Log("[%s%d] CreateDirectoryExFixup: Resetting return code to ERROR_ALREADY_EXISTS.", g_MfrModuleName, dllInstance);
 #endif
                                 }
                             }
@@ -227,7 +227,7 @@ BOOL __stdcall CreateDirectoryExFixup(
                                     retfinal = FALSE;
                                     SetLastError(ERROR_ALREADY_EXISTS);
 #if _DEBUG
-                                    Log("[%d] CreateDirectoryExFixup: Resetting return code to ERROR_ALREADY_EXISTS.");
+                                    Log("[%s%d] CreateDirectoryExFixup: Resetting return code to ERROR_ALREADY_EXISTS.", g_MfrModuleName, dllInstance);
 #endif
                                 }
                             }
@@ -247,7 +247,7 @@ BOOL __stdcall CreateDirectoryExFixup(
                                     retfinal = FALSE;
                                     SetLastError(ERROR_ALREADY_EXISTS);
 #if _DEBUG
-                                    Log("[%d] CreateDirectoryExFixup: Resetting return code to ERROR_ALREADY_EXISTS.");
+                                    Log("[%s%d] CreateDirectoryExFixup: Resetting return code to ERROR_ALREADY_EXISTS.", g_MfrModuleName, dllInstance);
 #endif
                                 }
                             }
@@ -268,7 +268,7 @@ BOOL __stdcall CreateDirectoryExFixup(
                                     retfinal = FALSE;
                                     SetLastError(ERROR_ALREADY_EXISTS);
 #if _DEBUG
-                                    Log("[%d] CreateDirectoryExFixup: Resetting return code to ERROR_ALREADY_EXISTS.");
+                                    Log("[%s%d] CreateDirectoryExFixup: Resetting return code to ERROR_ALREADY_EXISTS.", g_MfrModuleName, dllInstance);
 #endif
                                 }
                             }
@@ -301,7 +301,7 @@ BOOL __stdcall CreateDirectoryExFixup(
                                     retfinal = FALSE;
                                     SetLastError(ERROR_ALREADY_EXISTS);
 #if _DEBUG
-                                    Log("[%d] CreateDirectoryExFixup: Resetting return code to ERROR_ALREADY_EXISTS.");
+                                    Log("[%s%d] CreateDirectoryExFixup: Resetting return code to ERROR_ALREADY_EXISTS.", g_MfrModuleName, dllInstance);
 #endif
                                 }
                             }
@@ -321,7 +321,7 @@ BOOL __stdcall CreateDirectoryExFixup(
                                     retfinal = FALSE;
                                     SetLastError(ERROR_ALREADY_EXISTS);
 #if _DEBUG
-                                    Log("[%d] CreateDirectoryExFixup: Resetting return code to ERROR_ALREADY_EXISTS.");
+                                    Log("[%s%d] CreateDirectoryExFixup: Resetting return code to ERROR_ALREADY_EXISTS.", g_MfrModuleName, dllInstance);
 #endif
                                 }
                             }
@@ -355,7 +355,7 @@ BOOL __stdcall CreateDirectoryExFixup(
                                     retfinal = FALSE;
                                     SetLastError(ERROR_ALREADY_EXISTS);
 #if _DEBUG
-                                    Log("[%d] CreateDirectoryExFixup: Resetting return code to ERROR_ALREADY_EXISTS.");
+                                    Log("[%s%d] CreateDirectoryExFixup: Resetting return code to ERROR_ALREADY_EXISTS.", g_MfrModuleName, dllInstance);
 #endif
                                 }
                             }
@@ -375,7 +375,7 @@ BOOL __stdcall CreateDirectoryExFixup(
                                     retfinal = FALSE;
                                     SetLastError(ERROR_ALREADY_EXISTS);
 #if _DEBUG
-                                    Log("[%d] CreateDirectoryExFixup: Resetting return code to ERROR_ALREADY_EXISTS.");
+                                    Log("[%s%d] CreateDirectoryExFixup: Resetting return code to ERROR_ALREADY_EXISTS.", g_MfrModuleName, dllInstance);
 #endif
                                 }
                             }
@@ -408,7 +408,7 @@ BOOL __stdcall CreateDirectoryExFixup(
                                     retfinal = FALSE;
                                     SetLastError(ERROR_ALREADY_EXISTS);
 #if _DEBUG
-                                    Log("[%d] CreateDirectoryExFixup: Resetting return code to ERROR_ALREADY_EXISTS.");
+                                    Log("[%s%d] CreateDirectoryExFixup: Resetting return code to ERROR_ALREADY_EXISTS.", g_MfrModuleName, dllInstance);
 #endif
                                 }
                             }
@@ -429,7 +429,7 @@ BOOL __stdcall CreateDirectoryExFixup(
                                     retfinal = FALSE;
                                     SetLastError(ERROR_ALREADY_EXISTS);
 #if _DEBUG
-                                    Log("[%d] CreateDirectoryExFixup: Resetting return code to ERROR_ALREADY_EXISTS.");
+                                    Log("[%s%d] CreateDirectoryExFixup: Resetting return code to ERROR_ALREADY_EXISTS.", g_MfrModuleName, dllInstance);
 #endif
                                 }
                             }
@@ -450,7 +450,7 @@ BOOL __stdcall CreateDirectoryExFixup(
                                     retfinal = FALSE;
                                     SetLastError(ERROR_ALREADY_EXISTS);
 #if _DEBUG
-                                    Log("[%d] CreateDirectoryExFixup: Resetting return code to ERROR_ALREADY_EXISTS.");
+                                    Log("[%s%d] CreateDirectoryExFixup: Resetting return code to ERROR_ALREADY_EXISTS.", g_MfrModuleName, dllInstance);
 #endif
                                 }
                             }
@@ -482,7 +482,7 @@ BOOL __stdcall CreateDirectoryExFixup(
                                     retfinal = FALSE;
                                     SetLastError(ERROR_ALREADY_EXISTS);
 #if _DEBUG
-                                    Log("[%d] CreateDirectoryExFixup: Resetting return code to ERROR_ALREADY_EXISTS.");
+                                    Log("[%s%d] CreateDirectoryExFixup: Resetting return code to ERROR_ALREADY_EXISTS.", g_MfrModuleName, dllInstance);
 #endif
                                 }
                             }
@@ -502,7 +502,7 @@ BOOL __stdcall CreateDirectoryExFixup(
                                     retfinal = FALSE;
                                     SetLastError(ERROR_ALREADY_EXISTS);
 #if _DEBUG
-                                    Log("[%d] CreateDirectoryExFixup: Resetting return code to ERROR_ALREADY_EXISTS.");
+                                    Log("[%s%d] CreateDirectoryExFixup: Resetting return code to ERROR_ALREADY_EXISTS.", g_MfrModuleName, dllInstance);
 #endif
                                 }
                             }
@@ -523,7 +523,7 @@ BOOL __stdcall CreateDirectoryExFixup(
                                     retfinal = FALSE;
                                     SetLastError(ERROR_ALREADY_EXISTS);
 #if _DEBUG
-                                    Log("[%d] CreateDirectoryExFixup: Resetting return code to ERROR_ALREADY_EXISTS.");
+                                    Log("[%s%d] CreateDirectoryExFixup: Resetting return code to ERROR_ALREADY_EXISTS.", g_MfrModuleName, dllInstance);
 #endif
                                 }
                             }
@@ -572,11 +572,11 @@ BOOL __stdcall CreateDirectoryExFixup(
     }
 #if _DEBUG
     // Fall back to assuming no redirection is necessary if exception
-    LOGGED_CATCHHANDLER(dllInstance, L"CreateDirectoryExFixup")
+    LOGGED_CATCHHANDLER_MIN(g_MfrModuleName, dllInstance, L"CreateDirectoryExFixup")
 #else
     catch (...)
     {
-        Log(L"[%d] CreateDirectoryExFixup Exception=0x%x", dllInstance, GetLastError());
+        Log(L"[%s%d] CreateDirectoryExFixup Exception=0x%x", g_MfrModuleName, dllInstance, GetLastError());
     }
 #endif
 
@@ -592,7 +592,7 @@ BOOL __stdcall CreateDirectoryExFixup(
         retfinal = 0; //impl::CreateDirectoryEx(templateDirectory, newDirectory, securityAttributes);
     }
 #if _DEBUG
-    Log(L"[%d] CreateDirectoryExFixup returns 0x%x", dllInstance, retfinal);
+    Log(L"[%s%d] CreateDirectoryExFixup returns 0x%x", g_MfrModuleName, dllInstance, retfinal);
 #endif
     return retfinal;
 }

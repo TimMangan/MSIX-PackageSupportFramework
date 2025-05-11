@@ -29,6 +29,7 @@
 
 using namespace std::literals;
 
+
 //extern std::filesystem::path PackageRootPath();
 struct vfs_folder_mapping
 {
@@ -40,7 +41,7 @@ std::vector<vfs_folder_mapping> g_vfsFolderMappings;
 
 
 
-std::wstring CanReplaceWithVFS(const std::wstring input)
+std::wstring CanReplaceWithVFS(const wchar_t* moduleName, DWORD dllInstance, const std::wstring input)
 {
     std::wstring output = L"";
     std::filesystem::path testpath;
@@ -53,15 +54,15 @@ std::wstring CanReplaceWithVFS(const std::wstring input)
         testpath = psf::known_folder(FOLDERID_Documents);
         if (findStringIC(input, testpath))
         {
-            LogString(L"PackageRootPath is ", l_PackageRootPath.c_str());
+            LogString(moduleName, dllInstance, L"PackageRootPath is ", l_PackageRootPath.c_str());
             output = ((std::wstring)l_PackageRootPath.c_str()) + L"\\VFS\\Personal" + input.substr(testpath.wstring().length()).c_str();
-            LogString(L"Replacement is ", output.c_str());
+            LogString(moduleName, dllInstance, L"Replacement is ", output.c_str());
             return output;
         }
     }
     catch (...)
     {
-        Log(L"Warning: unknown known folder FOLDERID_Documents");
+        Log(L"[%s%d] Warning: unknown known folder FOLDERID_Documents", moduleName, dllInstance);
     }
 
     try
@@ -69,15 +70,15 @@ std::wstring CanReplaceWithVFS(const std::wstring input)
         testpath = psf::known_folder(FOLDERID_PublicDocuments);
         if (findStringIC(input, testpath))
         {
-            LogString(L"PackageRootPath is ", l_PackageRootPath.c_str());
+            LogString(moduleName, dllInstance, L"PackageRootPath is ", l_PackageRootPath.c_str());
             output = ((std::wstring)l_PackageRootPath.c_str()) + L"\\VFS\\Common Documents" + input.substr(testpath.wstring().length()).c_str();
-            LogString(L"Replacement is ", output.c_str());
+            LogString(moduleName, dllInstance, L"Replacement is ", output.c_str());
             return output;
         }
     }
     catch (...)
     {
-        Log(L"Warning: unknown known folder FOLDERID_PublicDocuments");
+        Log(L"[%s%d] Warning: unknown known folder FOLDERID_PublicDocuments", moduleName, dllInstance);
     }
 
     try
@@ -99,7 +100,7 @@ std::wstring CanReplaceWithVFS(const std::wstring input)
     }
     catch (...)
     {
-        Log(L"Warning: unknown known folder FOLDERID_LocalAppData");
+        Log(L"[%s%d] Warning: unknown known folder FOLDERID_LocalAppData", moduleName, dllInstance);
     }
 
     try
@@ -113,7 +114,7 @@ std::wstring CanReplaceWithVFS(const std::wstring input)
     }
     catch (...)
     {
-        Log(L"Warning: unknown known folder FOLDERID_RoamingAppData");
+        Log(L"[%s%d] Warning: unknown known folder FOLDERID_RoamingAppData", moduleName, dllInstance);
     }
 
     try
@@ -127,7 +128,7 @@ std::wstring CanReplaceWithVFS(const std::wstring input)
     }
     catch (...)
     {
-        Log(L"Warning: unknown known folder FOLDERID_ProgramFilesCommonX86");
+        Log(L"[%s%d] Warning: unknown known folder FOLDERID_ProgramFilesCommonX86", moduleName, dllInstance);
     }
 
     try
@@ -141,7 +142,7 @@ std::wstring CanReplaceWithVFS(const std::wstring input)
     }
     catch (...)
     {
-        Log(L"Warning: unknown known folder FOLDERID_ProgramFilesX86");
+        Log(L"[%s%d] Warning: unknown known folder FOLDERID_ProgramFilesX86", moduleName, dllInstance);
     }
 
     try
@@ -155,7 +156,7 @@ std::wstring CanReplaceWithVFS(const std::wstring input)
     }
     catch (...)
     {
-        Log(L"Warning: unknown known folder FOLDERID_ProgramFilesCommonX64");
+        Log(L"[%s%d] Warning: unknown known folder FOLDERID_ProgramFilesCommonX64", moduleName, dllInstance);
     }
 
     try
@@ -169,7 +170,7 @@ std::wstring CanReplaceWithVFS(const std::wstring input)
     }
     catch (...)
     {
-        Log(L"Warning: unknown known folder FOLDERID_ProgramFilesX64");
+        Log(L"[%s%d] Warning: unknown known folder FOLDERID_ProgramFilesX64", moduleName, dllInstance);
     }
 
     try
@@ -183,7 +184,7 @@ std::wstring CanReplaceWithVFS(const std::wstring input)
     }
     catch (...)
     {
-        Log(L"Warning: unknown known folder FOLDERID_System");
+        Log(L"[%s%d] Warning: unknown known folder FOLDERID_System", moduleName, dllInstance);
     }
     try
     {
@@ -196,7 +197,7 @@ std::wstring CanReplaceWithVFS(const std::wstring input)
     }
     catch (...)
     {
-        Log(L"Warning: unknown known folder FOLDERID_SystemX86");
+        Log(L"[%s%d] Warning: unknown known folder FOLDERID_SystemX86", moduleName, dllInstance);
     }
 
     try
@@ -210,7 +211,7 @@ std::wstring CanReplaceWithVFS(const std::wstring input)
     }
     catch (...)
     {
-        Log(L"Warning: unknown known folder FOLDERID_Fonts");
+        Log(L"[%s%d] Warning: unknown known folder FOLDERID_Fonts", moduleName, dllInstance);
     }
 
     try
@@ -224,7 +225,7 @@ std::wstring CanReplaceWithVFS(const std::wstring input)
     }
     catch (...)
     {
-        Log(L"Warning: unknown known folder FOLDERID_Windows");
+        Log(L"[%s%d] Warning: unknown known folder FOLDERID_Windows", moduleName, dllInstance);
     }
 
     try
@@ -238,7 +239,7 @@ std::wstring CanReplaceWithVFS(const std::wstring input)
     }
     catch (...)
     {
-        Log(L"Warning: unknown known folder FOLDERID_ProgramData");
+        Log(L"[%s%d] Warning: unknown known folder FOLDERID_ProgramData", moduleName, dllInstance);
     }
 
     try
@@ -252,7 +253,7 @@ std::wstring CanReplaceWithVFS(const std::wstring input)
     }
     catch (...)
     {
-        Log(L"Warning: unknown known folder FOLDERID_PublicDesktop");
+        Log(L"[%s%d] Warning: unknown known folder FOLDERID_PublicDesktop", moduleName, dllInstance);
     }
 
     try
@@ -266,7 +267,7 @@ std::wstring CanReplaceWithVFS(const std::wstring input)
     }
     catch (...)
     {
-        Log(L"Warning: unknown known folder FOLDERID_CommonProgram");
+        Log(L"[%s%d] Warning: unknown known folder FOLDERID_CommonProgram", moduleName, dllInstance);
     }
 
     try
@@ -280,13 +281,13 @@ std::wstring CanReplaceWithVFS(const std::wstring input)
     }
     catch (...)
     {
-        Log(L"Warning: unknown known folder FOLDERID_LocalAppDataLow");
+        Log(L"[%s%d] Warning: unknown known folder FOLDERID_LocalAppDataLow", moduleName, dllInstance);
     }
 
     return output;
 }
 
-std::wstring ArgumentVirtualization(const std::wstring input)
+std::wstring ArgumentVirtualization(const wchar_t* moduleName, DWORD dllInstance, const std::wstring input)
 {
     std::wstring output = L"";
 
@@ -339,7 +340,7 @@ std::wstring ArgumentVirtualization(const std::wstring input)
 
                 if (len != std::wstring::npos)
                 {
-                    std::wstring replacement = CanReplaceWithVFS(input.substr(offset,len));
+                    std::wstring replacement = CanReplaceWithVFS(moduleName, dllInstance, input.substr(offset,len));
                     if (replacement.length() != 0)
                     {
                         output.append(replacement); 

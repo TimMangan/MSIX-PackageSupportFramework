@@ -33,8 +33,8 @@ int  __cdecl wrenameFixup(
     try
     {
 #if _DEBUG
-        LogString(dllInstance, L"wrename Fixup oldName", oldName);
-        LogString(dllInstance, L"wrename Fixup newName", newName);
+        LogString(g_MfrModuleName, dllInstance, L"wrename Fixup oldName", oldName);
+        LogString(g_MfrModuleName, dllInstance, L"wrename Fixup newName", newName);
 #endif
         if (guard)
         {
@@ -52,11 +52,11 @@ int  __cdecl wrenameFixup(
 #if _DEBUG
         if (ret == 0)
         {
-            Log(L"[%d]\twrename returns SUCCESS", dllInstance);
+            Log(L"[%s%d]\twrename returns SUCCESS", g_MfrModuleName, dllInstance);
         }
         else
         {
-            Log(L"[%d]\twrename returns 0x", dllInstance,GetLastError());
+            Log(L"[%s%d]\twrename returns 0x", g_MfrModuleName, dllInstance,GetLastError());
         }
 #endif
         return ret;

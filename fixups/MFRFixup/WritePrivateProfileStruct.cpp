@@ -35,7 +35,7 @@
         } \
         if (debug) \
         { \
-            Log(L"[%d] WritePrivateProfileStruct returns %d on file %s", dllInstance, retfinal, LongDestinationFilename.c_str()); \
+            Log(L"[%s%d] WritePrivateProfileStruct returns %d on file %s", g_MfrModuleName, dllInstance, retfinal, LongDestinationFilename.c_str()); \
         } \
         return retfinal; \
     }
@@ -68,7 +68,7 @@ BOOL __stdcall WritePrivateProfileStructFixup(
             if (fileName != NULL)
             {
 #if _DEBUG
-                LogString(dllInstance, L"WritePrivateProfileStructFixup for fileName", fileName);
+                LogString(g_MfrModuleName, dllInstance, L"WritePrivateProfileStructFixup for fileName", fileName);
 #endif
                 // This get is inheirently a read-only operation in all cases.
 // We prefer to use the redirecton case, if present.
@@ -379,7 +379,7 @@ BOOL __stdcall WritePrivateProfileStructFixup(
             else
             {
 #ifdef _DEBUG
-                Log(L"[%d] WritePrivateProfileStructFixup: null fileName, don't redirect", dllInstance);
+                Log(L"[%s%d] WritePrivateProfileStructFixup: null fileName, don't redirect", g_MfrModuleName, dllInstance);
 #endif
             }
 
@@ -387,11 +387,11 @@ BOOL __stdcall WritePrivateProfileStructFixup(
     }
 #if _DEBUG
     // Fall back to assuming no redirection is necessary if exception
-    LOGGED_CATCHHANDLER(dllInstance, L"WritePrivateProfileStructFixup")
+    LOGGED_CATCHHANDLER_MIN(g_MfrModuleName, dllInstance, L"WritePrivateProfileStructFixup")
 #else
     catch (...)
     {
-        Log(L"[%d] WritePrivateProfileStrucFixupt: Exception=0x%x", dllInstance, GetLastError());
+        Log(L"[%s%d] WritePrivateProfileStrucFixupt: Exception=0x%x", g_MfrModuleName, dllInstance, GetLastError());
     }
 #endif 
 

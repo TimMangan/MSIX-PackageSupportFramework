@@ -19,7 +19,7 @@ DWORD __stdcall GetPrivateProfileStringFixup(
     auto guard = g_reentrancyGuard.enter();
     DWORD GetPrivateProfileStringInstance = ++g_FileIntceptInstance;
 #if _DEBUG
-    Log(L"[%d] GetPrivateProfileStringFixup", GetPrivateProfileStringInstance);
+    Log(L"[%s%d] GetPrivateProfileStringFixup", g_FrfModuleName, GetPrivateProfileStringInstance);
 #endif
     try
     {
@@ -30,40 +30,40 @@ DWORD __stdcall GetPrivateProfileStringFixup(
             {
                 if (fileName != NULL)
                 {
-                    LogString(GetPrivateProfileStringInstance,L"GetPrivateProfileStringFixup (A) for fileName", widen(fileName, CP_ACP).c_str());
+                    LogString(g_FrfModuleName, GetPrivateProfileStringInstance,L"GetPrivateProfileStringFixup (A) for fileName", widen(fileName, CP_ACP).c_str());
                 }
                 else
                 {
-                    Log(L"[%d] GetPrivateProfileStringFixup for null file.", GetPrivateProfileStringInstance);
+                    Log(L"[%s%d] GetPrivateProfileStringFixup for null file.", g_FrfModuleName, GetPrivateProfileStringInstance);
                 }
                 if (appName != NULL)
                 {
 
-                    LogString(GetPrivateProfileStringInstance,L" Section", widen_argument(appName).c_str());
+                    LogString(g_FrfModuleName, GetPrivateProfileStringInstance,L" Section", widen_argument(appName).c_str());
                 }
                 if (keyName != NULL)
                 {
-                        LogString(GetPrivateProfileStringInstance,L" Key", widen_argument(keyName).c_str());
+                        LogString(g_FrfModuleName, GetPrivateProfileStringInstance,L" Key", widen_argument(keyName).c_str());
                 }
             }
             else
             {
                 if (fileName != NULL)
                 {
-                    LogString(GetPrivateProfileStringInstance,L"GetPrivateProfileStringFixup (W) for fileName", widen(fileName, CP_ACP).c_str());
+                    LogString(g_FrfModuleName, GetPrivateProfileStringInstance,L"GetPrivateProfileStringFixup (W) for fileName", widen(fileName, CP_ACP).c_str());
                 }
                 else
                 {
-                    Log(L"[%d] GetPrivateProfileStringFixup for null file.", GetPrivateProfileStringInstance);
+                    Log(L"[%s%d] GetPrivateProfileStringFixup for null file.", g_FrfModuleName, GetPrivateProfileStringInstance);
                 }
                 if (appName != NULL)
                 {
 
-                    LogString(GetPrivateProfileStringInstance,L" Section", appName);
+                    LogString(g_FrfModuleName, GetPrivateProfileStringInstance,L" Section", appName);
                 }
                 if (keyName != NULL)
                 {
-                        LogString(GetPrivateProfileStringInstance,L" Key", keyName);
+                        LogString(g_FrfModuleName, GetPrivateProfileStringInstance,L" Key", keyName);
                 }
             }
 #endif
@@ -81,9 +81,9 @@ DWORD __stdcall GetPrivateProfileStringFixup(
                                                                                defaultString, string, stringLength, 
                                                                                narrow(pri.redirect_path.c_str()).c_str() );
 #if _DEBUG
-                            Log(L"[%d] Ansi Returned length=0x%x", GetPrivateProfileStringInstance, realRetValue);
+                            Log(L"[%s%d] Ansi Returned length=0x%x", g_FrfModuleName, GetPrivateProfileStringInstance, realRetValue);
                             if (realRetValue > 0)
-                                LogString(GetPrivateProfileStringInstance, L" Ansi Returned string", string);
+                                LogString(g_FrfModuleName, GetPrivateProfileStringInstance, L" Ansi Returned string", string);
 #endif
                             return realRetValue;
                         }
@@ -92,9 +92,9 @@ DWORD __stdcall GetPrivateProfileStringFixup(
                             auto realRetValue = impl::GetPrivateProfileString(appName, keyName, defaultString, string, stringLength, pri.redirect_path.c_str());
 #if _DEBUG
                             if (realRetValue > 0)
-                                LogString(GetPrivateProfileStringInstance, L" Returned string", string);
+                                LogString(g_FrfModuleName, GetPrivateProfileStringInstance, L" Returned string", string);
                             else
-                                Log(L"[%d] Returned string zero length", GetPrivateProfileStringInstance);
+                                Log(L"[%s%d] Returned string zero length", g_FrfModuleName, GetPrivateProfileStringInstance);
 #endif
                             return realRetValue;
                         }
@@ -103,32 +103,32 @@ DWORD __stdcall GetPrivateProfileStringFixup(
                 else
                 {
 #if _DEBUG
-                    Log(L"[%d]  Under LocalAppData\\Packages, don't redirect", GetPrivateProfileStringInstance);
+                    Log(L"[%s%d]  Under LocalAppData\\Packages, don't redirect", g_FrfModuleName, GetPrivateProfileStringInstance);
 #endif
                 }
             }
             else
             {
 #if _DEBUG
-                Log(L"[%d]  null fileName, don't redirect as may be registry based or default.", GetPrivateProfileStringInstance);
+                Log(L"[%s%d]  null fileName, don't redirect as may be registry based or default.", g_FrfModuleName, GetPrivateProfileStringInstance);
 #endif
             }
         }
     }
 #if _DEBUG
     // Fall back to assuming no redirection is necessary if exception
-    LOGGED_CATCHHANDLER(GetPrivateProfileStringInstance, L"GetPrivateProfileString")
+    LOGGED_CATCHHANDLER_MIN(g_FrfModuleName, GetPrivateProfileStringInstance, L"GetPrivateProfileString")
 #else
     catch (...)
     {
-        Log(L"[%d] GetPrivateProfileString Exception=0x%x", GetPrivateProfileStringInstance, GetLastError());
+        Log(L"[%s%d] GetPrivateProfileString Exception=0x%x", g_FrfModuleName, GetPrivateProfileStringInstance, GetLastError());
     }
 #endif
 
 
     DWORD dRet =  impl::GetPrivateProfileString(appName, keyName, defaultString, string, stringLength, fileName);
 #if _DEBUG
-    LogString(GetPrivateProfileStringInstance, L" Returning ", string);
+    LogString(g_FrfModuleName, GetPrivateProfileStringInstance, L" Returning ", string);
 #endif
     return dRet;
 }

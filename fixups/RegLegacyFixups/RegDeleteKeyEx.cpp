@@ -11,6 +11,7 @@
 
 #include <psf_framework.h>
 #include <psf_logging.h>
+#include "Logging.h"
 
 #include "FunctionImplementations.h"
 #include "Framework.h"
@@ -36,7 +37,7 @@ LSTATUS __stdcall RegDeleteKeyExGeneric(
     DWORD Reserved)
 {
 
-    DWORD RegLocalInstance = ++g_RegIntceptInstance;
+    DWORD RegLocalInstance = ++g_RegInterceptInstance;
 
     LSTATUS result;
     if constexpr (psf::is_ansi<CharT>)
@@ -56,31 +57,31 @@ LSTATUS __stdcall RegDeleteKeyExGeneric(
             try
             {
 #if _DEBUG
-                Log(L"[%d] RegDeleteKeyEx:\n", RegLocalInstance);
+                Log(L"[%s%d] RegDeleteKeyEx:\n", g_RegModuleName, RegLocalInstance);
 #endif
                 std::string keypath = ReplaceAppRegistrySyntax(InterpretKeyPath(key) + "\\" + InterpretStringA(subKey));
 #if _DEBUG
-                Log(L"[%d] RegDeleteKeyEx: Path=%s", RegLocalInstance, keypath.c_str());
+                Log(L"[%s%d] RegDeleteKeyEx: Path=%s", g_RegModuleName, RegLocalInstance, keypath.c_str());
                 if (RegFixupFakeDelete(keypath, RegLocalInstance) == true)
 #else
                 if (RegFixupFakeDelete(keypath, RegLocalInstance) == true)
 #endif
                 {
 #if _DEBUG
-                    LogCallingModuleInstance(RegLocalInstance);
-                    Log(L"[%d] RegDeleteKeyEx:Fake Success\n", RegLocalInstance);
+                    LogCallingModuleInstanceCommon(g_RegModuleName,RegLocalInstance);
+                    Log(L"[%s%d] RegDeleteKeyEx:Fake Success\n", g_RegModuleName, RegLocalInstance);
 #endif
                     result = 0;
                 }
             }
             catch (...)
             {
-                Log(L"[%d] RegDeleteKeyEx logging failure.\n", RegLocalInstance);
+                Log(L"[%s%d] RegDeleteKeyEx logging failure.\n", g_RegModuleName,RegLocalInstance);
             }
         }
     }
 #if _DEBUG
-    Log(L"[%d] RegDeleteKeyEx:Fake returns %d\n", RegLocalInstance, result);
+    Log(L"[%s%d] RegDeleteKeyEx:Fake returns %d\n", g_RegModuleName, RegLocalInstance, result);
 #endif
     return result;
 }
@@ -117,7 +118,7 @@ LSTATUS __stdcall RegDeleteKeyExFixup(
     DWORD Reserved)
 {
 
-    DWORD RegLocalInstance = ++g_RegIntceptInstance;
+    DWORD RegLocalInstance = ++g_RegInterceptInstance;
 
 
     auto result = RegDeleteKeyExImpl(key, subKey, viewDesired, Reserved);
@@ -130,31 +131,31 @@ LSTATUS __stdcall RegDeleteKeyExFixup(
             try
             {
 #if _DEBUG
-                Log(L"[%d] RegDeleteKeyEx:\n", RegLocalInstance);
+                Log(L"[%s%d] RegDeleteKeyEx:\n", g_RegModuleName, RegLocalInstance);
 #endif
                 std::string keypath = ReplaceAppRegistrySyntax(InterpretKeyPath(key) + "\\" + InterpretStringA(subKey));
 #if _DEBUG
-                Log(L"[%d] RegDeleteKeyEx: Path=%s", RegLocalInstance, keypath.c_str());
+                Log(L"[%s%d] RegDeleteKeyEx: Path=%s", g_RegModuleName, RegLocalInstance, keypath.c_str());
                 if (RegFixupFakeDelete(keypath, RegLocalInstance) == true)
 #else
                 if (RegFixupFakeDelete(keypath, RegLocalInstance) == true)
 #endif
                 {
 #if _DEBUG
-                    LogCallingModuleInstance(RegLocalInstance);
-                    Log(L"[%d] RegDeleteKeyEx:Fake Success\n", RegLocalInstance);
+                    LogCallingModuleInstanceCommon(g_RegModuleName,RegLocalInstance);
+                    Log(L"[%s%d] RegDeleteKeyEx:Fake Success\n", g_RegModuleName, RegLocalInstance);
 #endif
                     result = 0;
                 }
             }
             catch (...)
             {
-                Log(L"[%d] RegDeleteKeyEx logging failure.\n", RegLocalInstance);
+                Log(L"[%s%d] RegDeleteKeyEx logging failure.\n", g_RegModuleName, RegLocalInstance);
             }
         }
     }
 #if _DEBUG
-    Log(L"[%d] RegDeleteKeyEx:Fake returns %d\n", RegLocalInstance, result);
+    Log(L"[%s%d] RegDeleteKeyEx:Fake returns %d\n", g_RegModuleName, RegLocalInstance, result);
 #endif
     return result;
 }

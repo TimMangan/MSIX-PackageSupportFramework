@@ -5,6 +5,7 @@
 
 #include <psf_framework.h>
 #include <psf_logging.h>
+#include "PathRedirection.h"
 
 void InitializePaths();
 void InitializeConfiguration();
@@ -16,7 +17,7 @@ int __stdcall PSFInitialize() noexcept try
     InitializeConfiguration();
 #if _DEBUG
     int count = psf::attach_count_all();
-    Log(L"[0] FileRedirectionFixup attaches %d fixups.", count);
+    Log(L"[%s%d] FileRedirectionFixup attaches %d fixups.", g_FrfModuleName,0,  count);
 #else
     psf::attach_all();
 #endif

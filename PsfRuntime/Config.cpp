@@ -39,6 +39,8 @@ static std::filesystem::path g_PackageRootPath;
 static std::filesystem::path g_FinalPackageRootPath;
 static std::filesystem::path g_CurrentExecutable;
 
+const wchar_t* g_PsfRunTimeName = L"r";
+
 // The object that constructs the JSON DOM and holds the root
 static struct
 {
@@ -216,43 +218,6 @@ static struct
     bool enableReportError{ true };
 } g_JsonHandler;
 
-#if DONTCONSOLIDATELOGS
-void Log(const char* fmt, ...)
-{
-    std::string str;
-    str.resize(256);
-
-    va_list args;
-    va_start(args, fmt);
-    std::size_t count = std::vsnprintf(str.data(), str.size() + 1, fmt, args);
-    assert(count >= 0);
-    va_end(args);
-
-    if (count > str.size())
-    {
-        count = 1024;       // vswprintf actually returns a negative number, let's just go with something big enough for our long strings; it is resized shortly.
-        str.resize(count);
-
-        va_list args2;
-        va_start(args2, fmt);
-        count = std::vsnprintf(str.data(), str.size() + 1, fmt, args2);
-        assert(count >= 0);
-        va_end(args2);
-    }
-
-    str.resize(count);
-    ::OutputDebugStringA(str.c_str());
-}
-void LogString(const char* name, const char* value)
-{
-    Log("\t%s=%s\n", name, value);
-}
-void LogString(const char* name, const wchar_t* value)
-{
-    Log("\t%s=%ls\n", name, value);
-}
-#endif
-
 static const psf::json_object* g_CurrentExeConfig = nullptr;
 
 
@@ -262,17 +227,17 @@ void load_json()
     auto file = _wfopen((g_PackageRootPath / L"config.json").c_str(), L"rb, ccs=UTF-8");
     if (!file)
     {
-        Log(L"Config.json not found in root of package %ls, look elsewhere.", g_PackageRootPath.c_str());
+        Log(L"[%s%d] Config.json not found in root of package %ls, look elsewhere.", g_PsfRunTimeName, 0, g_PackageRootPath.c_str());
         ///Check folder with application, then everyhwere in package if needed
 #pragma warning(suppress:4996) // Nonsense warning; _wfopen is perfectly safe
         file = _wfopen((g_CurrentExecutable.parent_path() / L"config.json").c_str(), L"rb, ccs=UTF-8");
         if (file)
         {
-            Log(L"Config.json found in executable folder of package %ls", g_PackageRootPath.c_str());
+            Log(L"[%s%d] Config.json found in executable folder of package %ls", g_PsfRunTimeName, 0, g_PackageRootPath.c_str());
         }
         else
         {
-            Log(L"Config.json not found in executable folder of package %ls, continue looking elsewhere.", g_PackageRootPath.c_str());
+            Log(L"[%s%d] Config.json not found in executable folder of package %ls, continue looking elsewhere.", g_PsfRunTimeName, 0, g_PackageRootPath.c_str());
             // If not in those two locations, must check everywhere in package.
             for (auto& dentry : std::filesystem::recursive_directory_iterator(g_PackageRootPath))
             {
@@ -282,7 +247,7 @@ void load_json()
                     {
                         if (dentry.path().filename().compare(L"config.json") == 0)
                         {
-                            Log(L"Found config at: %ls", dentry.path().c_str());
+                            Log(L"[%s%d] Found config at: %ls", g_PsfRunTimeName, 0, dentry.path().c_str());
 #pragma warning(suppress:4996) // Nonsense warning; _wfopen is perfectly safe
                             file = _wfopen(dentry.path().c_str(), L"rb, ccs=UTF-8");
                             break;
@@ -291,7 +256,7 @@ void load_json()
                 }
                 catch (...)
                 {
-                    Log(L"Non-fatal error enumerating directories while looking for config.json.");
+                    Log(L"[%s%d] Non-fatal error enumerating directories while looking for config.json." ,g_PsfRunTimeName,0);
                 }
             }
         }
@@ -330,7 +295,7 @@ void load_json()
     }
     else
     {
-        Log(L"Config.json not found in package %ls", g_PackageRootPath.c_str());
+        Log(L"[%s%d]Config.json not found in package %ls", g_PsfRunTimeName, 0, g_PackageRootPath.c_str());
         PSFReportError(L"Config.json not found in package. Unable to configure the PSF.");
     }
     assert(g_JsonHandler.state_stack.empty());
@@ -348,23 +313,23 @@ void load_json()
                 if (!g_CurrentExeConfig && std::regex_match(currentExe.native(), std::wregex(exe.data(), exe.length())))
                 {
                     g_CurrentExeConfig = &obj;
-                    LogCountedStringW("Processes config match", exe.data(), exe.length());
+                    LogCountedStringW(g_PsfRunTimeName, 0,"Processes config match", exe.data(), exe.length());
                     break;
                 }
                 else if (!g_CurrentExeConfig)
                 {
-                    //LogCountedStringW(, Instance"Processes config notmatched", exe.data(), exe.length());
+                    //LogCountedStringW(g_PsfRunTimeName, 0, Instance"Processes config notmatched", exe.data(), exe.length());
                 }
             }
         }
         else
         {
-            Log(L"No processes to match; no fixups to load.");
+            Log(L"[%s%d] No processes to match; no fixups to load.", g_PsfRunTimeName, 0);
         }
     }
     else
     {
-        Log(L"No Processes to match; no fixups to load.");
+        Log(L"[%s%d] No Processes to match; no fixups to load.", g_PsfRunTimeName, 0);
     }
 
     // Permit ReportError disabling iff basic config.json parse succeeded
@@ -388,13 +353,13 @@ bool LoadConfig()
         g_CurrentExecutable = psf::current_executable_path();
 
 
-        LogCountedStringW("g_PackageFullName", g_PackageFullName.data(), g_PackageFullName.length());
-        LogCountedStringW("g_PackageFamilyName", g_PackageFamilyName.data(), g_PackageFamilyName.length());
-        LogCountedStringW("g_ApplicationUserModelId", g_ApplicationUserModelId.data(), g_ApplicationUserModelId.length());
-        LogCountedStringW("g_ApplicationId", g_ApplicationId.data(), g_ApplicationId.length());
-        LogString(L"g_PackageRootPath", g_PackageRootPath.c_str());
-        LogString(L"g_FinalPackageRootPath", g_FinalPackageRootPath.c_str());
-        LogString(L"g_CurrentExecutable", g_CurrentExecutable.c_str());
+        LogCountedStringW(g_PsfRunTimeName, 0, "g_PackageFullName", g_PackageFullName.data(), g_PackageFullName.length());
+        LogCountedStringW(g_PsfRunTimeName, 0, "g_PackageFamilyName", g_PackageFamilyName.data(), g_PackageFamilyName.length());
+        LogCountedStringW(g_PsfRunTimeName, 0, "g_ApplicationUserModelId", g_ApplicationUserModelId.data(), g_ApplicationUserModelId.length());
+        LogCountedStringW(g_PsfRunTimeName, 0, "g_ApplicationId", g_ApplicationId.data(), g_ApplicationId.length());
+        LogString(g_PsfRunTimeName, 0, L"g_PackageRootPath", g_PackageRootPath.c_str());
+        LogString(g_PsfRunTimeName, 0, L"g_FinalPackageRootPath", g_FinalPackageRootPath.c_str());
+        LogString(g_PsfRunTimeName, 0, L"g_CurrentExecutable", g_CurrentExecutable.c_str());
         load_json();
         return true;
     }
@@ -405,7 +370,7 @@ bool LoadConfig()
         //Log(L"App is not running inside the container and will be terminated.");
         //std::terminate();
         // The future is now, why terminate?  Just let it run without fixup.
-        Log(L"App is not running inside the container and will be ignored by the Psf.");
+        Log(L"[%s%d] App is not running inside the container and will be ignored by the Psf.", g_PsfRunTimeName, 0);
         return false;
     }
 }
@@ -497,7 +462,7 @@ PSFAPI const psf::json_object* __stdcall PSFQueryAppLaunchConfig(_In_ const wcha
         {
             if (verbose)
             {
-                LogCountedStringW("Json Application match against id", appId.data(), appId.length());
+                LogCountedStringW(g_PsfRunTimeName, 0, "Json Application match against id", appId.data(), appId.length());
             }
             return &appObj;
         }
@@ -505,7 +470,7 @@ PSFAPI const psf::json_object* __stdcall PSFQueryAppLaunchConfig(_In_ const wcha
 
     if (verbose)
     {
-        Log(L"\tNo Matches");
+        Log(L"\t[%s%d] No Matches", g_PsfRunTimeName, 0);
     }
 
     return nullptr;

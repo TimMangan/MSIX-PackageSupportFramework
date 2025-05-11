@@ -12,6 +12,7 @@
 #include <psf_logging.h>
 
 #include "Config.h"
+extern const wchar_t* g_PsfRunTimeName;
 
 #if _DEBUG
 #define MOREDEBUG 1
@@ -74,7 +75,7 @@ void load_fixups()
 
                         auto path = PackageRootPath() / fixupConfig.as_object().get("dll").as_string().wide();
 #if _DEBUG
-                        Log("\tfixup to attempt to load as specified: %ls.", path.c_str());
+                        Log("[%s%d]\tfixup to attempt to load as specified: %ls.", g_PsfRunTimeName, 0, path.c_str());
 #endif
                         fixup.module_handle = ::LoadLibraryW(path.c_str());
                         if (!fixup.module_handle)
@@ -82,21 +83,21 @@ void load_fixups()
                             path.replace_extension();
                             path.concat((sizeof(void*) == 4) ? L"32.dll" : L"64.dll");
 #if _DEBUG
-                            Log("\tfixup to attempt to load as: %ls.", path.c_str());
+                            Log("[%s%d]\tfixup to attempt to load as: %ls.", g_PsfRunTimeName, 0, path.c_str());
 #endif
                             fixup.module_handle = ::LoadLibraryW(path.c_str());
 
                             if (!fixup.module_handle)
                             {
 #if _DEBUG
-                                Log("\tfixup not found as specified,checkroot of package." );
+                                Log("[%s%d]\tfixup not found as specified,checkroot of package.", g_PsfRunTimeName, 0);
 #endif
                                 std::filesystem::path pathfromroot = PackageRootPath() / path.filename().c_str();
                                 fixup.module_handle = ::LoadLibraryW(pathfromroot.c_str());
                                 if (fixup.module_handle)
                                 {
 #if _DEBUG
-                                    Log("\tfixup found at . %ls", pathfromroot.c_str());
+                                    Log("[%s%d]\tfixup found at . %ls", g_PsfRunTimeName, 0, pathfromroot.c_str());
 #endif                            
                                     path = pathfromroot;
                                 }
@@ -107,7 +108,7 @@ void load_fixups()
                                     DWORD att = ::GetFileAttributesW(pathfromroot.c_str());
                                     if (att != INVALID_FILE_ATTRIBUTES)
                                     {
-                                        Log("\t???file %ls attrib 0x%x but load error 0x%x", pathfromroot.c_str(), att, rember);
+                                        Log("[%s%d]\t???file %ls attrib 0x%x but load error 0x%x", g_PsfRunTimeName,0, pathfromroot.c_str(), att, rember);
                                     }
                                 }
 #endif
@@ -116,7 +117,7 @@ void load_fixups()
                             if (!fixup.module_handle)
                             {
 #if _DEBUG
-                                Log("\tfixup not found at root of package, look elsewhere.");
+                                Log("[%s%d]\tfixup not found at root of package, look elsewhere.", g_PsfRunTimeName,0);
 #endif
                                 // just try to find it elsewhere as it isn't at the root
                                 for (auto& dentry : std::filesystem::recursive_directory_iterator(PackageRootPath()))
@@ -128,7 +129,7 @@ void load_fixups()
                                             if (dentry.path().filename().compare(path.filename().c_str()) == 0)
                                             {
 #if _DEBUG
-                                                Log("\tfixup might be found as %ls.", dentry.path().c_str());
+                                                Log("[%s%d]\tfixup might be found as %ls.", g_PsfRunTimeName, 0, dentry.path().c_str());
 #endif
                                                 fixup.module_handle = ::LoadLibraryW(dentry.path().c_str());
                                                 if (!fixup.module_handle)
@@ -141,7 +142,7 @@ void load_fixups()
                                                 if (fixup.module_handle)
                                                 {
 #if _DEBUG
-                                                    Log("\tfixup found at . %ls", dentry.path().c_str());
+                                                    Log("[%s%d]\tfixup found at . %ls", g_PsfRunTimeName, 0, dentry.path().c_str());
 #endif                            
                                                     path = dentry.path();
                                                     break;
@@ -150,7 +151,7 @@ void load_fixups()
                                         }
                                         catch (...)
                                         {
-                                            Log("Non-fatal error enumerating directories while looking for fixup.");
+                                            Log("[%s%d] Non-fatal error enumerating directories while looking for fixup.", g_PsfRunTimeName, 0);
                                         }
                                     }
                                     else
@@ -163,7 +164,7 @@ void load_fixups()
                             {
                                 if (GetLastError() == ERROR_NO_MORE_FILES)
                                 {
-                                    Log("\tERROR: fixup not found in package; ignoring.");
+                                    Log("[%s%d]\tERROR: fixup not found in package; ignoring.", g_PsfRunTimeName, 0);
                                 }
                                 else
                                 {
@@ -174,7 +175,7 @@ void load_fixups()
                         }
                         if (fixup.module_handle)
                         {
-                            Log("\tInjected into current process: %ls\n", path.c_str());
+                            Log("[%s%d]\tInjected into current process: %ls\n", g_PsfRunTimeName, 0, path.c_str());
 
                             auto initialize = reinterpret_cast<PSFInitializeProc>(::GetProcAddress(fixup.module_handle, "PSFInitialize"));
                             if (!initialize)
@@ -228,7 +229,7 @@ EntryPoint_t ApplicationEntryPoint = nullptr;
 static int __stdcall FixupEntryPoint() noexcept try
 {
 #if _DEBUG
-    Log("PsfRuntime FixupEntryPoint in App Pid=%d Tid=%d", GetCurrentProcessId(), GetCurrentThreadId());
+    Log("[%s%d] PsfRuntime FixupEntryPoint in App Pid=%d Tid=%d", g_PsfRunTimeName, 0, GetCurrentProcessId(), GetCurrentThreadId());
 #endif
     load_fixups();
 
@@ -244,7 +245,7 @@ static int __stdcall FixupEntryPoint() noexcept try
 catch (...)
 {
     int err = win32_from_caught_exception();
-    Log("Exception in PsfRuntime FixupEntryPoint() = 0x%x", err);
+    Log("[%s%d] Exception in PsfRuntime FixupEntryPoint() = 0x%x", g_PsfRunTimeName, 0, err);
     return  err;
 }
 
@@ -253,11 +254,11 @@ void attach()
     try
     {
 #if _DEBUG
-        Log("PsfRuntime Attach Pid=%d Tid=%d", GetCurrentProcessId(), GetCurrentThreadId());
+        Log("[%s%d] PsfRuntime Attach Pid=%d Tid=%d",  g_PsfRunTimeName, 0, GetCurrentProcessId(), GetCurrentThreadId());
 #endif
         usingPsf = LoadConfig();
 #if _DEBUG
-        Log("DEBUG: PsfRuntime after load config 0x%x",usingPsf);
+        Log("[%s%d] DEBUG: PsfRuntime after load config 0x%x", g_PsfRunTimeName, 0, usingPsf);
 #endif
         if (usingPsf)
         {
@@ -268,12 +269,12 @@ void attach()
             check_win32(::DetourUpdateThread(::GetCurrentThread()));
 
 #if _DEBUG
-            Log("Debug: PsfRuntime before attach all");
+            Log("[%s%d] Debug: PsfRuntime before attach all", g_PsfRunTimeName, 0);
 #endif
     // Call DetourAttach for all APIs that PsfRuntime detours
             psf::attach_all();
 #if _DEBUG
-            Log("DEBUG: PsfRuntime after attach all");
+            Log("[%s%d] DEBUG: PsfRuntime after attach all", g_PsfRunTimeName, 0);
 #endif
     // We can't call LoadLibrary in DllMain, so hook the application's entry point and do initialization then
             ApplicationEntryPoint = reinterpret_cast<EntryPoint_t>(::DetourGetEntryPoint(nullptr));
@@ -285,13 +286,13 @@ void attach()
 
             transaction.commit();
 #if _DEBUG
-            //Log("Debug: PsfRuntime is ready.");
+            //Log("[%s%d] Debug: PsfRuntime is ready.", g_PsfRunTimeName, 0);
 #endif
         }
     }
     catch (...)
     {
-        Log("App is not running inside the container, but will be allowed to run.");
+        Log("[%s%d] App is not running inside the container, but will be allowed to run.", g_PsfRunTimeName, 0);
     }
 }
 
@@ -301,7 +302,7 @@ void detach()
     {
         if (usingPsf)
         {
-            //Log("DEBUG: PsfRuntime Dettach Pid=%d",GetCurrentProcessId());
+            //Log("[%s%d] DEBUG: PsfRuntime Dettach Pid=%d", g_PsfRunTimeName, 0, GetCurrentProcessId());
             // Unload in the reverse order as we initialized
             unload_fixups();
 
@@ -313,7 +314,7 @@ void detach()
     }
     catch (...)
     {
-        Log("App is not running inside the container, but will be allowed to exit without error.");
+        Log("[%s%d] App is not running inside the container, but will be allowed to exit without error.", g_PsfRunTimeName, 0);
     }
 }
 
@@ -350,12 +351,12 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID) noexcept try
 #endif
 
 #if _DEBUG
-    Log("PsfRuntime: In DllMain Pid=%d Tid=%d", GetCurrentProcessId(), GetCurrentThreadId());
+    Log("[%s%d] PsfRuntime: In DllMain Pid=%d Tid=%d", g_PsfRunTimeName, 0, GetCurrentProcessId(), GetCurrentThreadId());
 #endif
     // Per detours documentation, immediately return true if running in a helper process
     if (::DetourIsHelperProcess())
     {
-        Log("PsfRuntime: Is Helper Process");
+        Log("[%s%d] PsfRuntime: Is Helper Process", g_PsfRunTimeName, 0);
         return TRUE;
     }
 
@@ -375,7 +376,7 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID) noexcept try
         }
         catch (...)
         {
-            Log("PsfRuntime: Exception attaching");
+            Log("[%s%d] PsfRuntime: Exception attaching", g_PsfRunTimeName, 0);
             unload_fixups();
             throw;
         }
@@ -385,13 +386,13 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID) noexcept try
         detach();
         break;
     case DLL_THREAD_ATTACH:
-        //Log("PsfRuntime: Reason Thread Attach Tid=0x%x", GetCurrentThreadId());
+        //Log("[%s%d] PsfRuntime: Reason Thread Attach Tid=0x%x", g_PsfRunTimeName, 0, GetCurrentThreadId());
         break;
     case DLL_THREAD_DETACH:
-        //Log("PsfRuntime: Reason Thread Detach  Tid=0x%x", GetCurrentThreadId()); 
+        //Log("[%s%d] PsfRuntime: Reason Thread Detach  Tid=0x%x", g_PsfRunTimeName, 0, GetCurrentThreadId()); 
         break;
     default:
-        Log("PsfRuntime: Reason %d", reason);
+        Log("[%s%d] PsfRuntime: Reason %d", g_PsfRunTimeName, 0, reason);
         break;
     }
 
@@ -399,7 +400,7 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID) noexcept try
 }
 catch (...)
 {
-    Log("PsfRuntime: Exception in dllMain");
+    Log("[%s%d] PsfRuntime: Exception in dllMain", g_PsfRunTimeName, 0);
     ::PSFReportError(widen(message_from_caught_exception()).c_str());
     ::SetLastError(win32_from_caught_exception());
     return false;

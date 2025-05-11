@@ -59,16 +59,16 @@ HANDLE __stdcall CreateFileFixup(
 #if _DEBUG
     if (fileName != NULL)
     {
-        LogString(CreateFileInstance, L"CreateFileFixup for ", fileName);
+        LogString(g_FrfModuleName, CreateFileInstance, L"CreateFileFixup for ", fileName);
     }
     else
     {
-        Log(L"[%d] CreateFileFixup for NULL", CreateFileInstance);
+        Log(L"[%s%d] CreateFileFixup for NULL", g_FrfModuleName, CreateFileInstance);
     }
-    Log(L"[%d]   DesiredAccess 0x%x  ShareMode 0x%x Disposition 0x%x flags 0x%x", CreateFileInstance, desiredAccess, shareMode, creationDisposition, flagsAndAttributes);
+    Log(L"[%s%d]   DesiredAccess 0x%x  ShareMode 0x%x Disposition 0x%x flags 0x%x", g_FrfModuleName, CreateFileInstance, desiredAccess, shareMode, creationDisposition, flagsAndAttributes);
     if ((flagsAndAttributes & FILE_FLAG_BACKUP_SEMANTICS) != 0)
     {
-        Log(L"[%d]   Looks like a possible directory request (FILE_FLAG_BACKUP_SEMANTICS)", CreateFileInstance);
+        Log(L"[%s%d]   Looks like a possible directory request (FILE_FLAG_BACKUP_SEMANTICS)", g_FrfModuleName, CreateFileInstance);
         // We probably should not redirect a request to open a directory, only create one
     }  
     
@@ -87,7 +87,7 @@ HANDLE __stdcall CreateFileFixup(
                 std::replace(FileNameString.begin(), FileNameString.end(), '/', '\\');
                 FileNameString = RemoveAnyFinalDoubleSlash(FileNameString);
                 FixedFileName = FileNameString.c_str();
-                //LogString(CreateFileInstance, L"CreateFileFixup A for fileName", widen(fileName).c_str()); 
+                //LogString(g_FrfModuleName, CreateFileInstance, L"CreateFileFixup A for fileName", widen(fileName).c_str()); 
             }
             else
             {
@@ -95,7 +95,7 @@ HANDLE __stdcall CreateFileFixup(
                 std::replace(WFileNameString.begin(), WFileNameString.end(), L'/', L'\\');
                 WFileNameString = RemoveAnyFinalDoubleSlash(WFileNameString);
                 FixedFileName = WFileNameString.c_str();
-                //LogString(CreateFileInstance, L"CreateFileFixup W for fileName", fileName);
+                //LogString(g_FrfModuleName, CreateFileInstance, L"CreateFileFixup W for fileName", fileName);
             }
 
             //if ((flagsAndAttributes & FILE_FLAG_BACKUP_SEMANTICS) != 0)
@@ -107,10 +107,10 @@ HANDLE __stdcall CreateFileFixup(
                     hRes = impl::CreateFile(FixedFileName, desiredAccess, shareMode, securityAttributes, creationDisposition, flagsAndAttributes, templateFile);
 #if _DEBUG
                     if (hRes == INVALID_HANDLE_VALUE)
-                        LogString(CreateFileInstance, L"CreateFileFixup fall through for directory call returns FAILURE.", FixedFileName);
+                        LogString(g_FrfModuleName, CreateFileInstance, L"CreateFileFixup fall through for directory call returns FAILURE.", FixedFileName);
                     else
-                        LogString(CreateFileInstance, L"CreateFileFixup fall through for directory call returns SUCCESS.", FixedFileName);
-                    Log(L"[%d] CreateFile   Error is 0x%x", CreateFileInstance, GetLastError());
+                        LogString(g_FrfModuleName, CreateFileInstance, L"CreateFileFixup fall through for directory call returns SUCCESS.", FixedFileName);
+                    Log(L"[%s%d] CreateFile   Error is 0x%x", g_FrfModuleName, CreateFileInstance, GetLastError());
 #endif
                 
                 return hRes;
@@ -130,7 +130,7 @@ HANDLE __stdcall CreateFileFixup(
                             std::string tname = narrow(WFileNameString);
                             FixedFileName = tname.c_str();
 #if _DEBUG
-                            LogString(CreateFileInstance, L"CreateFile: Use ReverseRedirected fileName", FixedFileName);
+                            LogString(g_FrfModuleName, CreateFileInstance, L"CreateFile: Use ReverseRedirected fileName", FixedFileName);
 #endif
                         }
                     }
@@ -147,7 +147,7 @@ HANDLE __stdcall CreateFileFixup(
                             WFileNameString = ReverseRedirectedToPackage(WFileNameString.c_str());
                             FixedFileName = WFileNameString.c_str();
 #if _DEBUG
-                            LogString(CreateFileInstance, L"CreateFile: Use ReverseRedirected fileName", FixedFileName);
+                            LogString(g_FrfModuleName, CreateFileInstance, L"CreateFile: Use ReverseRedirected fileName", FixedFileName);
 #endif
                         }
                     }
@@ -166,10 +166,10 @@ HANDLE __stdcall CreateFileFixup(
                             // NB: Only here if the input filename not in the package but is subject to layering for potential package file.
                             std::wstring VfsVar = GetVfsVarFromPackagePath(PackageVersion);
 #if _DEBUG
-                            Log(L"[%d] CreateFile: VfsVar Under %s", CreateFileInstance, VfsVar.c_str());
+                            Log(L"[%s%d] CreateFile: VfsVar Under %s", g_FrfModuleName, CreateFileInstance, VfsVar.c_str());
                             if (VfsVar.length() == 0)
                             {
-                                Log(L"[%d] CreateFile: Package version string was %s", CreateFileInstance, PackageVersion.c_str());
+                                Log(L"[%s%d] CreateFile: Package version string was %s", g_FrfModuleName, CreateFileInstance, PackageVersion.c_str());
                             }
 #endif
                             // special case.  We may need to do the copy the file to the redirection area ourselves if it is present in the package and not in redirection area as MSIX Runtime doesn't take care of these cases.
@@ -179,7 +179,7 @@ HANDLE __stdcall CreateFileFixup(
                                 {
                                     // Need to copy now
 #if _DEBUG
-                                    LogString(CreateFileInstance, L"\tFRF CreateFile COA from to", pri.redirect_path.c_str());
+                                    LogString(g_FrfModuleName, CreateFileInstance, L"\tFRF CreateFile COA from to", pri.redirect_path.c_str());
 #endif
                                     impl::CopyFileW(PackageVersion.c_str(), pri.redirect_path.c_str(), true);
                                 }
@@ -190,7 +190,7 @@ HANDLE __stdcall CreateFileFixup(
                         if (IsUnderUserAppDataLocal(FixedFileName))
                         {
 #if _DEBUG
-                            Log(L"[%d] Under LocalAppData", CreateFileInstance);
+                            Log(L"[%s%d] Under LocalAppData", g_FrfModuleName, CreateFileInstance);
 #endif
                             // special case.  Need to do the copy ourselves if present in the package as MSIX Runtime doesn't take care of these cases.
                             std::filesystem::path PackageVersion = GetPackageVFSPath(FixedFileName);
@@ -202,7 +202,7 @@ HANDLE __stdcall CreateFileFixup(
                                     {
                                         // Need to copy now
 #if _DEBUG
-                                        LogString(CreateFileInstance, L"\tFRF CreateFile COA from ADL to", pri.redirect_path.c_str());
+                                        LogString(g_FrfModuleName, CreateFileInstance, L"\tFRF CreateFile COA from ADL to", pri.redirect_path.c_str());
 #endif
                                         impl::CopyFileW(PackageVersion.c_str(), pri.redirect_path.c_str(), true);
                                     }
@@ -212,7 +212,7 @@ HANDLE __stdcall CreateFileFixup(
                         else if (IsUnderUserAppDataRoaming(FixedFileName))
                         {
 #if _DEBUG
-                            Log(L"[%d]\tUnder AppData(roaming)", CreateFileInstance);
+                            Log(L"[%s%d]\tUnder AppData(roaming)", g_FrfModuleName, CreateFileInstance);
 #endif
                             // special case.  Need to do the copy ourselves if present in the package as MSIX Runtime doesn't take care of these cases.
                             std::filesystem::path PackageVersion = GetPackageVFSPath(FixedFileName);
@@ -224,7 +224,7 @@ HANDLE __stdcall CreateFileFixup(
                                     {
                                         // Need to copy now
 #if _DEBUG
-                                        LogString(CreateFileInstance, L"\tFRF CreateFile COA from ADR to", pri.redirect_path.c_str());
+                                        LogString(g_FrfModuleName, CreateFileInstance, L"\tFRF CreateFile COA from ADR to", pri.redirect_path.c_str());
 #endif
                                         impl::CopyFileW(PackageVersion.c_str(), pri.redirect_path.c_str(), true);
                                     }
@@ -240,7 +240,7 @@ HANDLE __stdcall CreateFileFixup(
 #if _DEBUG
                             if (redirectedAccess != desiredAccess)
                             {
-                                Log(L"[%d] CreateFile: Modified desired access in redirection area to 0x%x", CreateFileInstance, redirectedAccess);
+                                Log(L"[%s%d] CreateFile: Modified desired access in redirection area to 0x%x", g_FrfModuleName, CreateFileInstance, redirectedAccess);
                             }
 #endif
                         }
@@ -257,7 +257,7 @@ HANDLE __stdcall CreateFileFixup(
                             //RegOpenKey(HKEY_CURRENT_USER, L"MarkerEnd", &keyE);
 #endif
 #if _DEBUG
-                            Log(L"[%d] CreateFile redirected uses %ls. FAILURE=0x%x.", CreateFileInstance, pri.redirect_path.c_str(), ecode);
+                            Log(L"[%s%d] CreateFile redirected uses %ls. FAILURE=0x%x.", g_FrfModuleName, CreateFileInstance, pri.redirect_path.c_str(), ecode);
 #endif
                             // Fall back to original request, but keep this error if needed (might be file not found instead of path not found/access denied).
                             HANDLE hRes3;
@@ -275,14 +275,14 @@ HANDLE __stdcall CreateFileFixup(
                             {
 #if _DEBUG                      
                                 DWORD ecode2 = GetLastError();
-                                Log(L"[%d] CreateFile fall-through to original request also failed 0x%x, return redirected result of 0x%x and reset error to redirected case.", CreateFileInstance, ecode2, ecode);
+                                Log(L"[%s%d] CreateFile fall-through to original request also failed 0x%x, return redirected result of 0x%x and reset error to redirected case.", g_FrfModuleName, CreateFileInstance, ecode2, ecode);
 #endif
                                 SetLastError(ecode);
                             }
                             else
                             {
 #if _DEBUG
-                                Log(L"[%d] CreateFile fall-through to original request SUCCESS", CreateFileInstance);
+                                Log(L"[%s%d] CreateFile fall-through to original request SUCCESS", g_FrfModuleName, CreateFileInstance);
 #endif
                             }
                             return hRes3;
@@ -290,7 +290,7 @@ HANDLE __stdcall CreateFileFixup(
                         else
                         {
 #if _DEBUG
-                            Log(L"[%d] CreateFile redirected uses %ls. SUCCESS.", CreateFileInstance, pri.redirect_path.c_str());
+                            Log(L"[%s%d] CreateFile redirected uses %ls. SUCCESS.", g_FrfModuleName, CreateFileInstance, pri.redirect_path.c_str());
 #endif
                             return hRet;
                         }
@@ -299,7 +299,7 @@ HANDLE __stdcall CreateFileFixup(
                 else
                 {
 #if _DEBUG
-                    Log(L"[%d] CreateFile: Under LocalAppData\\Packages, don't redirect", CreateFileInstance);
+                    Log(L"[%s%d] CreateFile: Under LocalAppData\\Packages, don't redirect", g_FrfModuleName, CreateFileInstance);
 #endif          
                 }
             }
@@ -307,11 +307,11 @@ HANDLE __stdcall CreateFileFixup(
     }
 #if _DEBUG
     // Fall back to assuming no redirection is necessary if exception
-    LOGGED_CATCHHANDLER(CreateFileInstance,L"CreateFile")
+    LOGGED_CATCHHANDLER_MIN(g_FrfModuleName, CreateFileInstance,L"CreateFile")
 #else
     catch (...)
     {
-        Log(L"[%d] CreateFile Exception=0x%x", CreateFileInstance, GetLastError());
+        Log(L"[%s%d] CreateFile Exception=0x%x", g_FrfModuleName, CreateFileInstance, GetLastError());
     }
 #endif
 
@@ -323,9 +323,9 @@ HANDLE __stdcall CreateFileFixup(
         HANDLE hRes = impl::CreateFile(sFileName.c_str(), desiredAccess, shareMode, securityAttributes, creationDisposition, flagsAndAttributes, templateFile);
 #if _DEBUG
         if (hRes == INVALID_HANDLE_VALUE)
-            LogString(CreateFileInstance, L"CreateFileFixup fall through call returns FAILURE.", sFileName.c_str());
+            LogString(g_FrfModuleName, CreateFileInstance, L"CreateFileFixup fall through call returns FAILURE.", sFileName.c_str());
         else
-            LogString(CreateFileInstance, L"CreateFileFixup fall through call returns SUCCESS.", sFileName.c_str());
+            LogString(g_FrfModuleName, CreateFileInstance, L"CreateFileFixup fall through call returns SUCCESS.", sFileName.c_str());
 #endif
         return hRes;
     }
@@ -335,9 +335,9 @@ HANDLE __stdcall CreateFileFixup(
         HANDLE hRes = impl::CreateFile(wFileName.c_str(), desiredAccess, shareMode, securityAttributes, creationDisposition, flagsAndAttributes, templateFile);
 #if _DEBUG
         if (hRes == INVALID_HANDLE_VALUE)
-            LogString(CreateFileInstance,L"CreateFileFixup fall through call returns FAILURE.", wFileName.c_str());
+            LogString(g_FrfModuleName, CreateFileInstance,L"CreateFileFixup fall through call returns FAILURE.", wFileName.c_str());
         else
-            LogString(CreateFileInstance,L"CreateFileFixup fall through call returns SUCCESS.", wFileName.c_str());
+            LogString(g_FrfModuleName, CreateFileInstance,L"CreateFileFixup fall through call returns SUCCESS.", wFileName.c_str());
 #endif
         return hRes;
     }
@@ -354,8 +354,8 @@ HANDLE __stdcall CreateFile2Fixup(
     auto guard = g_reentrancyGuard.enter();
     DWORD CreateFile2Instance = ++g_FileIntceptInstance;
 #if _DEBUG
-    LogString(CreateFile2Instance, L"CreateFile2Fixup for ", fileName);
-    Log(L"[%d] DesiredAccess 0x%x  ShareMode 0x%x", CreateFile2Instance, desiredAccess, shareMode);
+    LogString(g_FrfModuleName, CreateFile2Instance, L"CreateFile2Fixup for ", fileName);
+    Log(L"[%s%d] DesiredAccess 0x%x  ShareMode 0x%x", g_FrfModuleName, CreateFile2Instance, desiredAccess, shareMode);
 #endif
     std::wstring WFileNameString = fileName;
     try
@@ -365,15 +365,15 @@ HANDLE __stdcall CreateFile2Fixup(
             std::replace( WFileNameString.begin(), WFileNameString.end(), L'/', L'\\');
             WFileNameString = RemoveAnyFinalDoubleSlash(WFileNameString);
 
-            ///Log(L"[%d]CreateFile2Fixup for %ls", CreateFile2Instance, widen(fileName, CP_ACP).c_str());
-            //Log(L"[%d]CreateFile2Fixup for %ls", CreateFile2Instance, fileName);
+            ///Log(L"[%s%d]CreateFile2Fixup for %ls", g_FrfModuleName, CreateFile2Instance, widen(fileName, CP_ACP).c_str());
+            //Log(L"[%s%d]CreateFile2Fixup for %ls", g_FrfModuleName, CreateFile2Instance, fileName);
             
 
             if (IsUnderUserPackageWritablePackageRoot(WFileNameString.c_str()))
             {
                 WFileNameString = ReverseRedirectedToPackage(WFileNameString.c_str());
 #if _DEBUG
-                LogString(CreateFile2Instance, L"Use ReverseRedirected fileName", WFileNameString.c_str());
+                LogString(g_FrfModuleName, CreateFile2Instance, L"Use ReverseRedirected fileName", WFileNameString.c_str());
 #endif
             }
 
@@ -387,7 +387,7 @@ HANDLE __stdcall CreateFile2Fixup(
                     if (IsUnderUserAppDataLocal(WFileNameString.c_str()))
                     {
 #if _DEBUG
-                        Log(L"[%d]Under LocalAppData", CreateFile2Instance);
+                        Log(L"[%s%d]Under LocalAppData", g_FrfModuleName, CreateFile2Instance);
 #endif
                         // special case.  Need to do the copy ourselves if present in the package as MSIX Runtime doesn't take care of these cases.
                         std::filesystem::path PackageVersion = GetPackageVFSPath(fileName);
@@ -399,7 +399,7 @@ HANDLE __stdcall CreateFile2Fixup(
                                 {
                                     // Need to copy now
 #if _DEBUG
-                                    LogString(CreateFile2Instance, L"\tFRF CreateFile2 COA from ADL to", pri.redirect_path.c_str());
+                                    LogString(g_FrfModuleName, CreateFile2Instance, L"\tFRF CreateFile2 COA from ADL to", pri.redirect_path.c_str());
 #endif
                                     impl::CopyFileW(PackageVersion.c_str(), pri.redirect_path.c_str(), true);
                                 }
@@ -409,7 +409,7 @@ HANDLE __stdcall CreateFile2Fixup(
                     else if (IsUnderUserAppDataRoaming(WFileNameString.c_str()))
                     {
 #if _DEBUG
-                        Log(L"[%d]\tUnder AppData(roaming)", CreateFile2Instance);
+                        Log(L"[%s%d]\tUnder AppData(roaming)", g_FrfModuleName, CreateFile2Instance);
 #endif
                         // special case.  Need to do the copy ourselves if present in the package as MSIX Runtime doesn't take care of these cases.
                         std::filesystem::path PackageVersion = GetPackageVFSPath(fileName);
@@ -421,7 +421,7 @@ HANDLE __stdcall CreateFile2Fixup(
                                 {
                                     // Need to copy now
 #if _DEBUG
-                                    LogString(CreateFile2Instance, L"\tFRF CreateFile2 COA from ADR to", pri.redirect_path.c_str());
+                                    LogString(g_FrfModuleName, CreateFile2Instance, L"\tFRF CreateFile2 COA from ADR to", pri.redirect_path.c_str());
 #endif
                                     impl::CopyFileW(PackageVersion.c_str(), pri.redirect_path.c_str(), true);
                                 }
@@ -435,7 +435,7 @@ HANDLE __stdcall CreateFile2Fixup(
 #if _DEBUG
                         if (redirectedAccess != desiredAccess)
                         {
-                            Log(L"[%d] CreateFile2: Modified desired access in redirection area to 0x%x", CreateFile2Instance, redirectedAccess);
+                            Log(L"[%s%d] CreateFile2: Modified desired access in redirection area to 0x%x", g_FrfModuleName, CreateFile2Instance, redirectedAccess);
                         }
 #endif
                     }
@@ -444,7 +444,7 @@ HANDLE __stdcall CreateFile2Fixup(
                     if (hRet == INVALID_HANDLE_VALUE)
                     {
 #if _DEBUG
-                        Log(L"[%d]CreateFile2 redirected uses %ls. FAILURE.", CreateFile2Instance, pri.redirect_path.c_str());
+                        Log(L"[%s%d]CreateFile2 redirected uses %ls. FAILURE.", g_FrfModuleName, CreateFile2Instance, pri.redirect_path.c_str());
 #endif
                         // Fall back to original request, but keep this error if needed (might be file not found instead of path not found/access denied).
                         DWORD ecode = GetLastError();
@@ -453,14 +453,14 @@ HANDLE __stdcall CreateFile2Fixup(
                         if (hRet3 == INVALID_HANDLE_VALUE)
                         {
 #if _DEBUG
-                            Log(L"[%d]CreateFile2 Fall through to original request also failed return redirected result 0x%x", CreateFile2Instance, ecode);
+                            Log(L"[%s%d]CreateFile2 Fall through to original request also failed return redirected result 0x%x", g_FrfModuleName, CreateFile2Instance, ecode);
 #endif
                             SetLastError(ecode);
                         }
                         else
                         {
 #if _DEBUG
-                            Log(L"[%d]CreateFile2 Fall through to original request SUCCESS", CreateFile2Instance);
+                            Log(L"[%s%d]CreateFile2 Fall through to original request SUCCESS", g_FrfModuleName, CreateFile2Instance);
 #endif
                         }
                         return hRet3;
@@ -468,7 +468,7 @@ HANDLE __stdcall CreateFile2Fixup(
                     else
                     {
 #if _DEBUG
-                        Log(L"[%d]CreateFile2 redirected uses %ls. SUCCESS.", CreateFile2Instance, pri.redirect_path.c_str());
+                        Log(L"[%s%d]CreateFile2 redirected uses %ls. SUCCESS.", g_FrfModuleName, CreateFile2Instance, pri.redirect_path.c_str());
 #endif
                         return hRet;
                     }
@@ -477,18 +477,18 @@ HANDLE __stdcall CreateFile2Fixup(
             else
             {
 #if _DEBUG
-                Log(L"[%d]Under LocalAppData\\Packages, don't redirect", CreateFile2Instance);
+                Log(L"[%s%d]Under LocalAppData\\Packages, don't redirect", g_FrfModuleName, CreateFile2Instance);
 #endif
             }
         }
     }
 #if _DEBUG
     // Fall back to assuming no redirection is necessary if exception
-    LOGGED_CATCHHANDLER(CreateFile2Instance, L"CreateFile2")
+    LOGGED_CATCHHANDLER_MIN(g_FrfModuleName, CreateFile2Instance, L"CreateFile2")
 #else
     catch (...)
     {
-        Log(L"[%d] CreateFile2 Exception=0x%x", CreateFile2Instance, GetLastError());
+        Log(L"[%s%d] CreateFile2 Exception=0x%x", g_FrfModuleName, CreateFile2Instance, GetLastError());
     }
 #endif
 
@@ -507,14 +507,14 @@ HANDLE __stdcall CreateFile2Fixup(
     if (hRet2 == INVALID_HANDLE_VALUE)
     {
 #if _DEBUG
-        LogString(CreateFile2Instance, L"CreateFile2 fallthrough FAILURE.", fileName);
+        LogString(g_FrfModuleName, CreateFile2Instance, L"CreateFile2 fallthrough FAILURE.", fileName);
 #endif
         // Fall back to original request
     }
     else
     {
 #if _DEBUG
-        LogString(CreateFile2Instance, L"CreateFile2 fallthrough SUCCESS.", fileName);
+        LogString(g_FrfModuleName, CreateFile2Instance, L"CreateFile2 fallthrough SUCCESS.", fileName);
 #endif
     }
     return hRet2;
