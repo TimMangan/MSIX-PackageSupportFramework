@@ -289,7 +289,7 @@ std::wstring AdjustSlashes(std::wstring path, [[maybe_unused]] DWORD dllInstance
         while (found != std::wstring::npos)
         {
 #ifdef _DEBUG
-            Log(L"[%d] Adjusting for double backslash.", dllInstance);
+            Log(L"[%s%d] Adjusting for double backslash.", g_MfrModuleName, dllInstance);
 #endif
             // We see calls made with extra backslashes which will fail in FindFirst
             //wPathName.replace(found + start, 2, L"\\");
@@ -317,7 +317,7 @@ std::wstring AdjustBadUNC(std::wstring path, [[maybe_unused]] DWORD dllInstance,
         {
             wPathName = L"\\" + wPathName.substr(7);
 #if _DEBUG
-            Log(L"[%d] %s adjustment to existingFileName", dllInstance, CallerName.c_str(), wPathName.c_str());
+            Log(L"[%s%d] %s adjustment to existingFileName", g_MfrModuleName, dllInstance, CallerName.c_str(), wPathName.c_str());
 #endif
         }
     }
@@ -396,7 +396,7 @@ bool PathParentExists(const wchar_t* path)
 void PreCreateFolders(std::wstring filepath, [[maybe_unused]] DWORD dllInstance, [[maybe_unused]] std::wstring DebugMessage)
 {
 #if _DEBUG
-    Log(L"[%d] PreCreateFolders[%s] %s", dllInstance, DebugMessage.c_str(), filepath.c_str());
+    Log(L"[%s%d] PreCreateFolders[%s] %s", g_MfrModuleName, dllInstance, DebugMessage.c_str(), filepath.c_str());
 #endif
 
     std::wstring notlongfilepath = MakeNotLongPath(filepath);
@@ -471,7 +471,7 @@ void PreCreateFolders(std::wstring filepath, [[maybe_unused]] DWORD dllInstance,
         if (bDebug != 0)
         {
 #if _DEBUG
-            Log(L"[%d] %s pre-created folder '%s'", dllInstance, DebugMessage.c_str(), (*partial).c_str());
+            Log(L"[%s%d] %s pre-created folder '%s'", g_MfrModuleName, dllInstance, DebugMessage.c_str(), (*partial).c_str());
 #endif
         }
         
@@ -524,14 +524,14 @@ BOOL Cow(std::wstring from, std::wstring to, [[maybe_unused]] int dllInstance, [
         if ((AFrom & FILE_ATTRIBUTE_DIRECTORY) != 0)
         {
 #if _DEBUG
-            Log(L"[%d] %s COW folder '%s' just create '%s'", dllInstance, DebugString.c_str(), RdlFrom.c_str(), RdlTo.c_str());
+            Log(L"[%s%d] %s COW folder '%s' just create '%s'", g_MfrModuleName, dllInstance, DebugString.c_str(), RdlFrom.c_str(), RdlTo.c_str());
 #endif
             BOOL bRet = ::CreateDirectoryW(RdlTo.c_str(), NULL);
 #if _DEBUG
             if (bRet == 0)
             {
                 DWORD eCode = GetLastError();
-                Log(L"[%d] %s COW CreateDirectory failed, error=0x%d", dllInstance, DebugString.c_str(), eCode);
+                Log(L"[%s%d] %s COW CreateDirectory failed, error=0x%d", g_MfrModuleName, dllInstance, DebugString.c_str(), eCode);
             }
 #endif
             return bRet;
@@ -539,14 +539,14 @@ BOOL Cow(std::wstring from, std::wstring to, [[maybe_unused]] int dllInstance, [
         else
         {
 #if _DEBUG
-            Log(L"[%d] %s COW file '%s' to '%s'", dllInstance, DebugString.c_str(), RdlFrom.c_str(), RdlTo.c_str());
+            Log(L"[%s%d] %s COW file '%s' to '%s'", g_MfrModuleName, dllInstance, DebugString.c_str(), RdlFrom.c_str(), RdlTo.c_str());
 #endif
             BOOL bRet = ::CopyFileW(RdlFrom.c_str(), RdlTo.c_str(), true);
 #if _DEBUG
             if (bRet == 0)
             {
                 DWORD eCode = GetLastError();
-                Log(L"[%d] %s COW failed, error=0x%d", dllInstance, DebugString.c_str(), eCode);
+                Log(L"[%s%d] %s COW failed, error=0x%d", g_MfrModuleName, dllInstance, DebugString.c_str(), eCode);
             }
 #endif
             return bRet;
@@ -555,14 +555,14 @@ BOOL Cow(std::wstring from, std::wstring to, [[maybe_unused]] int dllInstance, [
     else
     {
 #if _DEBUG
-        Log(L"[%d] %s COW missing '%s' to '%s'", dllInstance, DebugString.c_str(), RdlFrom.c_str(), RdlTo.c_str());
+        Log(L"[%s%d] %s COW missing '%s' to '%s'", g_MfrModuleName, dllInstance, DebugString.c_str(), RdlFrom.c_str(), RdlTo.c_str());
 #endif
         BOOL bRet = ::CopyFileW(MakeLongPath(from).c_str(), MakeLongPath(to).c_str(), true);
 #if _DEBUG
         if (bRet == 0)
         {
             DWORD eCode = GetLastError();
-            Log(L"[%d] %s COW failed, error=0x%d", dllInstance, DebugString.c_str(), eCode);
+            Log(L"[%s%d] %s COW failed, error=0x%d", g_MfrModuleName, dllInstance, DebugString.c_str(), eCode);
         }
 #endif
         return bRet;
@@ -634,6 +634,9 @@ bool IsCreateForDirectory(DWORD desiredAccess, [[maybe_unused]]DWORD creationDis
 {
     if ((flagsAndAttributes & FILE_FLAG_BACKUP_SEMANTICS) != 0 &&
         (desiredAccess & FILE_LIST_DIRECTORY) != 0) 
+        return true;
+    if ((flagsAndAttributes & FILE_FLAG_BACKUP_SEMANTICS) != 0 &&
+        (flagsAndAttributes & FILE_FLAG_OPEN_REPARSE_POINT) != 0)
         return true;
     return false;
 }
