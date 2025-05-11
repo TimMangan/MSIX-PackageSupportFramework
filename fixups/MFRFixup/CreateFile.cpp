@@ -48,11 +48,11 @@ HANDLE  WRAPPER_CREATEFILE(std::wstring theDestinationFile,
     {
         if (retfinal == INVALID_HANDLE_VALUE)
         {
-            Log(L"[%d] WRAPPER_CREATEFILE returns FAILURE 0x%x on file '%s'", dllInstance, GetLastError(), LongDestinationFile.c_str());
+            Log(L"[%s%d] WRAPPER_CREATEFILE returns FAILURE 0x%x on file '%s'", g_MfrModuleName, dllInstance, GetLastError(), LongDestinationFile.c_str());
         }
         else
         {
-            Log(L"[%d] WRAPPER_CREATEFILE returns handle 0x%x on file '%s'", dllInstance, retfinal, LongDestinationFile.c_str());
+            Log(L"[%s%d] WRAPPER_CREATEFILE returns handle 0x%x on file '%s'", g_MfrModuleName, dllInstance, retfinal, LongDestinationFile.c_str());
         }
     }
     return retfinal;  
@@ -94,7 +94,7 @@ HANDLE __stdcall CreateFileFixup(_In_ const CharT* pathName,
             {
                 wPathName = L"\\" + wPathName.substr(7);
 #if _DEBUG
-                LogString(dllInstance, L"CreateFile adjustment to fileName", wPathName.c_str());
+                LogString(g_MfrModuleName, dllInstance, L"CreateFile adjustment to fileName", wPathName.c_str());
 #endif
             }
 
@@ -102,22 +102,22 @@ HANDLE __stdcall CreateFileFixup(_In_ const CharT* pathName,
             if (wPathName._Starts_with(L"STORAGE#") ||
                 wPathName._Starts_with(L"\\\\?\\STORAGE#"))
             {
-                Log(L"[%d] CreateFileFixup Storage Namespace", dllInstance);
+                Log(L"[%s%d] CreateFileFixup Storage Namespace", g_MfrModuleName, dllInstance);
             }
             else if (wPathName.size() == 3)
             {
                 if (wPathName.compare(L"C:\\") ||
                     wPathName.compare(L"c:\\"))
                 {
-                    Log(L"[%d] CreateFileFixup for native equivelent of AppVPackageDrive", dllInstance);
+                    Log(L"[%s%d] CreateFileFixup for native equivelent of AppVPackageDrive", g_MfrModuleName, dllInstance);
                 }
             }
-            LogString(dllInstance, L"CreateFileFixup for path", pathName);
+            LogString(g_MfrModuleName, dllInstance, L"CreateFileFixup for path", pathName);
 #if MOREDEBUG
-            Log(L"[%d]        DesiredAccess %s", dllInstance, Log_DesiredAccess(desiredAccess).c_str());
-            Log(L"[%d]        ShareMode %s", dllInstance, Log_ShareMode(shareMode).c_str());
-            Log(L"[%d]        creationDisposition %s", dllInstance, Log_CreationDisposition(creationDisposition).c_str());
-            Log(L"[%d]        flagsAndAttributes %s", dllInstance,  Log_FlagsAndAttributes(flagsAndAttributes).c_str());
+            Log(L"[%s%d]        DesiredAccess %s", g_MfrModuleName, dllInstance, Log_DesiredAccess(desiredAccess).c_str());
+            Log(L"[%s%d]        ShareMode %s", g_MfrModuleName, dllInstance, Log_ShareMode(shareMode).c_str());
+            Log(L"[%s%d]        creationDisposition %s", g_MfrModuleName, dllInstance, Log_CreationDisposition(creationDisposition).c_str());
+            Log(L"[%s%d]        flagsAndAttributes %s", g_MfrModuleName, dllInstance,  Log_FlagsAndAttributes(flagsAndAttributes).c_str());
 #endif
 #endif
             bool IsAWriteCase = IsCreateForChange(desiredAccess, creationDisposition, flagsAndAttributes);
@@ -140,8 +140,8 @@ HANDLE __stdcall CreateFileFixup(_In_ const CharT* pathName,
 #endif
 
 #if MOREDEBUG
-            Log(L"[%d] CreateFileFixup: Could be a write operation=%d", dllInstance, IsAWriteCase);
-            Log(L"[%d] CreateFileFixup: Is a directory operation=%d", dllInstance, IsADirectoryCase);
+            Log(L"[%s%d] CreateFileFixup: Could be a write operation=%d", g_MfrModuleName, dllInstance, IsAWriteCase);
+            Log(L"[%s%d] CreateFileFixup: Is a directory operation=%d", g_MfrModuleName, dllInstance, IsADirectoryCase);
 #endif
 
             // This get is may or may not be a write operation.
@@ -151,11 +151,11 @@ HANDLE __stdcall CreateFileFixup(_In_ const CharT* pathName,
             DetermineCohorts(wPathName, &cohorts, moredebug, dllInstance, L"CreateFileFixup");
             
 #if MOREDEBUG
-            LogString(dllInstance, L"CreateFileFixup: Cohort requested", cohorts.WsRequested.c_str());
-            LogString(dllInstance, L"CreateFileFixup: Cohort redirection", cohorts.WsRedirected.c_str());
-            LogString(dllInstance, L"CreateFileFixup: Cohort package", cohorts.WsPackage.c_str());
-            LogString(dllInstance, L"CreateFileFixup: Cohort native", cohorts.WsNative.c_str());
-            Log(L"[%d] CreateFileFixup: MfrPathType=%s", dllInstance, MfrFlagTypesString(cohorts.file_mfr.Request_MfrPathType));
+            LogString(g_MfrModuleName, dllInstance, L"CreateFileFixup: Cohort requested", cohorts.WsRequested.c_str());
+            LogString(g_MfrModuleName, dllInstance, L"CreateFileFixup: Cohort redirection", cohorts.WsRedirected.c_str());
+            LogString(g_MfrModuleName, dllInstance, L"CreateFileFixup: Cohort package", cohorts.WsPackage.c_str());
+            LogString(g_MfrModuleName, dllInstance, L"CreateFileFixup: Cohort native", cohorts.WsNative.c_str());
+            Log(L"[%s%d] CreateFileFixup: MfrPathType=%s", g_MfrModuleName, dllInstance, MfrFlagTypesString(cohorts.file_mfr.Request_MfrPathType));
 #endif
             if (!MFRConfiguration.Ilv_Aware)
             {
@@ -207,14 +207,14 @@ HANDLE __stdcall CreateFileFixup(_In_ const CharT* pathName,
                                 cohorts.map.RedirectionFlags == mfr::mfr_redirect_flags::prefer_redirection_if_package_vfs))
                         {
 #if MOREDEBUG
-                            Log(L"[%d] CreateFileFixup: traditional redirection mapping.", dllInstance);
+                            Log(L"[%s%d] CreateFileFixup: traditional redirection mapping.", g_MfrModuleName, dllInstance);
 #endif
                             // try the redirected path, then package (via COW), then native (possibly via COW).
                             if (cohorts.map.IsAnExclusionToRedirect == mfr::mfr_exclusion_types::not_excluded && 
                                 PathExists(cohorts.WsRedirected.c_str()))
                             {
 #if MOREDEBUG
-                                Log(L"[%d] CreateFileFixup: use redirected.", dllInstance);
+                                Log(L"[%s%d] CreateFileFixup: use redirected.", g_MfrModuleName, dllInstance);
 #endif
                                 retfinal = WRAPPER_CREATEFILE(cohorts.WsRedirected, desiredAccess, shareMode, securityAttributes, creationDisposition, flagsAndAttributes, templateFile, dllInstance, debug);
                                 return retfinal;
@@ -222,7 +222,7 @@ HANDLE __stdcall CreateFileFixup(_In_ const CharT* pathName,
                             if (PathExists(cohorts.WsPackage.c_str()))
                             {
 #if MOREDEBUG
-                                Log(L"[%d] CreateFileFixup: use package.", dllInstance);
+                                Log(L"[%s%d] CreateFileFixup: use package.", g_MfrModuleName, dllInstance);
 #endif
                                 if (IsAWriteCase)
                                 {
@@ -249,7 +249,7 @@ HANDLE __stdcall CreateFileFixup(_In_ const CharT* pathName,
                                 PathExists(cohorts.WsNative.c_str()))
                             {
 #if MOREDEBUG
-                                Log(L"[%d] CreateFileFixup: use native.", dllInstance);
+                                Log(L"[%s%d] CreateFileFixup: use native.", g_MfrModuleName, dllInstance);
 #endif
                                 if (IsAWriteCase)
                                 {
@@ -272,7 +272,7 @@ HANDLE __stdcall CreateFileFixup(_In_ const CharT* pathName,
                                 }
                             }
 #if MOREDEBUG
-                            Log(L"[%d] CreateFileFixup: no such file exists, use redirected path to fail.", dllInstance);
+                            Log(L"[%s%d] CreateFileFixup: no such file exists, use redirected path to fail.", g_MfrModuleName, dllInstance);
 #endif
                             // There isn't such a file anywhere.  We want to create the redirection parent folder and let this call against the redirected file to create there.
                             PreCreateFolders(cohorts.WsRedirected.c_str(), dllInstance, L"CreateFileFixup");
@@ -282,6 +282,16 @@ HANDLE __stdcall CreateFileFixup(_In_ const CharT* pathName,
                     }
                     else
                     {
+                        // 5/7/2025:  If this is a directory request in the native area, let's just return the native directory if it exists
+                        // Any attempt to perform a subsequent action will result in redirection based on the cohorts anyway.
+                        if (PathExists(cohorts.WsRequested.c_str()))
+                        {
+                            Log("[%s%d] Native Directory requested that exists, use that directory.", g_MfrModuleName, dllInstance);
+                            retfinal = WRAPPER_CREATEFILE(cohorts.WsRequested, desiredAccess, shareMode, securityAttributes, creationDisposition, flagsAndAttributes, templateFile, dllInstance, debug);
+                            return retfinal;
+                        }
+
+
                         if (cohorts.map.Valid_mapping == mfr::mfr_enabled_types::enabled &&
                             cohorts.map.RedirectionFlags == mfr::mfr_redirect_flags::prefer_redirection_local)
                         {
@@ -461,7 +471,7 @@ HANDLE __stdcall CreateFileFixup(_In_ const CharT* pathName,
                         cohorts.map.Valid_mapping == mfr::mfr_enabled_types::enabled)
                     {
 #if EVENMOREDEBUG
-                        Log(L"[%d] CreateFileFixup: Package VFS with local redirection case.", dllInstance);
+                        Log(L"[%s%d] CreateFileFixup: Package VFS with local redirection case.", g_MfrModuleName, dllInstance);
 #endif
                         // try the redirection path, then the package (COW).
                         if (cohorts.map.IsAnExclusionToRedirect == mfr::mfr_exclusion_types::not_excluded && 
@@ -502,19 +512,19 @@ HANDLE __stdcall CreateFileFixup(_In_ const CharT* pathName,
                             cohorts.map.RedirectionFlags == mfr::mfr_redirect_flags::prefer_redirection_if_package_vfs))
                     {
 #if EVENMOREDEBUG
-                        Log(L"[%d] CreateFileFixup: Package VFS with traditional redirection case.", dllInstance);
+                        Log(L"[%s%d] CreateFileFixup: Package VFS with traditional redirection case.", g_MfrModuleName, dllInstance);
                         DWORD ohCrap = GetFileAttributes(cohorts.WsPackage.c_str());
-                        Log(L"[%d] CreateFileFixup: OhCrap package att = 0x%x", dllInstance, ohCrap);
+                        Log(L"[%s%d] CreateFileFixup: OhCrap package att = 0x%x", g_MfrModuleName, dllInstance, ohCrap);
 #endif
                         if (PathExists(cohorts.WsPackage.c_str()))
                         {
 #if EVENMOREDEBUG
-                            Log(L"[%d] CreateFileFixup: package file exists case.", dllInstance);
+                            Log(L"[%s%d] CreateFileFixup: package file exists case.", g_MfrModuleName, dllInstance);
 #endif
                             if (MFRConfiguration.Ilv_Aware)
                             {
 #if EVENMOREDEBUG
-                                Log(L"[%d] CreateFileFixup: ilvAware case.", dllInstance);
+                                Log(L"[%s%d] CreateFileFixup: ilvAware case.", g_MfrModuleName, dllInstance);
 #endif
                                 retfinal = WRAPPER_CREATEFILE(cohorts.WsPackage, desiredAccess, shareMode, securityAttributes, creationDisposition, flagsAndAttributes, templateFile, dllInstance, debug);
                                 return retfinal;
@@ -522,40 +532,40 @@ HANDLE __stdcall CreateFileFixup(_In_ const CharT* pathName,
                             else
                             {
 #if EVENMOREDEBUG
-                                Log(L"[%d] CreateFileFixup: NOT ilvAware case.", dllInstance);
+                                Log(L"[%s%d] CreateFileFixup: NOT ilvAware case.", g_MfrModuleName, dllInstance);
 #endif
                                 if (!IsADirectoryCase)
                                 {
 #if EVENMOREDEBUG
-                                    Log(L"[%d] CreateFileFixup: NOT directory case.", dllInstance);
+                                    Log(L"[%s%d] CreateFileFixup: NOT directory case.", g_MfrModuleName, dllInstance);
 #endif
                                     // try the redirection path, then the package (COW), then native (possibly COW)
                                     if (cohorts.map.IsAnExclusionToRedirect == mfr::mfr_exclusion_types::not_excluded && 
                                         PathExists(cohorts.WsRedirected.c_str()))
                                     {
 #if MOREDEBUG
-                                        Log(L"[%d] CreateFileFixup: Read only Package VFS but exists in redir, ready to create in redirected area", dllInstance);
+                                        Log(L"[%s%d] CreateFileFixup: Read only Package VFS but exists in redir, ready to create in redirected area", g_MfrModuleName, dllInstance);
 #endif
                                         retfinal = WRAPPER_CREATEFILE(cohorts.WsRedirected, desiredAccess, shareMode, securityAttributes, creationDisposition, flagsAndAttributes, templateFile, dllInstance, debug);
                                         return retfinal;
                                     }
 
                                     ///#if MOREDEBUG
-                                     ///                        Log(L"[%d] CreateFileFixup: Package VFS exists", dllInstance);
+                                     ///                        Log(L"[%s%d] CreateFileFixup: Package VFS exists", g_MfrModuleName, dllInstance);
                                      ///#endif
                                     if (IsAWriteCase)
                                     {
 #if EVENMOREDEBUG
-                                        Log(L"[%d] CreateFileFixup: Write case.", dllInstance);
+                                        Log(L"[%s%d] CreateFileFixup: Write case.", g_MfrModuleName, dllInstance);
 #endif
                                         ///#if MOREDEBUG
-                                           ///                            Log(L"[%d] CreateFileFixup: Cow PkgVfs-->Redirected", dllInstance);
+                                           ///                            Log(L"[%s%d] CreateFileFixup: Cow PkgVfs-->Redirected", g_MfrModuleName, dllInstance);
                                            ///#endif
                                                                        // COW is applicable first.
                                         if (Cow(cohorts.WsPackage, cohorts.WsRedirected, dllInstance, L"CreateFileFixup"))
                                         {
                                             ///#if MOREDEBUG
-                                            ///                                Log(L"[%d] CreateFileFixup: Cow OK, ready to create", dllInstance);
+                                            ///                                Log(L"[%s%d] CreateFileFixup: Cow OK, ready to create", g_MfrModuleName, dllInstance);
                                             ///#endif
                                             retfinal = WRAPPER_CREATEFILE(cohorts.WsRedirected, desiredAccess, shareMode, securityAttributes, creationDisposition, flagsAndAttributes, templateFile, dllInstance, debug);
                                             return retfinal;
@@ -563,7 +573,7 @@ HANDLE __stdcall CreateFileFixup(_In_ const CharT* pathName,
                                         else
                                         {
                                             ///#if MOREDEBUG
-                                            ///                                Log(L"[%d] CreateFileFixup: Cow Bad, ready to create", dllInstance);
+                                            ///                                Log(L"[%s%d] CreateFileFixup: Cow Bad, ready to create", g_MfrModuleName, dllInstance);
                                             ///#endif
                                             retfinal = WRAPPER_CREATEFILE(cohorts.WsPackage, desiredAccess, shareMode, securityAttributes, creationDisposition, flagsAndAttributes, templateFile, dllInstance, debug);
                                             return retfinal;
@@ -572,36 +582,36 @@ HANDLE __stdcall CreateFileFixup(_In_ const CharT* pathName,
                                     else
                                     {
 #if EVENMOREDEBUG
-                                        Log(L"[%d] CreateFileFixup: NOT write case.", dllInstance);
+                                        Log(L"[%s%d] CreateFileFixup: NOT write case.", g_MfrModuleName, dllInstance);
 #endif
 #if MOREDEBUG
-                                        Log(L"[%d] CreateFileFixup: Read only Package VFS but isn't in redirection area, ready to create in package path", dllInstance);
+                                        Log(L"[%s%d] CreateFileFixup: Read only Package VFS but isn't in redirection area, ready to create in package path", g_MfrModuleName, dllInstance);
 #endif
                                         retfinal = WRAPPER_CREATEFILE(cohorts.WsPackage, desiredAccess, shareMode, securityAttributes, creationDisposition, flagsAndAttributes, templateFile, dllInstance, debug);
                                         int eCode = GetLastError();
 #if _DEBUG
-                                        Log(L"[%d] CreateFileFixup: Handle=0x%x eCode=0x%x", dllInstance, retfinal, eCode);
+                                        Log(L"[%s%d] CreateFileFixup: Handle=0x%x eCode=0x%x", g_MfrModuleName, dllInstance, retfinal, eCode);
 #endif
                                         if (retfinal == INVALID_HANDLE_VALUE &&
                                             eCode == ERROR_PATH_NOT_FOUND)
                                         {
 #if _DEBUG
-                                            Log(L"[%d] CreateFileFixup: was path not found in package area.", dllInstance);
+                                            Log(L"[%s%d] CreateFileFixup: was path not found in package area.", g_MfrModuleName, dllInstance);
                                             if (PathParentExists(cohorts.WsRedirected.c_str()))
                                             {
-                                                Log(L"[%d] CreateFileFixup: redirection parent found.", dllInstance);
+                                                Log(L"[%s%d] CreateFileFixup: redirection parent found.", g_MfrModuleName, dllInstance);
                                             }
                                             else
                                             {
-                                                Log(L"[%d] CreateFileFixup: redirection parent not found.", dllInstance);
+                                                Log(L"[%s%d] CreateFileFixup: redirection parent not found.", g_MfrModuleName, dllInstance);
                                             }
                                             if (PathExists(cohorts.WsRedirected.c_str()))
                                             {
-                                                Log(L"[%d] CreateFileFixup: redirection file found.", dllInstance);
+                                                Log(L"[%s%d] CreateFileFixup: redirection file found.", g_MfrModuleName, dllInstance);
                                             }
                                             else
                                             {
-                                                Log(L"[%d] CreateFileFixup: redirection file not found.", dllInstance);
+                                                Log(L"[%s%d] CreateFileFixup: redirection file not found.", g_MfrModuleName, dllInstance);
                                             }
 #endif
                                             // Return the most appropriate error code
@@ -609,7 +619,7 @@ HANDLE __stdcall CreateFileFixup(_In_ const CharT* pathName,
                                                 PathParentExists(cohorts.WsRedirected.c_str()) && !PathExists(cohorts.WsRedirected.c_str()))
                                             {
 #if _DEBUG
-                                                Log(L"[%d] CreateFileFixup: Reset error to File not found.", dllInstance);
+                                                Log(L"[%s%d] CreateFileFixup: Reset error to File not found.", g_MfrModuleName, dllInstance);
 #endif
                                                 SetLastError(ERROR_FILE_NOT_FOUND);
                                             }
@@ -618,7 +628,7 @@ HANDLE __stdcall CreateFileFixup(_In_ const CharT* pathName,
                                     }
 
                                     ///#if MOREDEBUG
-                                    ///                    Log(L"[%d] CreateFileFixup: Package VFS wasn't present.", dllInstance);
+                                    ///                    Log(L"[%s%d] CreateFileFixup: Package VFS wasn't present.", g_MfrModuleName, dllInstance);
                                     ///#endif
                                     if (cohorts.UsingNative)
                                     {
@@ -668,18 +678,18 @@ HANDLE __stdcall CreateFileFixup(_In_ const CharT* pathName,
                         else
                         {
 #if EVENMOREDEBUG
-                            Log(L"[%d] CreateFileFixup: package file does NOT exists case.", dllInstance);
+                            Log(L"[%s%d] CreateFileFixup: package file does NOT exists case.", g_MfrModuleName, dllInstance);
 #endif
                             if (MFRConfiguration.Ilv_Aware)
                             {
 #if EVENMOREDEBUG
-                                Log(L"[%d] CreateFileFixup: ilvAware case.", dllInstance);
+                                Log(L"[%s%d] CreateFileFixup: ilvAware case.", g_MfrModuleName, dllInstance);
 #endif
                                 retfinal = WRAPPER_CREATEFILE(cohorts.WsPackage, desiredAccess, shareMode, securityAttributes, creationDisposition, flagsAndAttributes, templateFile, dllInstance, debug);
                                 if (retfinal == INVALID_HANDLE_VALUE && GetLastError() == ERROR_CANT_ACCESS_FILE)
                                 {
 #if EVENMOREDEBUG
-                                    Log(L"[%d] CreateFileFixup: 1920, somaybe try native path?", dllInstance);
+                                    Log(L"[%s%d] CreateFileFixup: 1920, somaybe try native path?", g_MfrModuleName, dllInstance);
 #endif
                                     if (cohorts.UsingNative)
                                     {
@@ -687,7 +697,7 @@ HANDLE __stdcall CreateFileFixup(_In_ const CharT* pathName,
                                         if (retfinal == INVALID_HANDLE_VALUE && GetLastError() == ERROR_FILE_NOT_FOUND && creationDisposition == OPEN_EXISTING)
                                         {
 #if EVENMOREDEBUG
-                                            Log(L"[%d] CreateFileFixup: 1920, somaybe try redirected path?", dllInstance);
+                                            Log(L"[%s%d] CreateFileFixup: 1920, somaybe try redirected path?", g_MfrModuleName, dllInstance);
 #endif
                                             if (cohorts.UsingNative)
                                             {
@@ -701,17 +711,17 @@ HANDLE __stdcall CreateFileFixup(_In_ const CharT* pathName,
                             else
                             {
 #if EVENMOREDEBUG
-                                Log(L"[%d] CreateFileFixup: NOT ilvAware case.", dllInstance);
+                                Log(L"[%s%d] CreateFileFixup: NOT ilvAware case.", g_MfrModuleName, dllInstance);
 #endif
                                 if (!IsADirectoryCase)
                                 {
 #if EVENMOREDEBUG
-                                    Log(L"[%d] CreateFileFixup: NOT Directory case.", dllInstance);
+                                    Log(L"[%s%d] CreateFileFixup: NOT Directory case.", g_MfrModuleName, dllInstance);
 #endif
                                     if (IsAWriteCase)
                                     {
 #if EVENMOREDEBUG
-                                        Log(L"[%d] CreateFileFixup: write case.", dllInstance);
+                                        Log(L"[%s%d] CreateFileFixup: write case.", g_MfrModuleName, dllInstance);
 #endif
                                         // The file wasn't in the package, so precreate folders and let it rip!
                                         PreCreateFolders(cohorts.WsRedirected, dllInstance, L"CreateFileFixup");
@@ -721,29 +731,29 @@ HANDLE __stdcall CreateFileFixup(_In_ const CharT* pathName,
                                     else
                                     {
 #if EVENMOREDEBUG
-                                        Log(L"[%d] CreateFileFixup: NOT write case, but since file not in package try redirection area.", dllInstance);
+                                        Log(L"[%s%d] CreateFileFixup: NOT write case, but since file not in package try redirection area.", g_MfrModuleName, dllInstance);
 #endif
                                         retfinal = WRAPPER_CREATEFILE(cohorts.WsRedirected, desiredAccess, shareMode, securityAttributes, creationDisposition, flagsAndAttributes, templateFile, dllInstance, debug);
                                         int eCode = GetLastError();
 #if EVENMOREDEBUG
-                                        Log(L"[%d] CreateFileFixup: Handle=0x%x eCode=0x%x", dllInstance, retfinal, eCode);
+                                        Log(L"[%s%d] CreateFileFixup: Handle=0x%x eCode=0x%x", g_MfrModuleName, dllInstance, retfinal, eCode);
 #endif
                                         if (retfinal == INVALID_HANDLE_VALUE &&
                                             eCode == ERROR_PATH_NOT_FOUND)
                                         {
 #if EVENMOREDEBUG
-                                            Log(L"[%d] CreateFileFixup: was path not found in package area.", dllInstance);
+                                            Log(L"[%s%d] CreateFileFixup: was path not found in package area.", g_MfrModuleName, dllInstance);
 #endif
                                             if (PathParentExists(cohorts.WsPackage.c_str()))
                                             {
                                                 // Return the most appropriate error code
-                                                Log(L"[%d] CreateFileFixup:  package parent found, Reset error to File not found.", dllInstance);
+                                                Log(L"[%s%d] CreateFileFixup:  package parent found, Reset error to File not found.", g_MfrModuleName, dllInstance);
                                                 SetLastError(ERROR_FILE_NOT_FOUND);
                                             }
                                             else
                                             {
 #if EVENMOREDEBUG
-                                                Log(L"[%d] CreateFileFixup: package parent not found.", dllInstance);
+                                                Log(L"[%s%d] CreateFileFixup: package parent not found.", g_MfrModuleName, dllInstance);
 #endif
                                             }
                                         }
@@ -753,7 +763,7 @@ HANDLE __stdcall CreateFileFixup(_In_ const CharT* pathName,
                                 else
                                 {
 #if EVENMOREDEBUG
-                                    Log(L"[%d] CreateFileFixup: Directory case.", dllInstance);
+                                    Log(L"[%s%d] CreateFileFixup: Directory case.", g_MfrModuleName, dllInstance);
 #endif
                                     PreCreateFolders(cohorts.WsRedirected.c_str(), dllInstance, L"CreateFileFixup");
                                     retfinal = WRAPPER_CREATEFILE(cohorts.WsRedirected, desiredAccess, shareMode, securityAttributes, creationDisposition, flagsAndAttributes, templateFile, dllInstance, debug);
@@ -852,22 +862,32 @@ HANDLE __stdcall CreateFileFixup(_In_ const CharT* pathName,
                 if (!IsThisUnsupportedForInterceptsNow(cohorts.WsRequested))
                 {
                     std::wstring usePath;
-                    if (IsAWriteCase)
+                    // 5/7/2025 change to make directories that are native use native
+                    if (cohorts.file_mfr.Request_MfrPathType == mfr::mfr_path_types::in_native_area &&
+                        IsADirectoryCase)
                     {
-                        usePath = DetermineIlvPathForWriteOperations(cohorts, dllInstance, moredebug);
-                        // In a redirect to local scenario, we are responsible for pre-creating the local parent folders
-                        // if-and-only-if they are present in the package.
-                        PreCreateLocalFoldersIfNeededForWrite(usePath, cohorts.WsPackage, dllInstance, debug, L"CreateFileFixup");
-                        // In a redirect to local scenario, if the file is not present locally, but is in the package, we are responsible to copy it there first.
-                        CowLocalFoldersIfNeededForWrite(usePath, cohorts.WsPackage, dllInstance, debug, L"CreateFileFixup");
-                        // In a write to package scenario, folders may be needed.
-                        PreCreatePackageFoldersIfIlvNeededForWrite(usePath, dllInstance, debug, L"CreateFileFixup");
+                        usePath = cohorts.WsRequested;
+                        Log("[%s%d] Native Directory requested that exists, use that directory.", g_MfrModuleName, dllInstance);
                     }
                     else
                     {
-                        usePath = DetermineIlvPathForReadOperations(cohorts, dllInstance, moredebug);
-                        // In a redirect to local scenario, we are responsible for determing if source is local or in package
-                        usePath = SelectLocalOrPackageForRead(usePath, cohorts.WsPackage);
+                        if (IsAWriteCase)
+                        {
+                            usePath = DetermineIlvPathForWriteOperations(cohorts, dllInstance, moredebug);
+                            // In a redirect to local scenario, we are responsible for pre-creating the local parent folders
+                            // if-and-only-if they are present in the package.
+                            PreCreateLocalFoldersIfNeededForWrite(usePath, cohorts.WsPackage, dllInstance, debug, L"CreateFileFixup");
+                            // In a redirect to local scenario, if the file is not present locally, but is in the package, we are responsible to copy it there first.
+                            CowLocalFoldersIfNeededForWrite(usePath, cohorts.WsPackage, dllInstance, debug, L"CreateFileFixup");
+                            // In a write to package scenario, folders may be needed.
+                            PreCreatePackageFoldersIfIlvNeededForWrite(usePath, dllInstance, debug, L"CreateFileFixup");
+                        }
+                        else
+                        {
+                            usePath = DetermineIlvPathForReadOperations(cohorts, dllInstance, moredebug);
+                            // In a redirect to local scenario, we are responsible for determing if source is local or in package
+                            usePath = SelectLocalOrPackageForRead(usePath, cohorts.WsPackage);
+                        }
                     }
 
                     retfinal = WRAPPER_CREATEFILE(usePath, desiredAccess, shareMode, securityAttributes, creationDisposition, flagsAndAttributes, templateFile, dllInstance, debug);
@@ -895,17 +915,17 @@ HANDLE __stdcall CreateFileFixup(_In_ const CharT* pathName,
         else
         {
 #if _DEBUG
-            LogString(dllInstance, L"CreateFileFixup [unguarded] for path", pathName);
+            LogString(g_MfrModuleName, dllInstance, L"CreateFileFixup [unguarded] for path", pathName);
 #endif
         }
     }
 #if _DEBUG
     // Fall back to assuming no redirection is necessary if exception
-    LOGGED_CATCHHANDLER(dllInstance, L"CreateFileFixup")
+    LOGGED_CATCHHANDLER_MIN(g_MfrModuleName, dllInstance, L"CreateFileFixup")
 #else
     catch (...)
     {
-        Log(L"[%d] CreateFileFixup Exception=0x%x", dllInstance, GetLastError());
+        Log(L"[%s%d] CreateFileFixup Exception=0x%x", g_MfrModuleName, dllInstance, GetLastError());
     }
 #endif
     if (pathName != nullptr)
@@ -926,7 +946,7 @@ HANDLE __stdcall CreateFileFixup(_In_ const CharT* pathName,
         retfinal = INVALID_HANDLE_VALUE; //impl::CreateFile(pathName, desiredAccess, shareMode, securityAttributes, creationDisposition, flagsAndAttributes, templateFile);
     }
 #if _DEBUG
-    Log(L"[%d] CreateFileFixup (unguarded) returns with handle 0x%x and error=0x%x", dllInstance, retfinal, GetLastError());
+    Log(L"[%s%d] CreateFileFixup (unguarded) returns with handle 0x%x and error=0x%x", g_MfrModuleName, dllInstance, retfinal, GetLastError());
 #endif
     return retfinal;
 }

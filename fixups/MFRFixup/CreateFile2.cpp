@@ -41,11 +41,11 @@ HANDLE  WRAPPER_CREATEFILE2(std::wstring theDestinationFile,
     {
         if (retfinal == INVALID_HANDLE_VALUE)
         {
-            Log(L"[%d] CreateFile2 returns FAILURE 0x%x on file '%s'", dllInstance, GetLastError(), LongDestinationFile.c_str());
+            Log(L"[%s%d] CreateFile2 returns FAILURE 0x%x on file '%s'", g_MfrModuleName, dllInstance, GetLastError(), LongDestinationFile.c_str());
         }
         else
         {
-            Log(L"[%d] CreateFile2 returns handle 0x%x and file '%s'", dllInstance, retfinal, LongDestinationFile.c_str());
+            Log(L"[%s%d] CreateFile2 returns handle 0x%x and file '%s'", g_MfrModuleName, dllInstance, retfinal, LongDestinationFile.c_str());
         }       
     }
     return retfinal;
@@ -83,15 +83,15 @@ HANDLE __stdcall CreateFile2Fixup(
             wPathName = AdjustLocalPipeName(wPathName);
 
 #if _DEBUG
-            LogString(dllInstance, L"CreateFile2Fixup for ", fileName);
+            LogString(g_MfrModuleName, dllInstance, L"CreateFile2Fixup for ", fileName);
 #if MOREDEBUG
-            Log(L"[%d]        DesiredAccess %s", dllInstance, Log_DesiredAccess(desiredAccess).c_str());
-            Log(L"[%d]        ShareMode %s", dllInstance, Log_ShareMode(shareMode).c_str());
-            Log(L"[%d]        creationDisposition %s", dllInstance, Log_CreationDisposition(creationDisposition).c_str());
+            Log(L"[%s%d]        DesiredAccess %s", g_MfrModuleName, dllInstance, Log_DesiredAccess(desiredAccess).c_str());
+            Log(L"[%s%d]        ShareMode %s", g_MfrModuleName, dllInstance, Log_ShareMode(shareMode).c_str());
+            Log(L"[%s%d]        creationDisposition %s", g_MfrModuleName, dllInstance, Log_CreationDisposition(creationDisposition).c_str());
             if (createExParams)
             {
-                Log(L"[%d]        flags %s", dllInstance, Log_FlagsAndAttributes(createExParams->dwFileFlags).c_str());
-                Log(L"[%d]        Attributes %s", dllInstance, Log_FlagsAndAttributes(createExParams->dwFileAttributes).c_str());
+                Log(L"[%s%d]        flags %s", g_MfrModuleName, dllInstance, Log_FlagsAndAttributes(createExParams->dwFileFlags).c_str());
+                Log(L"[%s%d]        Attributes %s", g_MfrModuleName, dllInstance, Log_FlagsAndAttributes(createExParams->dwFileAttributes).c_str());
             }
 #endif
 #endif
@@ -101,14 +101,19 @@ HANDLE __stdcall CreateFile2Fixup(
             
 
             bool IsAWriteCase;
+            bool IsADirectoryCase;
             if (createExParams)
             {
                 IsAWriteCase = IsCreateForChange(desiredAccess, creationDisposition, createExParams->dwFileFlags);
+                IsADirectoryCase = IsCreateForDirectory(desiredAccess, creationDisposition, createExParams->dwFileFlags);
             }
             else
             {
                 IsAWriteCase = IsCreateForChange(desiredAccess, creationDisposition, 0);
+                IsADirectoryCase = IsCreateForDirectory(desiredAccess, creationDisposition, 0);
             }
+            
+
 
 #if NOTOBSOLETE
             if (!IsAWriteCase)
@@ -124,7 +129,7 @@ HANDLE __stdcall CreateFile2Fixup(
 #endif
 
 #if MOREDEBUG
-            Log(L"[%d] CreateFile2Fixup: Could be a write operation=%d", dllInstance, IsAWriteCase);
+            Log(L"[%s%d] CreateFile2Fixup: Could be a write operation=%d", g_MfrModuleName, dllInstance, IsAWriteCase);
 #endif
 
             // This get is may or may not be a write operation.
@@ -132,10 +137,10 @@ HANDLE __stdcall CreateFile2Fixup(
             Cohorts cohorts;
             DetermineCohorts(wPathName, &cohorts, moredebug, dllInstance, L"CreateFile2Fixup");
 #if MOREDEBUG
-            //LogString(dllInstance, L"CreateFileFixup: Cohort redirection", cohorts.WsRedirected.c_str());
-            //LogString(dllInstance, L"CreateFileFixup: Cohort package", cohorts.WsPackage.c_str());
-            //LogString(dllInstance, L"CreateFileFixup: Cohort native", cohorts.WsNative.c_str());
-            Log(L"[%d] CreateFile2Fixup: MfrPathType=%s", dllInstance, MfrFlagTypesString(cohorts.file_mfr.Request_MfrPathType));
+            //LogString(g_MfrModuleName, dllInstance, L"CreateFileFixup: Cohort redirection", cohorts.WsRedirected.c_str());
+            //LogString(g_MfrModuleName, dllInstance, L"CreateFileFixup: Cohort package", cohorts.WsPackage.c_str());
+            //LogString(g_MfrModuleName, dllInstance, L"CreateFileFixup: Cohort native", cohorts.WsNative.c_str());
+            Log(L"[%s%d] CreateFile2Fixup: MfrPathType=%s", g_MfrModuleName, dllInstance, MfrFlagTypesString(cohorts.file_mfr.Request_MfrPathType));
 #endif
             if (!MFRConfiguration.Ilv_Aware)
             {
@@ -185,6 +190,10 @@ HANDLE __stdcall CreateFile2Fixup(
                         (cohorts.map.RedirectionFlags == mfr::mfr_redirect_flags::prefer_redirection_containerized ||
                             cohorts.map.RedirectionFlags == mfr::mfr_redirect_flags::prefer_redirection_if_package_vfs))
                     {
+                        // TODO: Consider if this is a directory, ala CreateFile implementation for this case
+                        // 
+                        
+
                         // try the redirected path, then package (via COW), then native (possibly via COW).
                         if (cohorts.map.IsAnExclusionToRedirect == mfr::mfr_exclusion_types::not_excluded && 
                             PathExists(cohorts.WsRedirected.c_str()))
@@ -483,23 +492,35 @@ HANDLE __stdcall CreateFile2Fixup(
                 if (!IsThisUnsupportedForInterceptsNow(cohorts.WsRequested))
                 {
                     std::wstring usePath;
-                    if (IsAWriteCase)
+
+                    // 5/7/2025 change to make directories that are native use native
+                    if (cohorts.file_mfr.Request_MfrPathType == mfr::mfr_path_types::in_native_area &&
+                        IsADirectoryCase)
                     {
-                        usePath = DetermineIlvPathForWriteOperations(cohorts, dllInstance, moredebug);
-                        // In a redirect to local scenario, we are responsible for pre-creating the local parent folders
-                        // if-and-only-if they are present in the package.
-                        PreCreateLocalFoldersIfNeededForWrite(usePath, cohorts.WsPackage, dllInstance, debug, L"CreateFile2Fixup");
-                        // In a redirect to local scenario, if the file is not present locally, but is in the package, we are responsible to copy it there first.
-                        CowLocalFoldersIfNeededForWrite(usePath, cohorts.WsPackage, dllInstance, debug, L"CreateFile2Fixup");
-                        // In a write to package scenario, folders may be needed.
-                        PreCreatePackageFoldersIfIlvNeededForWrite(usePath, dllInstance, debug, L"CreateFile2Fixup");
+                        usePath = cohorts.WsRequested;
+                        Log("[%s%d] Native Directory requested that exists, use that directory.", g_MfrModuleName, dllInstance);
                     }
                     else
                     {
-                        usePath = DetermineIlvPathForReadOperations(cohorts, dllInstance, moredebug);
-                        // In a redirect to local scenario, we are responsible for determing if source is local or in package
-                        usePath = SelectLocalOrPackageForRead(usePath, cohorts.WsPackage);
+                        if (IsAWriteCase)
+                        {
+                            usePath = DetermineIlvPathForWriteOperations(cohorts, dllInstance, moredebug);
+                            // In a redirect to local scenario, we are responsible for pre-creating the local parent folders
+                            // if-and-only-if they are present in the package.
+                            PreCreateLocalFoldersIfNeededForWrite(usePath, cohorts.WsPackage, dllInstance, debug, L"CreateFile2Fixup");
+                            // In a redirect to local scenario, if the file is not present locally, but is in the package, we are responsible to copy it there first.
+                            CowLocalFoldersIfNeededForWrite(usePath, cohorts.WsPackage, dllInstance, debug, L"CreateFile2Fixup");
+                            // In a write to package scenario, folders may be needed.
+                            PreCreatePackageFoldersIfIlvNeededForWrite(usePath, dllInstance, debug, L"CreateFile2Fixup");
+                        }
+                        else
+                        {
+                            usePath = DetermineIlvPathForReadOperations(cohorts, dllInstance, moredebug);
+                            // In a redirect to local scenario, we are responsible for determing if source is local or in package
+                            usePath = SelectLocalOrPackageForRead(usePath, cohorts.WsPackage);
+                        }
                     }
+
                     retfinal = WRAPPER_CREATEFILE2(usePath, desiredAccess, shareMode, creationDisposition, createExParams, dllInstance, debug);
 
                     // Special case to keep app from getting confused by giving them VFS\AppVPackageRoot instead of C:\.
@@ -525,11 +546,11 @@ HANDLE __stdcall CreateFile2Fixup(
     }
 #if _DEBUG
     // Fall back to assuming no redirection is necessary if exception
-    LOGGED_CATCHHANDLER(dllInstance, L"CreateFile2Fixup")
+    LOGGED_CATCHHANDLER_MIN(g_MfrModuleName, dllInstance, L"CreateFile2Fixup")
 #else
     catch (...)
     {
-        Log(L"[%d] CreateFile2Fixup Exception=0x%x", dllInstance, GetLastError());
+        Log(L"[%s%d] CreateFile2Fixup Exception=0x%x", g_MfrModuleName, dllInstance, GetLastError());
     }
 #endif
     if (fileName != nullptr)
@@ -543,7 +564,7 @@ HANDLE __stdcall CreateFile2Fixup(
         retfinal = INVALID_HANDLE_VALUE; //impl::CreateFile2(fileName, desiredAccess, shareMode, creationDisposition, createExParams);
     }
 #if _DEBUG
-    Log(L"[%d] CreateFile2Fixup returns handle 0x%x", dllInstance, retfinal);
+    Log(L"[%s%d] CreateFile2Fixup returns handle 0x%x", g_MfrModuleName, dllInstance, retfinal);
 #endif
     return retfinal;
 }
