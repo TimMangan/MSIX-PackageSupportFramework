@@ -401,7 +401,8 @@ So if it is important to restrict a user from running multiple copies of a FullT
     {
       "id": "Sample6",
       "executpable": "VFS\\Windows\\Notepad.exe",
-      "preventMultipleInstances": true
+      "preventMultipleInstances": true,
+      "terminateChildren": false
     }
   ],
   "processes": [
@@ -436,6 +437,7 @@ So if it is important to restrict a user from running multiple copies of a FullT
 | | | `'showWindow'` - (Optional, default=true). Boolean. When false, the PowerShell window is hidden. |
 | | | `'scriptPath'` - Relative or full path to a ps1 file. May be in package or on a network share. Use of pseudo-variables or environment variables are supported. |
 | | | `'scriptArguments'` - (Optional) Arguments for the `'scriptPath'` PowerShell file.  Use of pseudo-variables or environment variables are supported. |
+| applications | terminateChildren | (Optioal) Boolean.  When set to true, the launcher will terminate child processes of the launched executable when that process ends.  Defaults to false. |
 | applications | endScript | (Optional) If present, used to define a PowerShell script that will be run after completion of the application executable. |
 | | | `'runOnce'` - (Optional, default=false) Boolean. When true, the script will only be run the first time the user runs the application. |
 | | | `'runInVirtualEnvironment'` - (Optional, default=true) Boolean. When false, the script will run outside of the container.  NOT_IMPLEMENTED |
@@ -457,6 +459,7 @@ The PSF Launcher supports the use of two special purpose "pseudo-variables". The
 |---------|-------|
 | %MsixPackageRoot% | The root folder of the package. While nominally this would be a subfolder under "C:\\Program Files\\WindowsApps" it is possible for the volume to be mounted in other locations. |
 | %MsixWritablePackageRoot% | The package specific redirection location for this user when the FileRedirectionFixup is in use. | 
+| %MsixPackageFamilyName% | This is the combination of the PackageName plus an underscore and the hash. |
 
 ### PsfLauncher Additional Requirements
 PsfLauncher will expect to find, under certain conditions, additional script files with specific names located in the package:

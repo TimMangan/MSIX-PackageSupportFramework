@@ -1,4 +1,6 @@
 # A NOTE ABOUT THIS FORK
+This is the TimMangan fork of the Microsoft MSIX-PackageSupportFramework project.
+
 While Microsoft created the initial open-source project for the Package Support Framework, they have neglected it for some time and seem disinterested in maintaining it, so this fork represents the lastest active branch.
     ![PsfLogo](https://user-images.githubusercontent.com/19534997/151001486-af6b65de-9046-4b23-9112-4916a844e81c.png)
 =======
@@ -124,5 +126,13 @@ To convert an xml configuration to json please use msxsl.exe located in the xmlT
 `msxsl.exe [location of your xml file] -format.xsl -o config.json`
 
 ## Data/Telemetry
-Telemetry datapoint has been hooked to collect usage data and sends it to Microsoft to help improve our products and services. Read Microsoft's [privacy statement to learn more](https://privacy.microsoft.com/en-US/privacystatement). However, data will be collected only when the PSF binaries are used from [Nuget package](https://www.nuget.org/packages?q=packagesupportframework) 
-on Windows 10 devices and only if users have enabled collection of data. The Nuget package has binaries signed and will collect usage data from machine. When the binaries are built locally by cloning the repo or downloading the bits, then telemetry is not collected.
+While the source code retains telemetry interfaces to collect and send telemetry to Microsoft (if enabled), this build of the source disables all telemetry. 
+
+## NUGET PACKAGE
+The purpose of this NuGet package is to provide the resources of the PSF that can be copied by an application that wishes to produce an MSIX package.
+
+The Nuget package has signed binaries, organized under the content folder.  The release version of the PSF is under the psf subfolder, and the debug version of the PSF is under the psfd subfolder.
+
+Under each subfolder are both the 32 and 64 bit versions of the PSF components that have bit-specific names, such as "PslLauncher32.exe" and "PsfLauncher64.exe".  Some of the dependencies of the PSF are bit-specific but the names of the files are the same, so these will be found in subfolders of the psf/psfd names "win32" or "amd64". 
+
+See the PSF documentation wiki at https://github.com/TimMangan/MSIX-PackageSupportFramework/wiki for information on the components and especially dependencies that might be needed.

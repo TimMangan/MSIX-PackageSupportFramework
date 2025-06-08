@@ -237,6 +237,14 @@ int launcher_main(PCWSTR args, int cmdShow) noexcept try
         }
     }
 
+
+    bool terminateChildren = false;
+    auto terminateChildrenObject = appConfig->try_get("terminateChildren");
+    if (terminateChildrenObject)
+    {
+        terminateChildren = terminateChildrenObject->as_boolean().get();
+    }
+
     // Keep these quotes here.  StartProcess assumes there are quotes around the exe file name
     if (check_suffix_if(exeName, L".exe"_isv))
     {
@@ -258,7 +266,7 @@ int launcher_main(PCWSTR args, int cmdShow) noexcept try
 
         //std::filesystem::path procmonMarker1 = packageRoot.append(L"MarkerBeforeLaunch.txt");
         //if (std::filesystem::exists(procmonMarker1)) {} // Do nothing, file doesn't exist, just here to set a marker in ProcessMonitor.
-        HRESULT hr = StartProcess(exePath.c_str(), fullCommandLine.data(), currentDirectory.c_str(), cmdShow, INFINITE,true, 0, NULL);
+        HRESULT hr = StartProcess(exePath.c_str(), fullCommandLine.data(), currentDirectory.c_str(), cmdShow, INFINITE,true, 0, NULL, terminateChildren);
         //std::filesystem::path procmonMarker2 = packageRoot.append(L"MarkerAfterLaunch.txt");
         //if (std::filesystem::exists(procmonMarker2)) {} // Do nothing, file doesn't exist, just here to set a marker in ProcessMonitor.
         if (hr != ERROR_SUCCESS)
@@ -494,7 +502,7 @@ void LaunchMonitorInBackground(std::filesystem::path packageRoot, const wchar_t 
     }
     else
     {
-        THROW_IF_FAILED(StartProcess(executable, (cmd + L" " + arguments).data(), (packageRoot / dirStr).c_str(), cmdShow, INFINITE,true,0, NULL));
+        THROW_IF_FAILED(StartProcess(executable, (cmd + L" " + arguments).data(), (packageRoot / dirStr).c_str(), cmdShow, INFINITE,true,0, NULL,false));
     }
 }
 
@@ -766,6 +774,15 @@ std::wstring ReplaceVariablesInString(std::wstring inputString, bool ReplaceEnvi
         var2rep = L"%MsixWritablePackageRoot%";
         std::filesystem::path writablePackageRootPath = psf::known_folder(FOLDERID_LocalAppData) / std::filesystem::path(L"Packages") / psf::current_package_family_name() / LR"(LocalCache\Local\Microsoft\WritablePackageRoot)";
         repargs = writablePackageRootPath.c_str();
+        while ((pos = outputString.find(var2rep, pos)) != std::string::npos) {
+            outputString.replace(pos, var2rep.length(), repargs);
+            pos += repargs.length();
+        }
+
+        pos = 0u;
+        var2rep = L"%MsixPackageFamilyName%";
+        std::filesystem::path packageFamilyName =  psf::current_package_family_name();
+        repargs = packageFamilyName.c_str();
         while ((pos = outputString.find(var2rep, pos)) != std::string::npos) {
             outputString.replace(pos, var2rep.length(), repargs);
             pos += repargs.length();

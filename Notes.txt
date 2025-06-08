@@ -15,6 +15,11 @@ ideas:
 	   Needs more thought on finding a way to distinguish.
 * EnvVar:  If the value is a string including Registry file pathing {[ProgramFilexX64]} we might need to Reg->VFS path it?  Seems like we'd need to and a quick look at the code suggests that we don't.
 
+v.Next
+  * PsfLauncher/PsfFtaCom: Support for new pseudo-variable in command and script files and arguments, %MsixPackageFamilyName%
+  * PsfLauncher/PsfFtaCom: Added support for terminating the child processes of the launched executable when the launhed executable exits.  This is a new application setting in the Json which is a boolean called 'terminateChildren'.
+							When not present, it defaults to false.
+
 v.2025.05.11
   * PsfLauncher: Fix to support shortcuts to files that don't have an default FTA at the client.  The launcher will now launch "openwith.exe" to let the user pick an app outside this container.
   * MfrFixup:  Fixes to file mappings. One involving directories, the other when ILV is involved for file listings such as dialogs.

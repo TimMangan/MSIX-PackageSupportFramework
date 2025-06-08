@@ -3,6 +3,7 @@ The PSF Runtime serves several purposes.
 * It provides an intercept for detouring `CreateProcess` to ensure that:
 * * Any child process will run inside the container, along with grandchildren.
 * * Any child process gets the PSF Runtime injected into it. 
+* * If requested, child processes of the created process are terminated upon completion of the created process. 
 * It provides an intercept for detouring `SetDllDirectory` and `AddDllDirectory[A/W]` to fix up path information.
 * It is responsible for loading and parsing the `config.json` DOM as well as loading any configured fixup dlls for the current executable. 
 * Finally, it exposes a set of utility functions collectively referred to as the "PSF Framework" for use by the individual fixup dlls. This includes helpers for interop with the Detours library, functions for querying information about the current package/app id, and a set of functions for querying information from the `config.json` DOM. See [psf_runtime.h](../include/psf_runtime.h) for a more complete idea of this API surface as well as [psf_config.h](../include/psf_config.h) for an idea of how the JSON data is exposed.

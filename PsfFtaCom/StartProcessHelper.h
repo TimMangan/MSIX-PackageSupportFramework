@@ -3,8 +3,10 @@
 #include <psf_logging.h>
 #include "Globals.h"
 #include <wil\resource.h>
+#include <tlhelp32.h>
 
-HRESULT StartProcess(LPCWSTR applicationName, LPWSTR commandLine, LPCWSTR currentDirectory, int cmdShow, DWORD timeout, bool inheritHandles, DWORD initialCreationFlags, LPPROC_THREAD_ATTRIBUTE_LIST attributeList = nullptr)
+
+HRESULT StartProcess(LPCWSTR applicationName, LPWSTR commandLine, LPCWSTR currentDirectory, int cmdShow, DWORD timeout, bool inheritHandles, DWORD initialCreationFlags, LPPROC_THREAD_ATTRIBUTE_LIST attributeList = nullptr, bool terminateChidren = false)
 {
 
     STARTUPINFOEXW startupInfoEx =
@@ -51,6 +53,7 @@ HRESULT StartProcess(LPCWSTR applicationName, LPWSTR commandLine, LPCWSTR curren
     }
 
     RETURN_HR_IF(HRESULT_FROM_WIN32(ERROR_INVALID_HANDLE), processInfo.hProcess == INVALID_HANDLE_VALUE);
+    DWORD parentPID = processInfo.dwProcessId;
     DWORD waitResult = ::WaitForSingleObject(processInfo.hProcess, timeout);
     RETURN_LAST_ERROR_IF_MSG(waitResult != WAIT_OBJECT_0, "Waiting operation failed unexpectedly.");
 
@@ -60,10 +63,37 @@ HRESULT StartProcess(LPCWSTR applicationName, LPWSTR commandLine, LPCWSTR curren
     CloseHandle(processInfo.hProcess);
     CloseHandle(processInfo.hThread);
 
+    if (terminateChidren)
+    {
+        HANDLE hSnapshot = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
+        if (hSnapshot != INVALID_HANDLE_VALUE)
+        {
+            PROCESSENTRY32 pe32;
+            pe32.dwSize = sizeof(PROCESSENTRY32);
+
+            if (Process32First(hSnapshot, &pe32))
+            {
+                do
+                {
+                    if (pe32.th32ParentProcessID == parentPID)
+                    {
+                        HANDLE hProcess = OpenProcess(PROCESS_TERMINATE, FALSE, pe32.th32ProcessID);
+                        if (hProcess != NULL)
+                        {
+                            TerminateProcess(hProcess, 0);
+                            CloseHandle(hProcess);
+                        }
+                    }
+                } while (Process32Next(hSnapshot, &pe32));
+            }
+            CloseHandle(hSnapshot);
+        }
+    }
+
     return ERROR_SUCCESS;  // Some apps return codes even when happy.
 }
 
-HRESULT StartProcessAsUser(HANDLE hUserToken, LPCWSTR applicationName, LPWSTR commandLine, LPCWSTR currentDirectory, int cmdShow, DWORD timeout, bool inheritHandles, DWORD initialCreationFlags, LPPROC_THREAD_ATTRIBUTE_LIST attributeList = nullptr)
+HRESULT StartProcessAsUser(HANDLE hUserToken, LPCWSTR applicationName, LPWSTR commandLine, LPCWSTR currentDirectory, int cmdShow, DWORD timeout, bool inheritHandles, DWORD initialCreationFlags, LPPROC_THREAD_ATTRIBUTE_LIST attributeList = nullptr, bool terminateChidren = false)
 {
 
     STARTUPINFOEXW startupInfoEx =
@@ -111,6 +141,7 @@ HRESULT StartProcessAsUser(HANDLE hUserToken, LPCWSTR applicationName, LPWSTR co
     }
 
     RETURN_HR_IF(HRESULT_FROM_WIN32(ERROR_INVALID_HANDLE), processInfo.hProcess == INVALID_HANDLE_VALUE);
+    DWORD parentPID = processInfo.dwProcessId;
     DWORD waitResult = ::WaitForSingleObject(processInfo.hProcess, timeout);
     RETURN_LAST_ERROR_IF_MSG(waitResult != WAIT_OBJECT_0, "Waiting operation failed unexpectedly.");
 
@@ -120,6 +151,32 @@ HRESULT StartProcessAsUser(HANDLE hUserToken, LPCWSTR applicationName, LPWSTR co
     CloseHandle(processInfo.hProcess);
     CloseHandle(processInfo.hThread);
 
+    if (terminateChidren)
+    {
+        HANDLE hSnapshot = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
+        if (hSnapshot != INVALID_HANDLE_VALUE)
+        {
+            PROCESSENTRY32 pe32;
+            pe32.dwSize = sizeof(PROCESSENTRY32);
+
+            if (Process32First(hSnapshot, &pe32))
+            {
+                do
+                {
+                    if (pe32.th32ParentProcessID == parentPID)
+                    {
+                        HANDLE hProcess = OpenProcess(PROCESS_TERMINATE, FALSE, pe32.th32ProcessID);
+                        if (hProcess != NULL)
+                        {
+                            TerminateProcess(hProcess, 0);
+                            CloseHandle(hProcess);
+                        }
+                    }
+                } while (Process32Next(hSnapshot, &pe32));
+            }
+            CloseHandle(hSnapshot);
+        }
+    }
     return ERROR_SUCCESS;  // Some apps return codes even when happy.
 }
 

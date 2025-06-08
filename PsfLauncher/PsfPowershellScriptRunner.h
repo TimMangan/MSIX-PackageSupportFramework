@@ -47,17 +47,18 @@ public:
 
 		// Note: the following path must be kept in sync with the FileRedirectionFixup PathRedirection.cpp
 		std::filesystem::path writablePackageRootPath = psf::known_folder(FOLDERID_LocalAppData) / std::filesystem::path(L"Packages") / psf::current_package_family_name() / LR"(LocalCache\Local\Microsoft\WritablePackageRoot)";
+		std::filesystem::path packageFamilyName = psf::current_package_family_name();
 
 		if (startScriptInformationObject)
 		{
-			this->m_startingScriptInformation = MakeScriptInformation(startScriptInformationObject, stopOnScriptError, scriptExecutionMode, currentDirectory, packageRootDirectory, writablePackageRootPath);
+			this->m_startingScriptInformation = MakeScriptInformation(startScriptInformationObject, stopOnScriptError, scriptExecutionMode, currentDirectory, packageRootDirectory, writablePackageRootPath, packageFamilyName);
 			this->m_startingScriptInformation.doesScriptExistInConfig = true;
 		}
 
 		if (endScriptInformationObject)
 		{
 			//Ending script ignores stopOnScriptError.  Keep it the default value
-			this->m_endingScriptInformation = MakeScriptInformation(endScriptInformationObject, false, scriptExecutionMode, currentDirectory, packageRootDirectory, writablePackageRootPath);
+			this->m_endingScriptInformation = MakeScriptInformation(endScriptInformationObject, false, scriptExecutionMode, currentDirectory, packageRootDirectory, writablePackageRootPath, packageFamilyName);
 			this->m_endingScriptInformation.doesScriptExistInConfig = true;
 
 			//Ending script ignores this value.  Keep true to make sure
@@ -315,12 +316,12 @@ private:
 			if (inside)
 			{
 				//LogString(L"DEBUG: Starting the script (inside) and waiting to finish", script.commandString.data());
-				startScriptResult = StartProcess(script.PsPath.c_str(), script.commandString.data(), script.currentDirectory.c_str(), script.showWindowAction, script.timeout, true, 0, m_AttributeListInside.get());
+				startScriptResult = StartProcess(script.PsPath.c_str(), script.commandString.data(), script.currentDirectory.c_str(), script.showWindowAction, script.timeout, true, 0, m_AttributeListInside.get(),false);
 			}
 			else
 			{
 				//LogString(L"DEBUG: Starting the script (outside) and waiting to finish", script.commandString.data());
-				startScriptResult = StartProcess(script.PsPath.c_str(), script.commandString.data(), script.currentDirectory.c_str(), script.showWindowAction, script.timeout, true, 0, m_AttributeListOutside.get());
+				startScriptResult = StartProcess(script.PsPath.c_str(), script.commandString.data(), script.currentDirectory.c_str(), script.showWindowAction, script.timeout, true, 0, m_AttributeListOutside.get(),false);
 			}
 			//HRESULT startScriptResult = StartProcess(nullptr, script.commandString.data(), script.currentDirectory.c_str(), script.showWindowAction, script.timeout, true, 0, nullptr);
 			if (startScriptResult == 0xC000013A)
@@ -346,24 +347,24 @@ private:
 			if (inside)
 			{
 				//LogString(L"DEBUG: Starting the script (inside) without waiting to finish", script.commandString.data());
-				std::thread pwrShellThread = std::thread(StartProcess, script.PsPath.c_str(), script.commandString.data(), script.currentDirectory.c_str(), script.showWindowAction, script.timeout, true, 0, m_AttributeListInside.get());
+				std::thread pwrShellThread = std::thread(StartProcess, script.PsPath.c_str(), script.commandString.data(), script.currentDirectory.c_str(), script.showWindowAction, script.timeout, true, 0, m_AttributeListInside.get(),false);
 				pwrShellThread.detach();
 			}
 			else
 			{
 				//LogString(L"DEBUG: Starting the script (outside) without waiting to finish", script.commandString.data());
-				std::thread pwrShellThread = std::thread(StartProcess, script.PsPath.c_str(), script.commandString.data(), script.currentDirectory.c_str(), script.showWindowAction, script.timeout, true, 0, m_AttributeListOutside.get());
+				std::thread pwrShellThread = std::thread(StartProcess, script.PsPath.c_str(), script.commandString.data(), script.currentDirectory.c_str(), script.showWindowAction, script.timeout, true, 0, m_AttributeListOutside.get(),false);
 				pwrShellThread.detach();
 			}
 		}
 	}
 
-	ScriptInformation MakeScriptInformation(const psf::json_object* scriptInformation, bool stopOnScriptError, std::wstring scriptExecutionMode, std::filesystem::path currentDirectory, std::filesystem::path packageRoot, std::filesystem::path packageWritableRoot)
+	ScriptInformation MakeScriptInformation(const psf::json_object* scriptInformation, bool stopOnScriptError, std::wstring scriptExecutionMode, std::filesystem::path currentDirectory, std::filesystem::path packageRoot, std::filesystem::path packageWritableRoot, std::filesystem::path packageFamilyName)
 	{
 		ScriptInformation scriptStruct;
 		scriptStruct.PsPath = PathToPowershell();
-		scriptStruct.scriptPath = ReplacePsuedoRootVariables(GetScriptPath(*scriptInformation), packageRoot, packageWritableRoot);
-		scriptStruct.commandString = ReplacePsuedoRootVariables(MakeCommandString(*scriptInformation, scriptStruct.PsPath, scriptExecutionMode, scriptStruct.scriptPath, packageRoot), packageRoot, packageWritableRoot);
+		scriptStruct.scriptPath = ReplacePsuedoRootVariables(GetScriptPath(*scriptInformation), packageRoot, packageWritableRoot, packageFamilyName);
+		scriptStruct.commandString = ReplacePsuedoRootVariables(MakeCommandString(*scriptInformation, scriptStruct.PsPath, scriptExecutionMode, scriptStruct.scriptPath, packageRoot), packageRoot, packageWritableRoot, packageFamilyName);
 		scriptStruct.timeout = GetTimeout(*scriptInformation);
 		scriptStruct.shouldRunOnce = GetRunOnce(*scriptInformation);
 		scriptStruct.runInVirtualEnvironment = GetRunInVirtualEnvironment(*scriptInformation);
@@ -385,13 +386,14 @@ private:
 	}
 
 
-	std::wstring ReplacePsuedoRootVariables(std::wstring inString, std::filesystem::path packageRoot, std::filesystem::path packageWritableRoot)
+	std::wstring ReplacePsuedoRootVariables(std::wstring inString, std::filesystem::path packageRoot, std::filesystem::path packageWritableRoot, std::filesystem::path packageFamilyName)
 	{
 		//Allow for a substitution in the strings for a new pseudo variable %MsixPackageRoot% so that arguments can point to files
 		//inside the package using a syntax relative to the package root rather than rely on VFS pathing which can't kick in yet.
 		std::wstring outString = inString;
 		std::wstring var2rep1 = L"%MsixPackageRoot%";
 		std::wstring var2rep2 = L"%MsixWritablePackageRoot%";
+		std::wstring var2rep3 = L"%MsixPackageFamilyName%";
 
 		std::wstring::size_type pos1 = 0u;
 		std::wstring repargs1 = packageRoot.c_str();
@@ -399,11 +401,19 @@ private:
 			outString.replace(pos1, var2rep1.length(), repargs1);
 			pos1 += repargs1.length();
 		}
+
 		std::wstring::size_type pos2 = 0u;
 		std::wstring repargs2 = packageWritableRoot.c_str();
 		while ((pos2 = outString.find(var2rep2, pos2)) != std::string::npos) {
 			outString.replace(pos2, var2rep2.length(), repargs2);
 			pos2 += repargs2.length();
+		}
+
+		std::wstring::size_type pos3 = 0u;
+		std::wstring repargs3 = packageFamilyName.c_str();
+		while ((pos3 = outString.find(var2rep3, pos3)) != std::string::npos) {
+			outString.replace(pos3, var2rep3.length(), repargs3);
+			pos2 += repargs3.length();
 		}
 		return outString;
 	}

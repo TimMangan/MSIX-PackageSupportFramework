@@ -164,6 +164,7 @@ int launcher_main(PCWSTR wargs, int cmdShow) noexcept try
         preventMultiple = preventMultipleObject->as_boolean().get();
     }
 
+
     if (preventMultiple)
     {
         Log(L"[%s%d] Checking for existing instances of %ls", PsfFtaComName, 0, targetFilePath.c_str());
@@ -177,11 +178,18 @@ int launcher_main(PCWSTR wargs, int cmdShow) noexcept try
     }
 
 
+    bool terminateChildren = false;
+    auto terminateChildrenObject = appConfig->try_get("terminateChildren");
+    if (terminateChildrenObject)
+    {
+        terminateChildren = terminateChildrenObject->as_boolean().get();
+    }
+
 
     LogString(PsfFtaComName, 0, L"TargetFilePath", targetFilePath.c_str());
     LogString(PsfFtaComName, 0, L"TargetArgs", targetArgs.c_str());
     std::wstring quotedFullLine = L"\"" + targetFilePath + L"\" " + targetArgs.c_str();
-    HRESULT hr = StartProcess(targetFilePath.c_str(), quotedFullLine.data(), currentDirectory.c_str(), cmdShow, INFINITE, true, 0, NULL);
+    HRESULT hr = StartProcess(targetFilePath.c_str(), quotedFullLine.data(), currentDirectory.c_str(), cmdShow, INFINITE, true, 0, NULL, terminateChildren);
     if (hr != ERROR_SUCCESS)
     {
         Log(L"[%s%d] Error return from launching process second try, try again 0x%x.", PsfFtaComName, 0, GetLastError());
@@ -400,6 +408,16 @@ std::wstring ReplaceVariablesInString(std::wstring inputString, bool ReplaceEnvi
         var2rep = L"%MsixWritablePackageRoot%";
         std::filesystem::path writablePackageRootPath = psf::known_folder(FOLDERID_LocalAppData) / std::filesystem::path(L"Packages") / psf::current_package_family_name() / LR"(LocalCache\Local\Microsoft\WritablePackageRoot)";
         repargs = writablePackageRootPath.c_str();
+        while ((pos = outputString.find(var2rep, pos)) != std::string::npos) {
+            outputString.replace(pos, var2rep.length(), repargs);
+            pos += repargs.length();
+        }
+
+
+        pos = 0u;
+        var2rep = L"%MsixPackageFamilyName%";
+        std::filesystem::path packageFamilyName =  psf::current_package_family_name();
+        repargs = packageFamilyName.c_str();
         while ((pos = outputString.find(var2rep, pos)) != std::string::npos) {
             outputString.replace(pos, var2rep.length(), repargs);
             pos += repargs.length();
