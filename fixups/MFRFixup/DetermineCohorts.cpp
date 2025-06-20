@@ -372,10 +372,6 @@ void DetermineCohorts(std::wstring requestedPath, Cohorts *cohorts, bool UseMore
         {
             Log(L"[%s%d] %s: DetermineCohorts: Request is in_redirection_area_other.", g_MfrModuleName, dllInstance, FixupName);
         }
-        cohorts->WsRedirected = cohorts->WsRequested;
-        cohorts->WsPackage = cohorts->WsRequested;
-        cohorts->WsNative = cohorts->WsRequested;
-        cohorts->map = mfr::MakeInvalidMapping();
         cohorts->UsingNative = false;
         break;
     case mfr::mfr_path_types::is_Protocol:
@@ -390,10 +386,6 @@ void DetermineCohorts(std::wstring requestedPath, Cohorts *cohorts, bool UseMore
         {
             Log(L"[%s%d] %s: DetermineCohorts: Request is in_non_redirectable_areas.", g_MfrModuleName, dllInstance, FixupName);
         }
-        cohorts->map = mfr::MakeInvalidMapping();
-        cohorts->WsRedirected = cohorts->WsRequested;
-        cohorts->WsPackage = cohorts->WsRequested;
-        cohorts->WsNative = cohorts->WsRequested;
         cohorts->UsingNative = false;
         break;
     }
