@@ -7,6 +7,8 @@
 #include "FID.h"
 #include "PathUtilities.h"
 #include <psf_logging.h>
+#include <algorithm>
+#include <cctype>
 
 namespace mfr
 {
@@ -94,7 +96,9 @@ namespace mfr
 
         //Log(L"[%s%d] FID_RootDrive  %s", g_MfrModuleName, dllInstance, FID_RootDrive.generic_wstring().c_str());
         //if (!pathString_isSubsetOf_Path(FID_RootDrive.generic_wstring().c_str(), path))
-        if (!pathString_isSubsetOf_Path(FID_RootDrive.generic_wstring().c_str(), forwardPath))
+        std::wstring rootDriveLower = FID_RootDrive.generic_wstring();
+        std::transform(rootDriveLower.begin(), rootDriveLower.end(), rootDriveLower.begin(), std::towlower);
+        if (!pathString_isSubsetOf_Path(rootDriveLower.c_str(), forwardPath))
         {
             return mfr_path_types::in_other_drive_area;
         }
