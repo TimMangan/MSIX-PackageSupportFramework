@@ -49,7 +49,7 @@ namespace mfr
 
     mfr_path_types Get_ManagedPathTypeForDriveAbsolute(std::filesystem::path path)
     {
-        std::filesystem::path forwardPath = path.generic_string();  // get rid of "/" issue by changing all "\\" to "/" for the comparison.
+        std::filesystem::path forwardPath = path.generic_wstring();  // get rid of "/" issue by changing all "\\" to "/" for the comparison.
         //if (pathString_isSubsetOf_Path(g_writablePackageRootPath.generic_wstring().c_str(), path))
         if (pathString_isSubsetOf_Path(g_writablePackageRootPath.generic_wstring().c_str(), forwardPath))
         {
@@ -96,9 +96,7 @@ namespace mfr
 
         //Log(L"[%s%d] FID_RootDrive  %s", g_MfrModuleName, dllInstance, FID_RootDrive.generic_wstring().c_str());
         //if (!pathString_isSubsetOf_Path(FID_RootDrive.generic_wstring().c_str(), path))
-        std::wstring rootDriveLower = FID_RootDrive.generic_wstring();
-        std::transform(rootDriveLower.begin(), rootDriveLower.end(), rootDriveLower.begin(), std::towlower);
-        if (!pathString_isSubsetOf_Path(rootDriveLower.c_str(), forwardPath))
+        if (!pathString_isSubsetOf_Path(FID_RootDrive.generic_wstring().c_str(), forwardPath))
         {
             return mfr_path_types::in_other_drive_area;
         }

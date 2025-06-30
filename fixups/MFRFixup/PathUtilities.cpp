@@ -106,7 +106,7 @@ bool pathString_isExactMatchOf_Path(const char* pathstring, std::filesystem::pat
 /// </summary>
 bool pathString_isSubsetOf_Path(const wchar_t* pathstring, std::filesystem::path& Path)
 {
-    if (wcsncmp(pathstring, Path.wstring().c_str(), wcslen(pathstring)) == 0)  
+    if (_wcsnicmp(pathstring, Path.generic_wstring().c_str(), wcslen(pathstring)) == 0)  
     {
         return true;
     }
@@ -119,7 +119,7 @@ bool pathString_isSubsetOf_Path(const wchar_t* pathstring, std::filesystem::path
 }
 bool pathString_isSubsetOf_Path(const char* pathstring, std::filesystem::path& Path)
 {
-    if (strncmp(pathstring, Path.string().c_str(), strlen(pathstring)) == 0)
+    if (_strnicmp(pathstring, Path.generic_string().c_str(), strlen(pathstring)) == 0)
     {
         return true;
     }
