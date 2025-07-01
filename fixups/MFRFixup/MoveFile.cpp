@@ -12,7 +12,7 @@
 ///     the old file in place.
 
 #if _DEBUG
-//#define MOREDEBUG 1
+#define MOREDEBUG 1
 #endif
 
 #include <errno.h>
@@ -64,6 +64,30 @@ BOOL __stdcall MoveFileFixup(_In_ const CharT* existingFileName, _In_ const Char
             wExistingFileName = AdjustBadUNC(wExistingFileName, dllInstance, L"MoveFileFixup (existing)");
             wNewFileName = AdjustBadUNC(wNewFileName, dllInstance, L"MoveFileFixup (new)");
 
+
+            /// Draw.IO problem with getting confused
+            std::wstring AAfrom = L"\\AppData\\AppData";
+            std::wstring AAto = L"\\AppData\\Roaming";
+            std::size_t AApos = wExistingFileName.find(AAfrom);
+            if (AApos != std::wstring::npos)
+            {
+                wExistingFileName.replace(AApos, AAfrom.length(), AAto);
+#if _DEBUG
+                LogString(g_MfrModuleName, dllInstance, L"MoveFileFixup existing adjustment", wExistingFileName.c_str());
+#endif
+            }
+            // Might get this somewhere too
+            std::wstring ALfrom = L"\\AppData\\Local AppData";
+            std::wstring ALto = L"\\AppData\\Local";
+            std::size_t ALpos = wExistingFileName.find(ALfrom);
+            if (ALpos != std::wstring::npos)
+            {
+                wExistingFileName.replace(ALpos, ALfrom.length(), ALto);
+#if _DEBUG
+                LogString(g_MfrModuleName, dllInstance, L"MoveFileFixup existing adjustment", wExistingFileName.c_str());
+#endif
+            }
+
             Cohorts cohortsExisting;
             DetermineCohorts(wExistingFileName, &cohortsExisting, moredebug, dllInstance, L"MoveFileFixup (existingFile)");
 
@@ -109,7 +133,7 @@ BOOL __stdcall MoveFileFixup(_In_ const CharT* existingFileName, _In_ const Char
                             UseExistingFile = cohortsExisting.WsPackage;
                             ExistingFileIsPackagePath = true;
                         }
-                        else //if (cohortsExisting.UsingNative && PathExists(cohortsExisting.WsNative) or not since this is what was requested
+                        else //if (cohortsExisting.NativeIsValidOptionInScenario && PathExists(cohortsExisting.WsNative) or not since this is what was requested
                         {
                             UseExistingFile = cohortsExisting.WsRequested;
                         }
@@ -162,7 +186,7 @@ BOOL __stdcall MoveFileFixup(_In_ const CharT* existingFileName, _In_ const Char
                             UseExistingFile = cohortsExisting.WsPackage;
                             ExistingFileIsPackagePath = true;
                         }
-                        else if (cohortsExisting.UsingNative &&
+                        else if (cohortsExisting.NativeIsValidOptionInScenario &&
                             PathExists(cohortsExisting.WsNative.c_str()))
                         {
                             UseExistingFile = cohortsExisting.WsNative;
@@ -188,7 +212,7 @@ BOOL __stdcall MoveFileFixup(_In_ const CharT* existingFileName, _In_ const Char
                             UseExistingFile = cohortsExisting.WsPackage;
                             ExistingFileIsPackagePath = true;
                         }
-                        else if (cohortsExisting.UsingNative &&
+                        else if (cohortsExisting.NativeIsValidOptionInScenario &&
                             PathExists(cohortsExisting.WsNative.c_str()))
                         {
                             UseExistingFile = cohortsExisting.WsNative;

@@ -101,16 +101,16 @@ HANDLE __stdcall CreateFile2Fixup(
             
 
             bool IsAWriteCase;
-            bool IsADirectoryCase;
+            bool IsPossibleDirectoryCase;
             if (createExParams)
             {
                 IsAWriteCase = IsCreateForChange(desiredAccess, creationDisposition, createExParams->dwFileFlags);
-                IsADirectoryCase = IsCreateForDirectory(desiredAccess, creationDisposition, createExParams->dwFileFlags);
+                IsPossibleDirectoryCase = IsPossibleCreateForDirectory(desiredAccess, creationDisposition, createExParams->dwFileFlags);
             }
             else
             {
                 IsAWriteCase = IsCreateForChange(desiredAccess, creationDisposition, 0);
-                IsADirectoryCase = IsCreateForDirectory(desiredAccess, creationDisposition, 0);
+                IsPossibleDirectoryCase = IsPossibleCreateForDirectory(desiredAccess, creationDisposition, 0);
             }
             
 
@@ -130,6 +130,7 @@ HANDLE __stdcall CreateFile2Fixup(
 
 #if MOREDEBUG
             Log(L"[%s%d] CreateFile2Fixup: Could be a write operation=%d", g_MfrModuleName, dllInstance, IsAWriteCase);
+            Log(L"[%s%d] CreateFile2Fixup: Is possibly a directory operation=%d", g_MfrModuleName, dllInstance, IsPossibleDirectoryCase);
 #endif
 
             // This get is may or may not be a write operation.
@@ -225,7 +226,7 @@ HANDLE __stdcall CreateFile2Fixup(
                                 return retfinal;
                             }
                         }
-                        if (cohorts.UsingNative &&
+                        if (cohorts.NativeIsValidOptionInScenario &&
                             PathExists(cohorts.WsNative.c_str()))
                         {
                             if (IsAWriteCase)
@@ -383,7 +384,7 @@ HANDLE __stdcall CreateFile2Fixup(
                                 }
                             }
                         }
-                        if (cohorts.UsingNative &&
+                        if (cohorts.NativeIsValidOptionInScenario &&
                             PathExists(cohorts.WsNative.c_str()))
                         {
                             if (IsAWriteCase)
@@ -444,7 +445,7 @@ HANDLE __stdcall CreateFile2Fixup(
                                 return retfinal;
                             }
                         }
-                        if (cohorts.UsingNative &&
+                        if (cohorts.NativeIsValidOptionInScenario &&
                             PathExists(cohorts.WsNative.c_str()))
                         {
                             if (IsAWriteCase)
@@ -491,16 +492,22 @@ HANDLE __stdcall CreateFile2Fixup(
                 // ILV in use
                 if (!IsThisUnsupportedForInterceptsNow(cohorts.WsRequested))
                 {
-                    std::wstring usePath;
+                    std::wstring usePath = L"";
 
                     // 5/7/2025 change to make directories that are native use native
                     if (cohorts.file_mfr.Request_MfrPathType == mfr::mfr_path_types::in_native_area &&
-                        IsADirectoryCase)
+                        IsPossibleDirectoryCase)
                     {
-                        usePath = cohorts.WsRequested;
-                        Log("[%s%d] Native Directory requested that exists, use that directory.", g_MfrModuleName, dllInstance);
+                        // Test if the native path exists and it is actually a directory, if so then use the native path (avoid for Draw.IO config issue)
+                        DWORD att = ::GetFileAttributes(cohorts.WsNative.c_str());
+                        if (att != INVALID_FILE_ATTRIBUTES &&
+                            (att & FILE_ATTRIBUTE_DIRECTORY) != 0)
+                        {
+                            usePath = cohorts.WsRequested;
+                            Log("[%s%d] Native Directory requested that exists, use that directory.", g_MfrModuleName, dllInstance);
+                        }
                     }
-                    else
+                    if (usePath.length() == 0)
                     {
                         if (IsAWriteCase)
                         {

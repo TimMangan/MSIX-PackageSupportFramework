@@ -46,6 +46,7 @@
 #include "FindData3.h"
 #include "FindFirstHelpers.h"
 #include "DetermineCohorts.h"
+#include "FID.h"
 
 //#ifdef _M_IX86
 #pragma comment(linker, "/EXPORT:FindFirstFileFixupAnsi_Fixup=impl::FindFirstFileW.ansi")  // A test to see if exporting these names helps ProcessMonitor stack traces.
@@ -54,6 +55,17 @@
 #pragma comment(linker, "/EXPORT:FindFirstFileFixupAnsi_Fixup=impl::FindFirstFileW.ansi")  // A test to see if exporting these names helps ProcessMonitor stack traces.
 #pragma comment(linker, "/EXPORT:FindFirstFileFixupWide_Fixup=impl::FindFirstFileW.wide")  // A test to see if exporting these names helps ProcessMonitor stack traces.
 //#endif
+
+bool FindFirstHasSpecialCharacters(std::wstring wFileName)
+{
+    std::wstring wilds = L"*?";
+    size_t wildOf = wFileName.find_first_of(wilds);
+    if (wildOf == std::wstring::npos)
+    {
+        return false;
+    }
+    return true;
+}
 
 template <typename CharT>
 HANDLE __stdcall FindFirstFileFixup(_In_ const CharT* fileName, _Out_ win32_find_data_t<CharT>* findFileData) noexcept try
@@ -81,11 +93,11 @@ HANDLE __stdcall FindFirstFileFixup(_In_ const CharT* fileName, _Out_ win32_find
 #if _DEBUG
         LogString(g_MfrModuleName, dllInstance, L"FindFirstFileFixup: for fileName", fileName);
 #endif
-       
+
         wfileName = AdjustBadUNC(wfileName, dllInstance, L"FindFirstFileFixup");
 
         // Determine possible paths involved
-        Cohorts cohorts; 
+        Cohorts cohorts;
         DetermineCohorts(wfileName, &cohorts, moreDebug, dllInstance, L"FindFirstFileFixup");
 
 
@@ -93,7 +105,7 @@ HANDLE __stdcall FindFirstFileFixup(_In_ const CharT* fileName, _Out_ win32_find
         Log(L"[%s%d] FindFirstFileFixup:  Adjusted Path=%s", g_MfrModuleName, dllInstance, wfileName.c_str());
         Log(L"[%s%d] FindFirstFileFixup:      RedirPath=%s", g_MfrModuleName, dllInstance, cohorts.WsRedirected.c_str());
         Log(L"[%s%d] FindFirstFileFixup:    PackagePath=%s", g_MfrModuleName, dllInstance, cohorts.WsPackage.c_str());
-        if (cohorts.UsingNative)
+        if (cohorts.NativeIsValidOptionInScenario)
         {
             Log(L"[%s%d] FindFirstFileFixup:     NativePath=%s", g_MfrModuleName, dllInstance, cohorts.WsNative.c_str());
         }
@@ -102,6 +114,13 @@ HANDLE __stdcall FindFirstFileFixup(_In_ const CharT* fileName, _Out_ win32_find
             Log(L"[%s%d] FindFirstFileFixup:  NO NativePath", g_MfrModuleName, dllInstance);
         }
 #endif
+
+
+
+
+
+
+
 
         //
 
@@ -216,7 +235,7 @@ HANDLE __stdcall FindFirstFileFixup(_In_ const CharT* fileName, _Out_ win32_find
         // save for next level
         findData = (result->find_handles[Result_Redirected] || result->find_handles[Result_Package] || psf::is_ansi<CharT>) ? &result->cached_data : wideData;
 
-        if (cohorts.UsingNative)
+        if (cohorts.NativeIsValidOptionInScenario)
         {
             rldUseFile = MakeLongPath(cohorts.WsNative);
             result->find_handles[Result_Native].reset(impl::FindFirstFile(rldUseFile.c_str(), findData));
@@ -266,6 +285,15 @@ HANDLE __stdcall FindFirstFileFixup(_In_ const CharT* fileName, _Out_ win32_find
                     }
                 }
             }
+            else  if (!FindFirstHasSpecialCharacters(wfileName))
+            {
+                // Feel like we need to do something in this case, but can't figure out what.
+                // Draw.IO calls this with C:\Users\xxx\AppData\Roaming.  We are returning "Roaming", but see the app getting confused later on, as if it got the package/redirect "AppData" instead and
+                // starts trying to work with ...\AppData\AppData
+#if _DEBUG
+                Log(L"[%s%d] FindFirstFileFixup[%d] Mixed Results without Special Characters.", g_MfrModuleName, dllInstance, Result_Native);
+#endif
+            }
         }
         else
         {
@@ -307,6 +335,7 @@ HANDLE __stdcall FindFirstFileFixup(_In_ const CharT* fileName, _Out_ win32_find
             return INVALID_HANDLE_VALUE;
         }
         return reinterpret_cast<HANDLE>(result.release());
+
     }
 
     // If still here, call original.

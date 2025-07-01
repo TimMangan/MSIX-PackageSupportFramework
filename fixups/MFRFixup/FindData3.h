@@ -52,7 +52,7 @@ struct FindData3
     // There are three different locations where we might find things, stored in the find_handles array and used in the following order:
     //    The first (optional) value is the find handle for the "redirected path" (typically to the user's profile). Set when original is a package path.
     //    The second (optional) value is for a "package" location equivalent to the requested information.
-    //    The third (optional) value is the find handle for the equivalend local path.
+    //    The third (optional) value is the find handle for the equivalent local path.
     // Some of these values will be not used (empty) when not appropriate for the requested type of request.
 
     // The values are set to INVALID_HANDLE_VALUE as enumeration completes.

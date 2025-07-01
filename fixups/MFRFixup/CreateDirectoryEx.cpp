@@ -222,7 +222,7 @@ BOOL __stdcall CreateDirectoryExFixup(
                             if (!retfinal)
                             {
                                 if (PathExists(cohortsNew.WsPackage.c_str()) ||
-                                    (cohortsNew.UsingNative && PathExists(cohortsNew.WsNative.c_str())))
+                                    (cohortsNew.NativeIsValidOptionInScenario && PathExists(cohortsNew.WsNative.c_str())))
                                 {
                                     retfinal = FALSE;
                                     SetLastError(ERROR_ALREADY_EXISTS);
@@ -242,7 +242,7 @@ BOOL __stdcall CreateDirectoryExFixup(
                             if (!retfinal)
                             {
                                 if (PathExists(cohortsNew.WsPackage.c_str()) ||
-                                    (cohortsNew.UsingNative && PathExists(cohortsNew.WsNative.c_str())))
+                                    (cohortsNew.NativeIsValidOptionInScenario && PathExists(cohortsNew.WsNative.c_str())))
                                 {
                                     retfinal = FALSE;
                                     SetLastError(ERROR_ALREADY_EXISTS);
@@ -254,7 +254,7 @@ BOOL __stdcall CreateDirectoryExFixup(
 #endif
                             return retfinal;
                         }
-                        else if (cohortsTemplate.UsingNative &&
+                        else if (cohortsTemplate.NativeIsValidOptionInScenario &&
                             PathExists(cohortsTemplate.WsNative.c_str()))
                         {
                             PreCreateFolders(newDirectoryWsRedirected.c_str(), dllInstance, L"CreateDirectoryExFixup");
@@ -263,7 +263,7 @@ BOOL __stdcall CreateDirectoryExFixup(
                             if (!retfinal)
                             {
                                 if (PathExists(cohortsNew.WsPackage.c_str()) ||
-                                    (cohortsNew.UsingNative && PathExists(cohortsNew.WsNative.c_str())))
+                                    (cohortsNew.NativeIsValidOptionInScenario && PathExists(cohortsNew.WsNative.c_str())))
                                 {
                                     retfinal = FALSE;
                                     SetLastError(ERROR_ALREADY_EXISTS);
@@ -296,7 +296,7 @@ BOOL __stdcall CreateDirectoryExFixup(
                             if (!retfinal)
                             {
                                 if (PathExists(cohortsNew.WsPackage.c_str()) ||
-                                    (cohortsNew.UsingNative && PathExists(cohortsNew.WsNative.c_str())))
+                                    (cohortsNew.NativeIsValidOptionInScenario && PathExists(cohortsNew.WsNative.c_str())))
                                 {
                                     retfinal = FALSE;
                                     SetLastError(ERROR_ALREADY_EXISTS);
@@ -316,7 +316,7 @@ BOOL __stdcall CreateDirectoryExFixup(
                             if (!retfinal)
                             {
                                 if (PathExists(cohortsNew.WsPackage.c_str()) ||
-                                    (cohortsNew.UsingNative && PathExists(cohortsNew.WsNative.c_str())))
+                                    (cohortsNew.NativeIsValidOptionInScenario && PathExists(cohortsNew.WsNative.c_str())))
                                 {
                                     retfinal = FALSE;
                                     SetLastError(ERROR_ALREADY_EXISTS);
@@ -350,7 +350,7 @@ BOOL __stdcall CreateDirectoryExFixup(
                             if (!retfinal)
                             {
                                 if (PathExists(cohortsNew.WsPackage.c_str()) ||
-                                    (cohortsNew.UsingNative && PathExists(cohortsNew.WsNative.c_str())))
+                                    (cohortsNew.NativeIsValidOptionInScenario && PathExists(cohortsNew.WsNative.c_str())))
                                 {
                                     retfinal = FALSE;
                                     SetLastError(ERROR_ALREADY_EXISTS);
@@ -370,7 +370,7 @@ BOOL __stdcall CreateDirectoryExFixup(
                             if (!retfinal)
                             {
                                 if (PathExists(cohortsNew.WsPackage.c_str()) ||
-                                    (cohortsNew.UsingNative && PathExists(cohortsNew.WsNative.c_str())))
+                                    (cohortsNew.NativeIsValidOptionInScenario && PathExists(cohortsNew.WsNative.c_str())))
                                 {
                                     retfinal = FALSE;
                                     SetLastError(ERROR_ALREADY_EXISTS);
@@ -403,7 +403,7 @@ BOOL __stdcall CreateDirectoryExFixup(
                             if (!retfinal)
                             {
                                 if (PathExists(cohortsNew.WsPackage.c_str()) ||
-                                    (cohortsNew.UsingNative && PathExists(cohortsNew.WsNative.c_str())))
+                                    (cohortsNew.NativeIsValidOptionInScenario && PathExists(cohortsNew.WsNative.c_str())))
                                 {
                                     retfinal = FALSE;
                                     SetLastError(ERROR_ALREADY_EXISTS);
@@ -424,7 +424,7 @@ BOOL __stdcall CreateDirectoryExFixup(
                             if (!retfinal)
                             {
                                 if (PathExists(cohortsNew.WsPackage.c_str()) ||
-                                    (cohortsNew.UsingNative && PathExists(cohortsNew.WsNative.c_str())))
+                                    (cohortsNew.NativeIsValidOptionInScenario && PathExists(cohortsNew.WsNative.c_str())))
                                 {
                                     retfinal = FALSE;
                                     SetLastError(ERROR_ALREADY_EXISTS);
@@ -435,7 +435,7 @@ BOOL __stdcall CreateDirectoryExFixup(
                             }
 #endif
                         }
-                        else if (cohortsTemplate.UsingNative &&
+                        else if (cohortsTemplate.NativeIsValidOptionInScenario &&
                             PathExists(cohortsTemplate.WsNative.c_str()))
                         {
                             PreCreateFolders(newDirectoryWsRedirected.c_str(), dllInstance, L"CreateDirectoryExFixup");
@@ -445,7 +445,7 @@ BOOL __stdcall CreateDirectoryExFixup(
                             if (!retfinal)
                             {
                                 if (PathExists(cohortsNew.WsPackage.c_str()) ||
-                                    (cohortsNew.UsingNative && PathExists(cohortsNew.WsNative.c_str())))
+                                    (cohortsNew.NativeIsValidOptionInScenario && PathExists(cohortsNew.WsNative.c_str())))
                                 {
                                     retfinal = FALSE;
                                     SetLastError(ERROR_ALREADY_EXISTS);
@@ -477,7 +477,7 @@ BOOL __stdcall CreateDirectoryExFixup(
                             if (!retfinal)
                             {
                                 if (PathExists(cohortsNew.WsPackage.c_str()) ||
-                                    (cohortsNew.UsingNative && PathExists(cohortsNew.WsNative.c_str())))
+                                    (cohortsNew.NativeIsValidOptionInScenario && PathExists(cohortsNew.WsNative.c_str())))
                                 {
                                     retfinal = FALSE;
                                     SetLastError(ERROR_ALREADY_EXISTS);
@@ -497,7 +497,7 @@ BOOL __stdcall CreateDirectoryExFixup(
                             if (!retfinal)
                             {
                                 if (PathExists(cohortsNew.WsPackage.c_str()) ||
-                                    (cohortsNew.UsingNative && PathExists(cohortsNew.WsNative.c_str())))
+                                    (cohortsNew.NativeIsValidOptionInScenario && PathExists(cohortsNew.WsNative.c_str())))
                                 {
                                     retfinal = FALSE;
                                     SetLastError(ERROR_ALREADY_EXISTS);
@@ -509,7 +509,7 @@ BOOL __stdcall CreateDirectoryExFixup(
 #endif
                             return retfinal;
                         }
-                        else if (cohortsTemplate.UsingNative &&
+                        else if (cohortsTemplate.NativeIsValidOptionInScenario &&
                             PathExists(cohortsTemplate.WsNative.c_str()))
                         {
                             PreCreateFolders(newDirectoryWsRedirected.c_str(), dllInstance, L"CreateDirectoryExFixup");
@@ -518,7 +518,7 @@ BOOL __stdcall CreateDirectoryExFixup(
                             if (!retfinal)
                             {
                                 if (PathExists(cohortsNew.WsPackage.c_str()) ||
-                                    (cohortsNew.UsingNative && PathExists(cohortsNew.WsNative.c_str())))
+                                    (cohortsNew.NativeIsValidOptionInScenario && PathExists(cohortsNew.WsNative.c_str())))
                                 {
                                     retfinal = FALSE;
                                     SetLastError(ERROR_ALREADY_EXISTS);
@@ -558,7 +558,7 @@ BOOL __stdcall CreateDirectoryExFixup(
                 // In a redirect to local scenario, we are responsible for pre-creating the local parent folders
                 // if-and-only-if they are present in the package.
                 PreCreateLocalFoldersIfNeededForWrite(UseNewDir, cohortsNew.WsPackage, dllInstance, debug, L"CreateDirectoryExFixup");
-                if (!cohortsNew.UsingNative)
+                if (!cohortsNew.NativeIsValidOptionInScenario)
                 {
                     PreCreatePackageFoldersIfIlvNeededForWrite(UseNewDir, dllInstance, debug, L"CreateDirectoryExFixup");
                 }

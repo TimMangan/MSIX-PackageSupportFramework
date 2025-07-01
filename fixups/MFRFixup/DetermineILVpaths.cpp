@@ -242,7 +242,7 @@ std::wstring DetermineIlvPathForReadOperations(Cohorts cohorts, [[maybe_unused]]
             cohorts.map.IsAnExclusionToRedirect == mfr::mfr_exclusion_types::not_excluded &&
             cohorts.map.RedirectionFlags == mfr::mfr_redirect_flags::prefer_redirection_local)
         {
-            if (cohorts.UsingNative && PathExists(cohorts.WsNative.c_str()))
+            if (cohorts.NativeIsValidOptionInScenario && PathExists(cohorts.WsNative.c_str()))
             {
                 UseFile = cohorts.WsNative;
                 break;
@@ -315,7 +315,7 @@ std::wstring DetermineIlvPathForWriteOperations(Cohorts cohorts, [[maybe_unused]
             cohorts.map.IsAnExclusionToRedirect == mfr::mfr_exclusion_types::not_excluded &&
             cohorts.map.RedirectionFlags == mfr::mfr_redirect_flags::prefer_redirection_local)
         {
-            if (cohorts.map.IsExactMatchOnly == mfr::mfr_exactmatchonly_types::exactmatchonly && cohorts.UsingNative)
+            if (cohorts.map.IsExactMatchOnly == mfr::mfr_exactmatchonly_types::exactmatchonly && cohorts.NativeIsValidOptionInScenario)
             {
                 UseFile = cohorts.WsNative;
             }
@@ -346,7 +346,7 @@ std::wstring DetermineIlvPathForWriteOperations(Cohorts cohorts, [[maybe_unused]
             cohorts.map.IsAnExclusionToRedirect == mfr::mfr_exclusion_types::not_excluded &&
             cohorts.map.RedirectionFlags == mfr::mfr_redirect_flags::prefer_redirection_local)
         {
-            if (cohorts.UsingNative)
+            if (cohorts.NativeIsValidOptionInScenario)
             {
                 UseFile = cohorts.WsNative;
                 break;

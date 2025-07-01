@@ -322,7 +322,7 @@ BOOL __stdcall GetFileAttributesExFixup(
                             {
                                 WRAPPER_GETFILEATTRIBUTESEX(cohorts.WsPackage, debug, moreDebug, L"WsPackage");  // returns if successful.
                             }
-                            if (cohorts.UsingNative)
+                            if (cohorts.NativeIsValidOptionInScenario)
                             {
                                 if (!cohorts.WsNative.compare(cohorts.WsRedirected) &&
                                     !cohorts.WsNative.compare(cohorts.WsPackage))
@@ -335,7 +335,7 @@ BOOL __stdcall GetFileAttributesExFixup(
                         {
                             WRAPPER_GETFILEATTRIBUTESEX(cohorts.WsPackage, debug, moreDebug, L"WsPackage");  // returns if successful.
 
-                            if (cohorts.UsingNative)
+                            if (cohorts.NativeIsValidOptionInScenario)
                             {
                                 if (cohorts.WsNative.compare(cohorts.WsPackage) != 0)
                                 {

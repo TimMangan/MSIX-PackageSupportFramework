@@ -19,7 +19,7 @@ struct Cohorts
     std::wstring WsRedirected;
     std::wstring WsPackage;
     std::wstring WsNative;
-    bool UsingNative = true;
+    bool NativeIsValidOptionInScenario = true;        // Indicates if WsNative is an option for this scenario (not is)
 };
 
 extern void DetermineCohorts(std::wstring requestedPath, Cohorts *cohorts, bool UseMoreDebug, DWORD dllInstance, const wchar_t* FixupName);

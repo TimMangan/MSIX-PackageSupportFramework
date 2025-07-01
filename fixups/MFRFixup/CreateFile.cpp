@@ -121,13 +121,13 @@ HANDLE __stdcall CreateFileFixup(_In_ const CharT* pathName,
 #endif
 #endif
             bool IsAWriteCase = IsCreateForChange(desiredAccess, creationDisposition, flagsAndAttributes);
-            bool IsADirectoryCase = IsCreateForDirectory(desiredAccess, creationDisposition, flagsAndAttributes);
+            bool IsPossibleDirectoryCase = IsPossibleCreateForDirectory(desiredAccess, creationDisposition, flagsAndAttributes);
 
             wPathName = AdjustBadUNC(wPathName, dllInstance, L"CreateFile");
             
 
 #if NOTOBSOLETE
-            if (!IsAWriteCase && !IsADirectoryCase)
+            if (!IsAWriteCase && !IsPossibleDirectoryCase)
             {
                 // Windows Forms apps can use System.Configuration to store settings in their exe.Config file.  The Save method ends up making calls to
                 // System.Security.AccessControl.FileSecurity to change the file attributes and if this is a package file it will cause an exception.
@@ -141,7 +141,7 @@ HANDLE __stdcall CreateFileFixup(_In_ const CharT* pathName,
 
 #if MOREDEBUG
             Log(L"[%s%d] CreateFileFixup: Could be a write operation=%d", g_MfrModuleName, dllInstance, IsAWriteCase);
-            Log(L"[%s%d] CreateFileFixup: Is a directory operation=%d", g_MfrModuleName, dllInstance, IsADirectoryCase);
+            Log(L"[%s%d] CreateFileFixup: Is possibly a directory operation=%d", g_MfrModuleName, dllInstance, IsPossibleDirectoryCase);
 #endif
 
             // This get is may or may not be a write operation.
@@ -162,7 +162,7 @@ HANDLE __stdcall CreateFileFixup(_In_ const CharT* pathName,
                 switch (cohorts.file_mfr.Request_MfrPathType)
                 {
                 case mfr::mfr_path_types::in_native_area:
-                    if (!IsADirectoryCase)
+                    if (!IsPossibleDirectoryCase)
                     {
                         if (cohorts.map.Valid_mapping == mfr::mfr_enabled_types::enabled  &&
                             cohorts.map.RedirectionFlags == mfr::mfr_redirect_flags::prefer_redirection_local)
@@ -245,7 +245,7 @@ HANDLE __stdcall CreateFileFixup(_In_ const CharT* pathName,
                                     return retfinal;
                                 }
                             }
-                            if (cohorts.UsingNative &&
+                            if (cohorts.NativeIsValidOptionInScenario &&
                                 PathExists(cohorts.WsNative.c_str()))
                             {
 #if MOREDEBUG
@@ -364,7 +364,7 @@ HANDLE __stdcall CreateFileFixup(_In_ const CharT* pathName,
                                     return retfinal;
                                 }
                             }
-                            if (cohorts.UsingNative &&
+                            if (cohorts.NativeIsValidOptionInScenario &&
                                 PathExists(cohorts.WsNative.c_str()))
                             {
                                 if (IsAWriteCase)
@@ -534,7 +534,7 @@ HANDLE __stdcall CreateFileFixup(_In_ const CharT* pathName,
 #if EVENMOREDEBUG
                                 Log(L"[%s%d] CreateFileFixup: NOT ilvAware case.", g_MfrModuleName, dllInstance);
 #endif
-                                if (!IsADirectoryCase)
+                                if (!IsPossibleDirectoryCase)
                                 {
 #if EVENMOREDEBUG
                                     Log(L"[%s%d] CreateFileFixup: NOT directory case.", g_MfrModuleName, dllInstance);
@@ -630,7 +630,7 @@ HANDLE __stdcall CreateFileFixup(_In_ const CharT* pathName,
                                     ///#if MOREDEBUG
                                     ///                    Log(L"[%s%d] CreateFileFixup: Package VFS wasn't present.", g_MfrModuleName, dllInstance);
                                     ///#endif
-                                    if (cohorts.UsingNative)
+                                    if (cohorts.NativeIsValidOptionInScenario)
                                     {
                                         if (IsAWriteCase)
                                         {
@@ -660,7 +660,7 @@ HANDLE __stdcall CreateFileFixup(_In_ const CharT* pathName,
                                 else
                                 {
                                     // Is a directory, so we probably want to use the native location, if it exists, since that will layer in the package
-                                    if (cohorts.UsingNative &&
+                                    if (cohorts.NativeIsValidOptionInScenario &&
                                         PathExists(cohorts.WsNative.c_str()))
                                     {
                                         retfinal = WRAPPER_CREATEFILE(cohorts.WsNative, desiredAccess, shareMode, securityAttributes, creationDisposition, flagsAndAttributes, templateFile, dllInstance, debug);
@@ -691,7 +691,7 @@ HANDLE __stdcall CreateFileFixup(_In_ const CharT* pathName,
 #if EVENMOREDEBUG
                                     Log(L"[%s%d] CreateFileFixup: 1920, somaybe try native path?", g_MfrModuleName, dllInstance);
 #endif
-                                    if (cohorts.UsingNative)
+                                    if (cohorts.NativeIsValidOptionInScenario)
                                     {
                                         retfinal = WRAPPER_CREATEFILE(cohorts.WsNative, desiredAccess, shareMode, securityAttributes, creationDisposition, flagsAndAttributes, templateFile, dllInstance, debug);
                                         if (retfinal == INVALID_HANDLE_VALUE && GetLastError() == ERROR_FILE_NOT_FOUND && creationDisposition == OPEN_EXISTING)
@@ -699,7 +699,7 @@ HANDLE __stdcall CreateFileFixup(_In_ const CharT* pathName,
 #if EVENMOREDEBUG
                                             Log(L"[%s%d] CreateFileFixup: 1920, somaybe try redirected path?", g_MfrModuleName, dllInstance);
 #endif
-                                            if (cohorts.UsingNative)
+                                            if (cohorts.NativeIsValidOptionInScenario)
                                             {
                                                 retfinal = WRAPPER_CREATEFILE(cohorts.WsRedirected, desiredAccess, shareMode, securityAttributes, creationDisposition, flagsAndAttributes, templateFile, dllInstance, debug);
                                             }
@@ -713,7 +713,7 @@ HANDLE __stdcall CreateFileFixup(_In_ const CharT* pathName,
 #if EVENMOREDEBUG
                                 Log(L"[%s%d] CreateFileFixup: NOT ilvAware case.", g_MfrModuleName, dllInstance);
 #endif
-                                if (!IsADirectoryCase)
+                                if (!IsPossibleDirectoryCase)
                                 {
 #if EVENMOREDEBUG
                                     Log(L"[%s%d] CreateFileFixup: NOT Directory case.", g_MfrModuleName, dllInstance);
@@ -814,7 +814,7 @@ HANDLE __stdcall CreateFileFixup(_In_ const CharT* pathName,
                                 }
                             }
                         }
-                        if (cohorts.UsingNative &&
+                        if (cohorts.NativeIsValidOptionInScenario &&
                             PathExists(cohorts.WsNative.c_str()))
                         {
                             if (IsAWriteCase)
@@ -861,15 +861,21 @@ HANDLE __stdcall CreateFileFixup(_In_ const CharT* pathName,
                 // ILV in use
                 if (!IsThisUnsupportedForInterceptsNow(cohorts.WsRequested))
                 {
-                    std::wstring usePath;
+                    std::wstring usePath = L"";
                     // 5/7/2025 change to make directories that are native use native
                     if (cohorts.file_mfr.Request_MfrPathType == mfr::mfr_path_types::in_native_area &&
-                        IsADirectoryCase)
+                        IsPossibleDirectoryCase)
                     {
-                        usePath = cohorts.WsRequested;
-                        Log("[%s%d] Native Directory requested that exists, use that directory.", g_MfrModuleName, dllInstance);
+                        // Test if the native path exists and it is actually a directory, if so then use the native path (avoid for Draw.IO config issue)
+                        DWORD att = ::GetFileAttributes(cohorts.WsNative.c_str());
+                        if (att != INVALID_FILE_ATTRIBUTES &&
+                            (att & FILE_ATTRIBUTE_DIRECTORY) != 0)
+                        {
+                            usePath = cohorts.WsRequested;
+                            Log("[%s%d] Native Directory requested that exists, use that directory.", g_MfrModuleName, dllInstance);
+                        }
                     }
-                    else
+                    if (usePath.length() == 0)
                     {
                         if (IsAWriteCase)
                         {

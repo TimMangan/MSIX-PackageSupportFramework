@@ -32,7 +32,7 @@ void DetermineCohorts(std::wstring requestedPath, Cohorts *cohorts, bool UseMore
 
     cohorts->file_mfr = mfr::create_mfr_path(requestedPath);
     cohorts->WsRequested = cohorts->file_mfr.Request_NormalizedPath.c_str();
-    cohorts->UsingNative = true;
+    cohorts->NativeIsValidOptionInScenario = true;
 
     // Temporary debug code to help with a specific issue.
     //if (requestedPath._Equal(L"C:\\Users") ||
@@ -72,7 +72,7 @@ void DetermineCohorts(std::wstring requestedPath, Cohorts *cohorts, bool UseMore
                 //cohorts->WsRedirected = cohorts->WsRequested;
                 //cohorts->WsPackage = ReplacePathPart(cohorts->WsRequested.c_str(), cohorts->map.RedirectedPathBase, cohorts->map.PackagePathBase);
                 ////cohorts->WsNative = cohorts->WsRequested;
-                //cohorts->UsingNative = false;
+                //cohorts->NativeIsValidOptionInScenario = false;
                 //cohorts->WsRedirected = cohorts->WsRequested;
                 //cohorts->WsPackage = ReplacePathPart(cohorts->WsRequested.c_str(), cohorts->map.RedirectedPathBase, cohorts->map.PackagePathBase);
                 cohorts->WsRedirected = ReplacePathPart(cohorts->WsRequested.c_str(), cohorts->map.NativePathBase, cohorts->map.RedirectedPathBase);
@@ -192,7 +192,7 @@ void DetermineCohorts(std::wstring requestedPath, Cohorts *cohorts, bool UseMore
                 }
                 cohorts->WsPackage = cohorts->WsRequested;
                 cohorts->WsRedirected = ReplacePathPart(cohorts->WsRequested.c_str(), cohorts->map.PackagePathBase, cohorts->map.RedirectedPathBase);
-                cohorts->UsingNative = false;
+                cohorts->NativeIsValidOptionInScenario = false;
             }
             else
             {
@@ -243,7 +243,7 @@ void DetermineCohorts(std::wstring requestedPath, Cohorts *cohorts, bool UseMore
                     cohorts->WsPackage = cohorts->WsRequested;
                     cohorts->WsRedirected = ReplacePathPart(cohorts->WsRequested.c_str(), cohorts->map.PackagePathBase, cohorts->map.NativePathBase);
                     cohorts->WsNative = ReplacePathPart(cohorts->WsRequested.c_str(), cohorts->map.PackagePathBase, cohorts->map.NativePathBase);
-                    //cohorts->UsingNative = false;
+                    //cohorts->NativeIsValidOptionInScenario = false;
                     break;
                 }
             }
@@ -345,7 +345,7 @@ void DetermineCohorts(std::wstring requestedPath, Cohorts *cohorts, bool UseMore
                 }
                 else
                 {
-                    cohorts->UsingNative = false;  //request was redirected area for a PVAD path in package.  No native possible.
+                    cohorts->NativeIsValidOptionInScenario = false;  //request was redirected area for a PVAD path in package.  No native possible.
                 }
             }
             else
@@ -372,7 +372,7 @@ void DetermineCohorts(std::wstring requestedPath, Cohorts *cohorts, bool UseMore
         {
             Log(L"[%s%d] %s: DetermineCohorts: Request is in_redirection_area_other.", g_MfrModuleName, dllInstance, FixupName);
         }
-        cohorts->UsingNative = false;
+        cohorts->NativeIsValidOptionInScenario = false;
         break;
     case mfr::mfr_path_types::is_Protocol:
     case mfr::mfr_path_types::is_DosSpecial:
@@ -386,7 +386,7 @@ void DetermineCohorts(std::wstring requestedPath, Cohorts *cohorts, bool UseMore
         {
             Log(L"[%s%d] %s: DetermineCohorts: Request is in_non_redirectable_areas.", g_MfrModuleName, dllInstance, FixupName);
         }
-        cohorts->UsingNative = false;
+        cohorts->NativeIsValidOptionInScenario = false;
         break;
     }
 
@@ -407,7 +407,7 @@ void DetermineCohorts(std::wstring requestedPath, Cohorts *cohorts, bool UseMore
         {
             Log(L"[%s%d] %s: DetermineCohorts:   Cohort->WsRedirected %s", g_MfrModuleName, dllInstance, FixupName, cohorts->WsRedirected.c_str());
             Log(L"[%s%d] %s: DetermineCohorts:   Cohort->WsPackage    %s", g_MfrModuleName, dllInstance, FixupName, cohorts->WsPackage.c_str());
-            Log(L"[%s%d] %s: DetermineCohorts:   Cohort->WsNative UseNative=%d   %s", g_MfrModuleName, dllInstance, FixupName, cohorts->UsingNative, cohorts->WsNative.c_str());
+            Log(L"[%s%d] %s: DetermineCohorts:   Cohort->WsNative MayUseNative=%d   %s", g_MfrModuleName, dllInstance, FixupName, cohorts->NativeIsValidOptionInScenario, cohorts->WsNative.c_str());
         }
         else
         {

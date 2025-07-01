@@ -99,7 +99,7 @@ BOOLEAN __stdcall CreateSymbolicLinkFixup(
 #endif
                         }
                     }
-                    else if (cohortsTarget.UsingNative)
+                    else if (cohortsTarget.NativeIsValidOptionInScenario)
                     {
 #if _DEBUG
                         Log(L"[%s%d] CreateSymbolicLinkFixup:  Copy target native file to redirection area.", g_MfrModuleName, dllInstance);

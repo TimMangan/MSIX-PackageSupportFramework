@@ -87,6 +87,31 @@ BOOL __stdcall MoveFileWithProgressFixup(
             }
 
 
+
+            /// Draw.IO problem with getting confused
+            std::wstring AAfrom = L"\\AppData\\AppData";
+            std::wstring AAto = L"\\AppData\\Roaming";
+            std::size_t AApos = wExistingFileName.find(AAfrom);
+            if (AApos != std::wstring::npos)
+            {
+                wExistingFileName.replace(AApos, AAfrom.length(), AAto);
+#if _DEBUG
+                LogString(g_MfrModuleName, dllInstance, L"MoveFileWithProgressFixup existing adjustment", wExistingFileName.c_str());
+#endif
+            }
+            // Might get this somewhere too
+            std::wstring ALfrom = L"\\AppData\\Local AppData";
+            std::wstring ALto = L"\\AppData\\Local";
+            std::size_t ALpos = wExistingFileName.find(ALfrom);
+            if (ALpos != std::wstring::npos)
+            {
+                wExistingFileName.replace(ALpos, ALfrom.length(), ALto);
+#if _DEBUG
+                LogString(g_MfrModuleName, dllInstance, L"MoveFileWithProgressFixup existing adjustment", wExistingFileName.c_str());
+#endif
+            }
+
+
             Cohorts cohortsNew;
             DetermineCohorts(wNewFileName, &cohortsNew, moredebug, dllInstance, L"MoveFileWithProgressFixup (newFile)");
 
@@ -136,7 +161,7 @@ BOOL __stdcall MoveFileWithProgressFixup(
                             UseExistingFile = cohortsExisting.WsPackage;
                             ExistingFileIsPackagePath = true;
                         }
-                        else //if (cohortsExisting.UsingNative && PathExists(cohortsExisting.WsNative) or not since this is what was requested
+                        else //if (cohortsExisting.NativeIsValidOptionInScenario && PathExists(cohortsExisting.WsNative) or not since this is what was requested
                         {
                             UseExistingFile = cohortsExisting.WsRequested;
                         }
@@ -189,7 +214,7 @@ BOOL __stdcall MoveFileWithProgressFixup(
                             UseExistingFile = cohortsExisting.WsPackage;
                             ExistingFileIsPackagePath = true;
                         }
-                        else if (cohortsExisting.UsingNative &&
+                        else if (cohortsExisting.NativeIsValidOptionInScenario &&
                             PathExists(cohortsExisting.WsNative.c_str()))
                         {
                             UseExistingFile = cohortsExisting.WsNative;
@@ -215,7 +240,7 @@ BOOL __stdcall MoveFileWithProgressFixup(
                             UseExistingFile = cohortsExisting.WsPackage;
                             ExistingFileIsPackagePath = true;
                         }
-                        else if (cohortsExisting.UsingNative &&
+                        else if (cohortsExisting.NativeIsValidOptionInScenario &&
                             PathExists(cohortsExisting.WsNative.c_str()))
                         {
                             UseExistingFile = cohortsExisting.WsNative;

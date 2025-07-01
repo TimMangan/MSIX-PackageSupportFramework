@@ -172,7 +172,7 @@ BOOL __stdcall CreateDirectoryFixup(_In_ const CharT* pathName, _In_opt_ LPSECUR
                             if (!retfinal)
                             {
                                 if (PathExists(cohorts.WsPackage.c_str()) ||
-                                    (cohorts.UsingNative && PathExists(cohorts.WsNative.c_str())))
+                                    (cohorts.NativeIsValidOptionInScenario && PathExists(cohorts.WsNative.c_str())))
                                 {
                                     retfinal = FALSE;
                                     SetLastError(ERROR_ALREADY_EXISTS);
@@ -199,7 +199,7 @@ BOOL __stdcall CreateDirectoryFixup(_In_ const CharT* pathName, _In_opt_ LPSECUR
 #endif
                             return retfinal;
                         }
-                        else if (cohorts.UsingNative &&
+                        else if (cohorts.NativeIsValidOptionInScenario &&
                             PathExists(cohorts.WsNative.c_str()))
                         {
                             PreCreateFolders(cohorts.WsRedirected.c_str(), dllInstance, L"CreateDirectoryFixup");
@@ -355,7 +355,7 @@ BOOL __stdcall CreateDirectoryFixup(_In_ const CharT* pathName, _In_opt_ LPSECUR
 #endif
                             return retfinal;
                         }
-                        else if (cohorts.UsingNative &&
+                        else if (cohorts.NativeIsValidOptionInScenario &&
                             PathExists(cohorts.WsNative.c_str()))
                         {
                             PreCreateFolders(cohorts.WsRedirected.c_str(), dllInstance, L"CreateDirectoryFixup");
@@ -419,7 +419,7 @@ BOOL __stdcall CreateDirectoryFixup(_In_ const CharT* pathName, _In_opt_ LPSECUR
 #endif
                             return retfinal;
                         }
-                        else if (cohorts.UsingNative &&
+                        else if (cohorts.NativeIsValidOptionInScenario &&
                             PathExists(cohorts.WsNative.c_str()))
                         {
                             PreCreateFolders(cohorts.WsRedirected.c_str(), dllInstance, L"CreateDirectoryFixup");
@@ -473,7 +473,7 @@ BOOL __stdcall CreateDirectoryFixup(_In_ const CharT* pathName, _In_opt_ LPSECUR
                 // In a redirect to local scenario, we are responsible for pre-creating the local parent folders
                 // if-and-only-if they are present in the package.
                 PreCreateLocalFoldersIfNeededForWrite(usePath, cohorts.WsPackage, dllInstance, debug, L"CreateDirectoryFixup");
-                if (!cohorts.UsingNative)
+                if (!cohorts.NativeIsValidOptionInScenario)
                 {
                     PreCreatePackageFoldersIfIlvNeededForWrite(usePath, dllInstance, debug, L"CreateDirectoryFixup");
                 }

@@ -12,6 +12,8 @@
 #include <psf_logging.h>
 
 #include "Config.h"
+using namespace std::literals;
+
 extern const wchar_t* g_PsfRunTimeName;
 
 #if _DEBUG
@@ -235,7 +237,8 @@ static int __stdcall FixupEntryPoint() noexcept try
 
     // Try to open this nonexistent (we hope) key to make a marker in ProcessMonitor Traces
     HKEY dummy;
-    LSTATUS res = RegOpenKey(HKEY_CURRENT_USER, L"PSF_READY_MARKER", &dummy);
+    std::wstring mark = L"PSF_READY_MARKER_" + psf::current_executable_path().filename().wstring();
+    LSTATUS res = RegOpenKey(HKEY_CURRENT_USER, mark.c_str(), &dummy);
     if (res == ERROR_SUCCESS)
     {
         RegCloseKey(dummy);

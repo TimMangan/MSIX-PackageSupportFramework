@@ -6,12 +6,7 @@
 // NOTE: PsfMonitor is a "procmon"-like display of events captured via the PSF TraceShim.
 
 using System;
-using System.Collections.Generic;
 using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Input;
-using Microsoft.Diagnostics.Tracing;  // consumer
-using Microsoft.Diagnostics.Tracing.Session; // controller
 using System.ComponentModel;  // backgroundworker
 using System.Threading;
 

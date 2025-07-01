@@ -50,6 +50,7 @@
 #include "FindData3.h"
 #include "FindFirstHelpers.h"
 #include "DetermineCohorts.h"
+#include "FID.h"
 
 #ifdef _M_IX86
 #pragma comment(linker, "/EXPORT:FindFirstFileExFixupAnsi_Fixup=impl::FindFirstFileExW.ansi")  // A test to see if exporting these names helps ProcessMonitor stack traces.
@@ -59,6 +60,17 @@
 #pragma comment(linker, "/EXPORT:FindFirstFileExFixupWide_Fixup=impl::FindFirstFileExW.wide")  // A test to see if exporting these names helps ProcessMonitor stack traces.
 #endif
 
+
+bool FindFirstExHasSpecialCharacters(std::wstring wFileName)
+{
+    std::wstring wilds = L"*?";
+    size_t wildOf = wFileName.find_first_of(wilds);
+    if (wildOf == std::wstring::npos)
+    {
+        return false;
+    }
+    return true;
+}
 
 template <typename CharT>
 HANDLE __stdcall FindFirstFileExFixup(_In_ const CharT* fileName,
@@ -142,7 +154,7 @@ HANDLE __stdcall FindFirstFileExFixup(_In_ const CharT* fileName,
 #if MOREDEBUG
         Log(L"[%s%d] FindFirstFileExFixup:      RedirPath=%s", g_MfrModuleName, dllInstance, cohorts.WsRedirected.c_str());
         Log(L"[%s%d] FindFirstFileExFixup:    PackagePath=%s", g_MfrModuleName, dllInstance, cohorts.WsPackage.c_str());
-        if (cohorts.UsingNative)
+        if (cohorts.NativeIsValidOptionInScenario)
         {
             Log(L"[%s%d] FindFirstFileExFixup:     NativePath=%s", g_MfrModuleName, dllInstance, cohorts.WsNative.c_str());
         }
@@ -251,7 +263,7 @@ HANDLE __stdcall FindFirstFileExFixup(_In_ const CharT* fileName,
         // save for next level
         findData = (result->find_handles[Result_Redirected] || result->find_handles[Result_Package] || psf::is_ansi<CharT>) ? &result->cached_data : wideData;
 
-        if (cohorts.UsingNative)
+        if (cohorts.NativeIsValidOptionInScenario)
         {
             rldUseFile = MakeLongPath(cohorts.WsNative);
             result->find_handles[Result_Native].reset(impl::FindFirstFileEx(rldUseFile.c_str(), infoLevelId, findData, searchOp, searchFilter, additionalFlags));
@@ -293,6 +305,15 @@ HANDLE __stdcall FindFirstFileExFixup(_In_ const CharT* fileName,
                         copy_find_data(*wideData, result->cached_data);
                     }
                 }
+            }
+            else  if (!FindFirstExHasSpecialCharacters(wfileName))
+            {
+                // Feel like we need to do something in this case, but can't figure out what.
+                // Draw.IO calls this with C:\Users\xxx\AppData\Roaming.  We are returning "Roaming", but see the app getting confused later on, as if it got the package/redirect "AppData" instead and
+                // starts trying to work with ...\AppData\AppData
+#if _DEBUG
+                Log(L"[%s%d] FindFirstFileExFixup[%d] Mixed Results without Special Characters.", g_MfrModuleName, dllInstance, Result_Native);
+#endif
             }
         }
         else

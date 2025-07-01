@@ -175,7 +175,7 @@ DWORD __stdcall GetPrivateProfileStringFixup(
                                 {
                                     WRAPPER_GETPRIVATEPROFILESTRING(cohorts.WsPackage, debug);
                                 }
-                                else if (cohorts.UsingNative &&
+                                else if (cohorts.NativeIsValidOptionInScenario &&
                                     PathExists(cohorts.WsNative.c_str()))
                                 {
                                     WRAPPER_GETPRIVATEPROFILESTRING(cohorts.WsNative, debug);
@@ -262,7 +262,7 @@ DWORD __stdcall GetPrivateProfileStringFixup(
                                 {
                                     WRAPPER_GETPRIVATEPROFILESTRING(cohorts.WsPackage, debug);
                                 }
-                                else if (cohorts.UsingNative &&
+                                else if (cohorts.NativeIsValidOptionInScenario &&
                                     PathExists(cohorts.WsNative.c_str()))
                                 {
                                     WRAPPER_GETPRIVATEPROFILESTRING(cohorts.WsNative, debug);
@@ -301,7 +301,7 @@ DWORD __stdcall GetPrivateProfileStringFixup(
                                 {
                                     WRAPPER_GETPRIVATEPROFILESTRING(cohorts.WsPackage, debug);
                                 }
-                                else if (cohorts.UsingNative &&
+                                else if (cohorts.NativeIsValidOptionInScenario &&
                                     PathExists(cohorts.WsNative.c_str()))
                                 {
                                     WRAPPER_GETPRIVATEPROFILESTRING(cohorts.WsNative, debug);

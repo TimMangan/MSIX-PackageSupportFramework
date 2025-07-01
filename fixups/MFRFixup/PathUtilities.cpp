@@ -80,7 +80,7 @@ bool path_isExactMatchOf_String(std::filesystem::path& basePath, const char* pat
 /// Utility functions to determine if a given file (w)string is relative to a path, as in the string starts the same.
 /// Comparison is perfomed case insensitive.
 /// </summary>
-bool pathString_isExatMatchtOf_Path(const wchar_t* pathstring, std::filesystem::path& Path)
+bool pathString_isExactMatchOf_Path(const wchar_t* pathstring, std::filesystem::path& Path)
 {
     if (Path.native().length() != wcslen(pathstring))
     {
@@ -630,14 +630,21 @@ bool IsSpecialCaseforChange(std::wstring filepath)
 }
 #endif
 
-bool IsCreateForDirectory(DWORD desiredAccess, [[maybe_unused]]DWORD creationDisposition, DWORD flagsAndAttributes)
+bool IsPossibleCreateForDirectory(DWORD desiredAccess, [[maybe_unused]]DWORD creationDisposition, DWORD flagsAndAttributes)
 {
-    if ((flagsAndAttributes & FILE_FLAG_BACKUP_SEMANTICS) != 0 &&
-        (desiredAccess & FILE_LIST_DIRECTORY) != 0) 
-        return true;
-    if ((flagsAndAttributes & FILE_FLAG_BACKUP_SEMANTICS) != 0 &&
-        (flagsAndAttributes & FILE_FLAG_OPEN_REPARSE_POINT) != 0)
-        return true;
+    bool hintDirectory;
+    if ((flagsAndAttributes & FILE_FLAG_BACKUP_SEMANTICS) == FILE_FLAG_BACKUP_SEMANTICS)
+    {
+        if ((desiredAccess & GENERIC_EXECUTE) == GENERIC_EXECUTE)
+            hintDirectory = false;
+
+        if ((desiredAccess & FILE_LIST_DIRECTORY) == FILE_LIST_DIRECTORY)
+            return true;
+       
+        if (  (flagsAndAttributes & FILE_FLAG_OPEN_REPARSE_POINT) == FILE_FLAG_OPEN_REPARSE_POINT)
+            return true;  // not a smoking gun on this
+
+    }
     return false;
 }
 

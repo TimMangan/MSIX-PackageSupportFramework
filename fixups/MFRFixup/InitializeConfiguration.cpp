@@ -219,6 +219,15 @@ void InitializeConfiguration()
                                 newMap.IsAnExclusionToRedirect = mfr::mfr_exclusion_types::excluded;
                                 mfr::g_MfrFolderMappings[MapIndex] = newMap;
                             }
+                            else if (std::equal(mode.begin(), mode.end(), L"local", psf::path_compare{}))
+                            {
+#if MOREDEBUG
+                                Log(L"\t\t\t\Local: %s=%s", folderid.c_str(), map.FolderId.c_str());
+#endif
+                                mfr::mfr_folder_mapping newMap = mfr::CloneFolderMapping(map);
+                                newMap.RedirectionFlags = mfr::mfr_redirect_flags::prefer_redirection_local;
+                                mfr::g_MfrFolderMappings[MapIndex] = newMap;
+                            }
                             else if (std::equal(mode.begin(), mode.end(), L"default", psf::path_compare{}))
                             {
 #if MOREDEBUG

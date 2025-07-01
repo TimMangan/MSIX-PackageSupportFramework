@@ -85,7 +85,7 @@ BOOL __stdcall CreateHardLinkFixup(
 #endif
                     }
                 }
-                else if (cohortsExisting.UsingNative)
+                else if (cohortsExisting.NativeIsValidOptionInScenario)
                 {
 #if _DEBUG
                     Log(L"[%s%d] CreateHardLinkFixup:  Copy existing native file to redirection area.", g_MfrModuleName, dllInstance);

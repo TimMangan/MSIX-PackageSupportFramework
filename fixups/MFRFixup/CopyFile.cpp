@@ -286,7 +286,7 @@ BOOL __stdcall CopyFileFixup(_In_ const CharT* existingFileName, _In_ const Char
                             retfinal = WRAPPER_COPYFILE(cohortsExisting.WsPackage, newFileWsRedirected, failIfExists, debug, moredebug, dllInstance);
                             return retfinal;
                         }
-                        else if (cohortsExisting.UsingNative &&
+                        else if (cohortsExisting.NativeIsValidOptionInScenario &&
                             PathExists(cohortsExisting.WsNative.c_str()))
                         {
                             PreCreateFolders(newFileWsRedirected.c_str(), dllInstance, L"CopyFileFixup");
@@ -419,7 +419,7 @@ BOOL __stdcall CopyFileFixup(_In_ const CharT* existingFileName, _In_ const Char
                             retfinal = WRAPPER_COPYFILE(cohortsExisting.WsPackage, newFileWsRedirected, failIfExists, debug, moredebug, dllInstance);
                             return retfinal;
                         }
-                        else if (cohortsExisting.UsingNative &&
+                        else if (cohortsExisting.NativeIsValidOptionInScenario &&
                             PathExists(cohortsExisting.WsNative.c_str()))
                         {
                             PreCreateFolders(newFileWsRedirected.c_str(), dllInstance, L"CopyFileFixup");
@@ -451,7 +451,7 @@ BOOL __stdcall CopyFileFixup(_In_ const CharT* existingFileName, _In_ const Char
                             retfinal = WRAPPER_COPYFILE(cohortsExisting.WsPackage, newFileWsRedirected, failIfExists, debug, moredebug, dllInstance);
                             return retfinal;
                         }
-                        else if (cohortsExisting.UsingNative &&
+                        else if (cohortsExisting.NativeIsValidOptionInScenario &&
                             PathExists(cohortsExisting.WsNative.c_str()))
                         {
                             PreCreateFolders(newFileWsRedirected.c_str(), dllInstance, L"CopyFileFixup");

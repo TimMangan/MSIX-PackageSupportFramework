@@ -337,7 +337,7 @@ DWORD __stdcall GetFileAttributesFixup(_In_ const CharT* fileName) noexcept
                                 {
                                     WRAPPER_GETFILEATTRIBUTES(cohorts.WsPackage, debug, moreDebug, L"WsPackage");  // returns if successful.
                                 }
-                                if (cohorts.UsingNative)
+                                if (cohorts.NativeIsValidOptionInScenario)
                                 {
                                     if (cohorts.WsNative.compare(cohorts.WsRedirected) !=0 &&
                                         cohorts.WsNative.compare(cohorts.WsPackage) != 0)
@@ -350,7 +350,7 @@ DWORD __stdcall GetFileAttributesFixup(_In_ const CharT* fileName) noexcept
                             {
                                 WRAPPER_GETFILEATTRIBUTES(cohorts.WsPackage, debug, moreDebug, L"WsPackage");  // returns if successful.
 
-                                if (cohorts.UsingNative)
+                                if (cohorts.NativeIsValidOptionInScenario)
                                 {
                                     WRAPPER_GETFILEATTRIBUTES(cohorts.WsNative, debug, moreDebug, L"WsNative");  // returns if successful.
                                 }

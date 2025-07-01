@@ -199,6 +199,7 @@ The `mode` is from the following table:
 | ----- | ----------- |
 | `default` | This is the default condition when the entry is not present in the disable list. Layering will be performed between the redirection area, package area and native locations and COW to the redirection area is performed. |
 | `disabled` | Disables the redirection. Calls made by the app to an area will only see files in that area and will not receive COW (unless handled by the MSIX runtime itself). |
+| `local` |  Changes the direction of the redirection of this entry to the local style. |
 
 
 

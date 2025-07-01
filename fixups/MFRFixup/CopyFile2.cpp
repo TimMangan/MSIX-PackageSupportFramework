@@ -200,7 +200,7 @@ HRESULT __stdcall CopyFile2Fixup(
                             PreCreateFolders(newFileWsRedirected.c_str(), dllInstance, L"CopyFile2Fixup");
                             WRAPPER_COPYFILE2(cohortsExisting.WsPackage, newFileWsRedirected, extendedParameters, debug, moredebug);
                         }
-                        else if (cohortsExisting.UsingNative &&
+                        else if (cohortsExisting.NativeIsValidOptionInScenario &&
                             PathExists(cohortsExisting.WsNative.c_str()))
                         {
                             PreCreateFolders(newFileWsRedirected.c_str(), dllInstance, L"CopyFile2Fixup");
@@ -273,7 +273,7 @@ HRESULT __stdcall CopyFile2Fixup(
                             PreCreateFolders(newFileWsRedirected.c_str(), dllInstance, L"CopyFile2Fixup");
                             WRAPPER_COPYFILE2(cohortsExisting.WsPackage, newFileWsRedirected, extendedParameters, debug, moredebug);
                         }
-                        else if (cohortsExisting.UsingNative &&
+                        else if (cohortsExisting.NativeIsValidOptionInScenario &&
                             PathExists(cohortsExisting.WsNative.c_str()))
                         {
                             PreCreateFolders(newFileWsRedirected.c_str(), dllInstance, L"CopyFile2Fixup");
@@ -301,7 +301,7 @@ HRESULT __stdcall CopyFile2Fixup(
                             PreCreateFolders(newFileWsRedirected.c_str(), dllInstance, L"CopyFile2Fixup");
                             WRAPPER_COPYFILE2(cohortsExisting.WsPackage, newFileWsRedirected, extendedParameters, debug, moredebug);
                         }
-                        else if (cohortsExisting.UsingNative &&
+                        else if (cohortsExisting.NativeIsValidOptionInScenario &&
                             PathExists(cohortsExisting.WsNative.c_str()))
                         {
                             PreCreateFolders(newFileWsRedirected.c_str(), dllInstance, L"CopyFile2Fixup");

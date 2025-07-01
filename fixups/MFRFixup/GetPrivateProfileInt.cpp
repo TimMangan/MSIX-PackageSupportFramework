@@ -144,7 +144,7 @@ UINT __stdcall GetPrivateProfileIntFixup(
                                 {
                                     WRAPPER_GETPRIVATEPROFILEINT(cohorts.WsPackage, debug);
                                 }
-                                else if (cohorts.UsingNative &&
+                                else if (cohorts.NativeIsValidOptionInScenario &&
                                     PathExists(cohorts.WsNative.c_str()))
                                 {
                                     WRAPPER_GETPRIVATEPROFILEINT(cohorts.WsNative, debug);
@@ -230,7 +230,7 @@ UINT __stdcall GetPrivateProfileIntFixup(
                                 {
                                     WRAPPER_GETPRIVATEPROFILEINT(cohorts.WsPackage, debug);
                                 }
-                                else if (cohorts.UsingNative &&
+                                else if (cohorts.NativeIsValidOptionInScenario &&
                                     PathExists(cohorts.WsNative.c_str()))
                                 {
                                     WRAPPER_GETPRIVATEPROFILEINT(cohorts.WsNative, debug);
@@ -269,7 +269,7 @@ UINT __stdcall GetPrivateProfileIntFixup(
                                 {
                                     WRAPPER_GETPRIVATEPROFILEINT(cohorts.WsPackage, debug);
                                 }
-                                else if (cohorts.UsingNative &&
+                                else if (cohorts.NativeIsValidOptionInScenario &&
                                     PathExists(cohorts.WsNative.c_str()))
                                 {
                                     WRAPPER_GETPRIVATEPROFILEINT(cohorts.WsNative, debug);

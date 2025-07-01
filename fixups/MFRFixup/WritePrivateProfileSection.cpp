@@ -129,7 +129,7 @@ BOOL __stdcall WritePrivateProfileSectionFixup(
                                         WRAPPER_WRITEPRIVATEPROFILESECTION(cohorts.WsPackage, debug);
                                     }
                                 }
-                                else if (cohorts.UsingNative &&
+                                else if (cohorts.NativeIsValidOptionInScenario &&
                                     PathExists(cohorts.WsNative.c_str()))
                                 {
                                     // TODO: This might not be the best way to decide is COW is appropriate.  
@@ -192,7 +192,7 @@ BOOL __stdcall WritePrivateProfileSectionFixup(
                                         WRAPPER_WRITEPRIVATEPROFILESECTION(cohorts.WsPackage, debug);
                                     }
                                 }
-                                else if (cohorts.UsingNative &&
+                                else if (cohorts.NativeIsValidOptionInScenario &&
                                     PathExists(cohorts.WsNative.c_str()))
                                 {
                                     if (Cow(cohorts.WsNative, cohorts.WsRedirected, dllInstance, L"WritePrivateProfileSectionFixup"))
@@ -266,7 +266,7 @@ BOOL __stdcall WritePrivateProfileSectionFixup(
                                         WRAPPER_WRITEPRIVATEPROFILESECTION(cohorts.WsPackage, debug);
                                     }
                                 }
-                                else if (cohorts.UsingNative &&
+                                else if (cohorts.NativeIsValidOptionInScenario &&
                                     PathExists(cohorts.WsNative.c_str()))
                                 {
                                     if (Cow(cohorts.WsNative, cohorts.WsRedirected, dllInstance, L"WritePrivateProfileSectionFixup"))
@@ -319,7 +319,7 @@ BOOL __stdcall WritePrivateProfileSectionFixup(
                                         WRAPPER_WRITEPRIVATEPROFILESECTION(cohorts.WsPackage, debug);
                                     }
                                 }
-                                else if (cohorts.UsingNative &&
+                                else if (cohorts.NativeIsValidOptionInScenario &&
                                     PathExists(cohorts.WsNative.c_str()))
                                 {
                                     if (Cow(cohorts.WsNative, cohorts.WsRedirected, dllInstance, L"WritePrivateProfileSectionFixup"))

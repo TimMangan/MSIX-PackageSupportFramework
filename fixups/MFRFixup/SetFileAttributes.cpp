@@ -365,7 +365,7 @@ BOOL __stdcall SetFileAttributesFixup(_In_ const CharT* fileName, _In_ DWORD fil
 #if MOREDEBUG
                                 Log(L"[%s%d] SetFileAttributesFixup: VFS Local with ILV", g_MfrModuleName, dllInstance);
 #endif
-                                if (cohorts.UsingNative)
+                                if (cohorts.NativeIsValidOptionInScenario)
                                 {
                                     retfinal = WRAPPER_SETFILEATTRIBUTES(cohorts.WsRedirected, fileAttributes, dllInstance, debug);
                                     if (!retfinal && GetLastError() == ERROR_CANT_ACCESS_FILE)
@@ -511,7 +511,7 @@ BOOL __stdcall SetFileAttributesFixup(_In_ const CharT* fileName, _In_ DWORD fil
                                     return retfinal;
                                 }
                             }
-                            else if (cohorts.UsingNative)
+                            else if (cohorts.NativeIsValidOptionInScenario)
                             {
                                 if (PathExists(cohorts.WsNative.c_str()))
                                 {

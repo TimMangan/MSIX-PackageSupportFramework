@@ -63,7 +63,7 @@ extern std::filesystem::path ConvertPathToShortPath(std::filesystem::path inputP
 
 extern bool IsCreateForChange(DWORD desiredAccess, DWORD creationDisposition, DWORD flagsAndAttributes);
 extern bool IsSpecialCaseforChange(std::wstring filepath);
-extern bool IsCreateForDirectory(DWORD desiredAccess, DWORD creationDisposition, DWORD flagsAndAttributes);
+extern bool IsPossibleCreateForDirectory(DWORD desiredAccess, DWORD creationDisposition, DWORD flagsAndAttributes);
 
 extern std::wstring Log_DesiredAccess(DWORD desiredAccess);
 extern std::wstring Log_ShareMode(DWORD shareMode);

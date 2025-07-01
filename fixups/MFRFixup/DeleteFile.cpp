@@ -139,7 +139,7 @@ BOOL __stdcall DeleteFileFixup(_In_ const CharT* pathName) noexcept
 #endif
                             return retfinal;
                         }
-                        else if (cohorts.UsingNative &&
+                        else if (cohorts.NativeIsValidOptionInScenario &&
                             PathExists(cohorts.WsNative.c_str()))
                         {
                             retfinal = WRAPPER_DELETEFILE(cohorts.WsNative, dllInstance, debug);
@@ -234,7 +234,7 @@ BOOL __stdcall DeleteFileFixup(_In_ const CharT* pathName) noexcept
 #endif
                             return retfinal;
                         }
-                        else if (cohorts.UsingNative &&
+                        else if (cohorts.NativeIsValidOptionInScenario &&
                             PathExists(cohorts.WsNative.c_str()))
                         {
                             retfinal = WRAPPER_DELETEFILE(cohorts.WsNative, dllInstance, debug);
@@ -269,7 +269,7 @@ BOOL __stdcall DeleteFileFixup(_In_ const CharT* pathName) noexcept
 #endif
                             return retfinal;
                         }
-                        else if (cohorts.UsingNative &&
+                        else if (cohorts.NativeIsValidOptionInScenario &&
                             PathExists(cohorts.WsNative.c_str()))
                         {
                             retfinal = WRAPPER_DELETEFILE(cohorts.WsNative, dllInstance, debug);

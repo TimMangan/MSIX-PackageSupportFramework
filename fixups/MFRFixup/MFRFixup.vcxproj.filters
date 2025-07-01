@@ -18,9 +18,6 @@
     <Filter Include="Source Files\Intercepts\Attributes">
       <UniqueIdentifier>{1de71a74-ff9b-48aa-9e96-8327a095d315}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Source Files\Intercepts\CopyFiles">
-      <UniqueIdentifier>{8901a70a-4e66-47a1-9f76-c53de640783c}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Source Files\Intercepts\PrivateProfiles">
       <UniqueIdentifier>{586b9f50-c89c-4463-89bb-ed4e408e5b01}</UniqueIdentifier>
     </Filter>
@@ -56,6 +53,9 @@
     </Filter>
     <Filter Include="Source Files\Intercepts\NtDll">
       <UniqueIdentifier>{949fe105-cbc9-4743-b55c-6faa9886d2b9}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Intercepts\CreateDirectories\CopyFiles">
+      <UniqueIdentifier>{8901a70a-4e66-47a1-9f76-c53de640783c}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -188,13 +188,13 @@
       <Filter>Source Files\Intercepts\Attributes</Filter>
     </ClCompile>
     <ClCompile Include="CopyFile.cpp">
-      <Filter>Source Files\Intercepts\CopyFiles</Filter>
+      <Filter>Source Files\Intercepts\CreateDirectories\CopyFiles</Filter>
     </ClCompile>
     <ClCompile Include="CopyFile2.cpp">
-      <Filter>Source Files\Intercepts\CopyFiles</Filter>
+      <Filter>Source Files\Intercepts\CreateDirectories\CopyFiles</Filter>
     </ClCompile>
     <ClCompile Include="CopyFileEx.cpp">
-      <Filter>Source Files\Intercepts\CopyFiles</Filter>
+      <Filter>Source Files\Intercepts\CreateDirectories\CopyFiles</Filter>
     </ClCompile>
     <ClCompile Include="CreateDirectory.cpp">
       <Filter>Source Files\Intercepts\CreateDirectories</Filter>

@@ -144,7 +144,7 @@ BOOL __stdcall RemoveDirectoryFixup(_In_ const CharT* pathName) noexcept
 #endif
                             return retfinal;
                         }
-                        else if (cohorts.UsingNative &&
+                        else if (cohorts.NativeIsValidOptionInScenario &&
                             PathExists(cohorts.WsNative.c_str()))
                         {
                             retfinal = WRAPPER_REMOVEDIRECTORY(cohorts.WsNative, dllInstance, debug);
@@ -239,7 +239,7 @@ BOOL __stdcall RemoveDirectoryFixup(_In_ const CharT* pathName) noexcept
 #endif
                             return retfinal;
                         }
-                        else if (cohorts.UsingNative &&
+                        else if (cohorts.NativeIsValidOptionInScenario &&
                             PathExists(cohorts.WsNative.c_str()))
                         {
                             retfinal = WRAPPER_REMOVEDIRECTORY(cohorts.WsNative, dllInstance, debug);
@@ -275,7 +275,7 @@ BOOL __stdcall RemoveDirectoryFixup(_In_ const CharT* pathName) noexcept
 #endif
                             return retfinal;
                         }
-                        else if (cohorts.UsingNative &&
+                        else if (cohorts.NativeIsValidOptionInScenario &&
                             PathExists(cohorts.WsNative.c_str()))
                         {
                             retfinal = WRAPPER_REMOVEDIRECTORY(cohorts.WsNative, dllInstance, debug);
