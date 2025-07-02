@@ -15,6 +15,9 @@ ideas:
 	   Needs more thought on finding a way to distinguish.
 * EnvVar:  If the value is a string including Registry file pathing {[ProgramFilexX64]} we might need to Reg->VFS path it?  Seems like we'd need to and a quick look at the code suggests that we don't.
 
+v.2025.07.02:
+  * Fix MfrFixup: to make path subset comparison also be case insensitive.
+
 v.2025.07.01:
   * Fix MfrFixup: for native requests that are not directories, even if CreateFile/CreateFile2 call requests to open as a directory.
   * Fix MfrFixup: for FindFirstFile and FindFirstFileEx to return the native path in the case of ADR or ADL folder name.  Some apps get confused when the name changes from the request, so we return the native name for the directory.

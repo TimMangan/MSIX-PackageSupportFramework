@@ -104,31 +104,43 @@ bool pathString_isExactMatchOf_Path(const char* pathstring, std::filesystem::pat
 /// Utility functions to determine if a given file (w)string is the same.
 /// Comparison is perfomed case insensitive.
 /// </summary>
-bool pathString_isSubsetOf_Path(const wchar_t* pathstring, std::filesystem::path& Path)
+bool pathString_isSubsetOf_Path(const wchar_t* pathString, std::filesystem::path& Path)
 {
-    if (wcsncmp(pathstring, Path.wstring().c_str(), wcslen(pathstring)) == 0)  
-    {
-        return true;
-    }
-    else
+    if (pathString == NULL)
     {
         return false;
     }
-    /////std::filesystem::path wpathpart = pathstring;
-    /////return std::equal(wpathpart.native().begin(), wpathpart.native().end(), Path.generic_wstring().c_str(), psf::path_compare{});
+
+    std::wstring wNeedle(pathString);
+    std::transform(wNeedle.begin(), wNeedle.end(), wNeedle.begin(), ::towlower);
+
+    std::wstring wPath(Path.wstring().c_str());
+    std::transform(wPath.begin(), wPath.end(), wPath.begin(), ::towlower);
+    
+    if (wPath._Starts_with(wNeedle))
+    {
+        return true;
+    }
+    return false;
 }
-bool pathString_isSubsetOf_Path(const char* pathstring, std::filesystem::path& Path)
+bool pathString_isSubsetOf_Path(const char* pathString, std::filesystem::path& Path)
 {
-    if (strncmp(pathstring, Path.string().c_str(), strlen(pathstring)) == 0)
-    {
-        return true;
-    }
-    else
+    if (pathString == NULL)
     {
         return false;
     }
-    /////std::filesystem::path wpathpart = widen(pathstring);
-    /////return std::equal(wpathpart.native().begin(), wpathpart.native().end(), Path.generic_wstring().c_str(), psf::path_compare{});
+
+    std::wstring wNeedle(widen(pathString));
+    std::transform(wNeedle.begin(), wNeedle.end(), wNeedle.begin(), ::towlower);
+
+    std::wstring wPath(Path.wstring().c_str());
+    std::transform(wPath.begin(), wPath.end(), wPath.begin(), ::towlower);
+
+    if (wPath._Starts_with(wNeedle))
+    {
+        return true;
+    }
+    return false;
 }
 
 /// <summary>
