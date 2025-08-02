@@ -69,6 +69,8 @@ HMODULE __stdcall LoadLibraryFixup(_In_ const CharT* libFileName)
     auto guard = g_reentrancyGuard.enter();
     HMODULE result;
 
+    SetLastError(0); // Clear the last error before we start.
+
     if (guard)
     {
 #if MOREDEBUG2
@@ -212,7 +214,7 @@ HMODULE __stdcall LoadLibraryFixup(_In_ const CharT* libFileName)
                             }
 #endif
 #if _DEBUG
-                            Log(L"[%s%d] LoadLibraryFixup: returns 0x%x using %s", g_LoadLibraryName, LoadLibraryInstance, result, spec.full_filepath.c_str());
+                            Log(L"[%s%d] LoadLibraryFixup: returns 0x%x with LastError=0x%x using %s", g_LoadLibraryName, LoadLibraryInstance, result, GetLastError(), spec.full_filepath.c_str());
 #endif
                             return result;
                         }
@@ -231,7 +233,7 @@ HMODULE __stdcall LoadLibraryFixup(_In_ const CharT* libFileName)
     }
     result = LoadLibraryImpl(libFileName);
 #if _DEBUG
-    Log(L" [%s%d] LoadLibraryFixup: fallthrough result=0x%x", g_LoadLibraryName, LoadLibraryInstance, result);
+    Log(L" [%s%d] LoadLibraryFixup: fallthrough result=0x%x with LastError=0x%x", g_LoadLibraryName, LoadLibraryInstance, result, GetLastError());
 #endif
     ///QueryPerformanceCounter(&TickEnd);
     return result;
@@ -254,6 +256,8 @@ HMODULE __stdcall LoadLibraryExFixup(_In_ const CharT* libFileName, _Reserved_ H
     auto guard = g_reentrancyGuard.enter();
     HMODULE result;
 
+    SetLastError(0); // Clear the last error before we start.
+
     if (guard)
     {
 #if MOREDEBUG2
@@ -269,10 +273,24 @@ HMODULE __stdcall LoadLibraryExFixup(_In_ const CharT* libFileName, _Reserved_ H
                 try
                 {
 #if MOREDEBUG2
-                    Log(L" [%s%d] LoadLibraryExFixup testing %ls against %ls", g_LoadLibraryName, LoadLibraryExInstance, libFileNameW.c_str(), spec.full_filepath.native().c_str());
-                    LogString(g_LoadLibraryName, LoadLibraryExInstance, L"LoadLibraryExFixup testing against", spec.filename.data());
+                    Log(L" [%s%d] LoadLibraryExFixup testing %ls against entry %ls", g_LoadLibraryName, LoadLibraryExInstance, libFileNameW.c_str(), spec.full_filepath.native().c_str());
+                    LogString(g_LoadLibraryName, LoadLibraryExInstance, L"LoadLibraryExFixup testing against just filename", spec.filename.data());
 #endif
+                    bool isAMatch = false;
                     if (compare_dllname(spec.filename.data(), libFileNameW) == 0)
+                    {
+                        isAMatch = true;
+                    }
+                    else
+                    {
+                        // Possibly a full or relative file path was provided.  We should just match up anyway.
+                        std::wstring libFileNameOnly = GetFilenameOnly(libFileNameW);
+                        if (compare_dllname(spec.filename.data(), libFileNameOnly) == 0)
+                        {
+                            isAMatch = true;
+                        }
+                    }
+                    if (isAMatch)
                     {
                         bool useThis = true;
                         [[maybe_unused]] BOOL procTest = false;
@@ -369,7 +387,25 @@ HMODULE __stdcall LoadLibraryExFixup(_In_ const CharT* libFileName, _Reserved_ H
 
                         if (useThis)
                         {
-                            result = LoadLibraryExImpl(spec.full_filepath.c_str(), file, flags);
+                            /// The flags parameter set by the caller might not make sense when we are trying to force a specific path.
+                            /// In this code, we can look for cases and adjust as appropriate.  
+                            /// It is possible that there are other cases needing adjustment, but we will start with the most obvious ones.
+                            DWORD altFlags = flags;
+                            if (altFlags == LOAD_WITH_ALTERED_SEARCH_PATH)
+                            {
+                                // Can't be combined with other options.  As we are supplying a full path, the use of this flag would tell the call
+                                // to ignore our path and use the search path instead.  Can't have that!
+                                altFlags = 0;
+                            }
+#if _DEBUG
+                            if (altFlags != flags)
+                            {
+                                Log(L"[%s%d] LoadLibraryExFixup: Adjusted flags from 0x%x to 0x%x", g_LoadLibraryName, LoadLibraryExInstance, flags, altFlags);
+                            }
+#endif
+
+                            // Now make the call!
+                            result = LoadLibraryExImpl(spec.full_filepath.c_str(), file, altFlags);
 #if TRY_LDRLOADDLL
                             if (result == 0)
                             {
@@ -394,7 +430,14 @@ HMODULE __stdcall LoadLibraryExFixup(_In_ const CharT* libFileName, _Reserved_ H
                             }
 #endif
 #if _DEBUG
-                            Log(L"[%s%d] LoadLibraryExFixup: returns 0x%x using %s", g_LoadLibraryName, LoadLibraryExInstance, result, spec.full_filepath.c_str());
+                            if (result != 0)
+                            {
+                                Log(L"[%s%d] LoadLibraryExFixup: returns 0x%x using %s", g_LoadLibraryName, LoadLibraryExInstance, result, spec.full_filepath.c_str());
+                            }
+                            else
+                            {
+                                Log(L"[%s%d] LoadLibraryExFixup: returns 0x%x and LastError=0x%x using %s", g_LoadLibraryName, LoadLibraryExInstance, result, GetLastError(), spec.full_filepath.c_str());
+                            }
 #endif
                             return result;
                         }
@@ -412,7 +455,7 @@ HMODULE __stdcall LoadLibraryExFixup(_In_ const CharT* libFileName, _Reserved_ H
     }
     result = LoadLibraryExImpl(libFileName, file, flags);
 #if _DEBUG
-        Log(L" [%s%d] LoadLibraryExFixup fallthrough result=0x%x", g_LoadLibraryName, LoadLibraryExInstance, result);
+        Log(L" [%s%d] LoadLibraryExFixup fallthrough result=0x%x with LastError=0x%x", g_LoadLibraryName, LoadLibraryExInstance, result, GetLastError());
 #endif
     ///QueryPerformanceCounter(&TickEnd);
     return result;

@@ -26,7 +26,7 @@ void LogString(const wchar_t* name, const char* value);
 void LogString(const wchar_t* name, const wchar_t* value);
 
 void LogCountedStringW(const char* name, const wchar_t* value, size_t length);
-void Loghexdump(void* pAddressIn, long  lSize, DWORD instance = 0);
+void Loghexdump(void* pAddressIn, long  lSize, const wchar_t * ModuleName, DWORD instance = 0);
 
 
 ///// WITH_INST

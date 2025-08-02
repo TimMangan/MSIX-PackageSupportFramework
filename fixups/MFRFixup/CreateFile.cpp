@@ -891,7 +891,7 @@ HANDLE __stdcall CreateFileFixup(_In_ const CharT* pathName,
                         else
                         {
                             usePath = DetermineIlvPathForReadOperations(cohorts, dllInstance, moredebug);
-                            // In a redirect to local scenario, we are responsible for determing if source is local or in package
+                            // In a redirect to local scenario, we are responsible for determining if source is local or in package
                             usePath = SelectLocalOrPackageForRead(usePath, cohorts.WsPackage);
                         }
                     }
@@ -899,7 +899,7 @@ HANDLE __stdcall CreateFileFixup(_In_ const CharT* pathName,
                     retfinal = WRAPPER_CREATEFILE(usePath, desiredAccess, shareMode, securityAttributes, creationDisposition, flagsAndAttributes, templateFile, dllInstance, debug);
 
                     // Special case to keep app from getting confused by giving them VFS\AppVPackageRoot instead of C:\.
-                    // We still want to precreate that folder in case they are going to add to it.
+                    // We still want to pre-create that folder in case they are going to add to it.
                     if (retfinal != INVALID_HANDLE_VALUE &&
                         pathName != nullptr)
                     {
@@ -915,7 +915,12 @@ HANDLE __stdcall CreateFileFixup(_In_ const CharT* pathName,
                     }
                     return retfinal;
                 }
-                // else fall through
+                else
+                {
+                    Log(L"[%s%d] CreateFileFixup: IsUnsupportedForInterceptsNow", g_MfrModuleName, dllInstance);
+                    // else fall through
+                }
+                
             }
         }
         else

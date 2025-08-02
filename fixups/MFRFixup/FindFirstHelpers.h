@@ -14,7 +14,7 @@
 #include <psf_logging.h>
 #include <memory>
 #include "FindData3.h"
-
+#include "DetermineCohorts.h"
 
 
 /////////////////////////////////////////
@@ -25,4 +25,8 @@ using win32_find_data_t = std::conditional_t<psf::is_ansi<CharT>, WIN32_FIND_DAT
 
 extern DWORD copy_find_data(const WIN32_FIND_DATAW& from, WIN32_FIND_DATAA& to) noexcept;
 extern DWORD copy_find_data(const WIN32_FIND_DATAW& from, WIN32_FIND_DATAW& to) noexcept;
+extern DWORD copy_find_data(const WIN32_FIND_DATAA& from, WIN32_FIND_DATAA& to) noexcept;
 extern DWORD copy_find_data(const WIN32_FIND_DATAA& from, WIN32_FIND_DATAW& to) noexcept;
+
+extern int ChooseIndexForFindResult(const Cohorts cohorts, FindData3A* result);
+extern int ChooseIndexForFindResult(const Cohorts cohorts, FindData3W* result);

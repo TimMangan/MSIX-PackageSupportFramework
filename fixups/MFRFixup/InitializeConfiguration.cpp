@@ -20,7 +20,7 @@
 using namespace std::literals;
 
 #if _DEBUG
-//#define MOREDEBUG 1
+#define MOREDEBUG 1
 //#define EVENMOREDEBUG 1
 #endif
 
@@ -143,7 +143,7 @@ void InitializeConfiguration()
                            if (std::equal(mode.begin(), mode.end(), L"disabled", psf::path_compare{}))
                            {
 #if MOREDEBUG
-                               Log(L"\t\t\t\tDisabled: %s=%s", folderid.c_str(), map.FolderId.c_str());
+                               Log(L"\t\t\t\tDisabled: index=%d %s=%s", MapIndex, folderid.c_str(), map.FolderId.c_str());
 #endif
                                mfr::mfr_folder_mapping newMap = mfr::CloneFolderMapping(map);
                                newMap.IsAnExclusionToRedirect = mfr::mfr_exclusion_types::excluded;
@@ -152,7 +152,7 @@ void InitializeConfiguration()
                            else if (std::equal(mode.begin(), mode.end(), L"traditional", psf::path_compare{}))
                            {
 #if MOREDEBUG
-                               Log(L"\t\t\t\tTraditioal: %s", folderid.c_str());
+                               Log(L"\t\t\t\tTraditioal: index=%d %s", MapIndex, folderid.c_str());
 #endif
                                mfr::mfr_folder_mapping newMap = mfr::CloneFolderMapping(map);
                                //map.Valid_mapping = false;
@@ -163,7 +163,7 @@ void InitializeConfiguration()
                            {
 
 #if MOREDEBUG
-                               Log(L"\t\t\t\tDefault: %s", folderid.c_str());
+                               Log(L"\t\t\t\tDefault: index=%d %s", MapIndex, folderid.c_str());
 #endif
                                // Do nothing
                            }
@@ -213,7 +213,7 @@ void InitializeConfiguration()
                             if (std::equal(mode.begin(), mode.end(), L"disabled", psf::path_compare{}))
                             {
 #if MOREDEBUG
-                                Log(L"\t\t\t\tDisabled: %s=%s", folderid.c_str(), map.FolderId.c_str());
+                                Log(L"\t\t\t\tDisabled: index=%d %s=%s", MapIndex, folderid.c_str(), map.FolderId.c_str());
 #endif
                                 mfr::mfr_folder_mapping newMap = mfr::CloneFolderMapping(map);
                                 newMap.IsAnExclusionToRedirect = mfr::mfr_exclusion_types::excluded;
@@ -222,22 +222,23 @@ void InitializeConfiguration()
                             else if (std::equal(mode.begin(), mode.end(), L"local", psf::path_compare{}))
                             {
 #if MOREDEBUG
-                                Log(L"\t\t\t\Local: %s=%s", folderid.c_str(), map.FolderId.c_str());
+                                Log(L"\t\t\t\tLocal: index=%d %s=%s", MapIndex, folderid.c_str(), map.FolderId.c_str());
 #endif
                                 mfr::mfr_folder_mapping newMap = mfr::CloneFolderMapping(map);
                                 newMap.RedirectionFlags = mfr::mfr_redirect_flags::prefer_redirection_local;
+                                newMap.RedirectedPathBase = map.NativePathBase; // This is now the local redirection area.
                                 mfr::g_MfrFolderMappings[MapIndex] = newMap;
                             }
                             else if (std::equal(mode.begin(), mode.end(), L"default", psf::path_compare{}))
                             {
 #if MOREDEBUG
-                                Log(L"\t\t\t\tDefault: %s", folderid.c_str());
+                                Log(L"\t\t\t\tDefault: index=%d %s", MapIndex, folderid.c_str());
 #endif
                                 // Do nothing
                             }
                             else
                             {
-                                Log(L"Bad json value ignored for overrideLocalTraditionalredirections %s %s", folderid.c_str(), mode.c_str());
+                                Log(L"Bad json value ignored for overrideTraditionalredirections %s %s", folderid.c_str(), mode.c_str());
                             }
                         }
                         MapIndex++;

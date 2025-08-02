@@ -548,7 +548,7 @@ BOOL WINAPI CreateProcessFixup(
                     partialList = new MyProcThreadAttributeList(si->lpAttributeList, true, true);
                     si->lpAttributeList = partialList->get();
 #if MOREDEBUG
-                    DumpStartupAttributes(reinterpret_cast<SIH_PROC_THREAD_ATTRIBUTE_LIST*>(si->lpAttributeList), CreateProcessInstance);
+                    DumpStartupAttributes(reinterpret_cast<SIH_PROC_THREAD_ATTRIBUTE_LIST*>(si->lpAttributeList), g_PsfRunTimeName, CreateProcessInstance);
 #endif
                 }
             }
@@ -570,7 +570,7 @@ BOOL WINAPI CreateProcessFixup(
                     partialList = new MyProcThreadAttributeList(si->lpAttributeList, true, true);
                     si->lpAttributeList = partialList->get();
 #if MOREDEBUG
-                    DumpStartupAttributes(reinterpret_cast<SIH_PROC_THREAD_ATTRIBUTE_LIST*>(si->lpAttributeList), CreateProcessInstance);
+                    DumpStartupAttributes(reinterpret_cast<SIH_PROC_THREAD_ATTRIBUTE_LIST*>(si->lpAttributeList), g_PsfRunTimeName, CreateProcessInstance);
 #endif
                 }
             }
@@ -938,7 +938,7 @@ BOOL WINAPI CreateProcessFixup(
                 if (si->lpAttributeList != NULL)
                 {
 #if MOREDEBUG
-                    DumpStartupAttributes(reinterpret_cast<SIH_PROC_THREAD_ATTRIBUTE_LIST*>(si->lpAttributeList), CreateProcessInstance);
+                    DumpStartupAttributes(reinterpret_cast<SIH_PROC_THREAD_ATTRIBUTE_LIST*>(si->lpAttributeList), g_PsfRunTimeName, CreateProcessInstance);
 #endif
                     allowInjection = DoesAttributeSpecifyInside(reinterpret_cast<SIH_PROC_THREAD_ATTRIBUTE_LIST*>(si->lpAttributeList));
                 }
@@ -959,7 +959,7 @@ BOOL WINAPI CreateProcessFixup(
                 if (si->lpAttributeList != NULL)
                 {
 #if MOREDEBUG
-                    DumpStartupAttributes(reinterpret_cast<SIH_PROC_THREAD_ATTRIBUTE_LIST*>(si->lpAttributeList), CreateProcessInstance);
+                    DumpStartupAttributes(reinterpret_cast<SIH_PROC_THREAD_ATTRIBUTE_LIST*>(si->lpAttributeList), g_PsfRunTimeName, CreateProcessInstance);
 #endif
                     allowInjection = DoesAttributeSpecifyInside(reinterpret_cast<SIH_PROC_THREAD_ATTRIBUTE_LIST*>(si->lpAttributeList));
                 }

@@ -318,6 +318,7 @@ There are known instances of Microsoft dlls that skip past Kernel32/KernelBase a
 | Windows.Storage | ShellExecute | Intercept for logging only at this time |
 | Windows.Storage | ShellExecuteEx | Intercept for logging only at this time |
 | Ntdll | NtQueryDirectoryFileEx | Intercept for logging only at this time |
+| Kernel32 | DeviceIoControl | Intercept for logging only at this time |
 
 The following APIs have been investigated but are intentionally not intercepted:
 | Dll | API | Status |
@@ -329,7 +330,7 @@ The following APIs have been investigated but are intentionally not intercepted:
 | NtDll | ZwCreateFile | not supported at this time |
 | NtDll | ZwOpenFile | not supported at this time |
 
-Additionally, there are numberous "Transacted" API calls that are generally not used and are ignored.
+Additionally, there are numerous "Transacted" API calls that are generally not used and are ignored.
 Also currently ignored is FindFirstFileName/Next as it deals only with hard links and probably has little usage.
 Ditto FindFirstStream/Next.
 Ditto PrivCopyFileEx, which is undocumented but used by robocopy apparently.

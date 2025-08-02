@@ -3,7 +3,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 //-------------------------------------------------------------------------------------------------------
 
-
+#define FNF_Over_PNF 1
 #if _DEBUG
 ///#define MOREDEBUG 1
 #endif
@@ -27,61 +27,78 @@ std::wstring DetermineIlvPathForReadOperations(Cohorts cohorts, [[maybe_unused]]
     // - For anything with a valid mapping for local redirection, this means the local path (if it exists), or as requested if not.
 
     // In ILV mode, requesting the native path when it is in the package VFS or redirected area, will find it even if not present natively - but only for supported VFS paths.
-    // However, if it reaally isn't present natively, we shouldn't use the native path but the VFS path.
+    // However, if it really isn't present natively, we shouldn't use the native path but the VFS path.
     // This is because requests using the native path don't notice the ILV deletion marker.
 
     std::wstring UseFile;
     DWORD oldErr = GetLastError();  
     SetLastError(0);
 
-    DWORD RequestedAttributes;
+    DWORD RequestedAttributes= INVALID_FILE_ATTRIBUTES;
     [[maybe_unused]] DWORD RequestedError = 0;
     bool SkipPackage = false;
-    [[maybe_unused]] DWORD PackageAttributes = 0;
+    [[maybe_unused]] DWORD PackageAttributes = INVALID_FILE_ATTRIBUTES;
     [[maybe_unused]] DWORD PackageError = 0;
     bool SkipRedirection = false;
-    DWORD RedirectedAttributes = 0;
+    DWORD RedirectedAttributes = INVALID_FILE_ATTRIBUTES;
     [[maybe_unused]] DWORD RedirectedError = 0;
+    bool SkipNative = false;
+    DWORD NativeAttributes = INVALID_FILE_ATTRIBUTES;
+    [[maybe_unused]] DWORD NativeError = 0;
 
     RequestedAttributes = impl::GetFileAttributes(MakeLongPath(cohorts.WsRequested).c_str());
     RequestedError = GetLastError();
+    SetLastError(0);
         
     if (cohorts.WsRequested == cohorts.WsPackage)
     {
         SkipPackage = true;
     }
+    if (cohorts.WsPackage == cohorts.WsRedirected && !SkipPackage)
+    {
+        SkipRedirection = true;
+    }
+    if (!cohorts.NativeIsValidOptionInScenario || cohorts.WsRequested == cohorts.WsPackage)
+    {
+        SkipNative = true;
+    }
+
     if (!SkipPackage)
     {
         PackageAttributes = impl::GetFileAttributes(MakeLongPath(cohorts.WsPackage).c_str());
         PackageError = GetLastError();
+        SetLastError(0);
     }
 
-    if (cohorts.WsPackage == cohorts.WsRedirected ||
-        cohorts.WsPackage == cohorts.WsPackage)
-    {
-        SkipRedirection = true;
-    }
+   
     if (!SkipRedirection)
     {
         RedirectedAttributes = impl::GetFileAttributes(MakeLongPath(cohorts.WsRedirected).c_str());
         RedirectedError = GetLastError();
+        SetLastError(0);
+    }
+    if (!SkipNative)
+    {
+        NativeAttributes = impl::GetFileAttributes(MakeLongPath(cohorts.WsNative).c_str());
+        NativeError = GetLastError();
+        SetLastError(0);
     }
 
-    bool RedirectoinDeletionMarker = false;
+    bool RedirectionDeletionMarker = false;
     if (!SkipRedirection)
     {
         if (RedirectedAttributes != INVALID_FILE_ATTRIBUTES &&
             (RedirectedAttributes & (FILE_ATTRIBUTE_HIDDEN | FILE_ATTRIBUTE_SYSTEM)) == (FILE_ATTRIBUTE_HIDDEN | FILE_ATTRIBUTE_SYSTEM))
         {
             // Might want to also make additional checks, but this does seem sufficient as no other redirected files should be marked system-hidden.
-            RedirectoinDeletionMarker = true;
+            RedirectionDeletionMarker = true;
         }
     }
     
     SetLastError(oldErr);
     if (moredebug)
     {
-        Log(L"[%s%d]        DetermineILVPaths Atts Req=[0]0x%x/0x%x Pkg=[%d]0x%x/0x%x Redir=[%d]0x%x/0x%x", g_MfrModuleName, dllInstance, RequestedAttributes, RequestedError, SkipPackage, PackageAttributes, PackageError, SkipRedirection, RedirectedAttributes, RedirectedError);
+        Log(L"[%s%d]        DetermineILVPathsForRead Atts[skip]Att/Err  Req=[0]0x%x/0x%x Pkg=[%d]0x%x/0x%x Redir=[%d]0x%x/0x%x Native=[%d]0x%x/0x%x", g_MfrModuleName, dllInstance, RequestedAttributes, RequestedError, SkipPackage, PackageAttributes, PackageError, SkipRedirection, RedirectedAttributes, RedirectedError, SkipNative, NativeAttributes, NativeError);
     }
     switch (cohorts.file_mfr.Request_MfrPathType)
     {
@@ -90,7 +107,7 @@ std::wstring DetermineIlvPathForReadOperations(Cohorts cohorts, [[maybe_unused]]
             cohorts.map.IsAnExclusionToRedirect == mfr::mfr_exclusion_types::not_excluded &&
             cohorts.map.RedirectionFlags == mfr::mfr_redirect_flags::prefer_redirection_local)
         {
-            // for REQUESTED, PACKAGE, REDIRECTED
+            // for REQUESTED, PACKAGE, REDIRECTED  (where Requested == Redirected)
             //K1 True, True, True    : means it might or mightnot be native, but we have a redirected copy and it was not deleted:                            USE=Package
             //K2 True, True, False   : means it might or mightnot be native, it is in package, but we not made a redirected copy  deleted it.:                USE=Package
             //K3 True, False, True   : means it might or moghtnot be native, it probably was in package, but we have a deletion marker, or redirected file    USE=Requested unless deleted, Package otherwise
@@ -104,25 +121,36 @@ std::wstring DetermineIlvPathForReadOperations(Cohorts cohorts, [[maybe_unused]]
                 if (PackageAttributes != INVALID_FILE_ATTRIBUTES)
                 {
                     // K1 and K2
-                    UseFile = cohorts.WsPackage;
+                    if (RedirectedAttributes != INVALID_FILE_ATTRIBUTES)
+                    {
+                        // K1
+                        UseFile = cohorts.WsRedirected; /// was: cohorts.WsPackage;
+                    }
+                    else
+                    {
+                        // K2  technically should not happen in local redirection of a native file request
+                        UseFile = cohorts.WsPackage;
+                    }
                 }
                 else
                 {
                     if (RedirectedAttributes != INVALID_FILE_ATTRIBUTES)
                     {
                         // K3
-                        if (RedirectoinDeletionMarker)
+                        if (RedirectionDeletionMarker)
                         {
+                            // K3 + deletion marker
                             UseFile = cohorts.WsPackage;
                         }
                         else
                         {
+                            // K3 + no deletion marker
                             UseFile = cohorts.WsRequested;
                         }
                     }
                     else
                     {
-                        // K4
+                        // K4  technically should not happen in local redirection of a native file request
                         UseFile = cohorts.WsRequested;
                     }
                 }
@@ -139,7 +167,7 @@ std::wstring DetermineIlvPathForReadOperations(Cohorts cohorts, [[maybe_unused]]
                     if (RedirectedAttributes != INVALID_FILE_ATTRIBUTES)
                     {
                         // K7
-                        if (RedirectoinDeletionMarker)
+                        if (RedirectionDeletionMarker)
                         {
                             UseFile = cohorts.WsPackage;
                         }
@@ -183,7 +211,7 @@ std::wstring DetermineIlvPathForReadOperations(Cohorts cohorts, [[maybe_unused]]
                     if (RedirectedAttributes != INVALID_FILE_ATTRIBUTES)
                     {
                         // K3
-                        if (RedirectoinDeletionMarker)
+                        if (RedirectionDeletionMarker)
                         {
                             UseFile = cohorts.WsPackage;
                         }
@@ -211,7 +239,7 @@ std::wstring DetermineIlvPathForReadOperations(Cohorts cohorts, [[maybe_unused]]
                     if (RedirectedAttributes != INVALID_FILE_ATTRIBUTES)
                     {
                         // K7
-                        if (RedirectoinDeletionMarker)
+                        if (RedirectionDeletionMarker)
                         {
                             UseFile = cohorts.WsPackage;
                         }
@@ -223,7 +251,44 @@ std::wstring DetermineIlvPathForReadOperations(Cohorts cohorts, [[maybe_unused]]
                     else
                     {
                         // K8
+#if FNF_Over_PNF        // Seen in RDManager, where the app tries to get the attributes of a file that isn't present.
+                        // If requested was a path not found in a READ operation, but we have another path with the file not found, we should use that.  When
+                        // the app tries to create the file under that path, we'll end up redirecting it and creating the folders needed then.
+                        if (RequestedError == ERROR_PATH_NOT_FOUND)
+                        {
+                            if (!SkipPackage && PackageError == ERROR_FILE_NOT_FOUND)
+                            {
+#if _DEBUG
+                                Log(L"[%s%d] DetermineIlvPathForReadOperations: Requested path was not found, but we have a package or redirected file.", g_MfrModuleName, dllInstance);
+#endif
+                                UseFile = cohorts.WsPackage;
+                            }
+                            else if (!SkipRedirection && RedirectedError == ERROR_FILE_NOT_FOUND )
+                            {
+#if _DEBUG
+                                Log(L"[%s%d] DetermineIlvPathForReadOperations: Requested path was not found, but we have a package or redirected file.", g_MfrModuleName, dllInstance);
+#endif
+                                UseFile = cohorts.WsRedirected;
+                            }
+                            else if (!SkipNative && NativeError == ERROR_FILE_NOT_FOUND)
+                            {
+#if _DEBUG
+                                Log(L"[%s%d] DetermineIlvPathForReadOperations: Requested path was not found, but we have a package or redirected file.", g_MfrModuleName, dllInstance);
+#endif
+                                UseFile = cohorts.WsNative;
+                            }
+                            else 
+                            {
+                                UseFile = cohorts.WsRequested;
+                            }
+                        }
+                        else
+                        {
+                            UseFile = cohorts.WsRequested;
+                        }
+#else
                         UseFile = cohorts.WsRequested;
+#endif
                     }
                 }
             }
@@ -242,12 +307,12 @@ std::wstring DetermineIlvPathForReadOperations(Cohorts cohorts, [[maybe_unused]]
             cohorts.map.IsAnExclusionToRedirect == mfr::mfr_exclusion_types::not_excluded &&
             cohorts.map.RedirectionFlags == mfr::mfr_redirect_flags::prefer_redirection_local)
         {
-            if (cohorts.NativeIsValidOptionInScenario && PathExists(cohorts.WsNative.c_str()))
+            if (cohorts.NativeIsValidOptionInScenario && NativeError==0)
             {
                 UseFile = cohorts.WsNative;
                 break;
             }
-            else if (PathExists(cohorts.WsRedirected.c_str()))
+            else if (!SkipRedirection && RedirectedError == 0)
             {
                 UseFile = cohorts.WsRedirected;
             }
@@ -295,6 +360,9 @@ std::wstring DetermineIlvPathForReadOperations(Cohorts cohorts, [[maybe_unused]]
         UseFile = cohorts.WsRequested;
         break;
     }
+
+
+
 
     return UseFile;
 }  // DetermineIlvPathForReadOperations()

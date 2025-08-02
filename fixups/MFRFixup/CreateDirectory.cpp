@@ -60,7 +60,26 @@ BOOL  WRAPPER_CREATEDIRECTORY(std::wstring theDestinationDirectory, LPSECURITY_A
     {
         if (retfinal == 0)
         {
-            Log(L"[%s%d] CreateDirectory returns FAILURE 0x%x GetLastError=0x%x and file '%s'", g_MfrModuleName, dllInstance, retfinal, GetLastError(), LongDestinationDirectory.c_str());
+            DWORD lastError = GetLastError();
+            if (lastError == ERROR_ALREADY_EXISTS)
+            {
+                Log(L"[%s%d] CreateDirectory returns FAILURE 0x%x GetLastError=ALREADY_EXISTS(0x%x) and file '%s'", g_MfrModuleName, dllInstance, lastError, GetLastError(), LongDestinationDirectory.c_str());
+            }
+            else if (lastError == ERROR_PATH_NOT_FOUND)
+            {
+                // This is a failure, but we should never get this because we pre-create the parent folders.
+                Log(L"[%s%d] CreateDirectory returns FAILURE 0x%x GetLastError=PATH_NOT_FOUND(0x%x) and file '%s'", g_MfrModuleName, dllInstance, lastError, GetLastError(), LongDestinationDirectory.c_str());
+            }
+            else if (lastError == ERROR_FILE_NOT_FOUND)
+            {
+                // This is a failure, but we should never get this because we pre-create the parent folders.
+                Log(L"[%s%d] CreateDirectory returns FAILURE 0x%x GetLastError=FILE_NOT_FOUND(0x%x) and file '%s'", g_MfrModuleName, dllInstance, lastError, GetLastError(), LongDestinationDirectory.c_str());
+            }
+            else
+            {
+                // Some other error occurred.
+                Log(L"[%s%d] CreateDirectory returns FAILURE 0x%x GetLastError=0x%x and file '%s'", g_MfrModuleName, dllInstance, retfinal, lastError, LongDestinationDirectory.c_str());
+            }
         }
         else
         {

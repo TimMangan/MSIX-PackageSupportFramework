@@ -51,28 +51,26 @@ bool path_isSubsetOf_String( std::filesystem::path& basePath, const char* pathst
 /// Utility functions to determine if a given file path is the same.
 /// Comparison is perfomed case insensitive.
 /// </summary>
-template <typename CharT>
-bool path_isExactMatchOf_StringImpl(std::filesystem::path& basePath, const CharT* pathstring)
-{
-    // Compare using case insesitive matching
-    return std::equal(basePath.native().begin(), basePath.native().end(), pathstring, psf::path_compare{});
-}
 bool path_isExactMatchOf_String(std::filesystem::path& basePath, const wchar_t* pathstring)
 {
-    ///Log(L"path_isExactMatchOf_String basePath=%s len=%d pathstring=%s len=%d", basePath.c_str(), basePath.native().length(), pathstring, wcslen(pathstring));
-    if (basePath.native().length() != wcslen(pathstring))
-    {
-        return false;
-    }
-    return path_isExactMatchOf_StringImpl(basePath, pathstring);
+    return CompareStringOrdinal(
+        basePath.native().c_str(),        // First string
+        -1,                        // Use full length
+        pathstring,                     // Second string
+        -1,                        // Use full length
+        TRUE                       // Case-insensitive
+    ) == CSTR_EQUAL;
 }
 bool path_isExactMatchOf_String(std::filesystem::path& basePath, const char* pathstring)
 {
-    if (basePath.native().length() != strlen(pathstring))
-    {
-        return false;
-    }
-    return path_isExactMatchOf_StringImpl(basePath, pathstring);
+    std::wstring wpathpart = widen(pathstring);
+    return CompareStringOrdinal(
+        basePath.native().c_str(),        // First string
+        -1,                        // Use full length
+        wpathpart.c_str(),                     // Second string
+        -1,                        // Use full length
+        TRUE                       // Case-insensitive
+    ) == CSTR_EQUAL;
 }
 
 
@@ -280,6 +278,39 @@ std::filesystem::path drive_absolute_to_normal(std::filesystem::path nativeRelat
 ///
 /// Adjust a file path for common non-standard requests that might or might not work as is,
 /// but give our code fits.  Alter the path to look normal.
+std::string AdjustSlashes(std::string path, [[maybe_unused]] DWORD dllInstance)
+{
+    std::string aPathName = path;
+
+    // Do not adust paths like "/dev/urandom"
+    if (!aPathName._Starts_with("/dev/"))
+    {
+        // Part 1:  Spin any backwards slashes around.
+        std::replace(aPathName.begin(), aPathName.end(), '/', '\\');
+        size_t start = 0;
+
+        // Part 2: Replace any double backslashes with a single, except for
+        //         Long path references (\\?\ and \\.\) and file share references.
+        if (aPathName.find("\\\\") != std::wstring::npos)
+        {
+            start = 2;
+        }
+        size_t found = aPathName.find("\\\\", start);
+        while (found != std::string::npos)
+        {
+#ifdef _DEBUG
+            Log("[%s%d] Adjusting for double backslash.", g_MfrModuleName, dllInstance);
+#endif
+            // We see calls made with extra backslashes which will fail in FindFirst
+            //aPathName.replace(found + start, 2, "\\");
+            std::string temp = aPathName.substr(0, found);
+            temp.append(aPathName.substr(found + 1));
+            aPathName = temp;
+            found = aPathName.find("\\\\", start);
+        }
+    }
+    return aPathName;
+}
 std::wstring AdjustSlashes(std::wstring path, [[maybe_unused]] DWORD dllInstance)
 {
     std::wstring wPathName = path;
@@ -320,6 +351,21 @@ std::wstring AdjustSlashes(std::wstring path, [[maybe_unused]] DWORD dllInstance
 /// the ILV will cause the app to think it is working with a unc path that is in the form of \\?\UNC\server\share\file.  
 /// This is not a valid UNC path and when the app uses it in subsequent calls, this call will fail.
 /// So if this shows up in a subsequent call, we need to adjust it to \\server\share\file.
+std::string AdjustBadUNC(std::string path, [[maybe_unused]] DWORD dllInstance, [[maybe_unused]] std::string CallerName)
+{
+    std::string aPathName = path;
+    if (!aPathName.empty())
+    {
+        if (aPathName._Starts_with("\\\\?\\UNC"))
+        {
+            aPathName = "\\" + aPathName.substr(7);
+#if _DEBUG
+            Log("[%s%d] %s adjustment to existing UNC FilePath to %s", g_MfrModuleName, dllInstance, CallerName.c_str(), widen(aPathName).c_str());
+#endif
+        }
+    }
+    return aPathName;
+}
 std::wstring AdjustBadUNC(std::wstring path, [[maybe_unused]] DWORD dllInstance, [[maybe_unused]] std::wstring CallerName)
 {
     std::wstring wPathName = path;
@@ -329,12 +375,41 @@ std::wstring AdjustBadUNC(std::wstring path, [[maybe_unused]] DWORD dllInstance,
         {
             wPathName = L"\\" + wPathName.substr(7);
 #if _DEBUG
-            Log(L"[%s%d] %s adjustment to existingFileName", g_MfrModuleName, dllInstance, CallerName.c_str(), wPathName.c_str());
+            Log(L"[%s%d] %s adjustment to existing UNC filePath to %s", g_MfrModuleName, dllInstance, CallerName.c_str(), wPathName.c_str());
 #endif
         }
     }
     return wPathName;
 }
+
+/// There are situations where the app just does incredibly bad things with paths, and ends up asking for something like C:\ProgramFilesX64\WindowsApps\...
+/// Let's just fix them up so that we can handle them properly.
+std::string AdjustPFx64Path(std::string afileName, [[maybe_unused]] DWORD dllInstance, std::wstring CallerName)
+{
+    if (afileName._Starts_with("C:\\ProgramFilesX64\\WindowsApps"))
+    {
+        // This is a bad path, so let's fix it up.
+        afileName = "C:\\Program Files\\WindowsApps" + afileName.substr(30);
+#if _DEBUG
+        Log(L"[%s%d] %s adjustment to existing improbable filename to %s", g_MfrModuleName, dllInstance, CallerName.c_str(), widen(afileName).c_str());
+#endif
+    }
+    return afileName;
+}
+std::wstring AdjustPFx64Path(std::wstring wfileName, [[maybe_unused]] DWORD dllInstance, std::wstring CallerName)
+{
+    if (wfileName._Starts_with(L"C:\\ProgramFilesX64\\WindowsApps"))
+    {
+        // This is a bad path, so let's fix it up.
+        wfileName = L"C:\\Program Files\\WindowsApps" + wfileName.substr(30);
+#if _DEBUG
+        Log(L"[%s%d] %s adjustment to existing improbable FileName to %s", g_MfrModuleName, dllInstance, CallerName.c_str(),wfileName.c_str());
+#endif
+    }
+    return wfileName;
+}
+
+
 
 /// <summary>
 /// Given a file path, return a path that in the long path form

@@ -15,6 +15,20 @@ ideas:
 	   Needs more thought on finding a way to distinguish.
 * EnvVar:  If the value is a string including Registry file pathing {[ProgramFilexX64]} we might need to Reg->VFS path it?  Seems like we'd need to and a quick look at the code suggests that we don't.
 
+v.Next2025.08.02:
+  * Small cleanups in RegLegacyFixup
+  * Changes in MfrFixup to improve support in FileSystemWrite scenario with GetFileAttributes/Ex
+  * Add logging support (only) for DeviceIoControl to MfrFixup in Debug mode.  We need to determine if an intercept is needed for this API.
+  * Change in DynamicLibraryFixup for an unusual case where LoadLibraryEx is called with a special option to ignore the path provided for the dll and only look in the search folders.
+  * Reduced some debug logging in MfrFixup and RegLegacyFixup to reduce the amount of output.
+  * Applied fix to logging to solve potential issue with messages exceeding 1024 characters in length.
+  * Adjustments for wide/narrow versions of data structure used in FindFirstFileA/W to avoid constantly converting string types.
+  * Ensure FindFirstFile returns file not found over path not found in MfrFixup.  Also ensure SetLastError is set appropriately before returning.
+  * Phase 1 work (conditionally disabled) to add additional folders to the redirect to local redirection in MfrFixup.  
+    Currently only the Documents and Desktop folders do this to allow outside applications to access files outside of the package.
+	Investigating the possibility of adding Downloads, Pictures, Videos, and Music folders to this list.
+	Expect this feature to be enabled in a future release.
+
 v.2025.07.02:
   * Fix MfrFixup: to make path subset comparison also be case insensitive.
 

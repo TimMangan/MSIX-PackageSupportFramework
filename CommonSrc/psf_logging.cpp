@@ -19,28 +19,31 @@ void Log(const char* fmt, ...)
     {
         try
         {
-            va_list args;
-            va_start(args, fmt);
+            int bufferSize = 1024;
             std::string str;
-            str.resize(256);
-            std::size_t count = std::vsnprintf(str.data(), str.size() + 1, fmt, args);
-            assert(count >= 0);
-            va_end(args);
+            int count = -1;
 
-            if (count > str.size())
+            while (true)
             {
-                count = 1024;       // vswprintf actually returns a negative number, let's just go with something big enough for our long strings; it is resized shortly.
-                str.resize(count);
+                str.resize(bufferSize);
+                va_list args;
+                va_start(args, fmt);
+                count = _vsnprintf_s(str.data(), bufferSize, _TRUNCATE, fmt, args);
+                va_end(args);
 
-                va_list args2;
-                va_start(args2, fmt);
-                count = std::vsnprintf(str.data(), str.size() + 1, fmt, args2);
-                assert(count >= 0);
-                va_end(args2);
+                if (count >= 0 && count < bufferSize)
+                {
+                    str.resize(count);
+                    ::OutputDebugStringA(str.c_str());
+                    break;
+                }
+                else if (bufferSize >= 65536)
+                {
+                    ::OutputDebugStringA("Error in Log() wide string too long or format error");
+                    break;
+                }
+                bufferSize *= 2;
             }
-
-            str.resize(count);
-            ::OutputDebugStringA(str.c_str());
         }
         catch (...)
         {
@@ -56,25 +59,31 @@ void Log(const wchar_t* fmt, ...)
     {
         try
         {
-            va_list args;
-            va_start(args, fmt);
-
+            int bufferSize = 1024;
             std::wstring wstr;
-            wstr.resize(256);
-            std::size_t count = std::vswprintf(wstr.data(), wstr.size() + 1, fmt, args);
-            va_end(args);
+            int count = -1;
 
-            if (count > wstr.size())
+            while (true)
             {
-                count = 1024;       // vswprintf actually returns a negative number, let's just go with something big enough for our long strings; it is resized shortly.
-                wstr.resize(count);
-                va_list args2;
-                va_start(args2, fmt);
-                count = std::vswprintf(wstr.data(), wstr.size() + 1, fmt, args2);
-                va_end(args2);
+                wstr.resize(bufferSize);
+                va_list args;
+                va_start(args, fmt);
+                count = _vsnwprintf_s(wstr.data(), bufferSize, _TRUNCATE, fmt, args);
+                va_end(args);
+
+                if (count >= 0 && count < bufferSize)
+                {
+                    wstr.resize(count);
+                    ::OutputDebugStringW(wstr.c_str());
+                    break;
+                }
+                else if (bufferSize >= 65536)
+                {
+                    ::OutputDebugStringA("Error in Log() wide string too long or format error");
+                    break;
+                }
+                bufferSize *= 2;
             }
-            wstr.resize(count);
-            ::OutputDebugStringW(wstr.c_str());
         }
         catch (...)
         {
@@ -139,7 +148,7 @@ void LogCountedStringW(const char* name, const wchar_t* value, std::size_t lengt
     }
 }
 
-void Loghexdump(void* pAddressIn, long  lSize, DWORD instance = 0)
+void Loghexdump(void* pAddressIn, long  lSize, const wchar_t* ModuleName, DWORD instance = 0)
 {
     if (!g_psf_NoLogging)
     {
@@ -191,15 +200,23 @@ void Loghexdump(void* pAddressIn, long  lSize, DWORD instance = 0)
             sprintf_s(szBuf + lIndex, 100 - lIndex, "<%08lx  ", (unsigned long)(rememberPtmp - pAddress));
             szBuf[lIndex + 14] = 0x0;
 
-            if (instance == 0)
+            if (ModuleName != nullptr)
             {
-                ::OutputDebugStringA(szBuf);
+                std::wstring wBuf = widen(szBuf);
+                Log(L"    [%s%d]\t\t%s", ModuleName, instance, wBuf.c_str());
             }
             else
             {
-                Log("    [%d]\t\t%s", instance, szBuf);
-            }
 
+                if (instance == 0)
+                {
+                    ::OutputDebugStringA(szBuf);
+                }
+                else
+                {
+                    Log("    [%d]\t\t%s", instance, szBuf);
+                }
+            }
             buf.pData += lOutLen;
             buf.lSize -= lOutLen;
         }

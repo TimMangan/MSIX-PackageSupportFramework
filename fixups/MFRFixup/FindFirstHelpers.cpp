@@ -47,6 +47,11 @@ DWORD copy_find_data(const WIN32_FIND_DATAW& from, WIN32_FIND_DATAW& to) noexcep
     to = from;
     return ERROR_SUCCESS;
 }
+DWORD copy_find_data(const WIN32_FIND_DATAA& from, WIN32_FIND_DATAA& to) noexcept
+{
+    to = from;
+    return ERROR_SUCCESS;
+}
 DWORD copy_find_data(const WIN32_FIND_DATAA& from, WIN32_FIND_DATAW& to) noexcept
 {
     to.dwFileAttributes = from.dwFileAttributes;

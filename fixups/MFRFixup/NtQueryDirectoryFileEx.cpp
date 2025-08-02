@@ -200,7 +200,7 @@ NTSTATUS TripplePlay_NtQueryDirectoryFileExImpl(
             {
                 if (wideData1->FileNameLength > 0)
                 {
-                    Log(L"[%s%d] NtDll_NtQueryDirectoryFileExFixup IoStatusBlock Status 0x%x Attributes=0x%x FromDir=%s FileLen %d File %s", g_MfrModuleName, dllInstance, IoStatusBlock->Status, wideData1->FileAttributes, DirPathUsed.c_str(), wideData1->FileNameLength, (const wchar_t*)wideData1->FileName);
+                    Log(L"[%s%d] NtDll_NtQueryDirectoryFileExFixup IoStatusBlock Status 0x%x Attributes=0x%x FromDir=%s FileLen=0x%x File=%s", g_MfrModuleName, dllInstance, IoStatusBlock->Status, wideData1->FileAttributes, DirPathUsed.c_str(), wideData1->FileNameLength, (const wchar_t*)wideData1->FileName);
                 }
                 wideData1 = wideData1->NextEntryOffset == 0 ? NULL : reinterpret_cast<FILE_DIRECTORY_INFORMATION*>(reinterpret_cast<BYTE*>(wideData1) + wideData1->NextEntryOffset);
             }
@@ -208,21 +208,22 @@ NTSTATUS TripplePlay_NtQueryDirectoryFileExImpl(
         case 2: //FILE_FULL_DIRECTORY_INFORMATION:
             if (wideData2->FileNameLength > 0)
             {
-                Log(L"[%s%d] NtDll_NtQueryDirectoryFileExFixup IoStatusBlock Status 0x%x Attributes=0x%x FromDir=%s FileLen %d File %s", g_MfrModuleName, dllInstance, IoStatusBlock->Status, wideData2->FileAttributes, DirPathUsed.c_str(), wideData2->FileNameLength, (const wchar_t*)wideData2->FileName);
+                Log(L"[%s%d] NtDll_NtQueryDirectoryFileExFixup IoStatusBlock Status 0x%x Attributes=0x%x FromDir=%s FileLen=0x%x File=%s", g_MfrModuleName, dllInstance, IoStatusBlock->Status, wideData2->FileAttributes, DirPathUsed.c_str(), wideData2->FileNameLength, (const wchar_t*)wideData2->FileName);
             }
             wideData2 = wideData2->NextEntryOffset == 0 ? NULL : reinterpret_cast<PFILE_FULL_DIRECTORY_INFORMATION>(reinterpret_cast<BYTE*>(wideData2) + wideData2->NextEntryOffset);
             break;
         case 3: //FILE_BOTH_DIRECTORY_INFORMATION:
             if (wideData3->FileNameLength > 0)
             {
-                Log(L"[%s%d] NtDll_NtQueryDirectoryFileExFixup IoStatusBlock Status 0x%x Attributes=0x%x FromDir=%s FileLen %d File %s", g_MfrModuleName, dllInstance, IoStatusBlock->Status, wideData3->FileAttributes, DirPathUsed.c_str(), wideData3->FileNameLength, (const wchar_t*)&wideData3->FileName[0]);
+                //Log(L"[%s%d] NtDll_NtQueryDirectoryFileExFixup IoStatusBlock Status 0x%x Attributes=0x%x FromDir=%s FileLen %d File %s", g_MfrModuleName, dllInstance, IoStatusBlock->Status, wideData3->FileAttributes, DirPathUsed.c_str(), wideData3->FileNameLength, (const wchar_t*)&wideData3->FileName[0]);
+                Log(L"[%s%d] NtDll_NtQueryDirectoryFileExFixup IoStatusBlock Status 0x%x Attributes=0x%x FromDir=%s FileLen=0x%x File=%s", g_MfrModuleName, dllInstance, IoStatusBlock->Status, wideData3->FileAttributes, DirPathUsed.c_str(), wideData3->FileNameLength, (const wchar_t*)wideData3->FileName);
             }
             wideData3 = wideData3->NextEntryOffset == 0 ? NULL : reinterpret_cast<PFILE_BOTH_DIRECTORY_INFORMATION>(reinterpret_cast<BYTE*>(wideData3) + wideData3->NextEntryOffset);
             break;
         case 12: // FILE_NAMES_INFORMATION
             if (wideData12->FileNameLength > 0)
             {
-                Log(L"[%s%d] NtDll_NtQueryDirectoryFileExFixup IoStatusBlock Status 0x%x FromDir=%s FileLen %d File %s", g_MfrModuleName, dllInstance, IoStatusBlock->Status, DirPathUsed.c_str(), wideData12->FileNameLength, (const wchar_t*)wideData12->FileName);
+                Log(L"[%s%d] NtDll_NtQueryDirectoryFileExFixup IoStatusBlock Status 0x%x FromDir=%s FileLen=0x%x File=%s", g_MfrModuleName, dllInstance, IoStatusBlock->Status, DirPathUsed.c_str(), wideData12->FileNameLength, (const wchar_t*)wideData12->FileName);
             }
             wideData12 = wideData12->NextEntryOffset == 0 ? NULL : reinterpret_cast<PFILE_NAMES_INFORMATION>(reinterpret_cast<BYTE*>(wideData12) + wideData12->NextEntryOffset);
             break;
@@ -238,14 +239,14 @@ NTSTATUS TripplePlay_NtQueryDirectoryFileExImpl(
         case 37: //FILE_ID_BOTH_DIR_INFORMATION:
             if (wideData37->FileNameLength > 0)
             {
-                Log(L"[%s%d] NtDll_NtQueryDirectoryFileExFixup IoStatusBlock Status 0x%x Attributes=0x%x FromDir=%s FileLen %d File %s", g_MfrModuleName, dllInstance, IoStatusBlock->Status, wideData37->FileAttributes, DirPathUsed.c_str(), wideData37->FileNameLength, (const wchar_t*)wideData37->FileName);
+                Log(L"[%s%d] NtDll_NtQueryDirectoryFileExFixup IoStatusBlock Status 0x%x Attributes=0x%x FromDir=%s FileLen=0x%x File=%s", g_MfrModuleName, dllInstance, IoStatusBlock->Status, wideData37->FileAttributes, DirPathUsed.c_str(), wideData37->FileNameLength, (const wchar_t*)wideData37->FileName);
             }
             wideData37 = wideData37->NextEntryOffset == 0 ? NULL : reinterpret_cast<PFILE_ID_BOTH_DIR_INFORMATION>(reinterpret_cast<BYTE*>(wideData37) + wideData37->NextEntryOffset);
             break;
         case 38: //FILE_ID_DIR_INFORMATION:
             if (wideData38->FileNameLength > 0)
             {
-                Log(L"[%s%d] NtDll_NtQueryDirectoryFileExFixup IoStatusBlock Status 0x%x Attributes=0x%x FromDir=%s FileLen %d File %s", g_MfrModuleName, dllInstance, IoStatusBlock->Status, wideData38->FileAttributes, DirPathUsed.c_str(), wideData38->FileNameLength, (const wchar_t*)wideData38->FileName);
+                Log(L"[%s%d] NtDll_NtQueryDirectoryFileExFixup IoStatusBlock Status 0x%x Attributes=0x%x FromDir=%s FileLen0x%x File=%s", g_MfrModuleName, dllInstance, IoStatusBlock->Status, wideData38->FileAttributes, DirPathUsed.c_str(), wideData38->FileNameLength, (const wchar_t*)wideData38->FileName);
             }
             wideData38 = wideData38->NextEntryOffset == 0 ? NULL : reinterpret_cast<PFILE_ID_BOTH_DIR_INFORMATION>(reinterpret_cast<BYTE*>(wideData38) + wideData38->NextEntryOffset);
             break;
@@ -267,7 +268,8 @@ NTSTATUS TripplePlay_NtQueryDirectoryFileExImpl(
 
     g_psf_NoLogging = temp;
     return retfinal;
-}
+}  // TripplePlay_NtQueryDirectoryFileExImpl()
+
 
 NTSTATUS __stdcall NtDll_NtQueryDirectoryFileExFixup(
     IN             HANDLE                 FileHandle,
@@ -319,7 +321,7 @@ NTSTATUS __stdcall NtDll_NtQueryDirectoryFileExFixup(
 #endif
                 if (FileName != NULL)
                 {
-                    Log(L"[%s%d] NtDll_NtQueryDirectoryExFileFixup RootDirectory=0x%x ReqClass=0x%x QueryFlags=%d FileName=%ls", g_MfrModuleName, dllInstance, FileHandle, FileInformationClass, QueryFlags, FileName->Buffer);
+                    Log(L"[%s%d] NtDll_NtQueryDirectoryFileExFixup RootDirectory=0x%x ReqClass=0x%x QueryFlags=%d FileName=%ls", g_MfrModuleName, dllInstance, FileHandle, FileInformationClass, QueryFlags, FileName->Buffer);
                 }
                 //LogCallingModuleInstance(g_MfrModuleName, dllInstance);
 #if MOREDEBUG

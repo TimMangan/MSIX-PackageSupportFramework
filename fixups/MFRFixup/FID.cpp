@@ -29,6 +29,12 @@ std::filesystem::path FID_Desktop;
 std::filesystem::path FID_Documents;
 std::filesystem::path FID_PublicDesktop;
 std::filesystem::path FID_PublicDocuments;
+#if MORE_ADDMOREEXCLUSIONS
+std::filesystem::path FID_Downloads;        // aka c:\users\username\downloads      [{Profile}]\Downloads
+std::filesystem::path FID_Pictures;        // aka c:\users\username\pictures      [{Profile}]\Pictures
+std::filesystem::path FID_Videos;          // aka c:\users\username\videos        [{Profile}]\Videos
+std::filesystem::path FID_Music;           // aka c:\users\username\music         [{Profile}]\Music
+#endif
 
 std::filesystem::path FID_RootDrive;        // aka C:\                              [{AppVPackageDrive}]
 
@@ -69,6 +75,12 @@ void FID_Initialize()
     FID_Documents =             psf::known_folder(FOLDERID_Documents);
     FID_PublicDesktop =         psf::known_folder(FOLDERID_PublicDesktop);
     FID_PublicDocuments =       psf::known_folder(FOLDERID_PublicDocuments);
+#if MORE_ADDMOREEXCLUSIONS
+    FID_Downloads =             psf::known_folder(FOLDERID_Downloads);
+    FID_Pictures =              psf::known_folder(FOLDERID_Pictures);
+    FID_Videos =                psf::known_folder(FOLDERID_Videos);
+    FID_Music =                 psf::known_folder(FOLDERID_Music);
+#endif
 
     FID_RootDrive =             FID_Windows.root_name();
 

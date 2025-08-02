@@ -35,11 +35,27 @@ BOOL WRAPPER_CREATEDIRECTORYEX(std::wstring theTemplateDirectory, std::wstring t
         } 
         if (debug) 
         { 
-            if (retfinal == 0) 
-            { 
-                Log(L"[%s%d] CreateDirectoryEx returns FAILURE 0x%x and directory '%s'", g_MfrModuleName, dllInstance, retfinal, LongDestinationDirectory.c_str());
-            } 
-            else 
+            if (retfinal == 0)
+            {
+                DWORD error = GetLastError();
+                if (error == ERROR_ALREADY_EXISTS)
+                {
+                    Log(L"[%s%d] CreateDirectoryEx returns FAILURE 0x%x Error=ALREADY_EXISTS(0x%x) and directory '%s' not found", g_MfrModuleName, dllInstance, retfinal, error, LongDestinationDirectory.c_str());
+                }
+                else if (error == ERROR_FILE_NOT_FOUND)
+                {
+                    Log(L"[%s%d] CreateDirectoryEx returns FAILURE 0x%x Error=FILE_NOT_FOUND(0x%x) and directory '%s' not found", g_MfrModuleName, dllInstance, retfinal, error, LongDestinationDirectory.c_str());
+                }
+                else if (error == ERROR_PATH_NOT_FOUND)
+                {
+                    Log(L"[%s%d] CreateDirectoryEx returns FAILURE 0x%x Error=PATH_NOT_FOUND(0x%x) and directory '%s' not found", g_MfrModuleName, dllInstance, retfinal, error, LongDestinationDirectory.c_str());
+                }
+                else
+                {
+                    Log(L"[%s%d] CreateDirectoryEx returns FAILURE 0x%x Error=0x%x and directory '%s'", g_MfrModuleName, dllInstance, retfinal, error, LongDestinationDirectory.c_str());
+                }
+            }
+            else
             { 
                 Log(L"[%s%d] CreateDirectoryEx returns SUCCESS 0x%x and directory '%s'", g_MfrModuleName, dllInstance, retfinal, LongDestinationDirectory.c_str());
             } 

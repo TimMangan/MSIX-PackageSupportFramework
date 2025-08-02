@@ -4,7 +4,7 @@
 //-------------------------------------------------------------------------------------------------------
 #if _DEBUG
 //#define _ManualDebug 1
-#define MOREDEBUG 1
+//#define MOREDEBUG 1
 #include <thread>
 #include <windows.h>
 #endif
@@ -34,6 +34,11 @@ LSTATUS __stdcall RegQueryValueExAFixup(
     _Out_opt_ PVOID lpData,
     _In_opt_ _Out_opt_ LPDWORD lpcbData)
 {
+    // Copilot suggested this, but it breaks stuff.
+    //if (lpDwType) *lpDwType = 0;
+    //if (lpcbData) *lpcbData = 0;
+    //if (lpData && lpcbData) memset(lpData, 0, *lpcbData);
+
     DWORD RegLocalInstance = ++g_RegInterceptInstance;
     LSTATUS result = -1;
 
@@ -61,41 +66,65 @@ LSTATUS __stdcall RegQueryValueExAFixup(
             if (result == ERROR_SUCCESS)
             {
 #if _DEBUG
-                if (lpcbData != NULL)
+                switch (dwType)
                 {
-                    switch (dwType)
+                case REG_SZ:
+                case REG_EXPAND_SZ:
+                case REG_MULTI_SZ:
+                    if (lpData != NULL)
                     {
-                    case REG_SZ:
-                        if (lpData != NULL)
+                        if (lpcbData != NULL)
                         {
                             char* rstring = new char[(*lpcbData) + 1];
                             FillMemory(rstring, (*lpcbData) + 1, 0);
                             memcpy(rstring, lpData, *lpcbData);
                             LogString(g_RegModuleName, RegLocalInstance, L"RegQueryValueExA: Returning success with value", rstring);
                         }
-                        else
-                        {
-                            Log(L"[%s%d] RegQueryValueExA:  Returning success with no data", g_RegModuleName, RegLocalInstance);
-                        }
-                        break;
-                    case REG_DWORD:
-                        if (lpData != NULL)
-                        {
-                            Log(L"[%s%d] RegQueryValueExA:  Returning success with DWORD x0x%x", g_RegModuleName, RegLocalInstance, *((DWORD*)lpData));
-                        }
-                        else
-                        {
-                            Log(L"[%s%d] RegQueryValueExA:  Returning success with DWORD", g_RegModuleName, RegLocalInstance);
-                        }
-                        break;
-                    default:
-                        Log(L"[%s%d] RegQueryValueExA:  Returning success of type 0x%x", g_RegModuleName, RegLocalInstance, dwType);
-                        break;
                     }
-                }
-                else
-                {
-                    Log(L"[%s%d] RegQueryValueExA:  Returning success", g_RegModuleName, RegLocalInstance);
+                    else
+                    {
+                        if (lpcbData != NULL)
+                        {
+                            Log(L"[%s%d] RegQueryValueExA:  Returning success with string no data, len needed=0x%x", g_RegModuleName, RegLocalInstance, *lpcbData);
+                        }
+                        else
+                        {
+                            Log(L"[%s%d] RegQueryValueExA:  Returning success with string no data", g_RegModuleName, RegLocalInstance);
+                        }
+                    }
+                    break;
+                case REG_DWORD:
+                    if (lpData != NULL)
+                    {
+                        Log(L"[%s%d] RegQueryValueExA:  Returning success with DWORD 0x%x", g_RegModuleName, RegLocalInstance, *((DWORD*)lpData));
+                    }
+                    else
+                    {
+                        if (lpcbData != NULL)
+                        {
+                            Log(L"[%s%d] RegQueryValueExA:  Returning success with DWORD, len needed=0x%x", g_RegModuleName, RegLocalInstance, *lpcbData);
+                        }
+                        else
+                            Log(L"[%s%d] RegQueryValueExA:  Returning success with DWORD no data", g_RegModuleName, RegLocalInstance);
+                    }
+                    break;
+                default:
+                    if (lpData != NULL)
+                    {
+                        Log(L"[%s%d] RegQueryValueExA:  Returning success of type 0x%x", g_RegModuleName, RegLocalInstance, dwType);
+                    }
+                    else
+                    {
+                        if (lpcbData != NULL)
+                        {
+                            Log(L"[%s%d] RegQueryValueExA:  Returning success of type 0x%x no data, len needed=0x%x", g_RegModuleName, RegLocalInstance, dwType, *lpcbData);
+                        }
+                        else
+                        {
+                            Log(L"[%s%d] RegQueryValueExA:  Returning success of type 0x%x no data", g_RegModuleName, RegLocalInstance, dwType);
+                        }
+                    }
+                    break;
                 }
 #endif                
             }
@@ -118,6 +147,11 @@ LSTATUS __stdcall RegQueryValueExAFixup(
     }
     catch (...)
     {
+        // Copilot suggested this, but it breaks stuff.
+        //if (lpDwType) *lpDwType = 0;
+        //if (lpcbData) *lpcbData = 0;
+        //if (lpData && lpcbData) memset(lpData, 0, *lpcbData);
+
         Log(L"[%s%d] RegQueryValueExA:  Exception thrown.", g_RegModuleName, RegLocalInstance);
     }
     return result;
@@ -159,43 +193,67 @@ LSTATUS __stdcall RegQueryValueExWFixup(
             if (result == ERROR_SUCCESS)
             {
 #if _DEBUG
-                if (lpcbData != NULL)
+                switch (dwType)
                 {
-                    switch (dwType)
+                case REG_SZ:
+                case REG_EXPAND_SZ:
+                case REG_MULTI_SZ:
+                    if (lpData != NULL)
                     {
-                    case REG_SZ:
-                        if (lpData != NULL)
+                        if (lpcbData != NULL)
                         {
                             wchar_t* rstring = new wchar_t[(*lpcbData) + 2];
                             FillMemory(rstring, (*lpcbData) + 2, 0);
                             memcpy(rstring, lpData, *lpcbData);
                             LogString(RegLocalInstance, L"RegQueryValueExW: Returning success with value", rstring);
                         }
-                        else
-                        {
-                            g_RegModuleName, 
-                            Log(L"[%s%d] RegQueryValueExW:  Returning success with no data", g_RegModuleName, RegLocalInstance);
-                        }
-                        break;
-                    case REG_DWORD:
-                        if (lpData != NULL)
-                        {
-                            Log(L"[%s%d] RegQueryValueExW:  Returning success with DWORD x0x%x", g_RegModuleName, RegLocalInstance, *((DWORD*)lpData));
-                        }
-                        else
-                        {
-                            Log(L"[%s%d] RegQueryValueExW:  Returning success with DWORD", g_RegModuleName, RegLocalInstance);
-                        }
-
-                        break;
-                    default:
-                        Log(L"[%s%d] RegQueryValueExW:  Returning success of type 0x%x", g_RegModuleName, RegLocalInstance, dwType);
-                        break;
                     }
-                }
-                else
-                {
-                    Log(L"[%s%d] RegQueryValueExW:  Returning success", g_RegModuleName, RegLocalInstance);
+                    else
+                    {
+                        if (lpcbData != NULL)
+                        {
+                            Log(L"[%s%d] RegQueryValueExW:  Returning success with string no data, len needed=0x%x", g_RegModuleName, RegLocalInstance, *lpcbData);
+                        }
+                        else
+                        {
+                            Log(L"[%s%d] RegQueryValueExW:  Returning success with string no data", g_RegModuleName, RegLocalInstance);
+                        }
+                    }
+                    break;
+                case REG_DWORD:
+                    if (lpData != NULL)
+                    {
+                        Log(L"[%s%d] RegQueryValueExW:  Returning success with DWORD 0x%x", g_RegModuleName, RegLocalInstance, *((DWORD*)lpData));
+                    }
+                    else
+                    {
+                        if (lpcbData != NULL)
+                        {
+                            Log(L"[%s%d] RegQueryValueExW:  Returning success with DWORD no data, len needed=0x%x", g_RegModuleName, RegLocalInstance, *lpcbData);
+                        }
+                        else
+                        {
+                            Log(L"[%s%d] RegQueryValueExW:  Returning success with DWORD no data", g_RegModuleName, RegLocalInstance);
+                        }
+                    }
+                    break;
+                default:
+                    if (lpData != NULL)
+                    {
+                        Log(L"[%s%d] RegQueryValueExW:  Returning success of type 0x%x", g_RegModuleName, RegLocalInstance, dwType);
+                    }
+                    else
+                    {
+                        if (lpcbData != NULL)
+                        {
+                            Log(L"[%s%d] RegQueryValueExW:  Returning success of type 0x%x no data, len needed=0x%x", g_RegModuleName, RegLocalInstance, dwType, *lpcbData);
+                        }
+                        else
+                        {
+                            Log(L"[%s%d] RegQueryValueExW:  Returning success of type 0x%x no data", g_RegModuleName, RegLocalInstance, dwType);
+                        }
+                    }
+                    break;
                 }
 #endif                
             }

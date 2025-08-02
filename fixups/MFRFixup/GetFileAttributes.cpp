@@ -20,7 +20,7 @@
 #if _DEBUG
 //#define DEBUGPATHTESTING 1
 #include "DebugPathTesting.h"
-//#define MOREDEBUG 1
+#define MOREDEBUG 1
 #endif
 
 #ifdef _M_IX86
@@ -105,13 +105,14 @@ DWORD __stdcall GetFileAttributesFixup(_In_ const CharT* fileName) noexcept
                 DebugPathTesting(dllInstance);
             }
 #endif
-            // This get is inheirently a read-only operation in all cases.
+            // This get is inherently a read-only operation in all cases.
             // We prefer to use the redirecton case, if present.
             Cohorts cohorts;
             DetermineCohorts(wfileName, &cohorts, moreDebug, dllInstance, L"GetAttributesFixup");
 
             bool anyFileNotFound = false;
             bool anyPathNotFound = false;
+            
 
             if (!MFRConfiguration.Ilv_Aware)
             {

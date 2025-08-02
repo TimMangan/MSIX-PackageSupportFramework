@@ -24,7 +24,7 @@
 #pragma comment(linker, "/EXPORT:FindCloseFixup_Fixup=FindCloseFixup_Fixup_v")  // A test to see if exporting these names helps ProcessMonitor stack traces.
 #endif
 
-BOOL __stdcall FindCloseFixup(_Inout_ HANDLE findHandle) noexcept
+static BOOL __stdcall FindCloseFixup(_Inout_ HANDLE findHandle) noexcept
 {
     auto guard = g_reentrancyGuard.enter();
     if (!guard)
@@ -44,29 +44,60 @@ BOOL __stdcall FindCloseFixup(_Inout_ HANDLE findHandle) noexcept
         return FALSE;
     }
 
-    auto data3 = reinterpret_cast<FindData3*>(findHandle);
+    auto data3A = reinterpret_cast<FindData3A*>(findHandle);
+    auto data3W = reinterpret_cast<FindData3W*>(findHandle);
 #if _DEBUG
-    Log(L"[%s%d][%s%d] FindCloseFixup handle=0x%x.", g_MfrModuleName, data3->RememberedInstance, g_MfrModuleName, dllInstance, findHandle);
+    Log(L"[%s%d][%s%d] FindCloseFixup handle=0x%x.", g_MfrModuleName, data3A->RememberedInstance, g_MfrModuleName, dllInstance, findHandle);
 #endif
-    if ((int)data3->RememberedInstance > 70000)
+    if (data3A && data3A->IsAnsi)
     {
-        if (data3->find_handles[Result_Redirected])
+        // This is an ANSI FindData3A structure
+        auto data3 = data3A;
+        if ((int)data3->RememberedInstance > 70000)
         {
-            data3->find_handles[Result_Redirected].release();
+            if (data3->find_handles[Result_Redirected])
+            {
+                data3->find_handles[Result_Redirected].release();
+            }
+            if (data3->find_handles[Result_Package])
+            {
+                data3->find_handles[Result_Package].release();
+            }
+            if (data3->find_handles[Result_Native])
+            {
+                data3->find_handles[Result_Native].release();
+            }
         }
-        if (data3->find_handles[Result_Package])
+        else
         {
-            data3->find_handles[Result_Package].release();
-        }
-        if (data3->find_handles[Result_Native])
-        {
-            data3->find_handles[Result_Native].release();
+            // This is a case where we got the guard, but it doesn't look like our FindFirst structure, so maybe from an unhandled NtQueryDirectoryFile or other source, so  impl:FindClose without interpretation?
+            impl::FindClose(findHandle);
         }
     }
-    else
+    else if (data3W && !data3W->IsAnsi)
     {
-        // This is a case where we got the guard, but it doesn't look like our FindFirst structure, so maybe from an unhandled NtQueryDirectoryFile or other source, so  impl:FindClose without interpretation?
-        impl::FindClose(findHandle);
+        // This is a Wide FindData3W structure
+        auto data3 = data3W;
+        if ((int)data3->RememberedInstance > 70000)
+        {
+            if (data3->find_handles[Result_Redirected])
+            {
+                data3->find_handles[Result_Redirected].release();
+            }
+            if (data3->find_handles[Result_Package])
+            {
+                data3->find_handles[Result_Package].release();
+            }
+            if (data3->find_handles[Result_Native])
+            {
+                data3->find_handles[Result_Native].release();
+            }
+        }
+        else
+        {
+            // This is a case where we got the guard, but it doesn't look like our FindFirst structure, so maybe from an unhandled NtQueryDirectoryFile or other source, so  impl:FindClose without interpretation?
+            impl::FindClose(findHandle);
+        }
     }
     ::SetLastError(ERROR_SUCCESS);
     return TRUE;

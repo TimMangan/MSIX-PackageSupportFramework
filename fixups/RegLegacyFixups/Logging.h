@@ -144,9 +144,9 @@ struct function_entry_tracker
 
     function_entry_tracker(const char* functionName)
     {
+        std::lock_guard<std::recursive_mutex> lock(g_outputMutex);
         if (trace_function_entry)
         {
-            std::lock_guard<std::recursive_mutex> lock(g_outputMutex);
             if (!output_lock::processing_output)
             {
                 if (++function_call_depth == 1)
@@ -171,9 +171,9 @@ struct function_entry_tracker
 
     ~function_entry_tracker()
     {
+        std::lock_guard<std::recursive_mutex> lock(g_outputMutex);
         if (trace_function_entry)
         {
-            std::lock_guard<std::recursive_mutex> lock(g_outputMutex);
             if (!output_lock::processing_output)
             {
                 if (--function_call_depth == 0)

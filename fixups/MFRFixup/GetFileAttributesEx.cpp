@@ -6,7 +6,7 @@
 
 
 #if _DEBUG
-//#define MOREDEBUG 1
+#define MOREDEBUG 1
 #endif
 
 #include <errno.h>
@@ -21,6 +21,7 @@
 #if _DEBUG
 //#define DEBUGPATHTESTING 1
 #include "DebugPathTesting.h"
+#define MOREDEBUG 1
 #endif
 
 
@@ -28,15 +29,13 @@ void LogAttributesEx(const wchar_t* MfrModuleName, DWORD dllInstance, LPVOID fil
 {
     if (fileInformation != NULL)
     {
-        Log(L"[%s%d] GetFileAttributesExFixup         Attributes 0x%x", MfrModuleName, dllInstance, ((LPWIN32_FILE_ATTRIBUTE_DATA)fileInformation)->dwFileAttributes);
-        Log(L"[%s%d] GetFileAttributesExFixup         Creation 0x%x 0x%x", MfrModuleName, dllInstance, ((LPWIN32_FILE_ATTRIBUTE_DATA)fileInformation)->ftCreationTime.dwHighDateTime,
-            ((LPWIN32_FILE_ATTRIBUTE_DATA)fileInformation)->ftCreationTime.dwLowDateTime);
-        Log(L"[%s%d] GetFileAttributesExFixup         Access   0x%x 0x%x", MfrModuleName, dllInstance, ((LPWIN32_FILE_ATTRIBUTE_DATA)fileInformation)->ftLastAccessTime.dwHighDateTime,
-            ((LPWIN32_FILE_ATTRIBUTE_DATA)fileInformation)->ftLastAccessTime.dwLowDateTime);
-        Log(L"[%s%d] GetFileAttributesExFixup         Write    0x%x 0x%x", MfrModuleName, dllInstance, ((LPWIN32_FILE_ATTRIBUTE_DATA)fileInformation)->ftLastWriteTime.dwHighDateTime,
-            ((LPWIN32_FILE_ATTRIBUTE_DATA)fileInformation)->ftLastWriteTime.dwLowDateTime);
-        Log(L"[%s%d] GetFileAttributesExFixup         Size     0x%x 0x%x", MfrModuleName, dllInstance, ((LPWIN32_FILE_ATTRIBUTE_DATA)fileInformation)->nFileSizeHigh,
-            ((LPWIN32_FILE_ATTRIBUTE_DATA)fileInformation)->nFileSizeLow);
+        Log(L"[%s%d] GetFileAttributesEx         Attributes %s  Size 0x%I64x 0x%I64x  Creation 0x%x 0x%x  Access 0x%x 0x%x  Write 0x%x 0x%x",
+            MfrModuleName, dllInstance,
+            Log_FlagsAndAttributes(((LPWIN32_FILE_ATTRIBUTE_DATA)fileInformation)->dwFileAttributes).c_str(),
+            ((LPWIN32_FILE_ATTRIBUTE_DATA)fileInformation)->nFileSizeHigh, ((LPWIN32_FILE_ATTRIBUTE_DATA)fileInformation)->nFileSizeLow,
+            ((LPWIN32_FILE_ATTRIBUTE_DATA)fileInformation)->ftCreationTime.dwHighDateTime, ((LPWIN32_FILE_ATTRIBUTE_DATA)fileInformation)->ftCreationTime.dwLowDateTime,
+            ((LPWIN32_FILE_ATTRIBUTE_DATA)fileInformation)->ftLastAccessTime.dwHighDateTime, ((LPWIN32_FILE_ATTRIBUTE_DATA)fileInformation)->ftLastAccessTime.dwLowDateTime,
+            ((LPWIN32_FILE_ATTRIBUTE_DATA)fileInformation)->ftLastWriteTime.dwHighDateTime, ((LPWIN32_FILE_ATTRIBUTE_DATA)fileInformation)->ftLastWriteTime.dwLowDateTime);
     }
 }
 
@@ -379,7 +378,8 @@ BOOL __stdcall GetFileAttributesExFixup(
             {
                 // ILV 
                 std::wstring UseFile = DetermineIlvPathForReadOperations(cohorts, dllInstance, moreDebug);
-                // In a redirect to local scenario, we are responsible for determing if source is local or in package
+                
+                // In a redirect to local scenario, we are responsible for determining if source is local or in package
                 UseFile = SelectLocalOrPackageForRead(UseFile, cohorts.WsPackage);
 
                 WRAPPER_GETFILEATTRIBUTESEX(UseFile, debug, moreDebug, L"IlvMode");  // returns if successful.
@@ -424,18 +424,7 @@ BOOL __stdcall GetFileAttributesExFixup(
     }
     else
     {
-        if (fileInformation != NULL)
-        {
-            Log(L"[%s%d] GetFileAttributesEx         Attributes %s", g_MfrModuleName, dllInstance, Log_FlagsAndAttributes(((LPWIN32_FILE_ATTRIBUTE_DATA)fileInformation)->dwFileAttributes).c_str());
-            Log(L"[%s%d] GetFileAttributesEx         Creation 0x%x 0x%x", g_MfrModuleName, dllInstance, ((LPWIN32_FILE_ATTRIBUTE_DATA)fileInformation)->ftCreationTime.dwHighDateTime,
-                ((LPWIN32_FILE_ATTRIBUTE_DATA)fileInformation)->ftCreationTime.dwLowDateTime);
-            Log(L"[%s%d] GetFileAttributesEx         Access   0x%x 0x%x", g_MfrModuleName, dllInstance, ((LPWIN32_FILE_ATTRIBUTE_DATA)fileInformation)->ftLastAccessTime.dwHighDateTime,
-                ((LPWIN32_FILE_ATTRIBUTE_DATA)fileInformation)->ftLastAccessTime.dwLowDateTime);
-            Log(L"[%s%d] GetFileAttributesEx         Write    0x%x 0x%x", g_MfrModuleName, dllInstance, ((LPWIN32_FILE_ATTRIBUTE_DATA)fileInformation)->ftLastWriteTime.dwHighDateTime,
-                ((LPWIN32_FILE_ATTRIBUTE_DATA)fileInformation)->ftLastWriteTime.dwLowDateTime);
-            Log(L"[%s%d] GetFileAttributesEx         Size     0x%I64x 0x%I64x", g_MfrModuleName, dllInstance, ((LPWIN32_FILE_ATTRIBUTE_DATA)fileInformation)->nFileSizeHigh,
-                ((LPWIN32_FILE_ATTRIBUTE_DATA)fileInformation)->nFileSizeLow);
-        }
+        LogAttributesEx(g_MfrModuleName, dllInstance, fileInformation);
     }
 #endif
     return retfinal;

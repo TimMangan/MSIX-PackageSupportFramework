@@ -46,8 +46,12 @@ extern std::filesystem::path root_local_relative_to_normal(std::filesystem::path
 
 extern std::filesystem::path drive_absolute_to_normal(std::filesystem::path nativeAbsolutePath);
 
+extern std::string AdjustSlashes(std::string path, DWORD dllInstance);
 extern std::wstring AdjustSlashes(std::wstring path, DWORD dllInstance);
+extern std::string AdjustBadUNC(std::string path, DWORD dllInstance, std::string CallerName); 
 extern std::wstring AdjustBadUNC(std::wstring path, DWORD dllInstance, std::wstring CallerName);
+extern std::string AdjustPFx64Path(std::string wfileName, DWORD dllInstance, std::wstring CallerName);
+extern std::wstring AdjustPFx64Path(std::wstring wfileName, DWORD dllInstance, std::wstring CallerName);
 
 extern std::wstring MakeLongPath(std::wstring path);
 extern std::wstring MakeNotLongPath(std::wstring path);

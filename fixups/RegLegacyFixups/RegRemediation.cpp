@@ -486,155 +486,162 @@ LSTATUS RegFixupDeletionMarker(std::string keyPath, std::string Value, [[maybe_u
 {
     try
     {
-#if MOREDEBUG
-        Log("[%S%d] RegFixupDeletionMarker: keypath=%s value=%s\n", g_RegModuleName, RegLocalInstance, keyPath.c_str(), Value.c_str());
-#endif
-        std::wstring wKeyPath = widen(keyPath);
-        std::wstring wValue = widen(Value);
-        std::wstring wKeyPathValue = wKeyPath + L"\\\\" + wValue;
-        std::wstring wRemainingKeyPathValue;
-        std::wstring wKeyString;
-        std::wstring wAltKeyString;
-        for (auto& spec : g_regRemediationSpecs)
+        if (!g_regRemediationSpecs.empty())
         {
-
-            for (auto& specitem : spec.remediationRecords)
+#if MOREDEBUG
+            Log("[%S%d] RegFixupDeletionMarker: keypath=%s value=%s\n", g_RegModuleName, RegLocalInstance, keyPath.c_str(), Value.c_str());
+#endif
+            std::wstring wKeyPath = widen(keyPath);
+            std::wstring wValue = widen(Value);
+            std::wstring wKeyPathValue = wKeyPath;
+            if (wValue.length() > 0)
             {
-                if (specitem.remeditaionType == Reg_Remediation_Type_DeletionMarker)
+                wKeyPathValue = wKeyPathValue + L"\\\\" + wValue;
+            }
+            std::wstring wRemainingKeyPathValue;
+            std::wstring wKeyString;
+            std::wstring wAltKeyString;
+            for (auto& spec : g_regRemediationSpecs)
+            {
+
+                for (auto& specitem : spec.remediationRecords)
                 {
-#if MOREDEBUG
-                    Log(L"[%s%d] RegFixupDeletionMarker: specitem.type=%d\n", g_RegModuleName, RegLocalInstance, specitem.remeditaionType);
-#endif 
-                    //TODO:  Test this
-                    switch (specitem.deletionMarker.hive)
+                    if (specitem.remeditaionType == Reg_Remediation_Type_DeletionMarker)
                     {
-                    case Modify_Key_Hive_Type_HKCU:
 #if MOREDEBUG
-                        Log(L"[%s%d] RegFixupDeletionMarker: checking hive HKCU\n", g_RegModuleName, RegLocalInstance);
+                        Log(L"[%s%d] RegFixupDeletionMarker: specitem.type=%d\n", g_RegModuleName, RegLocalInstance, specitem.remeditaionType);
 #endif 
-                        wKeyString = L"HKEY_CURRENT_USER";
-                        wAltKeyString = L"=\\REGISTRY\\USER";
-                        if (wKeyPathValue._Starts_with(wKeyString) ||
-                            wKeyPathValue._Starts_with(wAltKeyString))
+                        //TODO:  Test this
+                        switch (specitem.deletionMarker.hive)
                         {
+                        case Modify_Key_Hive_Type_HKCU:
 #if MOREDEBUG
-                            Log(L"[%s%d] RegFixupDeletionMarker: request is in hive\n", g_RegModuleName, RegLocalInstance);
+                            Log(L"[%s%d] RegFixupDeletionMarker: checking hive HKCU\n", g_RegModuleName, RegLocalInstance);
+#endif 
+                            wKeyString = L"HKEY_CURRENT_USER";
+                            wAltKeyString = L"=\\REGISTRY\\USER";
+                            if (wKeyPathValue._Starts_with(wKeyString) ||
+                                wKeyPathValue._Starts_with(wAltKeyString))
+                            {
+#if MOREDEBUG
+                                Log(L"[%s%d] RegFixupDeletionMarker: request is in hive\n", g_RegModuleName, RegLocalInstance);
 #endif                        
-                            size_t OffsetHkcu = wKeyString.size() + 2;  // skip next '\' 
-                            if (wKeyPathValue._Starts_with(wAltKeyString))
-                            {
-                                // Must remove both the pattern and the S-1-5-...\ that follows.
-                                OffsetHkcu = wKeyPathValue.find_first_of(L'\\', wAltKeyString.size()) + 2;
-                            }
-                            if (OffsetHkcu < wKeyPathValue.size())
-                            {
-                                wRemainingKeyPathValue = wKeyPathValue.substr(OffsetHkcu);
-                            }
-                            else
-                            {
-                                wRemainingKeyPathValue = L"";
-                            }
-                            
+                                size_t OffsetHkcu = wKeyString.size() + 2;  // skip next '\' 
+                                if (wKeyPathValue._Starts_with(wAltKeyString))
+                                {
+                                    // Must remove both the pattern and the S-1-5-...\ that follows.
+                                    OffsetHkcu = wKeyPathValue.find_first_of(L'\\', wAltKeyString.size()) + 2;
+                                }
+                                if (OffsetHkcu < wKeyPathValue.size())
+                                {
+                                    wRemainingKeyPathValue = wKeyPathValue.substr(OffsetHkcu);
+                                }
+                                else
+                                {
+                                    wRemainingKeyPathValue = L"";
+                                }
+
 #if MOREDEBUG
-                            Log(L"[%s%d] RegFixupDeletionMarker: wRemainingKeyPathValue=%Ls\n", g_RegModuleName, RegLocalInstance, wRemainingKeyPathValue.c_str());
-                            Log(L"[%s%d] RegFixupDeletionMarker: regex=%Ls\n", g_RegModuleName, RegLocalInstance, specitem.deletionMarker.key.c_str());
+                                Log(L"[%s%d] RegFixupDeletionMarker: wRemainingKeyPathValue=%Ls\n", g_RegModuleName, RegLocalInstance, wRemainingKeyPathValue.c_str());
+                                Log(L"[%s%d] RegFixupDeletionMarker: regex=%Ls\n", g_RegModuleName, RegLocalInstance, specitem.deletionMarker.key.c_str());
 #endif
-                            if (std::regex_match(wRemainingKeyPathValue, std::wregex(specitem.deletionMarker.key, std::regex_constants::icase)))
-                            {
+                                if (std::regex_match(wRemainingKeyPathValue, std::wregex(specitem.deletionMarker.key, std::regex_constants::icase)))
+                                {
 #if MOREDEBUG
-                                Log(L"[%s%d] RegFixupDeletionMarker: regex match on key\n", g_RegModuleName, RegLocalInstance);
+                                    Log(L"[%s%d] RegFixupDeletionMarker: regex match on key\n", g_RegModuleName, RegLocalInstance);
 #endif                            
-                                if (specitem.deletionMarker.patterns.empty())
-                                {
-                                    // treat an empty values list as a match on any value
-#if _DEBUG
-                                    Log(L"[%s%d] RegFixupDeletionMarker: no pattern specified return = ERROR_FILE_NOT_FOUND", g_RegModuleName, RegLocalInstance);
-#endif
-                                    return ERROR_FILE_NOT_FOUND;
-                                }
-                                else if (wValue.size() == 0)
-                                {
-#if _DEBUG
-                                    Log(L"[%s%d] RegFixupDeletionMarker: no value specified return = ERROR_FILE_NOT_FOUND", g_RegModuleName, RegLocalInstance);
-#endif
-                                    return ERROR_FILE_NOT_FOUND;
-                                }
-                                else
-                                {
-                                    for (auto& pattern : specitem.deletionMarker.patterns)
+                                    if (specitem.deletionMarker.patterns.empty())
                                     {
-                                        std::wstring fullpattern = specitem.deletionMarker.key + L".*" + pattern;
-#if MOREDEBUG
-                                        Log(L"[%s%d] RegFixupDeletionMarker: wRemainingKeyPathValue vs regex=%Ls\n", g_RegModuleName, RegLocalInstance, fullpattern.c_str());
-#endif
-                                        if (std::regex_match(wRemainingKeyPathValue, std::wregex(fullpattern, std::regex_constants::icase)))
-                                        {
+                                        // treat an empty values list as a match on any value
 #if _DEBUG
-                                            Log(L"[%s%d] RegFixupDeletionMarker: pattern match return = ERROR_PATH_NOT_FOUND", g_RegModuleName, RegLocalInstance);
+                                        Log(L"[%s%d] RegFixupDeletionMarker: no pattern specified return = ERROR_FILE_NOT_FOUND", g_RegModuleName, RegLocalInstance);
 #endif
-                                            return ERROR_PATH_NOT_FOUND;
+                                        return ERROR_FILE_NOT_FOUND;
+                                    }
+                                    else if (wValue.size() == 0)
+                                    {
+#if _DEBUG
+                                        Log(L"[%s%d] RegFixupDeletionMarker: no value specified return = ERROR_FILE_NOT_FOUND", g_RegModuleName, RegLocalInstance);
+#endif
+                                        return ERROR_FILE_NOT_FOUND;
+                                    }
+                                    else
+                                    {
+                                        for (auto& pattern : specitem.deletionMarker.patterns)
+                                        {
+                                            std::wstring fullpattern = specitem.deletionMarker.key + L".*" + pattern;
+#if MOREDEBUG
+                                            Log(L"[%s%d] RegFixupDeletionMarker: wRemainingKeyPathValue vs regex=%Ls\n", g_RegModuleName, RegLocalInstance, fullpattern.c_str());
+#endif
+                                            if (std::regex_match(wRemainingKeyPathValue, std::wregex(fullpattern, std::regex_constants::icase)))
+                                            {
+#if _DEBUG
+                                                Log(L"[%s%d] RegFixupDeletionMarker: pattern match return = ERROR_PATH_NOT_FOUND", g_RegModuleName, RegLocalInstance);
+#endif
+                                                return ERROR_PATH_NOT_FOUND;
+                                            }
                                         }
                                     }
                                 }
-                            }
 #if MOREDEBUG
-                            Log(L"[%s%d] RegFixupDeletionMarker: no match found.\n", g_RegModuleName, RegLocalInstance);
+                                Log(L"[%s%d] RegFixupDeletionMarker: no match found.\n", g_RegModuleName, RegLocalInstance);
 #endif 
-                        }
-                        break;
-                    case Modify_Key_Hive_Type_HKLM:
-                        wKeyString = L"HKEY_LOCAL_MACHINE";
-                        wAltKeyString = L"=\\REGISTRY\\MACHINE";
-                        if (wKeyPathValue._Starts_with(wKeyString) ||
-                            wKeyPathValue._Starts_with(wAltKeyString))
-                        {
-                            size_t OffsetHkcu = wKeyString.size() + 2;  // skip next '\' 
-                            if (wKeyPathValue._Starts_with(wAltKeyString))
-                            {
-                                // Must remove both the pattern and the S-1-5-...\ that follows.
-                                OffsetHkcu = wKeyPathValue.find_first_of(L'\\', wAltKeyString.size()) + 2;
                             }
-                            if (OffsetHkcu < wKeyPathValue.size())
+                            break;
+                        case Modify_Key_Hive_Type_HKLM:
+                            wKeyString = L"HKEY_LOCAL_MACHINE";
+                            wAltKeyString = L"=\\REGISTRY\\MACHINE";
+                            if (wKeyPathValue._Starts_with(wKeyString) ||
+                                wKeyPathValue._Starts_with(wAltKeyString))
                             {
-                                wRemainingKeyPathValue = wKeyPathValue.substr(OffsetHkcu);
-                            }
-                            else
-                            {
-                                wRemainingKeyPathValue = L"";
-                            }
-                            if (std::regex_match(wRemainingKeyPathValue, std::wregex(specitem.deletionMarker.key, std::regex_constants::icase)))
-                            {
-                                if (specitem.deletionMarker.patterns.empty())
+                                size_t OffsetHkcu = wKeyString.size() + 2;  // skip next '\' 
+                                if (wKeyPathValue._Starts_with(wAltKeyString))
                                 {
-                                    // treat an empty values list as a match on any value
-#if _DEBUG
-                                    Log(L"[%s%d] RegFixupDeletionMarker: return = ERROR_FILE_NOT_FOUND", g_RegModuleName, RegLocalInstance);
-#endif
-                                    return ERROR_FILE_NOT_FOUND;
+                                    // Must remove both the pattern and the S-1-5-...\ that follows.
+                                    OffsetHkcu = wKeyPathValue.find_first_of(L'\\', wAltKeyString.size()) + 2;
                                 }
-                                else if (wValue.size() == 0)
+                                if (OffsetHkcu < wKeyPathValue.size())
                                 {
-                                    return ERROR_FILE_NOT_FOUND;
+                                    wRemainingKeyPathValue = wKeyPathValue.substr(OffsetHkcu);
                                 }
                                 else
                                 {
-                                    for (auto& pattern : specitem.deletionMarker.patterns)
+                                    wRemainingKeyPathValue = L"";
+                                }
+                                if (std::regex_match(wRemainingKeyPathValue, std::wregex(specitem.deletionMarker.key, std::regex_constants::icase)))
+                                {
+                                    if (specitem.deletionMarker.patterns.empty())
                                     {
-                                        std::wstring fullpattern = specitem.deletionMarker.key + L".*" + pattern;
-                                        if (std::regex_match(wValue, std::wregex(fullpattern, std::regex_constants::icase)))
-                                        {
+                                        // treat an empty values list as a match on any value
 #if _DEBUG
-                                            Log(L"[%s%d] RegFixupDeletionMarker: return = ERROR_PATH_NOT_FOUND", g_RegModuleName, RegLocalInstance);
+                                        Log(L"[%s%d] RegFixupDeletionMarker: return = ERROR_FILE_NOT_FOUND", g_RegModuleName, RegLocalInstance);
 #endif
-                                            return ERROR_PATH_NOT_FOUND;
+                                        return ERROR_FILE_NOT_FOUND;
+                                    }
+                                    else if (wValue.size() == 0)
+                                    {
+                                        return ERROR_FILE_NOT_FOUND;
+                                    }
+                                    else
+                                    {
+                                        for (auto& pattern : specitem.deletionMarker.patterns)
+                                        {
+                                            std::wstring fullpattern = specitem.deletionMarker.key + L".*" + pattern;
+                                            if (std::regex_match(wValue, std::wregex(fullpattern, std::regex_constants::icase)))
+                                            {
+#if _DEBUG
+                                                Log(L"[%s%d] RegFixupDeletionMarker: return = ERROR_PATH_NOT_FOUND", g_RegModuleName, RegLocalInstance);
+#endif
+                                                return ERROR_PATH_NOT_FOUND;
+                                            }
                                         }
                                     }
                                 }
                             }
+                            break;
+                        default:
+                            break;
                         }
-                        break;
-                    default:
-                        break;
                     }
                 }
             }

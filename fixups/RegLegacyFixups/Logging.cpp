@@ -23,28 +23,31 @@ void Log(const char* fmt, ...)
     {
         try
         {
-            va_list args;
-            va_start(args, fmt);
+            int bufferSize = 1024;
             std::string str;
-            str.resize(256);
-            std::size_t count = std::vsnprintf(str.data(), str.size() + 1, fmt, args);
-            assert(count >= 0);
-            va_end(args);
+            int count = -1;
 
-            if (count > str.size())
+            while (true)
             {
-                count = 1024;       // vswprintf actually returns a negative number, let's just go with something big enough for our long strings; it is resized shortly.
-                str.resize(count);
+                str.resize(bufferSize);
+                va_list args;
+                va_start(args, fmt);
+                count = _vsnprintf_s(str.data(), bufferSize, _TRUNCATE, fmt, args);
+                va_end(args);
 
-                va_list args2;
-                va_start(args2, fmt);
-                count = std::vsnprintf(str.data(), str.size() + 1, fmt, args2);
-                assert(count >= 0);
-                va_end(args2);
+                if (count >= 0 && count < bufferSize)
+                {
+                    str.resize(count);
+                    ::OutputDebugStringA(str.c_str());
+                    break;
+                }
+                else if (bufferSize >= 65536)
+                {
+                    ::OutputDebugStringA("Error in Log() wide string too long or format error");
+                    break;
+                }
+                bufferSize *= 2;
             }
-
-            str.resize(count);
-            ::OutputDebugStringA(str.c_str());
         }
         catch (...)
         {
@@ -60,25 +63,31 @@ void Log(const wchar_t* fmt, ...)
     {
         try
         {
-            va_list args;
-            va_start(args, fmt);
-
+            int bufferSize = 1024;
             std::wstring wstr;
-            wstr.resize(256);
-            std::size_t count = std::vswprintf(wstr.data(), wstr.size() + 1, fmt, args);
-            va_end(args);
+            int count = -1;
 
-            if (count > wstr.size())
+            while (true)
             {
-                count = 1024;       // vswprintf actually returns a negative number, let's just go with something big enough for our long strings; it is resized shortly.
-                wstr.resize(count);
-                va_list args2;
-                va_start(args2, fmt);
-                count = std::vswprintf(wstr.data(), wstr.size() + 1, fmt, args2);
-                va_end(args2);
+                wstr.resize(bufferSize);
+                va_list args;
+                va_start(args, fmt);
+                count = _vsnwprintf_s(wstr.data(), bufferSize, _TRUNCATE, fmt, args);
+                va_end(args);
+
+                if (count >= 0 && count < bufferSize)
+                {
+                    wstr.resize(count);
+                    ::OutputDebugStringW(wstr.c_str());
+                    break;
+                }
+                else if (bufferSize >= 65536)
+                {
+                    ::OutputDebugStringA("Error in Log() wide string too long or format error");
+                    break;
+                }
+                bufferSize *= 2;
             }
-            wstr.resize(count);
-            ::OutputDebugStringW(wstr.c_str());
         }
         catch (...)
         {
@@ -482,6 +491,7 @@ std::string InterpretKeyPath(HKEY key, const char* msg)
         if ((status == STATUS_BUFFER_TOO_SMALL) || (status == STATUS_BUFFER_OVERFLOW))
         {
             auto buffer = std::make_unique<std::uint8_t[]>(size + 2);
+            ZeroMemory(buffer.get(), size + 2);
             if (NT_SUCCESS(impl::NtQueryKey(key, winternl::KeyNameInformation, buffer.get(), size, &size)))
             {
                 buffer[size] = 0x0;
@@ -490,7 +500,10 @@ std::string InterpretKeyPath(HKEY key, const char* msg)
                 sret = InterpretCountedString(msg, info->Name, info->NameLength / 2);
             }
             else
-                sret = "InterpretKeyPath failure2a";
+            {
+                Log(L"InterpretKeyPath failure2b.");
+                sret = "InterpretKeyPath failure2b";
+            }
         }
         else if (status == STATUS_INVALID_HANDLE)
         {
@@ -500,13 +513,31 @@ std::string InterpretKeyPath(HKEY key, const char* msg)
                 sret = msg + InterpretStringA("HKEY_CURRENT_USER");
             else if (key == HKEY_CLASSES_ROOT)
                 sret = msg + InterpretStringA("HKEY_CLASSES_ROOT");
+            else if (key == HKEY_USERS)
+                sret = msg + InterpretStringA("HKEY_USERS");
+            else if (key == HKEY_PERFORMANCE_DATA)
+                sret = msg + InterpretStringA("HKEY_PERFORMANCE_DATA");
+            else if (key == HKEY_PERFORMANCE_TEXT)
+                sret = msg + InterpretStringA("HKEY_PERFORMANCE_TEXT");
+            else if (key == HKEY_PERFORMANCE_NLSTEXT)
+                sret = msg + InterpretStringA("HKEY_PERFORMANCE_NLSTEXT");
+            else if (key == HKEY_CURRENT_CONFIG)
+                sret = msg + InterpretStringA("HKEY_CURRENT_CONFIG");
+            else if (key == HKEY_DYN_DATA)
+                sret = msg + InterpretStringA("HKEY_DYN_DATA");
+            else if (key == HKEY_CURRENT_USER_LOCAL_SETTINGS)
+                sret = msg + InterpretStringA("HKEY_CURRENT_USER_LOCAL_SETTINGS");
+#if _DEBUG
+            else
+                Log(L"InterpretKeyPath failure2c.");
+#endif
         }
         else
             sret = "InterpretKeyPath failure1" + InterpretAsHex("status", (DWORD)status);
     }
     catch (...)
     {
-        Log(L"InterpretKeyPath failure.");
+        Log(L"InterpretKeyPath failure0.");
     }
     return sret;
 }
@@ -520,16 +551,18 @@ std::string InterpretKeyPath(HKEY key)
         auto status = impl::NtQueryKey(key, winternl::KeyNameInformation, nullptr, 0, &size);
         if ((status == STATUS_BUFFER_TOO_SMALL) || (status == STATUS_BUFFER_OVERFLOW))
         {
-            auto buffer = std::make_unique<std::uint8_t[]>(size + 2);
+            auto buffer = std::make_unique<std::uint8_t[]>(size +2);
+            ZeroMemory(buffer.get(), size +2);
             if (NT_SUCCESS(impl::NtQueryKey(key, winternl::KeyNameInformation, buffer.get(), size, &size)))
             {
-                buffer[size] = 0x0;
-                buffer[size + 1] = 0x0;  // Add string termination character
                 auto info = reinterpret_cast<winternl::PKEY_NAME_INFORMATION>(buffer.get());
                 sret = InterpretCountedString("", info->Name, info->NameLength / 2);
             }
             else
+            {
                 sret = "InterpretKeyPath failure2b";
+                Log(L"InterpretKeyPath failure2b.");
+            }
         }
         else if (status == STATUS_INVALID_HANDLE)
         {
@@ -539,6 +572,20 @@ std::string InterpretKeyPath(HKEY key)
                 sret = InterpretStringA("HKEY_CURRENT_USER");
             else if (key == HKEY_CLASSES_ROOT)
                 sret = InterpretStringA("HKEY_CLASSES_ROOT");
+            else if (key == HKEY_USERS)
+                sret = InterpretStringA("HKEY_USERS");
+            else if (key == HKEY_PERFORMANCE_DATA)
+                sret = InterpretStringA("HKEY_PERFORMANCE_DATA");
+            else if (key == HKEY_PERFORMANCE_TEXT)
+                sret = InterpretStringA("HKEY_PERFORMANCE_TEXT");
+            else if (key == HKEY_PERFORMANCE_NLSTEXT)
+                sret = InterpretStringA("HKEY_PERFORMANCE_NLSTEXT");
+            else if (key == HKEY_CURRENT_CONFIG)
+                sret = InterpretStringA("HKEY_CURRENT_CONFIG");
+            else if (key == HKEY_DYN_DATA)
+                sret = InterpretStringA("HKEY_DYN_DATA");
+            else if (key == HKEY_CURRENT_USER_LOCAL_SETTINGS)
+                sret = InterpretStringA("HKEY_CURRENT_USER_LOCAL_SETTINGS");
 #if _DEBUG
             else
                 Log(L"InterpretKeyPath failure2c.");
@@ -552,7 +599,8 @@ std::string InterpretKeyPath(HKEY key)
     }
     catch (...)
     {
-        Log(L"InterpretKeyPath failure.");
+        sret = "InterpretKeyPath failure0";
+        Log(L"InterpretKeyPath failure0.");
     }
 
     // Let's keep these out of the container registry

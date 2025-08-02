@@ -35,6 +35,12 @@ extern std::filesystem::path FID_Desktop;
 extern std::filesystem::path FID_Documents;
 extern std::filesystem::path FID_PublicDesktop;
 extern std::filesystem::path FID_PublicDocuments;
+#if MORE_ADDMOREEXCLUSIONS
+extern std::filesystem::path FID_Downloads;
+extern std::filesystem::path FID_Pictures;
+extern std::filesystem::path FID_Videos;
+extern std::filesystem::path FID_Music;
+#endif
 
 extern std::filesystem::path FID_RootDrive;
 

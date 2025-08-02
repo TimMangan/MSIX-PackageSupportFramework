@@ -82,7 +82,12 @@ namespace impl
     inline auto WritePrivateProfileString = psf::detoured_string_function(&::WritePrivateProfileStringA, &::WritePrivateProfileStringW);
     inline auto WritePrivateProfileStruct = psf::detoured_string_function(&::WritePrivateProfileStructA, &::WritePrivateProfileStructW);
 
+#if INTERCEPT_DEVICEIOCONTROL
+    inline auto DeviceIoControl = &::DeviceIoControl;
+#endif
+    
     //inline auto SearchPath = psf::detoured_string_function(&::SearchPathA, &::SearchPathW);
+
 
 #if FIXUP_ORIGINAL_SHELLEXECUTE
     //inline auto ShellExecute = psf::detoured_string_function(&::ShellExecuteA, &::ShellExecuteW);

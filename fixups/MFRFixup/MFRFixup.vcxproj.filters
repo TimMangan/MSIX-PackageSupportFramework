@@ -57,6 +57,9 @@
     <Filter Include="Source Files\Intercepts\CreateDirectories\CopyFiles">
       <UniqueIdentifier>{8901a70a-4e66-47a1-9f76-c53de640783c}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\Intercepts\IoCtl">
+      <UniqueIdentifier>{02d99c31-d9e7-41a8-93c3-d4fca9285a66}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="framework.h">
@@ -123,6 +126,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\FileRedirectionFixup\PathRedirection.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="FindFirstFile.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
@@ -291,6 +297,12 @@
     </ClCompile>
     <ClCompile Include="NtCreateFilecpp.cpp">
       <Filter>Source Files\Intercepts\NtDll</Filter>
+    </ClCompile>
+    <ClCompile Include="ChooseIndexForFindResult.cpp">
+      <Filter>Source Files\Intercepts\FindsAndSearches</Filter>
+    </ClCompile>
+    <ClCompile Include="DeviceIoControl.cpp">
+      <Filter>Source Files\Intercepts\IoCtl</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

@@ -56,11 +56,11 @@ void DetermineCohorts(std::wstring requestedPath, Cohorts *cohorts, bool UseMore
             {
                 if (cohorts->map.IsExactMatchOnly == mfr::mfr_exactmatchonly_types::exactmatchonly)
                 {
-                    Log(L"[%s%d] %s: DetermineCohorts: ExactOnly Mapping match against local  %s", g_MfrModuleName, dllInstance, FixupName, cohorts->map.VFSFolderName.c_str());
+                    Log(L"[%s%d] %s: DetermineCohorts: ExactOnly Mapping match against redir %s", g_MfrModuleName, dllInstance, FixupName, cohorts->map.VFSFolderName.c_str());
                 }
                 else
                 {
-                    Log(L"[%s%d] %s: DetermineCohorts: Mapping match against local  %s", g_MfrModuleName, dllInstance, FixupName, cohorts->map.VFSFolderName.c_str());
+                    Log(L"[%s%d] %s: DetermineCohorts: Mapping match against redir %s", g_MfrModuleName, dllInstance, FixupName, cohorts->map.VFSFolderName.c_str());
                 }
             }
             if (cohorts->map.IsAnExclusionToRedirect == mfr::mfr_exclusion_types::not_excluded)
@@ -245,6 +245,21 @@ void DetermineCohorts(std::wstring requestedPath, Cohorts *cohorts, bool UseMore
                     cohorts->WsNative = ReplacePathPart(cohorts->WsRequested.c_str(), cohorts->map.PackagePathBase, cohorts->map.NativePathBase);
                     //cohorts->NativeIsValidOptionInScenario = false;
                     break;
+                }
+                else if (cohorts->map.RedirectionFlags == mfr::mfr_redirect_flags::prefer_redirection_if_package_vfs ||
+                         cohorts->map.RedirectionFlags == mfr::mfr_redirect_flags::prefer_redirection_containerized)
+                {
+                    if (UseMoreDebug)
+                    {
+                        Log(L"[%s%d] %s: DetermineCohorts: Ignore because it maps with known traditional redirection type %s", g_MfrModuleName, dllInstance, FixupName, RedirectFlagsName(cohorts->map.RedirectionFlags));
+                    }
+                }
+                else
+                {
+                    if (UseMoreDebug)
+                    {
+                        Log(L"[%s%d] %s: DetermineCohorts: ignore because it maps with unknown local redirection type %s", g_MfrModuleName, dllInstance, FixupName, RedirectFlagsName(cohorts->map.RedirectionFlags));
+                    }
                 }
             }
             else

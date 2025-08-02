@@ -4,7 +4,7 @@
 //-------------------------------------------------------------------------------------------------------
 #if _DEBUG
 //#define _ManualDebug 1
-#define MOREDEBUG 1
+//#define MOREDEBUG 1
 #include <thread>
 #include <windows.h>
 #endif

@@ -45,7 +45,7 @@ struct SIH_PROC_THREAD_ATTRIBUTE_LIST
     SIH_PROC_THREAD_ATTRIBUTE_ENTRY Entry[ANYSIZE_ARRAY];
 };
 
-inline void DumpStartupAttributes(SIH_PROC_THREAD_ATTRIBUTE_LIST* attlist, DWORD instance)
+inline void DumpStartupAttributes(SIH_PROC_THREAD_ATTRIBUTE_LIST* attlist, const wchar_t* moduleName, DWORD instance)
 {
     if (attlist != NULL)
     {
@@ -59,7 +59,7 @@ inline void DumpStartupAttributes(SIH_PROC_THREAD_ATTRIBUTE_LIST* attlist, DWORD
             {
                 SIH_PROC_THREAD_ATTRIBUTE_ENTRY Entry = attlist->Entry[inx];
                 Log("\t\t[%d]\t\tIndex %d Attribute 0x%x Size=0x%x", instance, inx, Entry.Attribute, Entry.cbSize);
-                Loghexdump(Entry.lpvalue, (long)Entry.cbSize, instance);
+                Loghexdump(Entry.lpvalue, (long)Entry.cbSize, moduleName, instance);
                 if (Entry.Attribute == PROC_THREAD_ATTRIBUTE_DESKTOP_APP_POLICY)
                 {
                     Log("\t\t[%d]\t\tIs Attribute_Desktop_App_Policy", instance);
@@ -84,7 +84,7 @@ inline void DumpStartupAttributes(SIH_PROC_THREAD_ATTRIBUTE_LIST* attlist, DWORD
         }
         else
         {
-            Loghexdump(attlist, 48, instance);
+            Loghexdump(attlist, 48, moduleName, instance);
         }
     }
 }
