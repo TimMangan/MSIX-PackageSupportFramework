@@ -17,13 +17,14 @@ ideas:
 * MFR: Create file on file with options that look like directory options (backup semantics) should be treated as a file open, not a directory open.  Devolutions (old version) does this. See Lab 23.
 
 
-v.Next
+v.2025.09.17
 	* Added new psfJson configuration option, "debugLevel", to control logging rather than use debug/release build.  It supports a number of different debug levels (0-9),
 	  where the default is LogLevel_Launching (2) and the recommended runtime level is LogLevel_DebugIntermediate (4).
 	* Added a new informational intercept in PsfRuntime for CreateNamedPipeA/W.  This is just informational at this time.
 	* Added multiple new informational intercepts in PsfRuntime for COM initialization by an application.
 	  These are just informational at this time, but a separate COM fixup may be needed in the future to allow spoofing for situations where existing COM names are not allowed in the AppXManifest.
 	  These new itercepts log only with Psf LogLevel 9, currently.
+
 v.2025.08.02:
   * Small cleanups in RegLegacyFixup
   * Changes in MfrFixup to improve support in FileSystemWrite scenario with GetFileAttributes/Ex
