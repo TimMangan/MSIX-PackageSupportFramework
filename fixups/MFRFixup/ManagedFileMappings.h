@@ -9,6 +9,7 @@
 #include <winternl.h>
 #include <minwindef.h>
 
+#define MORE_ADDMOREEXCLUSIONS 1
 
 namespace mfr
 {

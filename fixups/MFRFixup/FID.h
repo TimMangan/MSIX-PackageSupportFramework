@@ -6,6 +6,7 @@
 //-------------------------------------------------------------------------------------------------------
 
 #include <known_folders.h>
+#define  MORE_ADDMOREEXCLUSIONS 1
 
 
 using namespace std::literals;
