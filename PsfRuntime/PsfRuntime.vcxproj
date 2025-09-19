@@ -24,7 +24,9 @@
     <ClCompile Include="..\CommonSrc\findStringIC.cpp" />
     <ClCompile Include="..\CommonSrc\psf_logging.cpp" />
     <ClCompile Include="AddSetDllDirectory.cpp" />
+    <ClCompile Include="CoCreateInstance.cpp" />
     <ClCompile Include="Config.cpp" />
+    <ClCompile Include="CreateNamedPipe.cpp" />
     <ClCompile Include="CreateProcessAsUser.cpp" />
     <ClCompile Include="CreateProcessHook.cpp" />
     <ClCompile Include="main.cpp" />
@@ -36,6 +38,7 @@
   <ItemGroup>
     <ClInclude Include="..\CommonSrc\Config.h" />
     <ClInclude Include="..\CommonSrc\findStringIC.h" />
+    <ClInclude Include="..\include\psf_logging.h" />
     <ClInclude Include="JsonConfig.h" />
     <ClInclude Include="resource.h" />
   </ItemGroup>

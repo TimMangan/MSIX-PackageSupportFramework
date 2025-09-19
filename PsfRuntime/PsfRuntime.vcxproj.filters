@@ -36,6 +36,8 @@
     <ClCompile Include="CreateProcessAsUser.cpp">
       <Filter>src</Filter>
     </ClCompile>
+    <ClCompile Include="CreateNamedPipe.cpp" />
+    <ClCompile Include="CoCreateInstance.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="PsfRuntime.def" />
@@ -52,6 +54,9 @@
       <Filter>CommonSrc</Filter>
     </ClInclude>
     <ClInclude Include="resource.h" />
+    <ClInclude Include="..\include\psf_logging.h">
+      <Filter>CommonSrc</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="PsfRuntime.rc" />
