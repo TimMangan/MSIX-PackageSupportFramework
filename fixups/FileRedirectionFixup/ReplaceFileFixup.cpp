@@ -26,15 +26,13 @@ BOOL __stdcall ReplaceFileFixup(
     {
         if (guard)
         {
-#if _DEBUG
-            LogString(g_FrfModuleName, ReplaceFileInstance,L"ReplaceFileFixup From", replacedFileName);
-            LogString(g_FrfModuleName, ReplaceFileInstance,L"ReplaceFileFixup To",   replacementFileName);
+            LogString(LogLevel_DebugBasic, g_FrfModuleName, ReplaceFileInstance,L"ReplaceFileFixup From", replacedFileName);
+            LogString(LogLevel_DebugBasic, g_FrfModuleName, ReplaceFileInstance,L"ReplaceFileFixup To",   replacementFileName);
             if (backupFileName != nullptr)
             {
-                LogString(g_FrfModuleName, ReplaceFileInstance, L"ReplaceFileFixup with backup", backupFileName);
+                LogString(LogLevel_DebugBasic, g_FrfModuleName, ReplaceFileInstance, L"ReplaceFileFixup with backup", backupFileName);
             }
-            Log(L"[%s%d] ReplaceFileFixup replaceFlags 0x%x", g_FrfModuleName, ReplaceFileInstance, replaceFlags);
-#endif
+            Log(LogLevel_DebugBasic, L"[%s%d] ReplaceFileFixup replaceFlags 0x%x", g_FrfModuleName, ReplaceFileInstance, replaceFlags);
 
             // NOTE: ReplaceFile will delete the "replacement file" (the file we're copying from), so therefore we need
             //       delete access to it, thus we copy-on-read it here. I.e. we're copying the file only for it to
@@ -45,15 +43,14 @@ BOOL __stdcall ReplaceFileFixup(
             //////path_redirect_info  priSource = ShouldRedirectV2(replacementFileName, redirect_flags::ensure_directory_structure, ReplaceFileInstance);
             path_redirect_info  priSource = ShouldRedirectV2(replacementFileName, redirect_flags::check_file_presence | redirect_flags::copy_on_read | redirect_flags::ensure_directory_structure | redirect_flags::ok_if_parent_in_pkg, ReplaceFileInstance);
             path_redirect_info  priBackup = ShouldRedirectV2(backupFileName, redirect_flags::ensure_directory_structure | redirect_flags::ok_if_parent_in_pkg, ReplaceFileInstance);
-#if MOREDEBUG
             if (priTarget.should_redirect)
-                LogString(g_FrfModuleName, ReplaceFileInstance, L"ReplaceFileFixup RedirTarget ", priTarget.redirect_path.c_str());
+                LogString(LogLevel_DebugBasic, g_FrfModuleName, ReplaceFileInstance, L"ReplaceFileFixup RedirTarget ", priTarget.redirect_path.c_str());
             if (priSource.should_redirect)
-                LogString(g_FrfModuleName, ReplaceFileInstance, L"ReplaceFileFixup RedirSource ", priSource.redirect_path.c_str());
+                LogString(LogLevel_DebugBasic, g_FrfModuleName, ReplaceFileInstance, L"ReplaceFileFixup RedirSource ", priSource.redirect_path.c_str());
             if (priBackup.should_redirect)
-                LogString(g_FrfModuleName, ReplaceFileInstance, L"ReplaceFileFixup RedirBackup ", priBackup.redirect_path.c_str());
-            Log(L"[%s%d] Exists: %d %d %d", g_FrfModuleName, ReplaceFileInstance, priTarget.doesRedirectedExist, priSource.doesRedirectedExist, priBackup.doesRedirectedExist);
-#endif
+                LogString(LogLevel_DebugBasic, g_FrfModuleName, ReplaceFileInstance, L"ReplaceFileFixup RedirBackup ", priBackup.redirect_path.c_str());
+            Log(LogLevel_DebugBasic, L"[%s%d] Exists: %d %d %d", g_FrfModuleName, ReplaceFileInstance, priTarget.doesRedirectedExist, priSource.doesRedirectedExist, priBackup.doesRedirectedExist);
+
             if ( priTarget.should_redirect || priSource.should_redirect || priBackup.should_redirect)
             {
                 std::wstring rldReplacedFileName = TurnPathIntoRootLocalDevice(priTarget.should_redirect ? priTarget.redirect_path.c_str() : widen_argument(replacedFileName).c_str());
@@ -64,7 +61,7 @@ BOOL __stdcall ReplaceFileFixup(
                     BOOL b = impl::ReplaceFile(rldReplacedFileName.c_str(), rldReplacementFileName.c_str(), rldBackupFileName.c_str(), replaceFlags, exclude, reserved);
                     if (b == 0)
                     {
-                        Log(L"[%s%d] ReplaceFileFixup GetLastError 0x%x", g_FrfModuleName, ReplaceFileInstance, GetLastError());
+                        Log(LogLevel_DebugBasic, L"[%s%d] ReplaceFileFixup GetLastError 0x%x", g_FrfModuleName, ReplaceFileInstance, GetLastError());
                     }
                     return b;
                 }
@@ -73,22 +70,16 @@ BOOL __stdcall ReplaceFileFixup(
                     BOOL b = impl::ReplaceFile(rldReplacedFileName.c_str(), rldReplacementFileName.c_str(), nullptr, replaceFlags, exclude, reserved);
                     if (b == 0)
                     {
-                        Log(L"[%s%d] ReplaceFileFixup GetLastError 0x%x", g_FrfModuleName, ReplaceFileInstance, GetLastError());
+                        Log(LogLevel_DebugBasic, L"[%s%d] ReplaceFileFixup GetLastError 0x%x", g_FrfModuleName, ReplaceFileInstance, GetLastError());
                     }
                     return b;
                 }
             }
         }
     }
-#if _DEBUG
     // Fall back to assuming no redirection is necessary if exception
-    LOGGED_CATCHHANDLER_MIN(g_FrfModuleName, ReplaceFileInstance, L"ReplaceFile")
-#else
-    catch (...)
-    {
-        Log(L"[%s%d] ReplaceFile Exception=0x%x", g_FrfModuleName, ReplaceFileInstance, GetLastError());
-    }
-#endif
+    LOGGED_CATCHHANDLER_MIN(LogLevel_Exception, g_FrfModuleName, ReplaceFileInstance, L"ReplaceFile")
+
 
 
     if constexpr (psf::is_ansi<CharT>)

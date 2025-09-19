@@ -148,7 +148,7 @@ DWORD copy_find_data(const WIN32_FIND_DATAA& from, WIN32_FIND_DATAW& to) noexcep
 
 void LogNormalizedPath(normalized_path np,  std::wstring desc, DWORD instance)
 {
-    Log(L"[%s%d]\tNormalized_path %ls Type=%x, Full=%ls, Abs=%ls", g_FrfModuleName, instance, desc.c_str(), (int)np.path_type, np.full_path.c_str(), np.drive_absolute_path);
+    Log(LogLevel_DebugBasic, L"[%s%d]\tNormalized_path %ls Type=%x, Full=%ls, Abs=%ls", g_FrfModuleName, instance, desc.c_str(), (int)np.path_type, np.full_path.c_str(), np.drive_absolute_path);
 }
 
 
@@ -165,66 +165,60 @@ HANDLE __stdcall FindFirstFileExFixupV2(
     auto guard = g_reentrancyGuard.enter();
     if (!guard)
     {
-#if _DEBUG
-        LogString(g_FrfModuleName, InstanceV2, L"\tFindFirstFileExFixupV2 (unguarded): for fileName", fileName);
-#endif
+        LogString(LogLevel_DebugBasic, g_FrfModuleName, InstanceV2, L"\tFindFirstFileExFixupV2 (unguarded): for fileName", fileName);
         return impl::FindFirstFileEx(fileName, infoLevelId, findFileData, searchOp, searchFilter, additionalFlags);
     }
 
     
     std::wstring wFileName = widen(fileName);
-#if _DEBUG
     if (psf::is_ansi<CharT>)
     {
-        LogString(g_FrfModuleName, InstanceV2, L"\tFindFirstFileExAFixupV2: for fileName", fileName);
+        LogString(LogLevel_DebugBasic, g_FrfModuleName, InstanceV2, L"\tFindFirstFileExAFixupV2: for fileName", fileName);
     }
     else
     {
-        LogString(g_FrfModuleName, InstanceV2, L"\tFindFirstFileExWFixupV2: for fileName", fileName);
+        LogString(LogLevel_DebugBasic, g_FrfModuleName, InstanceV2, L"\tFindFirstFileExWFixupV2: for fileName", fileName);
     }
 
     switch (infoLevelId)
     {
     case FindExInfoStandard:
-        Log(L"[%s%d]\t\tLevel FindExInfoStandard", g_FrfModuleName, InstanceV2);
+        Log(LogLevel_DebugBasic, L"[%s%d]\t\tLevel FindExInfoStandard", g_FrfModuleName, InstanceV2);
         break;
     case FindExInfoBasic:
-        Log(L"[%s%d]\t\tLevel FindExInfoBasic", g_FrfModuleName, InstanceV2);
+        Log(LogLevel_DebugBasic, L"[%s%d]\t\tLevel FindExInfoBasic", g_FrfModuleName, InstanceV2);
         break;
     case FindExInfoMaxInfoLevel:
-        Log(L"[%s%d]\t\tLevel FindExInfoMaxInfoLevel", g_FrfModuleName, InstanceV2);
+        Log(LogLevel_DebugBasic, L"[%s%d]\t\tLevel FindExInfoMaxInfoLevel", g_FrfModuleName, InstanceV2);
         break;
     default:
-        Log(L"[%s%d]\t\tLevel unknown", g_FrfModuleName, InstanceV2);
+        Log(LogLevel_DebugBasic, L"[%s%d]\t\tLevel unknown", g_FrfModuleName, InstanceV2);
         break;
     }
     switch (searchOp)
     {
     case FindExSearchNameMatch:
-        Log(L"[%s%d]\t\tSearchOp FindExSearchNameMatch", g_FrfModuleName, InstanceV2);
+        Log(LogLevel_DebugBasic, L"[%s%d]\t\tSearchOp FindExSearchNameMatch", g_FrfModuleName, InstanceV2);
             break;
     case FindExSearchLimitToDirectories:
-        Log(L"[%s%d]\t\tSearchOp FindExSearchLimitToDirectories", g_FrfModuleName, InstanceV2);
+        Log(LogLevel_DebugBasic, L"[%s%d]\t\tSearchOp FindExSearchLimitToDirectories", g_FrfModuleName, InstanceV2);
         break;
     case FindExSearchLimitToDevices:
-        Log(L"[%s%d]\t\tSearchOp FindExSearchLimitToDevices", g_FrfModuleName, InstanceV2);
+        Log(LogLevel_DebugBasic, L"[%s%d]\t\tSearchOp FindExSearchLimitToDevices", g_FrfModuleName, InstanceV2);
         break;
     case FindExSearchMaxSearchOp:
-        Log(L"[%s%d]\t\tSearchOp FindExSearchMaxSearchOp", g_FrfModuleName, InstanceV2);
+        Log(LogLevel_DebugBasic, L"[%s%d]\t\tSearchOp FindExSearchMaxSearchOp", g_FrfModuleName, InstanceV2);
         break;
     default:
-        Log(L"[%s%d]\t\tSearchOp Unknown=0x%x", g_FrfModuleName, InstanceV2,searchOp);
+        Log(LogLevel_DebugBasic, L"[%s%d]\t\tSearchOp Unknown=0x%x", g_FrfModuleName, InstanceV2,searchOp);
         break;
     }
-#endif
     if (wFileName.length() > 3)
     {
         if (wFileName.substr(wFileName.length() - 3).compare(L"\\\\*")==0)
         {
             // This case is an invalid find request that accidentally works in normal find calls, but our redirection gets messed up.
-#if _DEBUG
-            Log(L"[%s%d] DEBUG TEST: Tweek bad call", g_FrfModuleName, InstanceV2);
-#endif
+            Log(LogLevel_DebugBasic, L"[%s%d] DEBUG TEST: Tweek bad call", g_FrfModuleName, InstanceV2);
             wFileName[wFileName.length()-2] = wFileName[wFileName.length()-1];
             wFileName.resize(wFileName.length() - 1);
         }
@@ -252,13 +246,11 @@ HANDLE __stdcall FindFirstFileExFixupV2(
     result->package_devfs_path = pathDeVirtualized;
     result->package_deredirect_path = pathDeRedirected;
 
-#if _DEBUG
-    Log(L"[%s%d] FindFirstFileExFixupV2 redirect_path        for [0] (from redir)   is %ls", g_FrfModuleName, InstanceV2, result->redirect_path.c_str());
-    Log(L"[%s%d] FindFirstFileExFixupV2 package_vfs_path     for [1] (from VFS)     is %ls", g_FrfModuleName, InstanceV2, result->package_vfs_path.c_str());
-    Log(L"[%s%d] FindFirstFileExFixupV2 requested_path       for [2] (from req)     is %ls", g_FrfModuleName, InstanceV2, result->requested_path.c_str());
-    Log(L"[%s%d] FindFirstFileExFixupV2 package_devfs_path   for [3] (from DeVFS)   is %ls", g_FrfModuleName, InstanceV2, result->package_devfs_path.c_str());
-    Log(L"[%s%d] FindFirstFileExFixupV2 package_deredir_path for [4] (from DeRedir) is %ls", g_FrfModuleName, InstanceV2, result->package_deredirect_path.c_str());
-#endif
+    Log(LogLevel_DebugBasic, L"[%s%d] FindFirstFileExFixupV2 redirect_path        for [0] (from redir)   is %ls", g_FrfModuleName, InstanceV2, result->redirect_path.c_str());
+    Log(LogLevel_DebugBasic, L"[%s%d] FindFirstFileExFixupV2 package_vfs_path     for [1] (from VFS)     is %ls", g_FrfModuleName, InstanceV2, result->package_vfs_path.c_str());
+    Log(LogLevel_DebugBasic, L"[%s%d] FindFirstFileExFixupV2 requested_path       for [2] (from req)     is %ls", g_FrfModuleName, InstanceV2, result->requested_path.c_str());
+    Log(LogLevel_DebugBasic, L"[%s%d] FindFirstFileExFixupV2 package_devfs_path   for [3] (from DeVFS)   is %ls", g_FrfModuleName, InstanceV2, result->package_devfs_path.c_str());
+    Log(LogLevel_DebugBasic, L"[%s%d] FindFirstFileExFixupV2 package_deredir_path for [4] (from DeRedir) is %ls", g_FrfModuleName, InstanceV2, result->package_deredirect_path.c_str());
 
     [[maybe_unused]] auto ansiData = reinterpret_cast<WIN32_FIND_DATAA*>(findFileData);
     [[maybe_unused]] auto wideData = reinterpret_cast<WIN32_FIND_DATAW*>(findFileData);
@@ -291,9 +283,7 @@ HANDLE __stdcall FindFirstFileExFixupV2(
                 assert(findData == wideData);
                 copy_find_data(*wideData, result->cached_data);
             }
-#if _DEBUG
-            Log(L"[%s%d] FindFirstFileExFixupV2[0] (from redirected): had results %ls", g_FrfModuleName, InstanceV2,findData->cFileName);
-#endif
+            Log(LogLevel_DebugBasic, L"[%s%d] FindFirstFileExFixupV2[0] (from redirected): had results %ls", g_FrfModuleName, InstanceV2,findData->cFileName);
             AnyValidPath = true;
             AnyValidResult = true;
         }
@@ -304,9 +294,7 @@ HANDLE __stdcall FindFirstFileExFixupV2(
 
             // Path doesn't exist or match any files. We can safely get away without the redirected file exists check
             result->redirect_path.clear();
-#if _DEBUG
-            Log(L"[%s%d] FindFirstFileExFixupV2[0] (from redirected): no results", g_FrfModuleName, InstanceV2);
-#endif
+            Log(LogLevel_DebugBasic, L"[%s%d] FindFirstFileExFixupV2[0] (from redirected): no results", g_FrfModuleName, InstanceV2);
         }
 
         // reset for next level???
@@ -314,9 +302,7 @@ HANDLE __stdcall FindFirstFileExFixupV2(
     }
     else
     {
-#if _DEBUG
-        Log(L"[%s%d] FindFirstFileExFixupV2[0] (from redirected): no results possible", g_FrfModuleName, InstanceV2);
-#endif
+        Log(LogLevel_DebugBasic, L"[%s%d] FindFirstFileExFixupV2[0] (from redirected): no results possible", g_FrfModuleName, InstanceV2);
     }
 
     //
@@ -331,9 +317,7 @@ HANDLE __stdcall FindFirstFileExFixupV2(
         ///result->package_vfs_path.resize(vfspathSize);
         if (result->find_handles[1])
         {
-#if _DEBUG
-            Log(L"[%s%d] FindFirstFileExFixupV2[1] (from vfs_path):   had results", g_FrfModuleName, InstanceV2);
-#endif
+            Log(LogLevel_DebugBasic, L"[%s%d] FindFirstFileExFixupV2[1] (from vfs_path):   had results", g_FrfModuleName, InstanceV2);
             AnyValidPath = true;
             AnyValidResult = true;
             initialFindError = ERROR_SUCCESS;
@@ -343,9 +327,7 @@ HANDLE __stdcall FindFirstFileExFixupV2(
             if (GetLastError() == ERROR_FILE_NOT_FOUND)
                 AnyValidPath = true;
             result->package_vfs_path.clear();
-#if _DEBUG
-            Log(L"[%s%d] FindFirstFileExFixupV2[1] (from vfs_path):   no results", g_FrfModuleName, InstanceV2);
-#endif
+            Log(LogLevel_DebugBasic, L"[%s%d] FindFirstFileExFixupV2[1] (from vfs_path):   no results", g_FrfModuleName, InstanceV2);
         }
         if (!result->find_handles[0])
         {
@@ -355,9 +337,7 @@ HANDLE __stdcall FindFirstFileExFixupV2(
                 {
                     if (copy_find_data(*findData, *ansiData))
                     {
-#if _DEBUG
-                        Log(L"[%s%d] FindFirstFileExFixup error set by caller", g_FrfModuleName, InstanceV2);
-#endif
+                        Log(LogLevel_DebugBasic, L"[%s%d] FindFirstFileExFixup error set by caller", g_FrfModuleName, InstanceV2);
                         // NOTE: Last error set by caller
                         return INVALID_HANDLE_VALUE;
                     }
@@ -376,9 +356,7 @@ HANDLE __stdcall FindFirstFileExFixupV2(
     }
     else
     {
-#if _DEBUG
-        Log(L"[%s%d] FindFirstFileExFixupV2[1] (from vfs_path):   no results possible", g_FrfModuleName, InstanceV2);
-#endif
+        Log(LogLevel_DebugBasic, L"[%s%d] FindFirstFileExFixupV2[1] (from vfs_path):   no results possible", g_FrfModuleName, InstanceV2);
     }
 
     //
@@ -386,9 +364,7 @@ HANDLE __stdcall FindFirstFileExFixupV2(
     result->find_handles[2].reset(impl::FindFirstFileEx(result->requested_path.c_str(), infoLevelId, findData, searchOp, searchFilter, additionalFlags));
     if (result->find_handles[2])
     {
-#if _DEBUG
-        Log(L"[%s%d] FindFirstFileExFixupV2[2] (from origial):    had results", g_FrfModuleName, InstanceV2);
-#endif
+        Log(LogLevel_DebugBasic, L"[%s%d] FindFirstFileExFixupV2[2] (from origial):    had results", g_FrfModuleName, InstanceV2);
         AnyValidPath = true; 
         AnyValidResult = true;
         initialFindError = ERROR_SUCCESS;
@@ -398,9 +374,7 @@ HANDLE __stdcall FindFirstFileExFixupV2(
         if (GetLastError() == ERROR_FILE_NOT_FOUND)
             AnyValidPath = true;
         result->requested_path.clear();
-#if _DEBUG
-        Log(L"[%s%d] FindFirstFileExFixupV2[2] (from original):   no results", g_FrfModuleName, InstanceV2);
-#endif
+        Log(LogLevel_DebugBasic, L"[%s%d] FindFirstFileExFixupV2[2] (from original):   no results", g_FrfModuleName, InstanceV2);
     }
     if (!result->find_handles[0] &&
         !result->find_handles[1])
@@ -411,9 +385,7 @@ HANDLE __stdcall FindFirstFileExFixupV2(
             {
                 if (copy_find_data(*findData, *ansiData))
                 {
-#if _DEBUG
-                    Log(L"[%s%d] FindFirstFileExFixupV2 error set by caller", g_FrfModuleName, InstanceV2);
-#endif
+                    Log(LogLevel_DebugBasic, L"[%s%d] FindFirstFileExFixupV2 error set by caller", g_FrfModuleName, InstanceV2);
                     // NOTE: Last error set by caller
                     return INVALID_HANDLE_VALUE;
                 }
@@ -436,9 +408,8 @@ HANDLE __stdcall FindFirstFileExFixupV2(
         result->find_handles[3].reset(impl::FindFirstFileEx(result->package_devfs_path.c_str(), infoLevelId, findData, searchOp, searchFilter, additionalFlags));
         if (result->find_handles[3])
         {
-#if _DEBUG
-            Log(L"[%s%d] FindFirstFileExFixupV2[3] (from deVFS):     had results", g_FrfModuleName, InstanceV2);
-#endif
+            Log(LogLevel_DebugBasic, L"[%s%d] FindFirstFileExFixupV2[3] (from deVFS):     had results", g_FrfModuleName, InstanceV2);
+
             AnyValidPath = true; 
             AnyValidResult = true;
             initialFindError = ERROR_SUCCESS;
@@ -448,9 +419,7 @@ HANDLE __stdcall FindFirstFileExFixupV2(
             if (GetLastError() == ERROR_FILE_NOT_FOUND)
                 AnyValidPath = true;
             result->requested_path.clear();
-#if _DEBUG
-            Log(L"[%s%d] FindFirstFileExFixupV2[3] (from deVFS):     no results", g_FrfModuleName, InstanceV2);
-#endif
+            Log(LogLevel_DebugBasic, L"[%s%d] FindFirstFileExFixupV2[3] (from deVFS):     no results", g_FrfModuleName, InstanceV2);
         }
         if (!result->find_handles[0] &&
             !result->find_handles[1] &&
@@ -462,9 +431,7 @@ HANDLE __stdcall FindFirstFileExFixupV2(
                 {
                     if (copy_find_data(*findData, *ansiData))
                     {
-#if _DEBUG
-                        Log(L"[%s%d] FindFirstFileExFixupV2 error set by caller", g_FrfModuleName, InstanceV2);
-#endif
+                        Log(LogLevel_DebugBasic, L"[%s%d] FindFirstFileExFixupV2 error set by caller", g_FrfModuleName, InstanceV2);
                         // NOTE: Last error set by caller
                         return INVALID_HANDLE_VALUE;
                     }
@@ -482,9 +449,7 @@ HANDLE __stdcall FindFirstFileExFixupV2(
     }
     else
     {
-#if _DEBUG
-        Log(L"[%s%d] FindFirstFileExFixupV2[3] (from deVFS):     no results possible", g_FrfModuleName, InstanceV2);
-#endif
+        Log(LogLevel_DebugBasic, L"[%s%d] FindFirstFileExFixupV2[3] (from deVFS):     no results possible", g_FrfModuleName, InstanceV2);
     }
 
     //
@@ -494,9 +459,7 @@ HANDLE __stdcall FindFirstFileExFixupV2(
         result->find_handles[4].reset(impl::FindFirstFileEx(result->package_deredirect_path.c_str(), infoLevelId, findData, searchOp, searchFilter, additionalFlags));
         if (result->find_handles[4])
         {
-#if _DEBUG
-            Log(L"[%s%d] FindFirstFileExFixupV2[4] (from deredir):    had results", g_FrfModuleName, InstanceV2 );
-#endif
+            Log(LogLevel_DebugBasic, L"[%s%d] FindFirstFileExFixupV2[4] (from deredir):    had results", g_FrfModuleName, InstanceV2 );
             AnyValidPath = true;
             AnyValidResult = true;
             initialFindError = ERROR_SUCCESS;
@@ -506,9 +469,7 @@ HANDLE __stdcall FindFirstFileExFixupV2(
             if (GetLastError() == ERROR_FILE_NOT_FOUND)
                 AnyValidPath = true;
             result->requested_path.clear();
-#if _DEBUG
-            Log(L"[%s%d] FindFirstFileExFixupV2[4] (from deredir):   no results", g_FrfModuleName, InstanceV2);
-#endif
+            Log(LogLevel_DebugBasic, L"[%s%d] FindFirstFileExFixupV2[4] (from deredir):   no results", g_FrfModuleName, InstanceV2);
         }
         if (!result->find_handles[0] &&
             !result->find_handles[1] &&
@@ -521,9 +482,7 @@ HANDLE __stdcall FindFirstFileExFixupV2(
                 {
                     if (copy_find_data(*findData, *ansiData))
                     {
-#if _DEBUG
-                        Log(L"[%s%d] FindFirstFileExFixupV2 error set by caller", g_FrfModuleName, InstanceV2);
-#endif
+                        Log(LogLevel_DebugBasic, L"[%s%d] FindFirstFileExFixupV2 error set by caller", g_FrfModuleName, InstanceV2);
                         // NOTE: Last error set by caller
                         return INVALID_HANDLE_VALUE;
                     }
@@ -539,9 +498,7 @@ HANDLE __stdcall FindFirstFileExFixupV2(
     }
     else
     {
-#if _DEBUG
-        Log(L"[%s%d] FindFirstFileExFixupV2[4] (from deredir):    no results possible", g_FrfModuleName, InstanceV2);
-#endif
+        Log(LogLevel_DebugBasic, L"[%s%d] FindFirstFileExFixupV2[4] (from deredir):    no results possible", g_FrfModuleName, InstanceV2);
     }
 
             
@@ -554,9 +511,7 @@ HANDLE __stdcall FindFirstFileExFixupV2(
             copy_find_data(*ansiData, result->cached_data);
             //result->cached_data = ansiData;  
         }
-#if _DEBUG
-        Log(L"[%s%d] FindFirstFileExFixupV2 returns %ls", g_FrfModuleName, InstanceV2, result->cached_data.cFileName);
-#endif
+        Log(LogLevel_DebugBasic, L"[%s%d] FindFirstFileExFixupV2 returns %ls", g_FrfModuleName, InstanceV2, result->cached_data.cFileName);
         result->already_returned_list.push_back(result->cached_data.cFileName);
         ::SetLastError(ERROR_SUCCESS);
     }
@@ -568,9 +523,7 @@ HANDLE __stdcall FindFirstFileExFixupV2(
             // we prefer to return file not found.
             initialFindError = ERROR_FILE_NOT_FOUND;
         }
-#if _DEBUG
-        Log(L"[%s%d] FindFirstFileExFixupV2 returns 0x%x", g_FrfModuleName, InstanceV2, initialFindError);
-#endif
+        Log(LogLevel_DebugBasic, L"[%s%d] FindFirstFileExFixupV2 returns 0x%x", g_FrfModuleName, InstanceV2, initialFindError);
         ::SetLastError(initialFindError);
         return INVALID_HANDLE_VALUE;
     }
@@ -581,7 +534,7 @@ catch (...)
 {
     // NOTE: Since we allocate our own "find handle" memory, we can't just forward on to the implementation
     ::SetLastError(win32_from_caught_exception());
-    Log(L"***FindFirstFileExFixupV2 Exception***");
+    Log(LogLevel_DebugBasic, L"***FindFirstFileExFixupV2 Exception***");
     return INVALID_HANDLE_VALUE;
 }
 DECLARE_STRING_FIXUP(impl::FindFirstFileEx, FindFirstFileExFixupV2);
@@ -594,16 +547,14 @@ HANDLE __stdcall FindFirstFileFixupV2(_In_ const CharT* fileName, _Out_ win32_fi
 
 #if UseEX
     // For simplicity, just do what the OS appears to be doing and forward arguments on to FindFirstFileEx
-#if _DEBUG
     if constexpr (psf::is_ansi<CharT>)
     {
-        Log(L"[%s%d] FindFirstFile A redirected to FindFirstFileExFixupV2", g_FrfModuleName, ++g_FileIntceptInstance);
+        Log(LogLevel_DebugBasic, L"[%s%d] FindFirstFile A redirected to FindFirstFileExFixupV2", g_FrfModuleName, ++g_FileIntceptInstance);
     }
     else
     {
-        Log(L"[%s%d] FindFirstFile W redirected to FindFirstFileExFixupV2", g_FrfModuleName, ++g_FileIntceptInstance);
+        Log(LogLevel_DebugBasic, L"[%s%d] FindFirstFile W redirected to FindFirstFileExFixupV2", g_FrfModuleName, ++g_FileIntceptInstance);
     }
-#endif    
     return FindFirstFileFixupV2(fileName, FindExInfoStandard, findFileData, FindExSearchNameMatch, nullptr, 0);
 #else
     // This code must be maintained in lockstep with the Ex counterpart.
@@ -611,41 +562,34 @@ HANDLE __stdcall FindFirstFileFixupV2(_In_ const CharT* fileName, _Out_ win32_fi
     auto guard = g_reentrancyGuard.enter();
     if (!guard)
     {
-#if _DEBUG
         if constexpr (psf::is_ansi<CharT>)
         {
-            LogString(g_FrfModuleName, InstanceV2, L"\tFindFirstFileAFixupV2: (unguarded) for fileName", fileName);
+            LogString(LogLevel_DebugBasic, g_FrfModuleName, InstanceV2, L"\tFindFirstFileAFixupV2: (unguarded) for fileName", fileName);
         }   
         else
         {
-            LogString(g_FrfModuleName, InstanceV2, L"\tFindFirstFileWFixupV2: (unguarded) for fileName", fileName);
+            LogString(LogLevel_DebugBasic, g_FrfModuleName, InstanceV2, L"\tFindFirstFileWFixupV2: (unguarded) for fileName", fileName);
         }
-#endif
         return impl::FindFirstFile(fileName, findFileData);
     }
 
 
     std::wstring wFileName = widen(fileName);
-#if _DEBUG
-    
     if (psf::is_ansi<CharT>)
     {
-        LogString(g_FrfModuleName, InstanceV2, L"\tFindFirstFileAFixupV2: for fileName", fileName);
+        LogString(LogLevel_DebugBasic, g_FrfModuleName, InstanceV2, L"\tFindFirstFileAFixupV2: for fileName", fileName);
     }
     else
     {
-        LogString(g_FrfModuleName, InstanceV2, L"\tFindFirstFileWFixupV2: for fileName", fileName);
+        LogString(LogLevel_DebugBasic, g_FrfModuleName, InstanceV2, L"\tFindFirstFileWFixupV2: for fileName", fileName);
     }
-#endif
 
     if (wFileName.length() > 3)
     {
         if (wFileName.substr(wFileName.length() - 3).compare(L"\\\\*") == 0)
         {
             // This case is an invalid find request that accidentally works in normal find calls, but our redirection gets messed up.
-#if _DEBUG
-            Log(L"[%s%d] DEBUG TEST: Tweek bad call", g_FrfModuleName, InstanceV2);
-#endif
+            Log(LogLevel_DebugBasic, L"[%s%d] DEBUG TEST: Tweek bad call", g_FrfModuleName, InstanceV2);
             wFileName[wFileName.length() - 2] = wFileName[wFileName.length() - 1];
             wFileName.resize(wFileName.length() - 1);
         }
@@ -673,13 +617,11 @@ HANDLE __stdcall FindFirstFileFixupV2(_In_ const CharT* fileName, _Out_ win32_fi
     result->package_devfs_path = pathDeVirtualized;
     result->package_deredirect_path = pathDeRedirected;
 
-#if _DEBUG
-    Log(L"[%s%d] FindFirstFileFixupV2 redirect_path        for [0] (from redir)   is %ls", g_FrfModuleName, InstanceV2, result->redirect_path.c_str());
-    Log(L"[%s%d] FindFirstFileFixupV2 package_vfs_path     for [1] (from VFS)     is %ls", g_FrfModuleName, InstanceV2, result->package_vfs_path.c_str());
-    Log(L"[%s%d] FindFirstFileFixupV2 requested_path       for [2] (from req)     is %ls", g_FrfModuleName, InstanceV2, result->requested_path.c_str());
-    Log(L"[%s%d] FindFirstFileFixupV2 package_devfs_path   for [3] (from DeVFS)   is %ls", g_FrfModuleName, InstanceV2, result->package_devfs_path.c_str());
-    Log(L"[%s%d] FindFirstFileFixupV2 package_deredir_path for [4] (from DeRedir) is %ls", g_FrfModuleName, InstanceV2, result->package_deredirect_path.c_str());
-#endif
+    Log(LogLevel_DebugBasic, L"[%s%d] FindFirstFileFixupV2 redirect_path        for [0] (from redir)   is %ls", g_FrfModuleName, InstanceV2, result->redirect_path.c_str());
+    Log(LogLevel_DebugBasic, L"[%s%d] FindFirstFileFixupV2 package_vfs_path     for [1] (from VFS)     is %ls", g_FrfModuleName, InstanceV2, result->package_vfs_path.c_str());
+    Log(LogLevel_DebugBasic, L"[%s%d] FindFirstFileFixupV2 requested_path       for [2] (from req)     is %ls", g_FrfModuleName, InstanceV2, result->requested_path.c_str());
+    Log(LogLevel_DebugBasic, L"[%s%d] FindFirstFileFixupV2 package_devfs_path   for [3] (from DeVFS)   is %ls", g_FrfModuleName, InstanceV2, result->package_devfs_path.c_str());
+    Log(LogLevel_DebugBasic, L"[%s%d] FindFirstFileFixupV2 package_deredir_path for [4] (from DeRedir) is %ls", g_FrfModuleName, InstanceV2, result->package_deredirect_path.c_str());
 
     [[maybe_unused]] auto ansiData = reinterpret_cast<WIN32_FIND_DATAA*>(findFileData);
     [[maybe_unused]] auto wideData = reinterpret_cast<WIN32_FIND_DATAW*>(findFileData);
@@ -713,9 +655,7 @@ HANDLE __stdcall FindFirstFileFixupV2(_In_ const CharT* fileName, _Out_ win32_fi
                 assert(findData == wideData);
                 copy_find_data(*wideData, result->cached_data);
             }
-#if _DEBUG
-            Log(L"[%s%d] FindFirstFileFixupV2[0] (from redirected): had results %ls", g_FrfModuleName, InstanceV2, findData->cFileName);
-#endif
+            Log(LogLevel_DebugBasic, L"[%s%d] FindFirstFileFixupV2[0] (from redirected): had results %ls", g_FrfModuleName, InstanceV2, findData->cFileName);
             AnyValidPath = true;
             AnyValidResult = true;
         }
@@ -726,9 +666,7 @@ HANDLE __stdcall FindFirstFileFixupV2(_In_ const CharT* fileName, _Out_ win32_fi
 
             // Path doesn't exist or match any files. We can safely get away without the redirected file exists check
             result->redirect_path.clear();
-#if _DEBUG
-            Log(L"[%s%d] FindFirstFileFixupV2[0] (from redirected): no results", g_FrfModuleName, InstanceV2);
-#endif
+            Log(LogLevel_DebugBasic, L"[%s%d] FindFirstFileFixupV2[0] (from redirected): no results", g_FrfModuleName, InstanceV2);
         }
 
         // reset for next level???
@@ -737,9 +675,7 @@ HANDLE __stdcall FindFirstFileFixupV2(_In_ const CharT* fileName, _Out_ win32_fi
     }
     else
     {
-#if _DEBUG
-        Log(L"[%s%d] FindFirstFileFixupV2[0] (from redirected): no results possible", g_FrfModuleName, InstanceV2);
-#endif
+        Log(LogLevel_DebugBasic, L"[%s%d] FindFirstFileFixupV2[0] (from redirected): no results possible", g_FrfModuleName, InstanceV2);
     }
 
     //
@@ -754,9 +690,7 @@ HANDLE __stdcall FindFirstFileFixupV2(_In_ const CharT* fileName, _Out_ win32_fi
         ///result->package_vfs_path.resize(vfspathSize);
         if (result->find_handles[1])
         {
-#if _DEBUG
-            Log(L"[%s%d] FindFirstFileFixupV2[1] (from vfs_path):   had results", g_FrfModuleName, InstanceV2);
-#endif
+            Log(LogLevel_DebugBasic, L"[%s%d] FindFirstFileFixupV2[1] (from vfs_path):   had results", g_FrfModuleName, InstanceV2);
             AnyValidPath = true;
             AnyValidResult = true;
             initialFindError = ERROR_SUCCESS;
@@ -766,9 +700,7 @@ HANDLE __stdcall FindFirstFileFixupV2(_In_ const CharT* fileName, _Out_ win32_fi
             if (GetLastError() == ERROR_FILE_NOT_FOUND)
                 AnyValidPath = true;
             result->package_vfs_path.clear();
-#if _DEBUG
-            Log(L"[%s%d] FindFirstFileFixupV2[1] (from vfs_path):   no results", g_FrfModuleName, InstanceV2);
-#endif
+            Log(LogLevel_DebugBasic, L"[%s%d] FindFirstFileFixupV2[1] (from vfs_path):   no results", g_FrfModuleName, InstanceV2);
         }
         if (!result->find_handles[0])
         {
@@ -778,9 +710,7 @@ HANDLE __stdcall FindFirstFileFixupV2(_In_ const CharT* fileName, _Out_ win32_fi
                 {
                     if (copy_find_data(*findData, *ansiData))
                     {
-#if _DEBUG
-                        Log(L"[%s%d] FindFirstFile error set by caller", g_FrfModuleName, InstanceV2);
-#endif
+                        Log(LogLevel_DebugBasic, L"[%s%d] FindFirstFile error set by caller", g_FrfModuleName, InstanceV2);
                         // NOTE: Last error set by caller
                         return INVALID_HANDLE_VALUE;
                     }
@@ -799,9 +729,7 @@ HANDLE __stdcall FindFirstFileFixupV2(_In_ const CharT* fileName, _Out_ win32_fi
     }
     else
     {
-#if _DEBUG
-        Log(L"[%s%d] FindFirstFileFixupV2[1] (from vfs_path):   no results possible", g_FrfModuleName, InstanceV2);
-#endif
+        Log(LogLevel_DebugBasic, L"[%s%d] FindFirstFileFixupV2[1] (from vfs_path):   no results possible", g_FrfModuleName, InstanceV2);
     }
 
     //
@@ -809,9 +737,7 @@ HANDLE __stdcall FindFirstFileFixupV2(_In_ const CharT* fileName, _Out_ win32_fi
     result->find_handles[2].reset(impl::FindFirstFile(result->requested_path.c_str(),  findData));
     if (result->find_handles[2])
     {
-#if _DEBUG
-        Log(L"[%s%d] FindFirstFileFixupV2[2] (from origial):    had results", g_FrfModuleName, InstanceV2);
-#endif
+        Log(LogLevel_DebugBasic, L"[%s%d] FindFirstFileFixupV2[2] (from origial):    had results", g_FrfModuleName, InstanceV2);
         AnyValidPath = true;
         AnyValidResult = true;
         initialFindError = ERROR_SUCCESS;
@@ -821,9 +747,7 @@ HANDLE __stdcall FindFirstFileFixupV2(_In_ const CharT* fileName, _Out_ win32_fi
         if (GetLastError() == ERROR_FILE_NOT_FOUND)
             AnyValidPath = true;
         result->requested_path.clear();
-#if _DEBUG
-        Log(L"[%s%d] FindFirstFileFixupV2[2] (from original):   no results", g_FrfModuleName, InstanceV2);
-#endif
+        Log(LogLevel_DebugBasic, L"[%s%d] FindFirstFileFixupV2[2] (from original):   no results", g_FrfModuleName, InstanceV2);
     }
     if (!result->find_handles[0] &&
         !result->find_handles[1])
@@ -834,9 +758,7 @@ HANDLE __stdcall FindFirstFileFixupV2(_In_ const CharT* fileName, _Out_ win32_fi
             {
                 if (copy_find_data(*findData, *ansiData))
                 {
-#if _DEBUG
-                    Log(L"[%s%d] FindFirstFileFixupV2 error set by caller", g_FrfModuleName, InstanceV2);
-#endif
+                    Log(LogLevel_DebugBasic, L"[%s%d] FindFirstFileFixupV2 error set by caller", g_FrfModuleName, InstanceV2);
                     // NOTE: Last error set by caller
                     return INVALID_HANDLE_VALUE;
                 }
@@ -859,9 +781,7 @@ HANDLE __stdcall FindFirstFileFixupV2(_In_ const CharT* fileName, _Out_ win32_fi
         result->find_handles[3].reset(impl::FindFirstFile(result->package_devfs_path.c_str(),  findData));
         if (result->find_handles[3])
         {
-#if _DEBUG
-            Log(L"[%s%d] FindFirstFileFixupV2[3] (from deVFS):     had results", g_FrfModuleName, InstanceV2);
-#endif
+            Log(LogLevel_DebugBasic, L"[%s%d] FindFirstFileFixupV2[3] (from deVFS):     had results", g_FrfModuleName, InstanceV2);
             AnyValidPath = true;
             AnyValidResult = true;
             initialFindError = ERROR_SUCCESS;
@@ -871,9 +791,7 @@ HANDLE __stdcall FindFirstFileFixupV2(_In_ const CharT* fileName, _Out_ win32_fi
             if (GetLastError() == ERROR_FILE_NOT_FOUND)
                 AnyValidPath = true;
             result->requested_path.clear();
-#if _DEBUG
-            Log(L"[%s%d] FindFirstFileFixupV2[3] (from deVFS):     no results", g_FrfModuleName, InstanceV2);
-#endif
+            Log(LogLevel_DebugBasic, L"[%s%d] FindFirstFileFixupV2[3] (from deVFS):     no results", g_FrfModuleName, InstanceV2);
         }
         if (!result->find_handles[0] &&
             !result->find_handles[1] &&
@@ -885,9 +803,7 @@ HANDLE __stdcall FindFirstFileFixupV2(_In_ const CharT* fileName, _Out_ win32_fi
                 {
                     if (copy_find_data(*findData, *ansiData))
                     {
-#if _DEBUG
-                        Log(L"[%s%d] FindFirstFileFixupV2 error set by caller", g_FrfModuleName, InstanceV2);
-#endif
+                        Log(LogLevel_DebugBasic, L"[%s%d] FindFirstFileFixupV2 error set by caller", g_FrfModuleName, InstanceV2);
                         // NOTE: Last error set by caller
                         return INVALID_HANDLE_VALUE;
                     }
@@ -905,9 +821,7 @@ HANDLE __stdcall FindFirstFileFixupV2(_In_ const CharT* fileName, _Out_ win32_fi
     }
     else
     {
-#if _DEBUG
-        Log(L"[%s%d] FindFirstFileFixupV2[3] (from deVFS):     no results possible", g_FrfModuleName, InstanceV2);
-#endif
+        Log(LogLevel_DebugBasic, L"[%s%d] FindFirstFileFixupV2[3] (from deVFS):     no results possible", g_FrfModuleName, InstanceV2);
     }
 
     //
@@ -917,9 +831,7 @@ HANDLE __stdcall FindFirstFileFixupV2(_In_ const CharT* fileName, _Out_ win32_fi
         result->find_handles[4].reset(impl::FindFirstFile(result->package_deredirect_path.c_str(), findData));
         if (result->find_handles[4])
         {
-#if _DEBUG
-            Log(L"[%s%d] FindFirstFileFixupV2[4] (from deredir):    had results", g_FrfModuleName, InstanceV2 );
-#endif
+            Log(LogLevel_DebugBasic, L"[%s%d] FindFirstFileFixupV2[4] (from deredir):    had results", g_FrfModuleName, InstanceV2 );
             AnyValidPath = true;
             AnyValidResult = true;
             initialFindError = ERROR_SUCCESS;
@@ -929,9 +841,7 @@ HANDLE __stdcall FindFirstFileFixupV2(_In_ const CharT* fileName, _Out_ win32_fi
             if (GetLastError() == ERROR_FILE_NOT_FOUND)
                 AnyValidPath = true;
             result->requested_path.clear();
-#if _DEBUG
-            Log(L"[%s%d] FindFirstFileFixupV2[4] (from deredir):   no results", g_FrfModuleName, InstanceV2);
-#endif
+            Log(LogLevel_DebugBasic, L"[%s%d] FindFirstFileFixupV2[4] (from deredir):   no results", g_FrfModuleName, InstanceV2);
         }
         if (!result->find_handles[0] &&
             !result->find_handles[1] &&
@@ -944,9 +854,7 @@ HANDLE __stdcall FindFirstFileFixupV2(_In_ const CharT* fileName, _Out_ win32_fi
                 {
                     if (copy_find_data(*findData, *ansiData))
                     {
-#if _DEBUG
-                        Log(L"[%s%d] FindFirstFileV2 error set by caller", g_FrfModuleName, InstanceV2);
-#endif
+                        Log(LogLevel_DebugBasic, L"[%s%d] FindFirstFileV2 error set by caller", g_FrfModuleName, InstanceV2);
                         // NOTE: Last error set by caller
                         return INVALID_HANDLE_VALUE;
                     }
@@ -962,9 +870,7 @@ HANDLE __stdcall FindFirstFileFixupV2(_In_ const CharT* fileName, _Out_ win32_fi
     }
     else
     {
-#if _DEBUG
-        Log(L"[%s%d] FindFirstFileFixupV2[4] (from deredir):    no results possible", g_FrfModuleName, InstanceV2);
-#endif
+        Log(LogLevel_DebugBasic, L"[%s%d] FindFirstFileFixupV2[4] (from deredir):    no results possible", g_FrfModuleName, InstanceV2);
     }
 
 
@@ -977,9 +883,7 @@ HANDLE __stdcall FindFirstFileFixupV2(_In_ const CharT* fileName, _Out_ win32_fi
             copy_find_data(*ansiData, result->cached_data);
             //result->cached_data = ansiData;  
         }
-#if _DEBUG
-        Log(L"[%s%d] FindFirstFileFixupV2 returns %ls", g_FrfModuleName, InstanceV2, result->cached_data.cFileName);
-#endif
+        Log(LogLevel_DebugBasic, L"[%s%d] FindFirstFileFixupV2 returns %ls", g_FrfModuleName, InstanceV2, result->cached_data.cFileName);
         result->already_returned_list.push_back(result->cached_data.cFileName);
         ::SetLastError(ERROR_SUCCESS);
     }
@@ -991,9 +895,7 @@ HANDLE __stdcall FindFirstFileFixupV2(_In_ const CharT* fileName, _Out_ win32_fi
             // we prefer to return file not found.
             initialFindError = ERROR_FILE_NOT_FOUND;
         }
-#if _DEBUG
-        Log(L"[%s%d] FindFirstFileFixupV2 returns 0x%x", g_FrfModuleName, InstanceV2, initialFindError);
-#endif
+        Log(LogLevel_DebugBasic, L"[%s%d] FindFirstFileFixupV2 returns 0x%x", g_FrfModuleName, InstanceV2, initialFindError);
         ::SetLastError(initialFindError);
         return INVALID_HANDLE_VALUE;
     }
@@ -1005,7 +907,7 @@ catch (...)
 {
     // NOTE: Since we allocate our own "find handle" memory, we can't just forward on to the implementation
     ::SetLastError(win32_from_caught_exception());
-    Log(L"***FindFirstFileFixupV2 Exception***");
+    Log(LogLevel_DebugBasic, L"***FindFirstFileFixupV2 Exception***");
     return INVALID_HANDLE_VALUE;
 }
 DECLARE_STRING_FIXUP(impl::FindFirstFile, FindFirstFileFixupV2);
@@ -1019,46 +921,38 @@ BOOL __stdcall FindNextFileFixupV2(_In_ HANDLE findFile, _Out_ win32_find_data_t
     auto guard = g_reentrancyGuard.enter();
     if (!guard)
     {
-#if _DEBUG
-        Log(L"FindNextFileFixupV2 (unguarded) for file.");
-#endif
+        Log(LogLevel_DebugBasic, L"FindNextFileFixupV2 (unguarded) for file.");
         return impl::FindNextFile(findFile, findFileData);
     }
 
-#if _DEBUG
         DWORD FindNextFileInstance2 = ++g_FileIntceptInstance;
-#endif
-
 
 
     if (findFile == INVALID_HANDLE_VALUE)
     {
-#if _DEBUG
-        Log(L"[%s%d] FindNextFileFixupV2 invaid handle.", g_FrfModuleName, FindNextFileInstance2);
-#endif
+        Log(LogLevel_DebugBasic, L"[%s%d] FindNextFileFixupV2 invaid handle.", g_FrfModuleName, FindNextFileInstance2);
         ::SetLastError(ERROR_INVALID_PARAMETER);
         return FALSE;
     }
 
     auto data = reinterpret_cast<find_data2*>(findFile);
 
-#if _DEBUG
-    //Log(L"[%s%d][%s%d] FindNextFileFixupV2 is against redir    =%ls", g_FrfModuleName, data->RememberedInstance, g_FrfModuleName, FindNextFileInstance2, data->redirect_path.c_str());
-    //Log(L"[%s%d][%s%d] FindNextFileFixupV2 is against pkgVfs   =%ls", g_FrfModuleName, data->RememberedInstance, g_FrfModuleName, FindNextFileInstance2, data->package_vfs_path.c_str());
-    Log(L"[%s%d][%s%d] FindNextFileFixupV2 is against original request=%ls", g_FrfModuleName, data->RememberedInstance, g_FrfModuleName, FindNextFileInstance2, data->requested_path.c_str());
-    //Log(L[%s%d]"[%s%d] FindNextFileFixupV2 is against deVfs    =%ls", g_FrfModuleName, data->RememberedInstance, g_FrfModuleName, FindNextFileInstance2, data->package_devfs_path.c_str());
-    //Log(L"[%s%d][%s%d] FindNextFileFixupV2 is against deRedir  =%ls", g_FrfModuleName, data->RememberedInstance, g_FrfModuleName, FindNextFileInstance2, data->package_deredirect_path.c_str());
-#endif
+    //Log(LogLevel_DebugBasic, L"[%s%d][%s%d] FindNextFileFixupV2 is against redir    =%ls", g_FrfModuleName, data->RememberedInstance, g_FrfModuleName, FindNextFileInstance2, data->redirect_path.c_str());
+    //Log(LogLevel_DebugBasic, L"[%s%d][%s%d] FindNextFileFixupV2 is against pkgVfs   =%ls", g_FrfModuleName, data->RememberedInstance, g_FrfModuleName, FindNextFileInstance2, data->package_vfs_path.c_str());
+    Log(LogLevel_DebugBasic, L"[%s%d][%s%d] FindNextFileFixupV2 is against original request=%ls", g_FrfModuleName, data->RememberedInstance, g_FrfModuleName, FindNextFileInstance2, data->requested_path.c_str());
+    //Log(LogLevel_DebugBasic, L[%s%d]"[%s%d] FindNextFileFixupV2 is against deVfs    =%ls", g_FrfModuleName, data->RememberedInstance, g_FrfModuleName, FindNextFileInstance2, data->package_devfs_path.c_str());
+    //Log(LogLevel_DebugBasic, L"[%s%d][%s%d] FindNextFileFixupV2 is against deRedir  =%ls", g_FrfModuleName, data->RememberedInstance, g_FrfModuleName, FindNextFileInstance2, data->package_deredirect_path.c_str());
+
 
 #ifdef OBSOLETE
     auto redirectedFileExists = [&](auto filename)
     {
         if (data->redirect_path.empty())
         {
-            Log(L"[%s%d]\tFindNextFileV2 redirectedFileExists returns false.", g_FrfModuleName, FindNextFileInstance2);
+            Log(LogLevel_DebugBasic, L"[%s%d]\tFindNextFileV2 redirectedFileExists returns false.", g_FrfModuleName, FindNextFileInstance2);
             return false;  
         }
-        LogString(g_FrfModuleName, FindNextFileInstance2, L"\tFindNextFileV2 redirectedFileExists versus", filename);
+        LogString(LogLevel_DebugBasic, g_FrfModuleName, FindNextFileInstance2, L"\tFindNextFileV2 redirectedFileExists versus", filename);
 
         auto revertSize = data->redirect_path.length();
 
@@ -1072,7 +966,7 @@ BOOL __stdcall FindNextFileFixupV2(_In_ HANDLE findFile, _Out_ win32_find_data_t
                 wcscmp(wFilename.c_str(), L".") == 0)
             {
                 // assume previously returned as part of requesteds
-                Log(L"[%s%d]\tFindNextFileV2 A redirectedFileExists returns true %ls", g_FrfModuleName, FindNextFileInstance2, wFilename.c_str());
+                Log(LogLevel_DebugBasic, L"[%s%d]\tFindNextFileV2 A redirectedFileExists returns true %ls", g_FrfModuleName, FindNextFileInstance2, wFilename.c_str());
                 return true;
             }
             data->redirect_path += wFilename;
@@ -1083,7 +977,7 @@ BOOL __stdcall FindNextFileFixupV2(_In_ HANDLE findFile, _Out_ win32_find_data_t
                 wcscmp(filename, L".") == 0)
             {
                 // assume previously returned as part of requesteds
-                Log(L"[%s%d]\tFindNextFileV2 W redirectedFileExists returns true %ls", g_FrfModuleName, FindNextFileInstance2, filename);
+                Log(LogLevel_DebugBasic, L"[%s%d]\tFindNextFileV2 W redirectedFileExists returns true %ls", g_FrfModuleName, FindNextFileInstance2, filename);
                 return true;
             }
             data->redirect_path += filename;
@@ -1091,17 +985,17 @@ BOOL __stdcall FindNextFileFixupV2(_In_ HANDLE findFile, _Out_ win32_find_data_t
 
         auto result = impl::PathExists(data->redirect_path.c_str());
         data->redirect_path.resize(revertSize);
-        Log(L"[%s%d]\tFindNextFileV2 redirectedFileExists returns 0x%x %ls", g_FrfModuleName, FindNextFileInstance2, (int)result, data->redirect_path.c_str());
+        Log(LogLevel_DebugBasic, L"[%s%d]\tFindNextFileV2 redirectedFileExists returns 0x%x %ls", g_FrfModuleName, FindNextFileInstance2, (int)result, data->redirect_path.c_str());
         return result;
     };
     auto vfspathFileExists = [&](auto filename)
     {
         if (data->package_vfs_path.empty())
         {
-            Log(L"[%s%d]\tFindNextFileV2 vfspathFileExists returns false.", g_FrfModuleName, FindNextFileInstance2);
+            Log(LogLevel_DebugBasic, L"[%s%d]\tFindNextFileV2 vfspathFileExists returns false.", g_FrfModuleName, FindNextFileInstance2);
             return false;
         }
-        //LogString(g_FrfModuleName, FindNextFileInstance2, L"\tFindNextFileV2 vfspathFileExists versus", filename);
+        //LogString(LogLevel_DebugBasic, g_FrfModuleName, FindNextFileInstance2, L"\tFindNextFileV2 vfspathFileExists versus", filename);
 
         auto revertSize = data->package_vfs_path.length();
 
@@ -1115,7 +1009,7 @@ BOOL __stdcall FindNextFileFixupV2(_In_ HANDLE findFile, _Out_ win32_find_data_t
                 wcscmp(wFilename.c_str(), L".") == 0)
             {
                 // assume previously returned as part of requesteds
-                Log(L"[%s%d]\tFindNextFileV2 A vfspathFileExists returns true %ls", g_FrfModuleName, FindNextFileInstance2, wFilename.c_str());
+                Log(LogLevel_DebugBasic, L"[%s%d]\tFindNextFileV2 A vfspathFileExists returns true %ls", g_FrfModuleName, FindNextFileInstance2, wFilename.c_str());
                 return true;
             }
             data->package_vfs_path += wFilename;
@@ -1126,7 +1020,7 @@ BOOL __stdcall FindNextFileFixupV2(_In_ HANDLE findFile, _Out_ win32_find_data_t
                 wcscmp(filename, L".") == 0)
             {
                 // assume previously returned as part of requesteds
-                Log(L"[%s%d]\tFindNextFileV2 W vfspathFileExists returns true %ls", g_FrfModuleName, FindNextFileInstance2, filename);
+                Log(LogLevel_DebugBasic, L"[%s%d]\tFindNextFileV2 W vfspathFileExists returns true %ls", g_FrfModuleName, FindNextFileInstance2, filename);
                 return true;
             }
             data->package_vfs_path += filename;
@@ -1134,17 +1028,17 @@ BOOL __stdcall FindNextFileFixupV2(_In_ HANDLE findFile, _Out_ win32_find_data_t
 
         auto result = impl::PathExists(data->package_vfs_path.c_str());
         data->package_vfs_path.resize(revertSize);
-        Log(L"[%s%d]\tFindNextFileV2 vfspathFileExists returns 0x%x %ls", g_FrfModuleName, FindNextFileInstance2, (int)result, data->package_vfs_path.c_str());
+        Log(LogLevel_DebugBasic, L"[%s%d]\tFindNextFileV2 vfspathFileExists returns 0x%x %ls", g_FrfModuleName, FindNextFileInstance2, (int)result, data->package_vfs_path.c_str());
         return result;
     };
     auto requestedFileExists = [&](auto filename)
     {
         if (data->requested_path.empty())
         {
-            Log(L"[%s%d]\tFindNextFileV2 requestedFileExists returns false.", g_FrfModuleName, FindNextFileInstance2);
+            Log(LogLevel_DebugBasic, L"[%s%d]\tFindNextFileV2 requestedFileExists returns false.", g_FrfModuleName, FindNextFileInstance2);
             return false;
         }
-        LogString(g_FrfModuleName, FindNextFileInstance2,L"\tFindNextFileV2 requestedFileExists versus", filename);
+        LogString(LogLevel_DebugBasic, g_FrfModuleName, FindNextFileInstance2,L"\tFindNextFileV2 requestedFileExists versus", filename);
 
         auto revertSize = data->requested_path.length();
 
@@ -1158,7 +1052,7 @@ BOOL __stdcall FindNextFileFixupV2(_In_ HANDLE findFile, _Out_ win32_find_data_t
                 wcscmp(wFilename.c_str(), L".") == 0)
             {
                 // assume previously returned as part of requesteds
-                Log(L"[%s%d]\tFindNextFileV2 A requestedFileExists returns true %ls", g_FrfModuleName, FindNextFileInstance2, wFilename.c_str());
+                Log(LogLevel_DebugBasic, L"[%s%d]\tFindNextFileV2 A requestedFileExists returns true %ls", g_FrfModuleName, FindNextFileInstance2, wFilename.c_str());
                 return true;
             }
             data->requested_path += wFilename;
@@ -1169,7 +1063,7 @@ BOOL __stdcall FindNextFileFixupV2(_In_ HANDLE findFile, _Out_ win32_find_data_t
                 wcscmp(filename, L".") == 0)
             {
                 // assume previously returned as part of requesteds
-                Log(L"[%s%d]\tFindNextFileV2 W requestedFileExists returns true %ls", g_FrfModuleName, FindNextFileInstance2, filename);
+                Log(LogLevel_DebugBasic, L"[%s%d]\tFindNextFileV2 W requestedFileExists returns true %ls", g_FrfModuleName, FindNextFileInstance2, filename);
                 return true;
             }
             data->requested_path += filename;
@@ -1177,21 +1071,17 @@ BOOL __stdcall FindNextFileFixupV2(_In_ HANDLE findFile, _Out_ win32_find_data_t
 
         auto result = impl::PathExists(data->requested_path.c_str());
         data->requested_path.resize(revertSize);
-        Log(L"[%s%d]\tFindNextFileV2 requestedFileExists returns 0x%x %ls", g_FrfModuleName, FindNextFileInstance2, (int)result, data->requested_path.c_str());
+        Log(LogLevel_DebugBasic, L"[%s%d]\tFindNextFileV2 requestedFileExists returns 0x%x %ls", g_FrfModuleName, FindNextFileInstance2, (int)result, data->requested_path.c_str());
         return result;
     };
 #endif
     auto wasFileAlreadyProvided = [&](std::wstring findrequest, auto filename)
     {
-#if _DEBUG
-        LogString(g_FrfModuleName, data->RememberedInstance, FindNextFileInstance2, L"\tFindNextFileV2 wasFileAlreadyProvided versus ",  filename);
-#endif
+        LogString(LogLevel_DebugBasic, g_FrfModuleName, data->RememberedInstance, FindNextFileInstance2, L"\tFindNextFileV2 wasFileAlreadyProvided versus ",  filename);
 
         if (data->already_returned_list.empty())
         {
-#if _DEBUG
-            Log(L"[%s%d][%s%d]\tFindNextFileV2 wasFileAlreadyProvided returns false.", g_FrfModuleName, data->RememberedInstance, g_FrfModuleName, FindNextFileInstance2);
-#endif
+            Log(LogLevel_DebugBasic, L"[%s%d][%s%d]\tFindNextFileV2 wasFileAlreadyProvided returns false.", g_FrfModuleName, data->RememberedInstance, g_FrfModuleName, FindNextFileInstance2);
             return false;
         }
         
@@ -1213,9 +1103,7 @@ BOOL __stdcall FindNextFileFixupV2(_In_ HANDLE findFile, _Out_ win32_find_data_t
             wcscmp(wFilename.c_str(), L".") == 0)
         {
             // assume previously returned as part of requesteds
-#if _DEBUG
-            Log(L"[%s%d]\tFindNextFileV2 A wasFileAlreadyProvided returns true %ls", g_FrfModuleName, FindNextFileInstance2, wFilename.c_str());
-#endif
+            Log(LogLevel_DebugBasic, L"[%s%d]\tFindNextFileV2 A wasFileAlreadyProvided returns true %ls", g_FrfModuleName, FindNextFileInstance2, wFilename.c_str());
             return true;
         }
 #endif
@@ -1226,14 +1114,10 @@ BOOL __stdcall FindNextFileFixupV2(_In_ HANDLE findFile, _Out_ win32_find_data_t
 #if WasntABadIdea
         // Maybe not.  The caller only needs the folder once, it doesn't see the path that succeeded.
         // Subsequent calls to other file APIs will redirect as needed.
-#if _DEBUG
-        Log(L"[%s%d]\tDEBUG FindNextFileV2 constructed path %ls", g_FrfModuleName, FindNextFileInstance2, fullpath.c_str());
-#endif
+        Log(LogLevel_DebugBasic, L"[%s%d]\tDEBUG FindNextFileV2 constructed path %ls", g_FrfModuleName, FindNextFileInstance2, fullpath.c_str());
         if (std::filesystem::is_directory(fullpath))
         {
-#if _DEBUG
-            Log(L"[%s%d]\tFindNextFileV2 Is a directory so wasFileAlreadyProvided returns false %ls", g_FrfModuleName, FindNextFileInstance2, wFilename.c_str());
-#endif
+            Log(LogLevel_DebugBasic, L"[%s%d]\tFindNextFileV2 Is a directory so wasFileAlreadyProvided returns false %ls", g_FrfModuleName, FindNextFileInstance2, wFilename.c_str());
             return false;
         }
 #endif
@@ -1244,18 +1128,14 @@ BOOL __stdcall FindNextFileFixupV2(_In_ HANDLE findFile, _Out_ win32_find_data_t
 //            if (check.compare(wFilename.c_str()) == 0)
             if (_wcsicmp_l(check.c_str(),wFilename.c_str(),locale) == 0)
             {
-#if _DEBUG
-                Log(L"[%s%d][%s%d]\tFindNextFileV2 A wasFileAlreadyProvided returns true %ls", g_FrfModuleName, data->RememberedInstance, g_FrfModuleName, FindNextFileInstance2, wFilename.c_str());
-#endif
+                Log(LogLevel_DebugBasic, L"[%s%d][%s%d]\tFindNextFileV2 A wasFileAlreadyProvided returns true %ls", g_FrfModuleName, data->RememberedInstance, g_FrfModuleName, FindNextFileInstance2, wFilename.c_str());
                 _free_locale(locale);
                 return true;
             }
         }
         _free_locale(locale);
 
-#if _DEBUG
-        Log(L"[%s%d][%s%d]\tFindNextFileV2 wasFileAlreadyProvided returns false", g_FrfModuleName, data->RememberedInstance, g_FrfModuleName, FindNextFileInstance2);
-#endif
+        Log(LogLevel_DebugBasic, L"[%s%d][%s%d]\tFindNextFileV2 wasFileAlreadyProvided returns false", g_FrfModuleName, data->RememberedInstance, g_FrfModuleName, FindNextFileInstance2);
         return false;
     };
 
@@ -1263,18 +1143,16 @@ BOOL __stdcall FindNextFileFixupV2(_In_ HANDLE findFile, _Out_ win32_find_data_t
     {
         if (data->find_handles[0])
         {
-            //Log(L"[%s%d] FindNextFileV2[0] to be checked.", g_FrfModuleName, FindNextFileInstance2);
+            //Log(LogLevel_DebugBasic, L"[%s%d] FindNextFileV2[0] to be checked.", g_FrfModuleName, FindNextFileInstance2);
             if (impl::FindNextFile(data->find_handles[0].get(), findFileData))
             {
-#if _DEBUG
-                Log(L"[%s%d][%s%d] FindNextFileV2[0] returns TRUE: %ls", g_FrfModuleName, data->RememberedInstance, g_FrfModuleName, FindNextFileInstance2, widen(findFileData->cFileName).c_str());
-#endif
+                Log(LogLevel_DebugBasic, L"[%s%d][%s%d] FindNextFileV2[0] returns TRUE: %ls", g_FrfModuleName, data->RememberedInstance, g_FrfModuleName, FindNextFileInstance2, widen(findFileData->cFileName).c_str());
                 data->already_returned_list.push_back(widen(findFileData->cFileName));
                 return TRUE;
             }
             else if (::GetLastError() == ERROR_NO_MORE_FILES)
             {
-                ///Log(L"[%s%d][%s%d] FindNextFileV2[0] had FALSE with ERROR_NO_MORE_FILES.", g_FrfModuleName, data->RememberedInstance, g_FrfModuleName, FindNextFileInstance2);
+                ///Log(LogLevel_DebugBasic, L"[%s%d][%s%d] FindNextFileV2[0] had FALSE with ERROR_NO_MORE_FILES.", g_FrfModuleName, data->RememberedInstance, g_FrfModuleName, FindNextFileInstance2);
                 data->find_handles[0].reset();
                 ::SetLastError(ERROR_NO_MORE_FILES);
                 // now check[1]
@@ -1282,9 +1160,7 @@ BOOL __stdcall FindNextFileFixupV2(_In_ HANDLE findFile, _Out_ win32_find_data_t
             else
             {
                 // Error due to something other than reaching the end 
-#if _DEBUG
-                Log(L"[%s%d][%s%d] FindNextFileV2[0] returns FALSE 0x%x", g_FrfModuleName, data->RememberedInstance, g_FrfModuleName, FindNextFileInstance2, ::GetLastError());
-#endif
+                Log(LogLevel_DebugBasic, L"[%s%d][%s%d] FindNextFileV2[0] returns FALSE 0x%x", g_FrfModuleName, data->RememberedInstance, g_FrfModuleName, FindNextFileInstance2, ::GetLastError());
                 return FALSE;
             }
         }
@@ -1299,9 +1175,7 @@ BOOL __stdcall FindNextFileFixupV2(_In_ HANDLE findFile, _Out_ win32_find_data_t
                 // Skip the file if the name was previously used, unless it is a directory
                 if (!wasFileAlreadyProvided(data->package_vfs_path,findFileData->cFileName))
                 {
-#if _DEBUG
-                    Log(L"[%s%d][%s%d] FindNextFileV2[1] returns TRUE with ERROR_SUCCESS and file %ls", g_FrfModuleName, data->RememberedInstance, g_FrfModuleName, FindNextFileInstance2, widen(findFileData->cFileName).c_str());
-#endif
+                    Log(LogLevel_DebugBasic, L"[%s%d][%s%d] FindNextFileV2[1] returns TRUE with ERROR_SUCCESS and file %ls", g_FrfModuleName, data->RememberedInstance, g_FrfModuleName, FindNextFileInstance2, widen(findFileData->cFileName).c_str());
                     data->already_returned_list.push_back(widen(findFileData->cFileName));
                     ::SetLastError(ERROR_SUCCESS);
                     return TRUE;
@@ -1309,23 +1183,19 @@ BOOL __stdcall FindNextFileFixupV2(_In_ HANDLE findFile, _Out_ win32_find_data_t
                 else
                 {
                     // Otherwise, skip this file and check the next one
-#if _DEBUG
-                    Log(L"[%s%d][%s%d] FindNextFileV2[1] skips file %ls", g_FrfModuleName, data->RememberedInstance, g_FrfModuleName, FindNextFileInstance2, widen(findFileData->cFileName).c_str());
-#endif
+                    Log(LogLevel_DebugBasic, L"[%s%d][%s%d] FindNextFileV2[1] skips file %ls", g_FrfModuleName, data->RememberedInstance, g_FrfModuleName, FindNextFileInstance2, widen(findFileData->cFileName).c_str());
                 }
             }
             else if (::GetLastError() == ERROR_NO_MORE_FILES)
             {
-                ///Log(L"[%s%d][%s%d] FindNextFileV2[1] had FALSE with ERROR_NO_MORE_FILES.", g_FrfModuleName, data->RememberedInstance, g_FrfModuleName, FindNextFileInstance2);
+                ///Log(LogLevel_DebugBasic, L"[%s%d][%s%d] FindNextFileV2[1] had FALSE with ERROR_NO_MORE_FILES.", g_FrfModuleName, data->RememberedInstance, g_FrfModuleName, FindNextFileInstance2);
                 data->find_handles[1].reset();
                 ::SetLastError(ERROR_NO_MORE_FILES);
                 // now check [2]
             }
             else
             {
-#if _DEBUG
-                Log(L"[%s%d][%s%d] FindNextFileV2[1] returns FALSE 0x%x", g_FrfModuleName, data->RememberedInstance, g_FrfModuleName, FindNextFileInstance2, ::GetLastError());
-#endif
+                Log(LogLevel_DebugBasic, L"[%s%d][%s%d] FindNextFileV2[1] returns FALSE 0x%x", g_FrfModuleName, data->RememberedInstance, g_FrfModuleName, FindNextFileInstance2, ::GetLastError());
                 // Error due to something other than reaching the end
                 return FALSE;
             }
@@ -1341,7 +1211,7 @@ BOOL __stdcall FindNextFileFixupV2(_In_ HANDLE findFile, _Out_ win32_find_data_t
                 if (wcscmp(widen(findFileData->cFileName).c_str(), L"*") == 0)
                 {
                     // Skip this entry as artifact
-                    ///Log(L"[%s%d][%s%d] FindNextFileV2[2] returns TRUE with ERROR_SUCCESS and artifact file *", g_FrfModuleName, data->RememberedInstance, g_FrfModuleName, FindNextFileInstance2);
+                    ///Log(LogLevel_DebugBasic, L"[%s%d][%s%d] FindNextFileV2[2] returns TRUE with ERROR_SUCCESS and artifact file *", g_FrfModuleName, data->RememberedInstance, g_FrfModuleName, FindNextFileInstance2);
                     // If this works, spread to other cases too...
                 }
                 else
@@ -1349,9 +1219,7 @@ BOOL __stdcall FindNextFileFixupV2(_In_ HANDLE findFile, _Out_ win32_find_data_t
                     // Skip the file if the name was previously used, unless it is a directory
                     if (!wasFileAlreadyProvided(data->requested_path, findFileData->cFileName))
                     {
-#if _DEBUG
-                        Log(L"[%s%d][%s%d] FindNextFileV2[2] returns TRUE with ERROR_SUCCESS and file %ls", g_FrfModuleName, data->RememberedInstance, g_FrfModuleName, FindNextFileInstance2, widen(findFileData->cFileName).c_str());
-#endif
+                        Log(LogLevel_DebugBasic, L"[%s%d][%s%d] FindNextFileV2[2] returns TRUE with ERROR_SUCCESS and file %ls", g_FrfModuleName, data->RememberedInstance, g_FrfModuleName, FindNextFileInstance2, widen(findFileData->cFileName).c_str());
                         data->already_returned_list.push_back(widen(findFileData->cFileName));
                         ::SetLastError(ERROR_SUCCESS);
                         return TRUE;
@@ -1359,24 +1227,20 @@ BOOL __stdcall FindNextFileFixupV2(_In_ HANDLE findFile, _Out_ win32_find_data_t
                     else
                     {
                         // Otherwise, skip this file and check the next one
-#if _DEBUG
-                        Log(L"[%s%d][%s%d] FindNextFileV2[2] skips file %ls", g_FrfModuleName, data->RememberedInstance, g_FrfModuleName, FindNextFileInstance2, widen(findFileData->cFileName).c_str());
-#endif
+                        Log(LogLevel_DebugBasic, L"[%s%d][%s%d] FindNextFileV2[2] skips file %ls", g_FrfModuleName, data->RememberedInstance, g_FrfModuleName, FindNextFileInstance2, widen(findFileData->cFileName).c_str());
                     }
                 }
             }
             else if (::GetLastError() == ERROR_NO_MORE_FILES)
             {
-                ///Log(L"[%s%d][%s%d] FindNextFileV2[2] had FALSE with ERROR_NO_MORE_FILES.", g_FrfModuleName, data->RememberedInstance, g_FrfModuleName, FindNextFileInstance2);
+                ///Log(LogLevel_DebugBasic, L"[%s%d][%s%d] FindNextFileV2[2] had FALSE with ERROR_NO_MORE_FILES.", g_FrfModuleName, data->RememberedInstance, g_FrfModuleName, FindNextFileInstance2);
                 data->find_handles[2].reset();
                 ::SetLastError(ERROR_NO_MORE_FILES);
                 ///now check [3]
             }
             else
             {
-#if _DEBUG
-                Log(L"[%s%d][%s%d] FindNextFileV2[2] returns FALSE 0x%x", g_FrfModuleName, data->RememberedInstance, g_FrfModuleName, FindNextFileInstance2, ::GetLastError());
-#endif
+                Log(LogLevel_DebugBasic, L"[%s%d][%s%d] FindNextFileV2[2] returns FALSE 0x%x", g_FrfModuleName, data->RememberedInstance, g_FrfModuleName, FindNextFileInstance2, ::GetLastError());
                 // Error due to something other than reaching the end
                 return FALSE;
             }
@@ -1393,9 +1257,7 @@ BOOL __stdcall FindNextFileFixupV2(_In_ HANDLE findFile, _Out_ win32_find_data_t
                 // Skip the file if the name was previously used, unless it is a directory
                 if (!wasFileAlreadyProvided(data->package_devfs_path, findFileData->cFileName))
                 {
-#if _DEBUG
-                    Log(L"[%s%d][%s%d] FindNextFileV2[3] returns TRUE with ERROR_SUCCESS and file %ls", g_FrfModuleName, data->RememberedInstance, g_FrfModuleName, FindNextFileInstance2, widen(findFileData->cFileName).c_str());
-#endif
+                    Log(LogLevel_DebugBasic, L"[%s%d][%s%d] FindNextFileV2[3] returns TRUE with ERROR_SUCCESS and file %ls", g_FrfModuleName, data->RememberedInstance, g_FrfModuleName, FindNextFileInstance2, widen(findFileData->cFileName).c_str());
                     data->already_returned_list.push_back(widen(findFileData->cFileName));
                     ::SetLastError(ERROR_SUCCESS);
                     return TRUE;
@@ -1403,25 +1265,19 @@ BOOL __stdcall FindNextFileFixupV2(_In_ HANDLE findFile, _Out_ win32_find_data_t
                 else
                 {
                     // Otherwise, skip this file and check the next one
-#if _DEBUG
-                    Log(L"[%s%d][%s%d] FindNextFileV2[3] skips file %ls", g_FrfModuleName, data->RememberedInstance, g_FrfModuleName, FindNextFileInstance2, widen(findFileData->cFileName).c_str());
-#endif
+                    Log(LogLevel_DebugBasic, L"[%s%d][%s%d] FindNextFileV2[3] skips file %ls", g_FrfModuleName, data->RememberedInstance, g_FrfModuleName, FindNextFileInstance2, widen(findFileData->cFileName).c_str());
                 }
             }
             else if (::GetLastError() == ERROR_NO_MORE_FILES)
             {
-#if _DEBUG
-                Log(L"[%s%d][%s%d] FindNextFileV2[3] returns FALSE with ERROR_NO_MORE_FILES.", g_FrfModuleName, data->RememberedInstance, g_FrfModuleName, FindNextFileInstance2);
-#endif
+                Log(LogLevel_DebugBasic, L"[%s%d][%s%d] FindNextFileV2[3] returns FALSE with ERROR_NO_MORE_FILES.", g_FrfModuleName, data->RememberedInstance, g_FrfModuleName, FindNextFileInstance2);
                 data->find_handles[3].reset();
                 ::SetLastError(ERROR_NO_MORE_FILES);
                 ///now check [4];
             }
             else
             {
-#if _DEBUG
-                Log(L"[%s%d][%s%d] FindNextFileV2[3] returns FALSE 0x%x", g_FrfModuleName, data->RememberedInstance, g_FrfModuleName, FindNextFileInstance2, ::GetLastError());
-#endif
+                Log(LogLevel_DebugBasic, L"[%s%d][%s%d] FindNextFileV2[3] returns FALSE 0x%x", g_FrfModuleName, data->RememberedInstance, g_FrfModuleName, FindNextFileInstance2, ::GetLastError());
                 // Error due to something other than reaching the end
                 // return existing error code
                 return FALSE;
@@ -1439,9 +1295,7 @@ BOOL __stdcall FindNextFileFixupV2(_In_ HANDLE findFile, _Out_ win32_find_data_t
                 // Skip the file if the name was previously used, unless it is a directory
                 if (!wasFileAlreadyProvided(data->package_deredirect_path, findFileData->cFileName))
                 {
-#if _DEBUG
-                    Log(L"[%s%d][%s%d] FindNextFileV2[4] returns TRUE with ERROR_SUCCESS and file %ls", g_FrfModuleName, data->RememberedInstance, g_FrfModuleName, FindNextFileInstance2, widen(findFileData->cFileName).c_str());
-#endif
+                    Log(LogLevel_DebugBasic, L"[%s%d][%s%d] FindNextFileV2[4] returns TRUE with ERROR_SUCCESS and file %ls", g_FrfModuleName, data->RememberedInstance, g_FrfModuleName, FindNextFileInstance2, widen(findFileData->cFileName).c_str());
                     data->already_returned_list.push_back(widen(findFileData->cFileName));
                     ::SetLastError(ERROR_SUCCESS);
                     return TRUE;
@@ -1449,25 +1303,19 @@ BOOL __stdcall FindNextFileFixupV2(_In_ HANDLE findFile, _Out_ win32_find_data_t
                 else
                 {
                     // Otherwise, skip this file and check the next one
-#if _DEBUG
-                    Log(L"[%s%d][%s%d] FindNextFileV2[4] skips file %ls", g_FrfModuleName, data->RememberedInstance, g_FrfModuleName, FindNextFileInstance2, widen(findFileData->cFileName).c_str());
-#endif
+                    Log(LogLevel_DebugBasic, L"[%s%d][%s%d] FindNextFileV2[4] skips file %ls", g_FrfModuleName, data->RememberedInstance, g_FrfModuleName, FindNextFileInstance2, widen(findFileData->cFileName).c_str());
                 }
             }
             else if (::GetLastError() == ERROR_NO_MORE_FILES)
             {
-#if _DEBUG
-                Log(L"[%s%d][%s%d] FindNextFileV2[4] returns FALSE with ERROR_NO_MORE_FILES.", g_FrfModuleName, data->RememberedInstance, g_FrfModuleName, FindNextFileInstance2);
-#endif
+                Log(LogLevel_DebugBasic, L"[%s%d][%s%d] FindNextFileV2[4] returns FALSE with ERROR_NO_MORE_FILES.", g_FrfModuleName, data->RememberedInstance, g_FrfModuleName, FindNextFileInstance2);
                 data->find_handles[4].reset();
                 ::SetLastError(ERROR_NO_MORE_FILES);
                 return FALSE;
             }
             else
             {
-#if _DEBUG
-                Log(L"[%s%d][%s%d] FindNextFileV2[4] returns FALSE 0x%x", g_FrfModuleName, data->RememberedInstance, g_FrfModuleName, FindNextFileInstance2, ::GetLastError());
-#endif
+                Log(LogLevel_DebugBasic, L"[%s%d][%s%d] FindNextFileV2[4] returns FALSE 0x%x", g_FrfModuleName, data->RememberedInstance, g_FrfModuleName, FindNextFileInstance2, ::GetLastError());
                 // Error due to something other than reaching the end
                 // return existing error code
                 return FALSE;
@@ -1477,9 +1325,7 @@ BOOL __stdcall FindNextFileFixupV2(_In_ HANDLE findFile, _Out_ win32_find_data_t
 
 
     // We ran out of data either on a previous call, or by ignoring files that have been redirected
-#if _DEBUG
-    Log(L"[%s%d][%s%d] FindNextFileV2 returns FALSE with ERROR_NO_MORE_FILES.", g_FrfModuleName, data->RememberedInstance, g_FrfModuleName, FindNextFileInstance2);
-#endif
+    Log(LogLevel_DebugBasic, L"[%s%d][%s%d] FindNextFileV2 returns FALSE with ERROR_NO_MORE_FILES.", g_FrfModuleName, data->RememberedInstance, g_FrfModuleName, FindNextFileInstance2);
     ::SetLastError(ERROR_NO_MORE_FILES);
     return FALSE;
 
@@ -1496,15 +1342,11 @@ BOOL __stdcall FindCloseFixupV2(_Inout_ HANDLE findHandle) noexcept
     auto guard = g_reentrancyGuard.enter();
     if (!guard)
     {
-#if _DEBUG
-        Log(L"FindCloseFixupV2");
-#endif
+        Log(LogLevel_DebugBasic, L"FindCloseFixupV2");
         return impl::FindClose(findHandle);
     }
 
-#if _DEBUG
     DWORD FindCloseInstance = ++g_FileIntceptInstance;
-#endif
     if (findHandle == INVALID_HANDLE_VALUE)
     {
         ::SetLastError(ERROR_INVALID_PARAMETER);
@@ -1512,9 +1354,7 @@ BOOL __stdcall FindCloseFixupV2(_Inout_ HANDLE findHandle) noexcept
     }
 
     auto data = reinterpret_cast<find_data2*>(findHandle);
-#if _DEBUG
-    Log(L"[%s%d][%s%d] FindCloseFixupV2.", g_FrfModuleName, data->RememberedInstance, g_FrfModuleName, FindCloseInstance);
-#endif
+    Log(LogLevel_DebugBasic, L"[%s%d][%s%d] FindCloseFixupV2.", g_FrfModuleName, data->RememberedInstance, g_FrfModuleName, FindCloseInstance);
 
     for (int i = 0; i < 5; i++)
     {

@@ -22,9 +22,7 @@ DWORD __stdcall GetPrivateProfileSectionNamesFixup(
         {
             if (fileName != NULL)
             {
-#if _DEBUG
-                LogString(g_FrfModuleName, GetPrivateProfileSectionNamesInstance,L"GetPrivateProfileSectionNamesFixup for fileName", widen(fileName, CP_ACP).c_str());
-#endif
+                LogString(LogLevel_DebugBasic, g_FrfModuleName, GetPrivateProfileSectionNamesInstance,L"GetPrivateProfileSectionNamesFixup for fileName", widen(fileName, CP_ACP).c_str());
                 if (!IsUnderUserAppDataLocalPackages(fileName))
                 {
                     path_redirect_info  pri = ShouldRedirectV2(fileName, redirect_flags::copy_on_read, GetPrivateProfileSectionNamesInstance);
@@ -49,28 +47,18 @@ DWORD __stdcall GetPrivateProfileSectionNamesFixup(
                 }
                 else
                 {
-#if _DEBUG
-                    Log(L"[%s%d]  Under LocalAppData\\Packages, don't redirect", g_FrfModuleName, GetPrivateProfileSectionNamesInstance);
-#endif
+                    Log(LogLevel_DebugBasic, L"[%s%d]  Under LocalAppData\\Packages, don't redirect", g_FrfModuleName, GetPrivateProfileSectionNamesInstance);
                 }
             }
             else
             {
-#if _DEBUG
-                Log(L"[%s%d]  null fileName, don't redirect as may be registry based or default.", g_FrfModuleName, GetPrivateProfileSectionNamesInstance);
-#endif
+                Log(LogLevel_DebugBasic, L"[%s%d]  null fileName, don't redirect as may be registry based or default.", g_FrfModuleName, GetPrivateProfileSectionNamesInstance);
             }
         }
     }
-#if _DEBUG
     // Fall back to assuming no redirection is necessary if exception
-    LOGGED_CATCHHANDLER_MIN(g_FrfModuleName, GetPrivateProfileSectionNamesInstance, L"GetPrivateProfileSectionNames")
-#else
-    catch (...)
-    {
-        Log(L"[%s%d] GetPrivateProfileSectionNames Exception=0x%x", g_FrfModuleName, GetPrivateProfileSectionNamesInstance, GetLastError());
-    }
-#endif
+    LOGGED_CATCHHANDLER_MIN(LogLevel_Exception, g_FrfModuleName, GetPrivateProfileSectionNamesInstance, L"GetPrivateProfileSectionNames")
+
 
 
     return impl::GetPrivateProfileSectionNames(string, stringLength, fileName);

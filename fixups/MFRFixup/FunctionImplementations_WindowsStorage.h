@@ -44,28 +44,25 @@ inline Func GetWindowsStorageDllInternalFunction(const char* functionName)
     }
 
     auto result = reinterpret_cast<Func>(::GetProcAddress(mod, functionName));
-#if _DEBUG
 #if DEBUG_NEW_FIXUPS_WINDOWSSTORAGE
     if (functionName != NULL)
     {
-        Log(L">>>WindowsStorage Fixup loaded name=%S from 0x%x", functionName, result);
+        Log(LogLevel_DebugBasic, L">>>WindowsStorage Fixup loaded name=%S from 0x%x", functionName, result);
     }
     else
     {
-        Log(L">>>WindowsStorage Fixup mistaken loaded name=??? 0x%x",  result);
+        Log(LogLevel_DebugBasic, L">>>WindowsStorage Fixup mistaken loaded name=??? 0x%x",  result);
     }
-#endif
 #endif
     /////assert(result);
     if (result == NULL)
     {
-        Log(L"Failed to locate exported function name=%S from WindowsStorage.dll, possibly not supported on this OS.", functionName);
+        Log(LogLevel_DebugBasic, L"Failed to locate exported function name=%S from WindowsStorage.dll, possibly not supported on this OS.", functionName);
     }
     else
     {
-#if _DEBUG
-        Log(L"Located exported function name=%S from WindowsStorage.dll at 0x%x", functionName, result);
-#endif
+        Log(LogLevel_DebugBasic, L"Located exported function name=%S from WindowsStorage.dll at 0x%x", functionName, result);
+
     }
     return result;
 }

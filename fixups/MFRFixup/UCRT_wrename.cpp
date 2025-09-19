@@ -32,10 +32,9 @@ int  __cdecl wrenameFixup(
     auto guard = g_reentrancyGuard.enter();
     try
     {
-#if _DEBUG
-        LogString(g_MfrModuleName, dllInstance, L"wrename Fixup oldName", oldName);
-        LogString(g_MfrModuleName, dllInstance, L"wrename Fixup newName", newName);
-#endif
+        LogString(LogLevel_DebugBasic, g_MfrModuleName, dllInstance, L"wrename Fixup oldName", oldName);
+        LogString(LogLevel_DebugBasic, g_MfrModuleName, dllInstance, L"wrename Fixup newName", newName);
+
         if (guard)
         {
             ; // if needed
@@ -49,16 +48,14 @@ int  __cdecl wrenameFixup(
         {
             ret = impl::Rename(oldName, newName);
         }
-#if _DEBUG
         if (ret == 0)
         {
-            Log(L"[%s%d]\twrename returns SUCCESS", g_MfrModuleName, dllInstance);
+            Log(LogLevel_DebugBasic, L"[%s%d]\twrename returns SUCCESS", g_MfrModuleName, dllInstance);
         }
         else
         {
-            Log(L"[%s%d]\twrename returns 0x", g_MfrModuleName, dllInstance,GetLastError());
+            Log(LogLevel_DebugBasic, L"[%s%d]\twrename returns 0x", g_MfrModuleName, dllInstance,GetLastError());
         }
-#endif
         return ret;
     }
     catch (...)

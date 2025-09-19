@@ -36,9 +36,14 @@ extern const wchar_t* g_LoadLibraryName;
 
 void InitializeFixups()
 {
-#if _DEBUG
-    Log(L"[%s%d] Initializing DynamicLibraryFixup", g_LoadLibraryName, 0);
-#endif
+    g_JsonDebugLevel = (Json_Debug_Levels)::PSFGetDebugLevelFromJson();
+    Json_Debug_Levels tempLog = g_JsonDebugLevel;
+    g_JsonDebugLevel = LogLevel_DebugMaximum; // force this to at least basic for the init logging
+    Log(LogLevel_DebugBasic, "[%s%d]\tDynamicLibraryFixup InitializeFixups: start Debug Level=%d", g_LoadLibraryName, 0, tempLog);
+    g_JsonDebugLevel = tempLog;
+
+
+
     // For path comparison's sake - and the fact that std::filesystem::path doesn't handle (root-)local device paths all
     // that well - ensure that these paths are drive-absolute
     auto packageRootPath = ::PSFQueryPackageRootPath();
@@ -56,9 +61,7 @@ void InitializeFixups()
 
 void InitializeConfiguration()
 {
-#if _DEBUG
-    Log(L"[%s%d] DynamicLibraryFixup InitializeConfiguration()", g_LoadLibraryName, 0);
-#endif
+    Log(LogLevel_DebugBasic, L"[%s%d] DynamicLibraryFixup InitializeConfiguration()", g_LoadLibraryName, 0);
     if (auto rootConfig = ::PSFQueryCurrentDllConfig())
     {
         auto& rootObject = rootConfig->as_object();
@@ -73,9 +76,7 @@ void InitializeConfiguration()
 
         if (g_dynf_forcepackagedlluse == true)
         {
-#if _DEBUG
-            Log(L"[%s%d] DynamicLibraryFixup ForcePackageDllUse=true", g_LoadLibraryName, 0);
-#endif
+            Log(LogLevel_DebugBasic, L"[%s%d] DynamicLibraryFixup ForcePackageDllUse=true", g_LoadLibraryName, 0);
             if (auto relativeDllsValue = rootObject.try_get("relativeDllPaths"))
             {
                 if (relativeDllsValue)
@@ -113,21 +114,15 @@ void InitializeConfiguration()
                         g_dynf_dllSpecs.back().full_filepath = fullpath;
                         g_dynf_dllSpecs.back().filename = filename;
                         g_dynf_dllSpecs.back().architecture = bitness;
-#if MOREDEBUG
-                        Log(L"[%s%d] DynamicLibraryFixup: %s : (%s=%d) : %s", g_LoadLibraryName, 0, filename.data(), wArch.c_str(), bitness, fullpath.c_str());
-#endif
+                        Log(LogLevel_DebugIntermediate, L"[%s%d] DynamicLibraryFixup: %s : (%s=%d) : %s", g_LoadLibraryName, 0, filename.data(), wArch.c_str(), bitness, fullpath.c_str());
                         count++;
                     };
-#if _DEBUG
-                    Log(L"[%s%d] DynamicLibraryFixup: %d relative items read.", g_LoadLibraryName, 0, count);
-#endif
+                    Log(LogLevel_DebugBasic, L"[%s%d] DynamicLibraryFixup: %d relative items read.", g_LoadLibraryName, 0, count);
                 }
             }
             else
             {
-#if _DEBUG
-                Log(L"[%s%d] DynamicLibraryFixup ForcePackageDllUse=false", g_LoadLibraryName, 0);
-#endif
+                Log(LogLevel_DebugBasic, L"[%s%d] DynamicLibraryFixup ForcePackageDllUse=false", g_LoadLibraryName, 0);
             }
         }
     }

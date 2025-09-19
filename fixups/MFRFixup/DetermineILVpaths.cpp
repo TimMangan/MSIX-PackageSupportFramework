@@ -20,7 +20,7 @@
 extern void CheckFileForIlvAnomoly(DWORD, std::wstring);
 #endif
 
-std::wstring DetermineIlvPathForReadOperations(Cohorts cohorts, [[maybe_unused]] DWORD dllInstance, [[maybe_unused]] bool moredebug)
+std::wstring DetermineIlvPathForReadOperations(Json_Debug_Levels debugRequestLevel, Cohorts cohorts, DWORD dllInstance)
 {
     // Given the cohorts information for a file path, determine the correct path to use when attempting what would be a read operation under ILV.
     // - For anything with a valid mapping for traditional redirection, this means we want the package path.
@@ -96,10 +96,8 @@ std::wstring DetermineIlvPathForReadOperations(Cohorts cohorts, [[maybe_unused]]
     }
     
     SetLastError(oldErr);
-    if (moredebug)
-    {
-        Log(L"[%s%d]        DetermineILVPathsForRead Atts[skip]Att/Err  Req=[0]0x%x/0x%x Pkg=[%d]0x%x/0x%x Redir=[%d]0x%x/0x%x Native=[%d]0x%x/0x%x", g_MfrModuleName, dllInstance, RequestedAttributes, RequestedError, SkipPackage, PackageAttributes, PackageError, SkipRedirection, RedirectedAttributes, RedirectedError, SkipNative, NativeAttributes, NativeError);
-    }
+    Log(debugRequestLevel, L"[%s%d]        DetermineILVPathsForRead Atts[skip]Att/Err  Req=[0]0x%x/0x%x Pkg=[%d]0x%x/0x%x Redir=[%d]0x%x/0x%x Native=[%d]0x%x/0x%x", g_MfrModuleName, dllInstance, RequestedAttributes, RequestedError, SkipPackage, PackageAttributes, PackageError, SkipRedirection, RedirectedAttributes, RedirectedError, SkipNative, NativeAttributes, NativeError);
+    
     switch (cohorts.file_mfr.Request_MfrPathType)
     {
     case mfr::mfr_path_types::in_native_area: 
@@ -258,23 +256,17 @@ std::wstring DetermineIlvPathForReadOperations(Cohorts cohorts, [[maybe_unused]]
                         {
                             if (!SkipPackage && PackageError == ERROR_FILE_NOT_FOUND)
                             {
-#if _DEBUG
-                                Log(L"[%s%d] DetermineIlvPathForReadOperations: Requested path was not found, but we have a package or redirected file.", g_MfrModuleName, dllInstance);
-#endif
+                                Log(LogLevel_DebugBasic, L"[%s%d] DetermineIlvPathForReadOperations: Requested path was not found, but we have a package or redirected file.", g_MfrModuleName, dllInstance);
                                 UseFile = cohorts.WsPackage;
                             }
                             else if (!SkipRedirection && RedirectedError == ERROR_FILE_NOT_FOUND )
                             {
-#if _DEBUG
-                                Log(L"[%s%d] DetermineIlvPathForReadOperations: Requested path was not found, but we have a package or redirected file.", g_MfrModuleName, dllInstance);
-#endif
+                                Log(LogLevel_DebugBasic, L"[%s%d] DetermineIlvPathForReadOperations: Requested path was not found, but we have a package or redirected file.", g_MfrModuleName, dllInstance);
                                 UseFile = cohorts.WsRedirected;
                             }
                             else if (!SkipNative && NativeError == ERROR_FILE_NOT_FOUND)
                             {
-#if _DEBUG
-                                Log(L"[%s%d] DetermineIlvPathForReadOperations: Requested path was not found, but we have a package or redirected file.", g_MfrModuleName, dllInstance);
-#endif
+                                Log(LogLevel_DebugBasic, L"[%s%d] DetermineIlvPathForReadOperations: Requested path was not found, but we have a package or redirected file.", g_MfrModuleName, dllInstance);
                                 UseFile = cohorts.WsNative;
                             }
                             else 
@@ -368,7 +360,7 @@ std::wstring DetermineIlvPathForReadOperations(Cohorts cohorts, [[maybe_unused]]
 }  // DetermineIlvPathForReadOperations()
 
 
-std::wstring DetermineIlvPathForWriteOperations(Cohorts cohorts, [[maybe_unused]] DWORD dllInstance, [[maybe_unused]] bool moredebug)
+std::wstring DetermineIlvPathForWriteOperations([[maybe_unused]] Json_Debug_Levels debugRequestLevel, Cohorts cohorts, [[maybe_unused]] DWORD dllInstance)
 {
     // Given the cohorts information for a file path, determine the correct path to use when attempting what would be a write/create operation under ILV.
     // - For anything with a valid mapping for traditional redirection, this means we want the package path.
@@ -491,7 +483,7 @@ std::wstring SelectLocalOrPackageForRead(std::wstring localPath, std::wstring pa
 {
     if (IsThisALocalPathNow(localPath))
     {
-        // In a redirect to local scenario, we are responsible for determing if source is local or in package
+        // In a redirect to local scenario, we are responsible for determining if source is local or in package
         if (!PathExists(localPath.c_str()) && PathExists(packagePath.c_str()))
         {
             return packagePath;
@@ -500,7 +492,7 @@ std::wstring SelectLocalOrPackageForRead(std::wstring localPath, std::wstring pa
     return localPath;
 }  // SelectLocalOrPackageForRead()
 
-void PreCreateLocalFoldersIfNeededForWrite(std::wstring localPath, std::wstring packagePath, DWORD dllInstance,  bool debug, std::wstring debugString)
+void PreCreateLocalFoldersIfNeededForWrite(Json_Debug_Levels debugRequestLevel, std::wstring localPath, std::wstring packagePath, DWORD dllInstance, std::wstring debugString)
 {
     if (IsThisALocalPathNow(localPath))
     {
@@ -512,18 +504,15 @@ void PreCreateLocalFoldersIfNeededForWrite(std::wstring localPath, std::wstring 
             std::filesystem::path packagePathAsPath = std::filesystem::path(packagePath);
             if (PathExists(packagePathAsPath.parent_path().c_str()))
             {
-                if (debug)
-                {
-                    Log(L"[%s%d] %s: Pre-create local parent path to match the package first %s", g_MfrModuleName, dllInstance, debugString.c_str(), packagePathAsPath.parent_path().c_str());
-                }
+                Log(debugRequestLevel, L"[%s%d] %s: Pre-create local parent path to match the package first %s", g_MfrModuleName, dllInstance, debugString.c_str(), packagePathAsPath.parent_path().c_str());
                 PreCreateFolders(localPath, dllInstance, debugString.c_str());
 
             }
         }
     }
-} // PreCreateLocalFoldersIfNeededForWrite() // PreCreateLocalFoldersIfNeededForWrite()
+} // PreCreateLocalFoldersIfNeededForWrite()
 
-void PreCreatePackageFoldersIfIlvNeededForWrite(std::wstring filePath, DWORD dllInstance, bool debug, std::wstring debugString)
+void PreCreatePackageFoldersIfIlvNeededForWrite(Json_Debug_Levels debugRequestLevel, std::wstring filePath, DWORD dllInstance, std::wstring debugString)
 {
     if (IsThisAPackagePathNow(filePath))
     {
@@ -533,24 +522,21 @@ void PreCreatePackageFoldersIfIlvNeededForWrite(std::wstring filePath, DWORD dll
             std::filesystem::path packagePathAsPath = std::filesystem::path(filePath);
             if (!PathExists(packagePathAsPath.parent_path().c_str()))
             {
-                if (debug)
-                {
-                    Log(L"[%s%d] %s: Pre-create package parent path to match the package first %s", g_MfrModuleName, dllInstance, debugString.c_str(), packagePathAsPath.parent_path().c_str());
-                }
+                Log(debugRequestLevel, L"[%s%d] %s: Pre-create package parent path to match the package first %s", g_MfrModuleName, dllInstance, debugString.c_str(), packagePathAsPath.parent_path().c_str());
                 PreCreateFolders(filePath, dllInstance, debugString.c_str());
             }
         }
     }
 } // PreCreatePackageFoldersIfIlvNeededForWrite()
 
-void CowLocalFoldersIfNeededForWrite(std::wstring localPath, std::wstring packagePath, DWORD dllInstance, [[maybe_unused]] bool debug, std::wstring debugString)
+void CowLocalFoldersIfNeededForWrite(Json_Debug_Levels debugRequestLevel, std::wstring localPath, std::wstring packagePath, DWORD dllInstance, std::wstring debugString)
 {
     if (IsThisALocalPathNow(localPath))
     {
         // In a redirect to local scenario, if the file is not present locally, but is in the package, we are responsible to copy it there first.
         if (!PathExists(localPath.c_str()) && PathExists(packagePath.c_str()))
         {
-            Cow(packagePath, localPath, dllInstance, debugString);
+            Cow(debugRequestLevel, packagePath, localPath, dllInstance, debugString);
         }
     }
 } // CowLocalFoldersIfNeededForWrite()

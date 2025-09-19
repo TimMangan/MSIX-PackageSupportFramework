@@ -86,15 +86,15 @@ public:
 	{
 		if (HasStartingScript())
 		{
-			LogString(L"StartingScript commandString", this->m_startingScriptInformation.commandString.c_str());
-			LogString(L"StartingScript currentDirectory", this->m_startingScriptInformation.currentDirectory.c_str());
+			LogString(LogLevel_Launching, L"StartingScript commandString", this->m_startingScriptInformation.commandString.c_str());
+			LogString(LogLevel_Launching, L"StartingScript currentDirectory", this->m_startingScriptInformation.currentDirectory.c_str());
 			if (this->m_startingScriptInformation.waitForScriptToFinish)
 			{
-				Log(L"StartingScript waitForScriptToFinish=true");
+				Log(LogLevel_Launching, L"StartingScript waitForScriptToFinish=true");
 			}
 			else
 			{
-				Log(L"StartingScript waitForScriptToFinish=false");
+				Log(LogLevel_Launching, L"StartingScript waitForScriptToFinish=false");
 			}
 			//RunScript(this->m_startingScriptInformation, true);
 			RunScript(this->m_startingScriptInformation, this->m_startingScriptInformation.runInVirtualEnvironment);
@@ -105,8 +105,8 @@ public:
 	{
 		if (HasEndingScript())
 		{
-			LogString(L"EndingScript commandString", this->m_endingScriptInformation.commandString.c_str());
-			LogString(L"EndingScript currentDirectory", this->m_endingScriptInformation.currentDirectory.c_str());
+			LogString(LogLevel_Launching, L"EndingScript commandString", this->m_endingScriptInformation.commandString.c_str());
+			LogString(LogLevel_Launching, L"EndingScript currentDirectory", this->m_endingScriptInformation.currentDirectory.c_str());
 			//RunScript(this->m_endingScriptInformation, true);			
 			RunScript(this->m_endingScriptInformation, this->m_endingScriptInformation.runInVirtualEnvironment);
 		}
@@ -143,8 +143,8 @@ public:
 		scriptStruct.commandString.append(InjectCommandArgs);
 		scriptStruct.currentDirectory = CurrentDirectory;
 		scriptStruct.packageRoot = PSFQueryPackageRootPath();
-		LogString(L"Script Launch to inject commandString", scriptStruct.commandString.c_str());
-		LogString(L"Script Launch using currentDirectory", scriptStruct.currentDirectory.c_str());
+		LogString(LogLevel_Launching, L"Script Launch to inject commandString", scriptStruct.commandString.c_str());
+		LogString(LogLevel_Launching, L"Script Launch using currentDirectory", scriptStruct.currentDirectory.c_str());
 		RunScript(scriptStruct, inside);
 		//Log(L"RunOtherScript returned.");
 	}
@@ -306,7 +306,7 @@ private:
 
 		if (!canScriptRun)
 		{
-			Log(L"Script has already been run and is marked to run once.");
+			Log(LogLevel_Launching, L"Script has already been run and is marked to run once.");
 			return;
 		}
 
@@ -315,26 +315,26 @@ private:
 			HRESULT startScriptResult;
 			if (inside)
 			{
-				//LogString(L"DEBUG: Starting the script (inside) and waiting to finish", script.commandString.data());
+				LogString(LogLevel_DebugBasic, L"DEBUG: Starting the script (inside) and waiting to finish", script.commandString.data());
 				startScriptResult = StartProcess(script.PsPath.c_str(), script.commandString.data(), script.currentDirectory.c_str(), script.showWindowAction, script.timeout, true, 0, m_AttributeListInside.get(),false);
 			}
 			else
 			{
-				//LogString(L"DEBUG: Starting the script (outside) and waiting to finish", script.commandString.data());
+				LogString(LogLevel_DebugBasic, L"DEBUG: Starting the script (outside) and waiting to finish", script.commandString.data());
 				startScriptResult = StartProcess(script.PsPath.c_str(), script.commandString.data(), script.currentDirectory.c_str(), script.showWindowAction, script.timeout, true, 0, m_AttributeListOutside.get(),false);
 			}
 			//HRESULT startScriptResult = StartProcess(nullptr, script.commandString.data(), script.currentDirectory.c_str(), script.showWindowAction, script.timeout, true, 0, nullptr);
 			if (startScriptResult == 0xC000013A)
 			{
-				Log(L"Debug: Script process was closed by user action.");
+				Log(LogLevel_Launching, L"Script process was closed by user action.");
 			}
 			else if (startScriptResult != ERROR_SUCCESS)
 			{
-				Log(L"Debug: Error return from script process 0x%x LastError=0x%x", startScriptResult, GetLastError());
+				Log(LogLevel_Launching, L"Error return from script process 0x%x LastError=0x%x", startScriptResult, GetLastError());
 			}
 			else
 			{
-				//Log(L"Debug: Script returns without error");
+				Log(LogLevel_Launching, L"Script returns without error");
 			}
 			if (script.stopOnScriptError)
 			{
@@ -346,13 +346,13 @@ private:
 			//We don't want to stop on an error and we want to run async
 			if (inside)
 			{
-				//LogString(L"DEBUG: Starting the script (inside) without waiting to finish", script.commandString.data());
+				LogString(LogLevel_DebugBasic, L"Starting the script (inside) without waiting to finish", script.commandString.data());
 				std::thread pwrShellThread = std::thread(StartProcess, script.PsPath.c_str(), script.commandString.data(), script.currentDirectory.c_str(), script.showWindowAction, script.timeout, true, 0, m_AttributeListInside.get(),false);
 				pwrShellThread.detach();
 			}
 			else
 			{
-				//LogString(L"DEBUG: Starting the script (outside) without waiting to finish", script.commandString.data());
+				LogString(LogLevel_DebugBasic, L"Starting the script (outside) without waiting to finish", script.commandString.data());
 				std::thread pwrShellThread = std::thread(StartProcess, script.PsPath.c_str(), script.commandString.data(), script.currentDirectory.c_str(), script.showWindowAction, script.timeout, true, 0, m_AttributeListOutside.get(),false);
 				pwrShellThread.detach();
 			}
@@ -491,7 +491,7 @@ private:
 		commandString.append(L" -file ");
 
 		std::wstring wScriptPath = scriptPath;
-		LogString(L"MakeCommandString: Input Script path", scriptPath.c_str());
+		LogString(LogLevel_Launching, L"MakeCommandString: Input Script path", scriptPath.c_str());
 		if (!std::filesystem::exists(scriptPath))
 		{
 			// The wrapper isn't in this folder, so we should search for it elewhere in the package.
@@ -504,11 +504,11 @@ private:
 				}
 			}
 		}
-		LogString(L"MakeCommandString: post exists search Script path", wScriptPath.c_str());
+		LogString(LogLevel_Launching, L"MakeCommandString: post exists search Script path", wScriptPath.c_str());
 		const std::filesystem::path dequotedScriptPath = Dequote(wScriptPath);
-		LogString(L"MakeCommandString: post DeQuote Script path", wScriptPath.c_str());
+		LogString(LogLevel_Launching, L"MakeCommandString: post DeQuote Script path", wScriptPath.c_str());
 		std::wstring fixed4PowerShell = dequotedScriptPath; // EscapeFilenameForPowerShell(dequotedScriptPath);
-		LogString(L"MakeCommandString: Updated Script path", fixed4PowerShell.c_str());
+		LogString(LogLevel_Launching, L"MakeCommandString: Updated Script path", fixed4PowerShell.c_str());
 		///if (dequotedScriptPath.is_absolute())
 		///{
 		commandString.append(L"\\");
@@ -536,7 +536,7 @@ private:
 		//Add ending quote for the script inside a string literal.
 		commandString.append(L"\"");
 
-		LogString(L"MakeCommandString: final string", commandString.c_str());
+		LogString(LogLevel_Launching, L"MakeCommandString: final string", commandString.c_str());
 
 		return commandString;
 	}

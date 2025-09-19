@@ -24,9 +24,7 @@ BOOL __stdcall GetPrivateProfileStructFixup(
         {
             if (fileName != NULL)
             {
-#if _DEBUG
-                LogString(g_FrfModuleName, GetPrivateProfileStructInstance,L"GetPrivateProfileStructFixup for fileName", widen(fileName, CP_ACP).c_str());
-#endif
+                LogString(LogLevel_DebugBasic, g_FrfModuleName, GetPrivateProfileStructInstance,L"GetPrivateProfileStructFixup for fileName", widen(fileName, CP_ACP).c_str());
                 if (!IsUnderUserAppDataLocalPackages(fileName))
                 {
                     path_redirect_info  pri = ShouldRedirectV2(fileName, redirect_flags::copy_on_read, GetPrivateProfileStructInstance);
@@ -45,28 +43,18 @@ BOOL __stdcall GetPrivateProfileStructFixup(
                 }
                 else
                 {
-#if _DEBUG
-                    Log(L"[%s%d]  Under LocalAppData\\Packages, don't redirect", g_FrfModuleName, GetPrivateProfileStructInstance);
-#endif
+                    Log(LogLevel_DebugBasic, L"[%s%d]  Under LocalAppData\\Packages, don't redirect", g_FrfModuleName, GetPrivateProfileStructInstance);
                 }
             }
             else
             {
-#if _DEBUG
-                Log(L"[%s%d]  null fileName, don't redirect as may be registry based or default.", g_FrfModuleName, GetPrivateProfileStructInstance);
-#endif
+                Log(LogLevel_DebugBasic, L"[%s%d]  null fileName, don't redirect as may be registry based or default.", g_FrfModuleName, GetPrivateProfileStructInstance);
+
             }
         }
     }
-#if _DEBUG
     // Fall back to assuming no redirection is necessary if exception
-    LOGGED_CATCHHANDLER_MIN(g_FrfModuleName, GetPrivateProfileStructInstance, L"GetPrivateProfileStruct")
-#else
-    catch (...)
-    {
-        Log(L"[%s%d] GetPrivateProfileStruct Exception=0x%x", g_FrfModuleName, GetPrivateProfileStructInstance, GetLastError());
-    }
-#endif
+    LOGGED_CATCHHANDLER_MIN(LogLevel_Exception, g_FrfModuleName, GetPrivateProfileStructInstance, L"GetPrivateProfileStruct")
 
 
     return impl::GetPrivateProfileStruct(sectionName, key, structArea, uSizeStruct, fileName);

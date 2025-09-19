@@ -1266,7 +1266,8 @@ NTSTATUS __stdcall NtQueryValueKeyFixup(
                         break;
                     }
 
-                    if (!name.empty()) LogCountedString("Name", name.data(), name.length());
+                    if (!name.empty()) 
+                        LogCountedString(LogLevel_DebugBasic, "Name", name.data(), name.length());
                     LogRegKeyType(type);
                     if (data)
                     {

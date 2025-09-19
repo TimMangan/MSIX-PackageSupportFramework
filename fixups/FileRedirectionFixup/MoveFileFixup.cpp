@@ -16,10 +16,8 @@ BOOL __stdcall MoveFileFixup(_In_ const CharT* existingFileName, _In_ const Char
     {
         if (guard)
         {
-#if _DEBUG
-            LogString(g_FrfModuleName, MoveFileInstance,L"MoveFileFixup From", existingFileName);
-            LogString(g_FrfModuleName, MoveFileInstance,L"MoveFileFixup To",   newFileName);
-#endif
+            LogString(LogLevel_DebugBasic, g_FrfModuleName, MoveFileInstance,L"MoveFileFixup From", existingFileName);
+            LogString(LogLevel_DebugBasic, g_FrfModuleName, MoveFileInstance,L"MoveFileFixup To",   newFileName);
 
             // NOTE: MoveFile needs delete access to the existing file, but since we won't have delete access to the
             //       file if it is in the package, we copy-on-read it here. This is slightly wasteful since we're
@@ -35,32 +33,22 @@ BOOL __stdcall MoveFileFixup(_In_ const CharT* existingFileName, _In_ const Char
                 BOOL bRet = impl::MoveFile(
                     priExisting.should_redirect ? priExisting.redirect_path.c_str() : widen_argument(existingFileName).c_str(),
                     priDest.should_redirect ? priDest.redirect_path.c_str() : widen_argument(newFileName).c_str());
-#if _DEBUG
                 if (bRet)
-                    Log(L"[%s%d]MoveFile returns true.", g_FrfModuleName, MoveFileInstance);
+                    Log(LogLevel_DebugBasic, L"[%s%d]MoveFile returns true.", g_FrfModuleName, MoveFileInstance);
                 else
-                    Log(L"[%s%d]MoveFile returns false. err=0x%x", g_FrfModuleName, MoveFileInstance,GetLastError());
-#endif
+                    Log(LogLevel_DebugBasic, L"[%s%d]MoveFile returns false. err=0x%x", g_FrfModuleName, MoveFileInstance,GetLastError());
                 return bRet;
             }
         }
         else
         {
-#if _DEBUG
-            LogString(g_FrfModuleName, MoveFileInstance, L"MoveFileFixup Unguarded From", existingFileName);
-            LogString(g_FrfModuleName, MoveFileInstance, L"MoveFileFixup Unguarded To", newFileName);
-#endif
+            LogString(LogLevel_DebugBasic, g_FrfModuleName, MoveFileInstance, L"MoveFileFixup Unguarded From", existingFileName);
+            LogString(LogLevel_DebugBasic, g_FrfModuleName, MoveFileInstance, L"MoveFileFixup Unguarded To", newFileName);
         }
     }
-#if _DEBUG
     // Fall back to assuming no redirection is necessary if exception
-    LOGGED_CATCHHANDLER_MIN(g_FrfModuleName, MoveFileInstance, L"MoveFile")
-#else
-    catch (...)
-    {
-        Log(L"[%s%d] MoveFile Exception=0x%x", g_FrfModuleName, MoveFileInstance, GetLastError());
-    }
-#endif
+    LOGGED_CATCHHANDLER_MIN(LogLevel_Exception, g_FrfModuleName, MoveFileInstance, L"MoveFile")
+
 
 
     return impl::MoveFile(existingFileName, newFileName);
@@ -80,11 +68,9 @@ BOOL __stdcall MoveFileExFixup(
     {
         if (guard)
         {
-#if _DEBUG
-            LogString(g_FrfModuleName, MoveFileExInstance,L"MoveFileExFixup From", existingFileName);
-            LogString(g_FrfModuleName, MoveFileExInstance,L"MoveFileExFixup To",   newFileName);
-#endif
-           
+            LogString(LogLevel_DebugBasic, g_FrfModuleName, MoveFileExInstance,L"MoveFileExFixup From", existingFileName);
+            LogString(LogLevel_DebugBasic, g_FrfModuleName, MoveFileExInstance,L"MoveFileExFixup To",   newFileName);
+         
 
             // See note in MoveFile for commentary on copy-on-read functionality (though we could do better by checking
             // flags for MOVEFILE_REPLACE_EXISTING)
@@ -95,32 +81,23 @@ BOOL __stdcall MoveFileExFixup(
                 std::wstring rldExistingFileName = TurnPathIntoRootLocalDevice(priExisting.should_redirect ? priExisting.redirect_path.c_str() : widen_argument(existingFileName).c_str());
                 std::wstring rldNewDirectory = TurnPathIntoRootLocalDevice(priDest.should_redirect ? priDest.redirect_path.c_str() : widen_argument(newFileName).c_str());
                 BOOL bRet= impl::MoveFileEx(rldExistingFileName.c_str(), rldNewDirectory.c_str(), flags);
-#if _DEBUG
                 if (bRet)
-                    Log(L"[%s%d]MoveFileEx returns true.", g_FrfModuleName, MoveFileExInstance);
+                    Log(LogLevel_DebugBasic, L"[%s%d]MoveFileEx returns true.", g_FrfModuleName, MoveFileExInstance);
                 else
-                    Log(L"[%s%d]MoveFileEx returns false with err 0x%x", g_FrfModuleName, MoveFileExInstance,GetLastError());
-#endif
+                    Log(LogLevel_DebugBasic, L"[%s%d]MoveFileEx returns false with err 0x%x", g_FrfModuleName, MoveFileExInstance,GetLastError());
                 return bRet;
             }
         }
         else
         {
-#if _DEBUG
-            LogString(g_FrfModuleName, MoveFileExInstance, L"MoveFileExFixup Unguarded From", existingFileName);
-            LogString(g_FrfModuleName, MoveFileExInstance, L"MoveFileExFixup Unguarded To", newFileName);
-#endif
+            LogString(LogLevel_DebugBasic, g_FrfModuleName, MoveFileExInstance, L"MoveFileExFixup Unguarded From", existingFileName);
+            LogString(LogLevel_DebugBasic, g_FrfModuleName, MoveFileExInstance, L"MoveFileExFixup Unguarded To", newFileName);
         }
     }
-#if _DEBUG
     // Fall back to assuming no redirection is necessary if exception
-    LOGGED_CATCHHANDLER_MIN(g_FrfModuleName, MoveFileExInstance, L"MoveFileEx")
-#else
-    catch (...)
-    {
-        Log(L"[%s%d] MoveFileEx Exception=0x%x", g_FrfModuleName, MoveFileExInstance, GetLastError());
-    }
-#endif
+    LOGGED_CATCHHANDLER_MIN(LogLevel_Exception, g_FrfModuleName, MoveFileExInstance, L"MoveFileEx")
+
+
 
     if (existingFileName != nullptr && newFileName != nullptr)
     {
@@ -141,9 +118,7 @@ BOOL __stdcall MoveFileExFixup(
     {
         retfinal = impl::MoveFileEx(existingFileName, newFileName, flags);
     }
-#if _DEBUG
-    Log(L"[%s%d] MoveFileFixup returns 0x%x", g_FrfModuleName, MoveFileExInstance, retfinal);
-#endif
+    Log(LogLevel_DebugBasic, L"[%s%d] MoveFileFixup returns 0x%x", g_FrfModuleName, MoveFileExInstance, retfinal);
     return retfinal;
 }
 DECLARE_STRING_FIXUP(impl::MoveFileEx, MoveFileExFixup);

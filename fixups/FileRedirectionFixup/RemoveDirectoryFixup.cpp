@@ -18,9 +18,7 @@ BOOL __stdcall RemoveDirectoryFixup(_In_ const CharT* pathName) noexcept
         if (guard)
         {
             std::wstring wPathName = widen(pathName);
-#if _DEBUG
-            LogString(g_FrfModuleName, RemoveDirectoryInstance,L"RemoveDirectoryFixup for pathName", wPathName.c_str());
-#endif
+            LogString(LogLevel_DebugBasic, g_FrfModuleName, RemoveDirectoryInstance,L"RemoveDirectoryFixup for pathName", wPathName.c_str());
             
             if (!IsUnderUserAppDataLocalPackages(wPathName.c_str()))
             {
@@ -37,50 +35,34 @@ BOOL __stdcall RemoveDirectoryFixup(_In_ const CharT* pathName) noexcept
                         {
                             // If the directory does not exist in the redirected location, but does in the non-redirected
                             // location, then we want to give the "illusion" that the delete succeeded
-#if _DEBUG
-                            LogString(g_FrfModuleName, RemoveDirectoryInstance, L"RemoveDirectoryFixup In package but not redirected area.", L"Fake return true.");
-#endif
+                            LogString(LogLevel_DebugBasic, g_FrfModuleName, RemoveDirectoryInstance, L"RemoveDirectoryFixup In package but not redirected area.", L"Fake return true.");
                             return TRUE;
                         }
                         else
                         {
-#if _DEBUG
-                            LogString(g_FrfModuleName, RemoveDirectoryInstance, L"RemoveDirectoryFixup Not present in redirected or requested path.", L"return false.");
-#endif
+                            LogString(LogLevel_DebugBasic, g_FrfModuleName, RemoveDirectoryInstance, L"RemoveDirectoryFixup Not present in redirected or requested path.", L"return false.");
                             SetLastError(ERROR_PATH_NOT_FOUND);
                             return FALSE;
                         }
                     }
                     else
                     {
-#if _DEBUG
-                        LogString(g_FrfModuleName, RemoveDirectoryInstance, L"RemoveDirectoryFixup Use Folder", pri.redirect_path.c_str());
-#endif
+                        LogString(LogLevel_DebugBasic, g_FrfModuleName, RemoveDirectoryInstance, L"RemoveDirectoryFixup Use Folder", pri.redirect_path.c_str());
                         BOOL bRet = impl::RemoveDirectory(rldRedirectPath.c_str());
-#if _DEBUG
-                        Log(L"[%s%d]RemoveDirectoryFixup deletes redirected with result: %d", g_FrfModuleName, RemoveDirectoryInstance, bRet);
-#endif
+                        Log(LogLevel_DebugBasic, L"[%s%d]RemoveDirectoryFixup deletes redirected with result: %d", g_FrfModuleName, RemoveDirectoryInstance, bRet);
                         return bRet;
                     }
                 }
             }
             else
             {
-#if _DEBUG
-                Log(L"[%s%d]RemoveDirectoryFixup Under LocalAppData\\Packages, don't redirect", g_FrfModuleName, RemoveDirectoryInstance);
-#endif
+                Log(LogLevel_DebugBasic, L"[%s%d]RemoveDirectoryFixup Under LocalAppData\\Packages, don't redirect", g_FrfModuleName, RemoveDirectoryInstance);
             }
         }
     }
-#if _DEBUG
     // Fall back to assuming no redirection is necessary if exception
-    LOGGED_CATCHHANDLER_MIN(g_FrfModuleName, RemoveDirectoryInstance, L"RemoveDirectory")
-#else
-    catch (...)
-    {
-        Log(L"[%s%d] RemoveDirectory Exception=0x%x", g_FrfModuleName, RemoveDirectoryInstance, GetLastError());
-    }
-#endif
+    LOGGED_CATCHHANDLER_MIN(LogLevel_Exception, g_FrfModuleName, RemoveDirectoryInstance, L"RemoveDirectory")
+
 
     if (pathName != nullptr)
     {
@@ -91,9 +73,7 @@ BOOL __stdcall RemoveDirectoryFixup(_In_ const CharT* pathName) noexcept
     {
         retfinal = impl::RemoveDirectory(pathName);
     }
-#if _DEBUG
-    Log(L"[%s%d] RemoveDirectoryFixup returns 0x%x", g_FrfModuleName, RemoveDirectoryInstance, retfinal);
-#endif
+    Log(LogLevel_DebugBasic, L"[%s%d] RemoveDirectoryFixup returns 0x%x", g_FrfModuleName, RemoveDirectoryInstance, retfinal);
     return retfinal;
 }
 DECLARE_STRING_FIXUP(impl::RemoveDirectory, RemoveDirectoryFixup);

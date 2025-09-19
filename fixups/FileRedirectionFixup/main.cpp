@@ -15,12 +15,9 @@ extern "C" {
 int __stdcall PSFInitialize() noexcept try
 {
     InitializeConfiguration();
-#if _DEBUG
     int count = psf::attach_count_all();
-    Log(L"[%s%d] FileRedirectionFixup attaches %d fixups.", g_FrfModuleName,0,  count);
-#else
-    psf::attach_all();
-#endif
+    Log(LogLevel_DebugBasic,L"[%s%d] FileRedirectionFixup attaches %d fixups.", g_FrfModuleName,0,  count);
+
     return ERROR_SUCCESS;
 }
 catch (...)
@@ -50,9 +47,12 @@ BOOL __stdcall DllMain(HINSTANCE, DWORD reason, LPVOID) noexcept try
 {
     if (reason == DLL_PROCESS_ATTACH)
     {
-#ifdef _DEBUG
-        ::OutputDebugStringA("FileRedirectionFixup attached");
-#endif
+        g_JsonDebugLevel = (Json_Debug_Levels)::PSFGetDebugLevelFromJson();
+        Json_Debug_Levels tempLog = g_JsonDebugLevel;
+        g_JsonDebugLevel = LogLevel_DebugMaximum; // force this to at least basic for the init logging
+        Log(LogLevel_DebugBasic, "[%s%d]\t\tFileRedirectionFixup DllMain: start Debug Level=%d", g_FrfModuleName, 0, tempLog);
+        g_JsonDebugLevel = tempLog;
+
         InitializePaths();
     }
 

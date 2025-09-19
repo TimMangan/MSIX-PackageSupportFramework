@@ -48,15 +48,13 @@ BOOL __stdcall WS_ShellExecuteExAFixup(
         if (guard)
         {
 
-            if (moredebug)
-            {
-                // Release level logging for detection
-                bool temp = g_psf_NoLogging;
-                g_psf_NoLogging = false;
-                Log(L"[%s%d] (Windows.Storage)ShellExecutEx()", g_MfrModuleName, dllInstance);
-                LogCallingModuleInstance(g_MfrModuleName, dllInstance);
-                g_psf_NoLogging = temp;
-            }
+            // Release level logging for detection
+            bool temp = g_psf_NoLogging;
+            g_psf_NoLogging = false;
+            Log(LogLevel_DebugBasic, L"[%s%d] (Windows.Storage)ShellExecutEx()", g_MfrModuleName, dllInstance);
+            LogCallingModuleInstance(g_MfrModuleName, dllInstance);
+            g_psf_NoLogging = temp;
+            
 
             
             retfinal = ::ShellExecuteExA(pExecInfo);
@@ -65,7 +63,7 @@ BOOL __stdcall WS_ShellExecuteExAFixup(
     }
     catch (...)
     {
-        Log(L"[%s%d] (Windows.Storage)ShellExecute Exception=0x%x", g_MfrModuleName, dllInstance, GetLastError());
+        Log(LogLevel_Exception, L"[%s%d] (Windows.Storage)ShellExecute Exception=0x%x", g_MfrModuleName, dllInstance, GetLastError());
     }
 
     retfinal = ::ShellExecuteExA(pExecInfo);
@@ -99,16 +97,14 @@ BOOL __stdcall WS_ShellExecuteExWFixup(
         if (guard)
         {
 
-            if (moredebug)
-            {
-                // Release level logging for detection
-                bool temp = g_psf_NoLogging;
-                g_psf_NoLogging = false; 
-                Log(L"[%s%d] (Windows.Storage)ShellExecutExW()", g_MfrModuleName, dllInstance);
-                Log(L"[%s%d] (Windows.Storage)ShellExecute() unfixed  dir=%ls, file=%ls, verb=%ls", g_MfrModuleName, dllInstance, pExecInfo->lpDirectory, pExecInfo->lpFile, pExecInfo->lpVerb);
-                LogCallingModuleInstance(g_MfrModuleName, dllInstance);
-                g_psf_NoLogging = temp;
-            }
+            // Release level logging for detection
+            bool temp = g_psf_NoLogging;
+            g_psf_NoLogging = false; 
+            Log(LogLevel_DebugBasic, L"[%s%d] (Windows.Storage)ShellExecutExW()", g_MfrModuleName, dllInstance);
+            Log(LogLevel_DebugBasic, L"[%s%d] (Windows.Storage)ShellExecute() unfixed  dir=%ls, file=%ls, verb=%ls", g_MfrModuleName, dllInstance, pExecInfo->lpDirectory, pExecInfo->lpFile, pExecInfo->lpVerb);
+            LogCallingModuleInstance(g_MfrModuleName, dllInstance);
+            g_psf_NoLogging = temp;
+            
 
 
             retfinal = ::ShellExecuteExW(pExecInfo);
@@ -117,7 +113,7 @@ BOOL __stdcall WS_ShellExecuteExWFixup(
     }
     catch (...)
     {
-        Log(L"[%s%d] (Windows.Storage)ShellExecute Exception=0x%x", g_MfrModuleName, dllInstance, GetLastError());
+        Log(LogLevel_Exception, L"[%s%d] (Windows.Storage)ShellExecute Exception=0x%x", g_MfrModuleName, dllInstance, GetLastError());
     }
 
     retfinal = ::ShellExecuteExW(pExecInfo);

@@ -57,7 +57,7 @@ DLL_DIRECTORY_COOKIE __stdcall AddDllDirectoryFixup(_In_ PCWSTR newDirectory)
             LogFunctionResult(functionResult);
             if (function_failed(functionResult))
             {
-                LogLastError();
+                LogLastError(LogLevel_DebugBasic) ;
             }
             else
             {
@@ -121,7 +121,7 @@ HMODULE __stdcall LoadLibraryFixup(_In_ const CharT* libFileName)
                 LogFunctionResult(functionResult);
                 if (function_failed(functionResult))
                 {
-                    LogLastError();
+                    LogLastError(LogLevel_DebugBasic) ;
                 }
                 LogCallingModule();
             }
@@ -188,7 +188,7 @@ HMODULE __stdcall LoadLibraryExFixup(_In_ const CharT* libFileName, _Reserved_ H
                 LogFunctionResult(functionResult);
                 if (function_failed(functionResult))
                 {
-                    LogLastError();
+                    LogLastError(LogLevel_DebugBasic) ;
                 }
                 LogCallingModule();
             }
@@ -250,7 +250,7 @@ DWORD __stdcall LoadModuleFixup(_In_ LPCSTR moduleName, _In_ LPVOID parameterBlo
         LogFunctionResult(functionResult);
         if (function_failed(functionResult))
         {
-            LogLastError();
+            LogLastError(LogLevel_DebugBasic) ;
         }
         LogCallingModule();
     }
@@ -307,7 +307,7 @@ HMODULE __stdcall LoadPackagedLibraryFixup(_In_ LPCWSTR libFileName, _Reserved_ 
         LogFunctionResult(functionResult);
         if (function_failed(functionResult))
         {
-            LogLastError();
+            LogLastError(LogLevel_DebugBasic) ;
         }
         LogCallingModule();
     }
@@ -364,7 +364,7 @@ BOOL __stdcall RemoveDllDirectoryFixup(_In_ DLL_DIRECTORY_COOKIE cookie)
             LogFunctionResult(functionResult);
             if (function_failed(functionResult))
             {
-                LogLastError();
+                LogLastError(LogLevel_DebugBasic) ;
             }
             LogCallingModule();
         }
@@ -421,7 +421,7 @@ BOOL __stdcall SetDefaultDllDirectoriesFixup(_In_ DWORD directoryFlags)
             LogFunctionResult(functionResult);
             if (function_failed(functionResult))
             {
-                LogLastError();
+                LogLastError(LogLevel_DebugBasic) ;
             }
             LogCallingModule();
         }
@@ -481,7 +481,7 @@ BOOL __stdcall SetDllDirectoryFixup(_In_opt_ const CharT* pathName)
                 LogFunctionResult(functionResult);
                 if (function_failed(functionResult))
                 {
-                    LogLastError();
+                    LogLastError(LogLevel_DebugBasic) ;
                 }
                 LogCallingModule();
             }

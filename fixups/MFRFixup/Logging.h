@@ -33,7 +33,7 @@
                 reinterpret_cast<const wchar_t*>(_ReturnAddress()), \
                 &moduleHandle)) \
             { \
-                Log(L"[%s%d]\tCalling Module=%ls\n", moduleName, instance, psf::get_module_path(moduleHandle).c_str()); \
+                Log(LogLevel_DebugIntermediate, L"[%s%d]\tCalling Module=%ls\n", moduleName, instance, psf::get_module_path(moduleHandle).c_str()); \
             } \
         } \
     }

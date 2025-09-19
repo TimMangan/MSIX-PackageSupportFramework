@@ -48,11 +48,11 @@ inline Func GetKernelBaseDllInternalFunction(const char* functionName)
 
     if (functionName != NULL)
     {
-        Log(L">>>KernelBase Fixup loaded name=%S from 0x%x", functionName, result);
+        Log(LogLevel_DebugBasic, ">>>KernelBase Fixup loaded name=%S from 0x%x", functionName, result);
     }
     else
     {
-        Log(L">>>KernelBase Fixup mistaken loaded name=??? 0x%x", result);
+        Log(LogLevel_DebugIntermediate, L">>>KernelBase Fixup mistaken loaded name=??? 0x%x", result);
     }
 #endif
 #endif

@@ -43,15 +43,13 @@ LSTATUS __stdcall RegGetValueAFixup(
     std::string keyonlypath = InterpretKeyPath(key);
 
 
-#if _DEBUG
     std::string sSubKey = "NULL";
     std::string sValue = "NULL";
     if (lpSubKey != NULL)
         sSubKey = lpSubKey;
     if (lpValue != NULL)
         sValue = lpValue;
-    Log(L"[%s%d] RegGetValueA:  key=0x%x keyname=%S SubKey=%S SubName=%S", g_RegModuleName, RegLocalInstance, (ULONG)(ULONG_PTR)key, keyonlypath.c_str(), sSubKey.c_str(), sValue.c_str());
-#endif
+    Log(LogLevel_DebugBasic, L"[%s%d] RegGetValueA:  key=0x%x keyname=%S SubKey=%S SubName=%S", g_RegModuleName, RegLocalInstance, (ULONG)(ULONG_PTR)key, keyonlypath.c_str(), sSubKey.c_str(), sValue.c_str());
 
     result = impl::KernelBaseRegGetValueA(key, lpSubKey, lpValue, dwFlags, lpDwType, lpData, lpcchClass, lpcbData);
     if (result == ERROR_SUCCESS)
@@ -59,29 +57,22 @@ LSTATUS __stdcall RegGetValueAFixup(
         std::string sskey = "";
         if (lpSubKey != NULL)
             sskey = lpSubKey;
-        result = RegFixupDeletionMarker(keyonlypath, sskey, RegLocalInstance);
+        result = RegFixupDeletionMarker(LogLevel_DebugMaximumkeyonlypath, sskey, RegLocalInstance);
         if (result == ERROR_SUCCESS)
         {
-#if MOREDEBUG
-            Log(L"[%s%d] RegGetValue:  Returning success", g_RegModuleName, RegLocalInstance);
-#endif                
+            Log(LogLevel_DebugIntermediate[%s%d] RegGetValue:  Returning success", g_RegModuleName, RegLocalInstance);
         }
         else
         {
             // We have a deletion marker on this particular item, so we need to skip it.
             // When we return this value, a subsequent call by the app might ask for this new index, but we can probably assume it's OK to return it twice
             // because we do not have a way to remember this, like done in FindFirstFile.
-#if _DEBUG
-            Log(L"[%s%d] RegGetValue:  DeletionMarker Blocking this call.", g_RegModuleName, RegLocalInstance);
-#endif                
-
+            Log(LogLevel_DebugBasic, L"[%s%d] RegGetValue:  DeletionMarker Blocking this call.", g_RegModuleName, RegLocalInstance);
         }
     }
     else
     {
-#if _DEBUG
-        Log(L"[%s%d] RegGetValue:  Returning normal failure 0x%x.", g_RegModuleName, RegLocalInstance, result);
-#endif                
+        Log(LogLevel_DebugBasic, L"[%s%d] RegGetValue:  Returning normal failure 0x%x.", g_RegModuleName, RegLocalInstance, result);
     }
     return result;
 }
@@ -104,15 +95,13 @@ LSTATUS __stdcall RegGetValueWFixup(
     std::string keyonlypath = InterpretKeyPath(key);
 
 
-#if _DEBUG
     std::string sSubKey = "NULL";
     std::string sValue = "NULL";
     if (lpSubKey != NULL)
         sSubKey = narrow(lpSubKey);
     if (lpValue != NULL)
         sValue = narrow(lpValue);
-    Log(L"[%s%d] RegGetValueW:  key=0x%x keyname=%S SubKey=%S SubName=%S", g_RegModuleName, RegLocalInstance, (ULONG)(ULONG_PTR)key, keyonlypath.c_str(), sSubKey.c_str(), sValue.c_str());
-#endif
+    Log(LogLevel_DebugBasic, L"[%s%d] RegGetValueW:  key=0x%x keyname=%S SubKey=%S SubName=%S", g_RegModuleName, RegLocalInstance, (ULONG)(ULONG_PTR)key, keyonlypath.c_str(), sSubKey.c_str(), sValue.c_str());
 
     result = impl::KernelBaseRegGetValueW(key, lpSubKey, lpValue, dwFlags, lpDwType, lpData, lpcchClass, lpcbData);
     if (result == ERROR_SUCCESS)
@@ -120,28 +109,22 @@ LSTATUS __stdcall RegGetValueWFixup(
         std::string sskey = "";
         if (lpSubKey != NULL)
             sskey = narrow(lpSubKey);
-        result = RegFixupDeletionMarker(keyonlypath, sskey, RegLocalInstance);
+        result = RegFixupDeletionMarker(LogLevel_DebugMaximumkeyonlypath, sskey, RegLocalInstance);
         if (result == ERROR_SUCCESS)
         {
-#if _DEBUG
-            Log(L"[%s%d] RegGetValue:  Returning success", g_RegModuleName, RegLocalInstance);
-#endif                
+            Log(LogLevel_DebugIntermediate, L"[%s%d] RegGetValue:  Returning success", g_RegModuleName, RegLocalInstance);
         }
         else
         {
             // We have a deletion marker on this particular item, so we need to skip it.
             // When we return this value, a subsequent call by the app might ask for this new index, but we can probably assume it's OK to return it twice
             // because we do not have a way to remember this, like done in FindFirstFile.
-#if _DEBUG
-            Log(L"[%s%d] RegGetValue:  DeletionMarker Blocking this call.", g_RegModuleName, RegLocalInstance);
-#endif
+            Log(LogLevel_DebugBasic, L"[%s%d] RegGetValue:  DeletionMarker Blocking this call.", g_RegModuleName, RegLocalInstance);
         }
     }
     else
     {
-#if _DEBUG
-        Log(L"[%s%d] RegGetValue:  Returning normal failure 0x%x.", g_RegModuleName, RegLocalInstance, result);
-#endif                
+        Log(LogLevel_DebugBasic, L"[%s%d] RegGetValue:  Returning normal failure 0x%x.", g_RegModuleName, RegLocalInstance, result);
     }
     return result;
 }

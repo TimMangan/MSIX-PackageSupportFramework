@@ -16,6 +16,7 @@
 #include <winternl.h>
 
 #include <psf_utils.h>
+#include <psf_logging.h>
 
 #include "Config.h"
 
@@ -161,9 +162,9 @@ inline std::string InterpretStringA(const wchar_t* value)
     return "";
 }
 
-inline void LogCountedString(const char* name, const char* value, std::size_t length)
+inline void LogCountedString(Json_Debug_Levels debugRequestLevel, const char* name, const char* value, std::size_t length)
 {
-    Log("\t%s=%.*s\n", name, length, value);
+    Log(debugRequestLevel,"\t%s=%.*s\n", name, length, value);
 }
 
 inline std::string InterpretCountedString(const char* name, const char* value, std::size_t length)
@@ -180,15 +181,15 @@ inline std::string InterpretCountedString(const char* name, const char* value, s
     return sout.str();
 }
 
-inline void LogCountedString(const char* name, const wchar_t* value, std::size_t length)
+inline void LogCountedString(Json_Debug_Levels debugRequestLevel, const char* name, const wchar_t* value, std::size_t length)
 {
     if (value != NULL)
     {
-        Log("\t%s=%.*ls\n", name, length, value);
+        Log(debugRequestLevel, "\t%s=%.*ls\n", name, length, value);
     }
     else
     {
-        Log("\t%s=NULL", name);
+        Log(debugRequestLevel, "\t%s=NULL", name);
     }
 }
 
@@ -417,15 +418,15 @@ inline std::string win32_error_description(DWORD error)
     return str;
 }
 
-inline void LogWin32Error(DWORD error, const char* msg = "Error")
+inline void LogWin32Error(Json_Debug_Levels debugRequestLevel, DWORD error, const char* msg = "Error")
 {
     auto str = win32_error_description(error);
-    Log("\t%s=%d (%s)\n", msg, error, str.c_str());
+    Log(debugRequestLevel, "\t%s=%d (%s)\n", msg, error, str.c_str());
 }
-inline void LogWin32ErrorInstance(DWORD DllInstance, DWORD error, const char* msg = "Error")
+inline void LogWin32ErrorInstance(Json_Debug_Levels debugRequestLevel, DWORD DllInstance, DWORD error, const char* msg = "Error")
 {
     auto str = win32_error_description(error);
-    Log("[%d]\t%s=%d (%s)\n", DllInstance, msg, error, str.c_str());
+    Log(debugRequestLevel, "[%d]\t%s=%d (%s)\n", DllInstance, msg, error, str.c_str());
 }
 
 inline std::string InterpretWin32Error(DWORD error, const char* msg = "Error")
@@ -433,9 +434,9 @@ inline std::string InterpretWin32Error(DWORD error, const char* msg = "Error")
     return InterpretAsHex(msg, error);
 }
 
-inline void LogLastError(const char* msg = "Last Error")
+inline void LogLastError(Json_Debug_Levels debugRequestLevel, const char* msg = "Last Error")
 {
-    LogWin32Error(::GetLastError(), msg);
+    LogWin32Error(debugRequestLevel, ::GetLastError(), msg);
 }
 
 inline std::string InterpretLastError(const char* msg = "Last Error")
@@ -2999,7 +3000,7 @@ inline void LogRegValue(DWORD type, const void* data, std::size_t dataSize, cons
     case REG_SZ:
     case REG_EXPAND_SZ:
     case REG_LINK:
-        LogCountedString(msg, reinterpret_cast<const CharT*>(data), dataSize / sizeof(CharT));
+        LogCountedString(LogLevel_DebugBasic, msg, reinterpret_cast<const CharT*>(data), dataSize / sizeof(CharT));
         break;
 
     case REG_MULTI_SZ:
@@ -3010,12 +3011,12 @@ inline void LogRegValue(DWORD type, const void* data, std::size_t dataSize, cons
             std::size_t strLen;
             if constexpr (psf::is_ansi<CharT>)
             {
-                Log("\t%s[%d]=%s\n", msg, index, str);
+                Log(LogLevel_DebugBasic, "\t%s[%d]=%s\n", msg, index, str);
                 strLen = std::strlen(str);
             }
             else
             {
-                Log("\t%s[%d]=%ls\n", msg, index, str);
+                Log(LogLevel_DebugBasic, "\t%s[%d]=%ls\n", msg, index, str);
                 strLen = std::wcslen(str);
             }
 
@@ -3030,34 +3031,34 @@ inline void LogRegValue(DWORD type, const void* data, std::size_t dataSize, cons
     }   break;
 
     case REG_BINARY:
-        Log("\t%s=", msg);
+        Log(LogLevel_DebugBasic, "\t%s=", msg);
         for (auto ptr = reinterpret_cast<const unsigned char*>(data); dataSize--; ++ptr)
         {
             if (++counter < 16)
             {
-                Log("%02X", *ptr);
+                Log(LogLevel_DebugBasic, "%02X", *ptr);
             }
             else if (counter == 16)
             {
-                Log("...");
+                Log(LogLevel_DebugBasic, "...");
             }                
         }
-        Log("\n");
+        Log(LogLevel_DebugBasic, "\n");
         break;
 
     case REG_DWORD_LITTLE_ENDIAN: // NOTE: Same as REG_DWORD
-        Log("\t%s=%u\n", msg, *reinterpret_cast<const DWORD*>(data));
+        Log(LogLevel_DebugBasic, "\t%s=%u\n", msg, *reinterpret_cast<const DWORD*>(data));
         break;
 
     case REG_DWORD_BIG_ENDIAN:
     {
         auto value = *reinterpret_cast<const DWORD*>(data);
         value = (value & 0xFF000000 >> 24) | (value & 0x00FF0000 >> 8) | (value & 0x0000FF00 << 8) | (value & 0x000000FF << 24);
-        Log("\t%s=%u\n", msg, value);
+        Log(LogLevel_DebugBasic, "\t%s=%u\n", msg, value);
     }   break;
 
     case REG_QWORD_LITTLE_ENDIAN: // NOTE: Same as REG_QWORD
-        Log("\t%s=%llu\n", msg, *reinterpret_cast<const std::int64_t*>(data));
+        Log(LogLevel_DebugBasic, "\t%s=%llu\n", msg, *reinterpret_cast<const std::int64_t*>(data));
         break;
 
         // Ignore as they likely aren't important to applications

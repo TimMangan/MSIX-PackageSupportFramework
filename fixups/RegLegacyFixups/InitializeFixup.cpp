@@ -20,7 +20,7 @@
 #include <objbase.h>
 
 #include <psf_framework.h>
-
+#include "Logging.h"
 #include <psf_logging.h>
 #include <utilities.h>
 
@@ -45,55 +45,52 @@ std::vector<Reg_Remediation_Spec>  g_regRemediationSpecs;
 
 void InitializeFixups()
 {
-#if _DEBUG
-    Log(L"[R0] Initializing RegLegacyFixups\n");
-#endif
+    g_JsonDebugLevel = (Json_Debug_Levels)::PSFGetDebugLevelFromJson();
+    Json_Debug_Levels tempLog = g_JsonDebugLevel;
+    g_JsonDebugLevel = LogLevel_DebugMaximum; // force this to at least basic for the init logging
+    Log(LogLevel_DebugBasic, "[%s%d]\tRegLegacyFixups InitializeFixups: start Debug Level=%d", g_RegModuleName, 0, tempLog);
+    g_JsonDebugLevel = tempLog;
+
+
 }
 
 
 void InitializeConfiguration()
 {
-#if _DEBUG
-    Log(L"[R0] RegLegacyFixups Start InitializeConfiguration()\n");
-#endif
+    Log(LogLevel_DebugBasic, L"[R0] RegLegacyFixups Start InitializeConfiguration()\n");
+
     if (auto rootConfig = ::PSFQueryCurrentDllConfig())
     {
         if (rootConfig != NULL)
         {
-#if _DEBUG
-            Log(L"[R0] RegLegacyFixups process config\n");
-#endif
+            Log(LogLevel_DebugBasic, L"[R0] RegLegacyFixups process config\n");
+
             const psf::json_array& rootConfigArray = rootConfig->as_array();
             for (auto& spec : rootConfigArray)
             {
-#if _DEBUG
-                Log(L"[R0] RegLegacyFixups: process spec\n");
-#endif
+                Log(LogLevel_DebugIntermediate, L"[R0] RegLegacyFixups: process spec\n");
+
                 Reg_Remediation_Spec specItem;
                 auto& specObject = spec.as_object();
                 if (auto regItems = specObject.try_get("remediation"))
                 {
-#if _DEBUG
-                    Log(L"[R0] RegLegacyFixups:  remediation array:\n");
-#endif
+                    Log(LogLevel_DebugIntermediate, L"[R0] RegLegacyFixups:  remediation array:\n");
+
                     const psf::json_array& remediationArray = regItems->as_array();
                     for (auto& regItem : remediationArray)
                     {
-#if _DEBUG
-                        Log(L"[R0] RegLegacyFixups:    remediation entry:\n");
-#endif
+                        Log(LogLevel_DebugIntermediate, L"[R0] RegLegacyFixups:    remediation entry:\n");
+
                         auto& regItemObject = regItem.as_object();
                         Reg_Remediation_Record recordItem;
                         auto type = regItemObject.get("type").as_string().wstring();
-#if _DEBUG
-                        Log(L"[R0] RegLegacyFixups:      Type: %Ls\n", type.data());
-#endif
+                        Log(LogLevel_DebugBasic, L"[R0] RegLegacyFixups:      Type: %Ls\n", type.data());
+
                         //Reg_Remediation_Spec specItem;
                         if (type.compare(L"ModifyKeyAccess") == 0)
                         {
-#if _DEBUG
-                            Log(L"[R0] RegLegacyFixups:      is ModifyKeyAccess\n");
-#endif
+                            Log(LogLevel_DebugBasic, L"[R0] RegLegacyFixups:      is ModifyKeyAccess\n");
+
                             recordItem.remeditaionType = Reg_Remediation_Type_ModifyKeyAccess;
                             
                             try
@@ -103,9 +100,8 @@ void InitializeConfiguration()
                                     hiveType.begin(), hiveType.end(),
                                     hiveType.begin(),
                                     [](wchar_t wc) { return (wchar_t)std::toupper(wc); });
-#if _DEBUG
-                                Log(L"[R0] RegLegacyFixups:      Hive: %Ls\n", hiveType.data());
-#endif
+                                Log(LogLevel_DebugIntermediate, L"[R0] RegLegacyFixups:      Hive: %Ls\n", hiveType.data());
+
                                 if (hiveType.compare(L"HKCU") == 0 )
                                 {
                                     recordItem.modifyKeyAccess.hive = Modify_Key_Hive_Type_HKCU;
@@ -118,29 +114,26 @@ void InitializeConfiguration()
                                 {
                                     recordItem.modifyKeyAccess.hive = Modify_Key_Hive_Type_Unknown;
                                 }
-#if _DEBUG
-                                Log(L"[R0] RegLegacyFixups:      hive: %Ls\n", hiveType.data());
-#endif
+                                Log(LogLevel_DebugBasic, L"[R0] RegLegacyFixups:      hive: %Ls\n", hiveType.data());
+
                             }
                             catch (...)
                             {
-                                Log(L"[R0] RegLegacyFixups:      EXCEPTION: reading ModifyKeyAccess hive from config.json.");
+                                Log(LogLevel_Exception, L"[R0] RegLegacyFixups:      EXCEPTION: reading ModifyKeyAccess hive from config.json.");
                             }
                             try
                             {
                                 for (auto& pattern : regItemObject.get("patterns").as_array())
                                 {
                                     auto patternString = pattern.as_string().wstring();
-#if _DEBUG
-                                    Log(L"[R0] RegLegacyFixups:      Pattern: %Ls\n", patternString.data());
-#endif
+                                    Log(LogLevel_DebugBasic, L"[R0] RegLegacyFixups:      Pattern: %Ls\n", patternString.data());
                                     recordItem.modifyKeyAccess.patterns.push_back(patternString.data());
 
                                 }
                             }
                             catch (...)
                             {
-                                Log(L"[R0] RegLegacyFixups:      EXCEPTION: reading ModifyKeyAccess patterns from config.json.");
+                                Log(LogLevel_Exception, L"[R0] RegLegacyFixups:      EXCEPTION: reading ModifyKeyAccess patterns from config.json.");
                             }
                             try
                             {
@@ -169,21 +162,18 @@ void InitializeConfiguration()
                                 {
                                     recordItem.modifyKeyAccess.access = Modify_Key_Access_Type_Unknown;
                                 }
-#if _DEBUG
-                                Log(L"[R0] RegLegacyFixups:      access: %Ls\n", accessType.data());
-#endif
+                                Log(LogLevel_DebugBasic, L"[R0] RegLegacyFixups:      access: %Ls\n", accessType.data());
                             }
                             catch (...)
                             {
-                                Log(L"[R0] RegLegacyFixups:      EXCEPTION: reading ModifyKeyAccess access from config.json.");
+                                Log(LogLevel_Exception, L"[R0] RegLegacyFixups:      EXCEPTION: reading ModifyKeyAccess access from config.json.");
                             }
                             specItem.remediationRecords.push_back(recordItem);
                         }
                         else if (type.compare(L"FakeDelete") == 0)
                         {
-#if _DEBUG
-                            Log(L"[R0] RegLegacyFixups:      is FakeDelete\n");
-#endif
+                            Log(LogLevel_DebugBasic, L"[R0] RegLegacyFixups:      is FakeDelete\n");
+
                             recordItem.remeditaionType = Reg_Remediation_Type_FakeDelete;
                             try
                             {
@@ -204,28 +194,26 @@ void InitializeConfiguration()
                                 {
                                     recordItem.fakeDeleteKey.hive = Modify_Key_Hive_Type_Unknown;
                                 }
-#if _DEBUG
-                                Log(L"[R0] RegLegacyFixups:      hive: %Ls\n", hiveType.data());
-#endif
+                                Log(LogLevel_DebugBasic, L"[R0] RegLegacyFixups:      hive: %Ls\n", hiveType.data());
+
                             }
                             catch (...)
                             {
-                                Log(L"[R0] RegLegacyFixups:      EXCEPTION: reading FakeDelete hive from config.json.");
+                                Log(LogLevel_Exception, L"[R0] RegLegacyFixups:      EXCEPTION: reading FakeDelete hive from config.json.");
                             }
                             try
                             {
                                 for (auto& pattern : regItemObject.get("patterns").as_array())
                                 {
                                     auto patternString = pattern.as_string().wstring();
-#if _DEBUG
-                                    Log(L"[R0] RegLegacyFixups:      Pattern: %Ls\n", patternString.data());
-#endif
+                                    Log(LogLevel_DebugBasic, L"[R0] RegLegacyFixups:      Pattern: %Ls\n", patternString.data());
+
                                     recordItem.fakeDeleteKey.patterns.push_back(patternString.data());
                                 }
                             }
                             catch (...)
                             {
-                                Log(L"[R0] RegLegacyFixups:      EXCEPTION: reading FakeDelete patterns from config.json.");
+                                Log(LogLevel_Exception, L"[R0] RegLegacyFixups:      EXCEPTION: reading FakeDelete patterns from config.json.");
                             }
 
                             specItem.remediationRecords.push_back(recordItem);
@@ -233,18 +221,16 @@ void InitializeConfiguration()
 #if TRYHKLM2HKCU
                         else if (type.compare(L"HKLM2HKCU") == 0)
                         {
-#if _DEBUG
-                            Log(L"[R0] RegLegacyFixups:      is HKLM2HKCU\n");
-#endif
+                            Log(LogLevel_DebugBasic, L"[R0] RegLegacyFixups:      is HKLM2HKCU\n");
+
                             recordItem.remeditaionType = Reg_Remediation_Type_HKLM_to_HKCU;
                             specItem.remediationRecords.push_back(recordItem);
                         }
 #endif
                         else if (type.compare(L"DeletionMarker") == 0)
                         {
-#if _DEBUG
-                            Log(L"[R0] RegLegacyFixups:      is DeletionMarker\n");
-#endif
+                            Log(LogLevel_DebugBasic, L"[R0] RegLegacyFixups:      is DeletionMarker\n");
+
                             recordItem.remeditaionType = Reg_Remediation_Type_DeletionMarker;
                             try
                             {
@@ -265,25 +251,21 @@ void InitializeConfiguration()
                                 {
                                     recordItem.deletionMarker.hive = Modify_Key_Hive_Type_Unknown;
                                 } 
-#if _DEBUG
-                                Log(L"[R0] RegLegacyFixups:      Hive: %Ls\n", hiveType.data());
-#endif
+                                Log(LogLevel_DebugBasic, L"[R0] RegLegacyFixups:      Hive: %Ls\n", hiveType.data());
                             }
                             catch (...)
                             {
-                                Log(L"[R0] RegLegacyFixups:      EXCEPTION: reading DeletionMarker hive from config.json.");
+                                Log(LogLevel_Exception, L"[R0] RegLegacyFixups:      EXCEPTION: reading DeletionMarker hive from config.json.");
                             }
 
                             try
                             {
                                 recordItem.deletionMarker.key = regItemObject.try_get("key")->as_string().wstring();
-#if _DEBUG
-                                Log(L"[R0] RegLegacyFixups:      Key: %Ls\n", recordItem.deletionMarker.key.data());
-#endif
+                                Log(LogLevel_DebugBasic, L"[R0] RegLegacyFixups:      Key: %Ls\n", recordItem.deletionMarker.key.data());
                             }
                             catch (...)
                             {
-                                Log(L"[R0] RegLegacyFixups:      EXCEPTION: reading DeletionMarker hive from config.json.");
+                                Log(LogLevel_Exception, L"[R0] RegLegacyFixups:      EXCEPTION: reading DeletionMarker hive from config.json.");
                             }
 
                             try
@@ -291,23 +273,20 @@ void InitializeConfiguration()
                                 for (auto& pattern : regItemObject.get("patterns").as_array())
                                 {
                                     auto patternString = pattern.as_string().wstring();
-#if _DEBUG
-                                    Log(L"[R0] RegLegacyFixups:      Pattern: %Ls\n", patternString.data());
-#endif
+                                    Log(LogLevel_DebugBasic, L"[R0] RegLegacyFixups:      Pattern: %Ls\n", patternString.data());
                                     recordItem.deletionMarker.patterns.push_back(patternString.data());
                                 }  
                             }
                             catch (...)
                             {
-                                Log(L"[R0] RegLegacyFixups:      EXCEPTION: reading DeletionMarker patterns from config.json.");
+                                Log(LogLevel_Exception, L"[R0] RegLegacyFixups:      EXCEPTION: reading DeletionMarker patterns from config.json.");
                             }
                             specItem.remediationRecords.push_back(recordItem);
                         }
                         else if (type.compare(L"JavaBlocker") == 0)
                         {
-#if _DEBUG
-                            Log(L"[R0] RegLegacyFixups:      is JavaBlocker\n");
-#endif
+                            Log(LogLevel_DebugBasic, L"[R0] RegLegacyFixups:      is JavaBlocker\n");
+
                             recordItem.remeditaionType = Reg_Remediation_Type_JavaBlocker;
                             try
                             {
@@ -316,7 +295,7 @@ void InitializeConfiguration()
                             }
                             catch (...)
                             {
-                                Log(L"[R0] RegLegacyFixups:      EXCEPTION: reading JavaBlocker majorVersion from config.json.");
+                                Log(LogLevel_Exception, L"[R0] RegLegacyFixups:      EXCEPTION: reading JavaBlocker majorVersion from config.json.");
                             }
                             try
                             {
@@ -325,7 +304,7 @@ void InitializeConfiguration()
                             }
                             catch (...)
                             {
-                                Log(L"[R0] RegLegacyFixups:      EXCEPTION: reading JavaBlocker minorVersion from config.json.");
+                                Log(LogLevel_Exception, L"[R0] RegLegacyFixups:      EXCEPTION: reading JavaBlocker minorVersion from config.json.");
                             }
                             try
                             {
@@ -334,16 +313,14 @@ void InitializeConfiguration()
                             }
                             catch (...)
                             {
-                                Log(L"[R0] RegLegacyFixups:      EXCEPTION: reading JavaBlocker updateVersion from config.json.");
+                                Log(LogLevel_Exception, L"[R0] RegLegacyFixups:      EXCEPTION: reading JavaBlocker updateVersion from config.json.");
                             }
-#if _DEBUG
-                            Log(L"[R0] RegLegacyFixups:      MaxVersion Allowed: %d.%dU%d\n", recordItem.javaBlocker.majorVersion, recordItem.javaBlocker.minorVersion, recordItem.javaBlocker.updateVersion );
-#endif
+                            Log(LogLevel_DebugBasic, L"[R0] RegLegacyFixups:      MaxVersion Allowed: %d.%dU%d\n", recordItem.javaBlocker.majorVersion, recordItem.javaBlocker.minorVersion, recordItem.javaBlocker.updateVersion );
                             specItem.remediationRecords.push_back(recordItem);
                         }
                         else
                         {
-                            LogString(L"R",0, L"RegLegacyFixups:      Have unknown type from config.json", type.data());
+                            LogString(LogLevel_DebugBasic, L"R",0, L"RegLegacyFixups:      Have unknown type from config.json", type.data());
                         }
                         g_regRemediationSpecs.push_back(specItem);
                     }
@@ -352,12 +329,8 @@ void InitializeConfiguration()
         }
         else
         {
-#if _DEBUG
-            Log(L"[R0] RegLegacyFixups: Fixup not found in json config.\n");
-#endif
+            Log(LogLevel_DebugBasic, L"[R0] RegLegacyFixups: Fixup not found in json config.\n");
         }
-#if _DEBUG
-        Log(L"[R0] RegLegacyFixups End InitializeConfiguration()\n");
-#endif
+        Log(LogLevel_DebugBasic, L"[R0] RegLegacyFixups End InitializeConfiguration()\n");
     }
 }

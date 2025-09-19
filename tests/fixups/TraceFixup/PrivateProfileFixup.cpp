@@ -56,23 +56,23 @@ UINT __stdcall GetPrivateProfileIntFixup(
             }
             catch (...)
             {
-                Log("GetPrivateProfileInt event logging failure");
+                Log(LogLevel_DebugBasic,  "GetPrivateProfileInt event logging failure");
             }
         }
         else
         {
             try
             {
-                Log("GetPrivateProfileInt:\n");
-                LogString("Path", fileName);
-                LogString("Section", sectionName);
-                LogString("Key", key);
-                LogString("Returned",InterpretAsHex("Result", result).c_str());   
+                Log(LogLevel_DebugBasic,  "GetPrivateProfileInt:\n");
+                LogString(LogLevel_DebugBasic,  "Path", fileName);
+                LogString(LogLevel_DebugBasic,  "Section", sectionName);
+                LogString(LogLevel_DebugBasic,  "Key", key);
+                LogString(LogLevel_DebugBasic,  "Returned",InterpretAsHex("Result", result).c_str());   
                 LogCallingModule();
             }
             catch (...)
             {
-                Log("GetPrivateProfileInt logging failure");
+                Log(LogLevel_DebugBasic,  "GetPrivateProfileInt logging failure");
             }
         }
     }
@@ -124,23 +124,23 @@ DWORD __stdcall GetPrivateProfileSectionFixup(
             }
             catch (...)
             {
-                Log("GetPrivateProfileSection event logging failure");
+                Log(LogLevel_DebugBasic,  "GetPrivateProfileSection event logging failure");
             }
         }
         else
         {
             try
             {
-                Log("GetPrivateProfileSection:\n");
-                LogString("Path", fileName);
-                LogString("Section", appName);
-                LogString("Returned",InterpretAsHex("Result", result).c_str());
-                LogCountedString("ReturnedString", string, stringLength);
+                Log(LogLevel_DebugBasic,  "GetPrivateProfileSection:\n");
+                LogString(LogLevel_DebugBasic,  "Path", fileName);
+                LogString(LogLevel_DebugBasic,  "Section", appName);
+                LogString(LogLevel_DebugBasic,  "Returned",InterpretAsHex("Result", result).c_str());
+                LogCountedString(LogLevel_DebugBasic, "ReturnedString", string, stringLength);
                 LogCallingModule();
             }
             catch (...)
             {
-                Log("GetPrivateProfileSection logging failure");
+                Log(LogLevel_DebugBasic,  "GetPrivateProfileSection logging failure");
             }
         }
     }
@@ -190,22 +190,22 @@ DWORD __stdcall GetPrivateProfileSectionNamesFixup(
             }
             catch (...)
             {
-                Log("GetPrivateProfileSectionNames event logging failure");
+                Log(LogLevel_DebugBasic,  "GetPrivateProfileSectionNames event logging failure");
             }
         }
         else
         {
             try
             {
-                Log("GetPrivateProfileSectionNames:\n");
-                LogString("Path", fileName);
-                LogString("Returned",InterpretAsHex("Result", result).c_str());
-                LogCountedString("ReturnedString", string, stringLength);
+                Log(LogLevel_DebugBasic,  "GetPrivateProfileSectionNames:\n");
+                LogString(LogLevel_DebugBasic,  "Path", fileName);
+                LogString(LogLevel_DebugBasic,  "Returned",InterpretAsHex("Result", result).c_str());
+                LogCountedString(LogLevel_DebugBasic,"ReturnedString", string, stringLength);
                 LogCallingModule();
             }
             catch (...)
             {
-                Log("GetPrivateProfileSectionNames logging failure");
+                Log(LogLevel_DebugBasic,  "GetPrivateProfileSectionNames logging failure");
             }
         }
     }
@@ -261,25 +261,25 @@ DWORD __stdcall GetPrivateProfileStringFixup(
             }
             catch (...)
             {
-                Log("GetPrivateProfileString event logging failure");
+                Log(LogLevel_DebugBasic,  "GetPrivateProfileString event logging failure");
             }
         }
         else
         {
             try
             {
-                Log("GetPrivateProfileString:\n");
-                LogString("Path", fileName);
-                LogString("Section", appName);
-                LogString("Key", keyName);
-                LogString("Default", defaultString);
-                LogString("Returned", InterpretAsHex("Result", result).c_str());
-                LogCountedString("Returned String", string, stringLength);
+                Log(LogLevel_DebugBasic,  "GetPrivateProfileString:\n");
+                LogString(LogLevel_DebugBasic,  "Path", fileName);
+                LogString(LogLevel_DebugBasic,  "Section", appName);
+                LogString(LogLevel_DebugBasic,  "Key", keyName);
+                LogString(LogLevel_DebugBasic,  "Default", defaultString);
+                LogString(LogLevel_DebugBasic,  "Returned", InterpretAsHex("Result", result).c_str());
+                LogCountedString(LogLevel_DebugBasic,"Returned String", string, stringLength);
                 LogCallingModule();
             }
             catch (...)
             {
-                Log("GetPrivateProfileString logging failure");
+                Log(LogLevel_Exception,  "GetPrivateProfileString logging failure");
             }
         }
     }
@@ -333,24 +333,24 @@ BOOL __stdcall GetPrivateProfileStructFixup(
             }
             catch (...)
             {
-                Log("GetPrivateProfileStruct event logging failure");
+                Log(LogLevel_DebugBasic,  "GetPrivateProfileStruct event logging failure");
             }
         }
         else
         {
             try
             {
-                Log("GetPrivateProfileStuct:\n");
-                LogString("Path", fileName);
-                LogString("Section", sectionName);
-                LogString("Key", key);
+                Log(LogLevel_DebugBasic,  "GetPrivateProfileStuct:\n");
+                LogString(LogLevel_DebugBasic,  "Path", fileName);
+                LogString(LogLevel_DebugBasic,  "Section", sectionName);
+                LogString(LogLevel_DebugBasic,  "Key", key);
                 LogBool("Result", result);
-                LogString("ReturnedStruct", "(not displayed)");
+                LogString(LogLevel_DebugBasic,  "ReturnedStruct", "(not displayed)");
                 LogCallingModule();
             }
             catch (...)
             {
-                Log("GetPrivateProfileStruct logging failure");
+                Log(LogLevel_DebugBasic,  "GetPrivateProfileStruct logging failure");
             }
         }
     }
@@ -404,23 +404,23 @@ BOOL __stdcall WritePrivateProfileSectionFixup(
             }
             catch (...)
             {
-                Log("WritePrivateProfileSection event logging failure");
+                Log(LogLevel_DebugBasic,  "WritePrivateProfileSection event logging failure");
             }
         }
         else
         {
             try
             {
-                Log("WritePrivateProfileSection:\n");
-                LogString("Path", fileName);
-                LogString("Section", appName);
-                LogString("ValueString", string);
+                Log(LogLevel_DebugBasic,  "WritePrivateProfileSection:\n");
+                LogString(LogLevel_DebugBasic,  "Path", fileName);
+                LogString(LogLevel_DebugBasic,  "Section", appName);
+                LogString(LogLevel_DebugBasic,  "ValueString", string);
                 LogBool("Return", result);
                 LogCallingModule();
             }
             catch (...)
             {
-                Log("WritePrivateProfileSection logging failure");
+                Log(LogLevel_DebugBasic,  "WritePrivateProfileSection logging failure");
             }
         }
     }
@@ -474,24 +474,24 @@ BOOL __stdcall WritePrivateProfileStringFixup(
             }
             catch (...)
             {
-                Log("WritePrivateProfileString event logging failure");
+                Log(LogLevel_DebugBasic,  "WritePrivateProfileString event logging failure");
             }
         }
         else
         {
             try
             {
-                Log("WritePrivateProfileString:\n");
-                LogString("Path", fileName);
-                LogString("Section", appName);
-                LogString("Key", keyName);
-                LogString("Value", string);
+                Log(LogLevel_DebugBasic,  "WritePrivateProfileString:\n");
+                LogString(LogLevel_DebugBasic,  "Path", fileName);
+                LogString(LogLevel_DebugBasic,  "Section", appName);
+                LogString(LogLevel_DebugBasic,  "Key", keyName);
+                LogString(LogLevel_DebugBasic,  "Value", string);
                 LogBool("Result", result);
                 LogCallingModule();
             }
             catch (...)
             {
-                Log("WritePrivateProfileString logging failure");
+                Log(LogLevel_DebugBasic,  "WritePrivateProfileString logging failure");
             }
         }
     }
@@ -544,24 +544,24 @@ BOOL __stdcall WritePrivateProfileStructFixup(
             }
             catch (...)
             {
-                Log("WritePrivateProfileStruct event logging failure");
+                Log(LogLevel_DebugBasic,  "WritePrivateProfileStruct event logging failure");
             }
         }
         else
         {
             try
             {
-                Log("WritePrivateProfileStuct:\n");
-                LogString("Path", fileName);
-                LogString("Section", appName);
-                LogString("Key", keyName);
-                LogString("Struct", "(not displayed)");
+                Log(LogLevel_DebugBasic,  "WritePrivateProfileStuct:\n");
+                LogString(LogLevel_DebugBasic,  "Path", fileName);
+                LogString(LogLevel_DebugBasic,  "Section", appName);
+                LogString(LogLevel_DebugBasic,  "Key", keyName);
+                LogString(LogLevel_DebugBasic,  "Struct", "(not displayed)");
                 LogBool("Result", result);
                 LogCallingModule();
             }
             catch (...)
             {
-                Log("WritePrivateProfileStruct logging failure");
+                Log(LogLevel_DebugBasic,  "WritePrivateProfileStruct logging failure");
             }
         }
     }

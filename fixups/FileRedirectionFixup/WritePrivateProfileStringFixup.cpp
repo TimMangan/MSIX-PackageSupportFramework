@@ -23,7 +23,7 @@ BOOL __stdcall WritePrivateProfileStringFixup(
             
             if (fileName != NULL)
             {
-                LogString(g_FrfModuleName, WritePrivateProfileStringInstance,L"WritePrivateProfileStringFixup for fileName", fileName);
+                LogString(LogLevel_DebugBasic,g_FrfModuleName, WritePrivateProfileStringInstance,L"WritePrivateProfileStringFixup for fileName", fileName);
                 if (!IsUnderUserAppDataLocalPackages(fileName))
                 {
                     path_redirect_info  pri = ShouldRedirectV2(fileName, redirect_flags::copy_on_read, WritePrivateProfileStringInstance);
@@ -32,41 +32,31 @@ BOOL __stdcall WritePrivateProfileStringFixup(
                         if constexpr (psf::is_ansi<CharT>)
                         {
                             BOOL bRet = impl::WritePrivateProfileString(appName, keyName, string, ((std::filesystem::path)pri.redirect_path).string().c_str());
-#if _DEBUG
-                            Log(L"[%s%d] WritePrivateProfileString(A) returns %d", g_FrfModuleName, WritePrivateProfileStringInstance, bRet);
-#endif
+                            Log(LogLevel_DebugBasic, L"[%s%d] WritePrivateProfileString(A) returns %d", g_FrfModuleName, WritePrivateProfileStringInstance, bRet);
                             return bRet;
                         }
                         else
                         {
                             BOOL bRet = impl::WritePrivateProfileString(appName, keyName, string, pri.redirect_path.c_str());
-#if _DEBUG
-                            Log(L"[%s%d] WritePrivateProfileString(W) returns %d", g_FrfModuleName, WritePrivateProfileStringInstance, bRet);
-#endif                            
+                            Log(LogLevel_DebugBasic, L"[%s%d] WritePrivateProfileString(W) returns %d", g_FrfModuleName, WritePrivateProfileStringInstance, bRet);
                             return bRet;
                         }
                     }
                 }
                 else
                 {
-                    Log(L"[%s%d]Under LocalAppData\\Packages, don't redirect", g_FrfModuleName, WritePrivateProfileStringInstance);
+                    Log(LogLevel_DebugBasic, L"[%s%d]Under LocalAppData\\Packages, don't redirect", g_FrfModuleName, WritePrivateProfileStringInstance);
                 }
             }
             else
             {
-                Log(L"[%s%d]null fileName, don't redirect", g_FrfModuleName, WritePrivateProfileStringInstance);
+                Log(LogLevel_DebugBasic, L"[%s%d]null fileName, don't redirect", g_FrfModuleName, WritePrivateProfileStringInstance);
             }
         }
     }
-#if _DEBUG
     // Fall back to assuming no redirection is necessary if exception
-    LOGGED_CATCHHANDLER_MIN(g_FrfModuleName, WritePrivateProfileStringInstance, L"WritePrivateProfileString")
-#else
-    catch (...)
-    {
-        Log(L"[%s%d] WritePrivateProfileString Exception=0x%x", g_FrfModuleName, WritePrivateProfileStringInstance, GetLastError());
-    }
-#endif 
+    LOGGED_CATCHHANDLER_MIN(LogLevel_Exception, g_FrfModuleName, WritePrivateProfileStringInstance, L"WritePrivateProfileString")
+
 
 
     return impl::WritePrivateProfileString(appName, keyName, string, fileName);

@@ -21,46 +21,44 @@ UINT __stdcall GetPrivateProfileIntFixup(
     {
         if (guard)
         {
-#if _DEBUG
             if constexpr (psf::is_ansi<CharT>)
             {
                 if (fileName != NULL)
                 {
-                    LogString(g_FrfModuleName, GetPrivateProfileIntInstance,L"GetPrivateProfileIntFixup for fileName", widen_argument(fileName).c_str());
+                    LogString(LogLevel_DebugBasic, g_FrfModuleName, GetPrivateProfileIntInstance,L"GetPrivateProfileIntFixup for fileName", widen_argument(fileName).c_str());
                 }
                 else
                 {
-                    Log(L"[%s%d] GetPrivateProfileIntFixup for null file.", g_FrfModuleName, GetPrivateProfileIntInstance);
+                    Log(LogLevel_DebugBasic, L"[%s%d] GetPrivateProfileIntFixup for null file.", g_FrfModuleName, GetPrivateProfileIntInstance);
                 }
                 if (sectionName != NULL)
                 {
-                    LogString(g_FrfModuleName, GetPrivateProfileIntInstance,L" Section", widen_argument(sectionName).c_str());
+                    LogString(LogLevel_DebugBasic, g_FrfModuleName, GetPrivateProfileIntInstance,L" Section", widen_argument(sectionName).c_str());
                 }
                 if (key != NULL)
                 {
-                    LogString(g_FrfModuleName, GetPrivateProfileIntInstance,L" Key", widen_argument(key).c_str());
+                    LogString(LogLevel_DebugBasic, g_FrfModuleName, GetPrivateProfileIntInstance,L" Key", widen_argument(key).c_str());
                 }
             }
             else
             {
                 if (fileName != NULL)
                 {
-                    LogString(g_FrfModuleName, GetPrivateProfileIntInstance,L"GetPrivateProfileIntFixup for fileName", fileName);
+                    LogString(LogLevel_DebugBasic, g_FrfModuleName, GetPrivateProfileIntInstance,L"GetPrivateProfileIntFixup for fileName", fileName);
                 }
                 else
                 {
-                    Log(L"[%s%d] GetPrivateProfileIntFixup for null file.", g_FrfModuleName, GetPrivateProfileIntInstance);
+                    Log(LogLevel_DebugBasic, L"[%s%d] GetPrivateProfileIntFixup for null file.", g_FrfModuleName, GetPrivateProfileIntInstance);
                 }
                 if (sectionName != NULL)
                 {
-                    LogString(g_FrfModuleName, GetPrivateProfileIntInstance,L" Section", sectionName);
+                    LogString(LogLevel_DebugBasic, g_FrfModuleName, GetPrivateProfileIntInstance,L" Section", sectionName);
                 }
                 if (key != NULL)
                 {
-                    LogString(g_FrfModuleName, GetPrivateProfileIntInstance,L" Key", key);
+                    LogString(LogLevel_DebugBasic, g_FrfModuleName, GetPrivateProfileIntInstance,L" Key", key);
                 }
             }
-#endif
             if (fileName != NULL)
             {
                 if (!IsUnderUserAppDataLocalPackages(fileName))
@@ -71,50 +69,35 @@ UINT __stdcall GetPrivateProfileIntFixup(
                         if constexpr (psf::is_ansi<CharT>)
                         {
                             UINT retval = impl::GetPrivateProfileIntW(widen_argument(sectionName).c_str(), widen_argument(key).c_str(), nDefault, pri.redirect_path.c_str());
-#if _DEBUG
-                            Log(L" [%s%d] Returned uint: %d ", g_FrfModuleName, GetPrivateProfileIntInstance, retval);
-#endif
+                            Log(LogLevel_DebugBasic, L" [%s%d] Returned uint: %d ", g_FrfModuleName, GetPrivateProfileIntInstance, retval);
                             return retval;
                         }
                         else
                         {
                             UINT retval = impl::GetPrivateProfileIntW(sectionName, key, nDefault, pri.redirect_path.c_str());
-#if _DEBUG
-                            Log(L" [%s%d] Returned uint: %d ", g_FrfModuleName, GetPrivateProfileIntInstance, retval);
-#endif
+                            Log(LogLevel_DebugBasic, L" [%s%d] Returned uint: %d ", g_FrfModuleName, GetPrivateProfileIntInstance, retval);
                             return retval;
                         }
                     }
                 }
                 else
                 {
-#if _DEBUG
-                    Log(L"[%s%d]  Under LocalAppData\\Packages, don't redirect", g_FrfModuleName, GetPrivateProfileIntInstance);
-#endif
+                    Log(LogLevel_DebugBasic, L"[%s%d]  Under LocalAppData\\Packages, don't redirect", g_FrfModuleName, GetPrivateProfileIntInstance);
                 }
             }
             else
             {
-#if _DEBUG
-                Log(L"[%s%d]  null filename, don't redirect as may be registry based or default.", g_FrfModuleName, GetPrivateProfileIntInstance);
-#endif
+                Log(LogLevel_DebugBasic, L"[%s%d]  null filename, don't redirect as may be registry based or default.", g_FrfModuleName, GetPrivateProfileIntInstance);
             }
         }
     }
-#if _DEBUG
     // Fall back to assuming no redirection is necessary if exception
-    LOGGED_CATCHHANDLER_MIN(g_FrfModuleName, GetPrivateProfileIntInstance, L"GetPrivateProfileInt")
-#else
-    catch (...)
-    {
-        Log(L"[%s%d] GetPrivateProfileInt Exception=0x%x", g_FrfModuleName, GetPrivateProfileIntInstance, GetLastError());
-    }
-#endif
+    LOGGED_CATCHHANDLER_MIN(LogLevel_Exception, g_FrfModuleName, GetPrivateProfileIntInstance, L"GetPrivateProfileInt")
+
 
     UINT uVal = impl::GetPrivateProfileInt(sectionName, key, nDefault, fileName);
-#if _DEBUG
-    Log( L"[%s%d] Returning 0x%x", g_FrfModuleName, GetPrivateProfileIntInstance,uVal);
-#endif
+    Log(LogLevel_DebugBasic,  L"[%s%d] Returning 0x%x", g_FrfModuleName, GetPrivateProfileIntInstance,uVal);
+
     return uVal;
 
 }

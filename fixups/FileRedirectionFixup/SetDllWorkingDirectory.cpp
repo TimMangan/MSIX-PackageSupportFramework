@@ -20,57 +20,42 @@ BOOL __stdcall SetCurrentDirectoryFixup(_In_ const CharT* filePath) noexcept
         {
             if constexpr (psf::is_ansi<CharT>)
             {
-                LogStringWA(g_FrfModuleName, SetCurrentDirectoryInstance,L"SetWorkingDirectoryInstance A input is", (const char *)filePath);
+                LogStringWA(LogLevel_DebugBasic, g_FrfModuleName, SetCurrentDirectoryInstance,L"SetWorkingDirectoryInstance A input is", (const char *)filePath);
             }
             else
             {
-#if _DEBUG
-                LogStringWW(g_FrfModuleName, SetCurrentDirectoryInstance,L"SetCurrentDirectoryFixup W input is", filePath);
-#endif
+                LogStringWW(LogLevel_DebugBasic, g_FrfModuleName, SetCurrentDirectoryInstance,L"SetCurrentDirectoryFixup W input is", filePath);
             }
             std::wstring wFilePath = widen(filePath);
-#if _DEBUG
-            LogString(g_FrfModuleName, SetCurrentDirectoryInstance, L"SetCurrentDirectoryFixup ", wFilePath.c_str());
-#endif
+            LogString(LogLevel_DebugBasic, g_FrfModuleName, SetCurrentDirectoryInstance, L"SetCurrentDirectoryFixup ", wFilePath.c_str());
             if (!path_relative_to(wFilePath.c_str(), psf::current_package_path()))
             {
                 normalized_path normalized = NormalizePath(wFilePath.c_str(), SetCurrentDirectoryInstance);
                 normalized_path virtualized = VirtualizePath(normalized, SetCurrentDirectoryInstance);
                 if (impl::PathExists(virtualized.full_path.c_str()))
                 {
-#if _DEBUG
-                    LogString(g_FrfModuleName, SetCurrentDirectoryInstance, L"SetCurrentDirectoryFixup Use Folder", virtualized.full_path.c_str());
-#endif
+                    LogString(LogLevel_DebugBasic, g_FrfModuleName, SetCurrentDirectoryInstance, L"SetCurrentDirectoryFixup Use Folder", virtualized.full_path.c_str());
+
                     return impl::SetCurrentDirectoryW(virtualized.full_path.c_str());
                 }
                 else
                 {
                     // Fall through to original call
-#if _DEBUG
-                    LogString(g_FrfModuleName, SetCurrentDirectoryInstance, L"SetCurrentDirectoryFixup ", L"Virtualized folder not in package, use requested folder.");
-#endif
+                    LogString(LogLevel_DebugBasic, g_FrfModuleName, SetCurrentDirectoryInstance, L"SetCurrentDirectoryFixup ", L"Virtualized folder not in package, use requested folder.");
                 }
             }
             else
             {
                 // Fall through to original call
-#if _DEBUG
-                LogString(g_FrfModuleName, SetCurrentDirectoryInstance, L"SetCurrentDirectoryFixup ", L"Requested folder is part of package, use requested folder.");
-#endif
+                LogString(LogLevel_DebugBasic, g_FrfModuleName, SetCurrentDirectoryInstance, L"SetCurrentDirectoryFixup ", L"Requested folder is part of package, use requested folder.");
             }
             return ::SetCurrentDirectoryW(wFilePath.c_str());
         }
 
     }
-#if _DEBUG
     // Fall back to assuming no redirection is necessary if exception
-    LOGGED_CATCHHANDLER_MIN(g_FrfModuleName, SetCurrentDirectoryInstance, L"SetCurrentDirectory")
-#else
-    catch (...)
-    {
-        Log(L"[%s%d] SetCurrentDirectory Exception=0x%x", g_FrfModuleName, SetCurrentDirectoryInstance, GetLastError());
-    }
-#endif 
+    LOGGED_CATCHHANDLER_MIN(LogLevel_Exception, g_FrfModuleName, SetCurrentDirectoryInstance, L"SetCurrentDirectory")
+
 
 
     return impl::SetCurrentDirectory(filePath);
@@ -95,52 +80,36 @@ DWORD __stdcall GetCurrentDirectoryFixup(_In_ DWORD nBufferLength, _Out_ CharT* 
             // This exists for debugging only.
             DWORD dRet = impl::GetCurrentDirectory(nBufferLength, filePath);
 
-#if _DEBUG
-            Log(L"[%s%d]GetCurrentDirectory: returns 0x%x", g_FrfModuleName, GetCurrentDirectoryInstance, dRet);
-#endif
+            Log(LogLevel_DebugBasic, L"[%s%d]GetCurrentDirectory: returns 0x%x", g_FrfModuleName, GetCurrentDirectoryInstance, dRet);
             if (dRet != 0)
             {
                 if (nBufferLength >= dRet)
                 {
                     try
                     {
-#if _DEBUG
-                        LogString(g_FrfModuleName, GetCurrentDirectoryInstance, L"GetCurrentDirectory path", filePath);
-#endif
+                        LogString(LogLevel_DebugBasic, g_FrfModuleName, GetCurrentDirectoryInstance, L"GetCurrentDirectory path", filePath);
                     }
                     catch (...)
                     {
-                        Log(L"[%s%d] Exception printing g_FrfModuleName, GetCurrentDirectory.");
+                        Log(LogLevel_Exception, L"[%s%d] Exception printing", g_FrfModuleName, "GetCurrentDirectory");
                     }
                 }
                 else
                 {
-#if _DEBUG
-                    Log(L"[%s%d]GetCurrentDirectory but buffer was only 0x%x", g_FrfModuleName, GetCurrentDirectoryInstance, nBufferLength);
-#endif
+                    Log(LogLevel_DebugBasic, L"[%s%d]GetCurrentDirectory but buffer was only 0x%x", g_FrfModuleName, GetCurrentDirectoryInstance, nBufferLength);
                 }
             }
             else
             {
-#if _DEBUG
-                Log(L"[%s%d]GetCurrentDirectory Error = 0x%x", g_FrfModuleName, GetCurrentDirectoryInstance, GetLastError());
-#endif
+                Log(LogLevel_DebugBasic, L"[%s%d]GetCurrentDirectory Error = 0x%x", g_FrfModuleName, GetCurrentDirectoryInstance, GetLastError());
             }
 
             return dRet;
         }
     }
-#if _DEBUG
     // Fall back to assuming no redirection is necessary if exception
-    LOGGED_CATCHHANDLER_MIN_ReturnError(g_FrfModuleName, GetCurrentDirectoryInstance, L"GetCurrentDirectory")
-#else
-    catch (...)
-    {
-        int err = win32_from_caught_exception();
-        Log(L"[%s%d] GetCurrentDirectory Exception=0x%x", g_FrfModuleName, GetCurrentDirectoryInstance, err);
-        return err;
-    }
-#endif 
+    LOGGED_CATCHHANDLER_MIN_ReturnError(LogLevel_Exception, g_FrfModuleName, GetCurrentDirectoryInstance, L"GetCurrentDirectory")
+
 }
 DECLARE_STRING_FIXUP(impl::GetCurrentDirectory, GetCurrentDirectoryFixup);
 

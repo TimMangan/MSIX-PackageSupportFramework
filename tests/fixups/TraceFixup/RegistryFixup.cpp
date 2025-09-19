@@ -8,28 +8,35 @@
 #include "Config.h"
 #include "FunctionImplementations.h"
 #include "Logging.h"
+#include <psf_logging.h>
 #include "PreserveError.h"
 
-void LogKeyPath(HKEY key, const char* msg = "Key")
+extern const wchar_t* g_traceModuleName;
+
+void LogKeyPath(Json_Debug_Levels debugRequestLevel, const wchar_t* moduleName, DWORD dllInstance, HKEY key, const char* msg = "Key")
 {
-    ULONG size;
-    if (auto status = impl::NtQueryKey(key, winternl::KeyNameInformation, nullptr, 0, &size);
-        (status == STATUS_BUFFER_TOO_SMALL) || (status == STATUS_BUFFER_OVERFLOW))
+    if (debugRequestLevel <= g_JsonDebugLevel)
     {
-        try
+        ULONG size;
+        if (auto status = impl::NtQueryKey(key, winternl::KeyNameInformation, nullptr, 0, &size);
+            (status == STATUS_BUFFER_TOO_SMALL) || (status == STATUS_BUFFER_OVERFLOW))
         {
-            auto buffer = std::make_unique<std::uint8_t[]>(size + 2);
-            if (NT_SUCCESS(impl::NtQueryKey(key, winternl::KeyNameInformation, buffer.get(), size, &size)))
+            try
             {
-                buffer[size] = 0x0;
-                buffer[size + 1] = 0x0;  // Add string termination character
-                auto info = reinterpret_cast<winternl::PKEY_NAME_INFORMATION>(buffer.get());
-                LogCountedString(msg, info->Name, info->NameLength / 2);
+                auto buffer = std::make_unique<std::uint8_t[]>(size + 2);
+                if (NT_SUCCESS(impl::NtQueryKey(key, winternl::KeyNameInformation, buffer.get(), size, &size)))
+                {
+
+                    buffer[size] = 0x0;
+                    buffer[size + 1] = 0x0;  // Add string termination character
+                    auto info = reinterpret_cast<winternl::PKEY_NAME_INFORMATION>(buffer.get());
+                    LogCountedString(debugRequestLevel, msg, info->Name, info->NameLength / 2);
+                }
             }
-        }
-        catch (...)
-        {
-            Log("Unable to log Key Path");
+            catch (...)
+            {
+                Log(LogLevel_Exception, "[%d%d]\tUnable to log Key Path", moduleName, dllInstance);
+            }
         }
     }
 }
@@ -67,7 +74,7 @@ std::string InterpretKeyPath(HKEY key, const char* msg = "Key")
     }
     catch (...)
     {
-        Log("InterpretKeyPath failure.");
+        Log(LogLevel_DebugBasic, "InterpretKeyPath failure.");
     }
     return sret;
 }
@@ -117,26 +124,26 @@ LSTATUS __stdcall RegCreateKeyFixup(_In_ HKEY key, _In_opt_ const CharT* subKey,
             }
             catch (...)
             {
-                Log("RegCreateKey event logging failure");
+                Log(LogLevel_DebugBasic, "RegCreateKey event logging failure");
             }
         }
         else
         {
             try
             {
-                Log("RegCreateKey:\n");
-                LogKeyPath(key);
-                if (subKey) LogString("Sub Key", subKey);
+                Log(LogLevel_DebugBasic, "[%s%d]/tRegCreateKey:", g_traceModuleName, 0);
+                LogKeyPath(LogLevel_DebugBasic, g_traceModuleName, 0, key);
+                if (subKey) LogString(LogLevel_DebugBasic, "Sub Key", subKey);
                 LogFunctionResult(functionResult);
                 if (function_failed(functionResult))
                 {
-                    LogWin32Error(result);
+                    LogWin32Error(LogLevel_DebugBasic, result);
                 }
                 LogCallingModule();
             }
             catch (...)
             {
-                Log("RegCreateKey logging failure");
+                Log(LogLevel_DebugBasic, "RegCreateKey logging failure");
             }
         }
     }
@@ -207,23 +214,23 @@ LSTATUS __stdcall RegCreateKeyExFixup(
             }
             catch (...)
             {
-                Log("RegCreateKeyEx event logging failure");
+                Log(LogLevel_DebugBasic, "RegCreateKeyEx event logging failure");
             }
         }
         else
         {
             try
             {
-                Log("RegCreateKeyEx:\n");
-                LogKeyPath(key);
-                LogString("Sub Key", subKey);
-                if (classType) LogString("Class", classType);
+                Log(LogLevel_DebugBasic, "RegCreateKeyEx:\n");
+                LogKeyPath(LogLevel_DebugBasic, g_traceModuleName, 0, key);
+                LogString(LogLevel_DebugBasic, "Sub Key", subKey);
+                if (classType) LogString(LogLevel_DebugBasic, "Class", classType);
                 LogRegKeyFlags(options);
                 LogRegKeyAccess(samDesired);
                 LogFunctionResult(functionResult);
                 if (function_failed(functionResult))
                 {
-                    LogWin32Error(result);
+                    LogWin32Error(LogLevel_DebugBasic, result);
                 }
                 else if (disposition)
                 {
@@ -233,7 +240,7 @@ LSTATUS __stdcall RegCreateKeyExFixup(
             }
             catch (...)
             {
-                Log("RegCreateKeyEx logging failure");
+                Log(LogLevel_DebugBasic, "RegCreateKeyEx logging failure");
             }
         }
     }
@@ -290,26 +297,26 @@ LSTATUS __stdcall RegOpenKeyFixup(_In_ HKEY key, _In_opt_ const CharT* subKey, _
             }
             catch (...)
             {
-                Log("RegOpenKey event logging failure");
+                Log(LogLevel_DebugBasic, "RegOpenKey event logging failure");
             }
         }
         else
         {
             try
             {
-                Log("RegOpenKey:\n");
-                LogKeyPath(key);
-                if (subKey) LogString("Sub Key", subKey);
+                Log(LogLevel_DebugBasic, "RegOpenKey:\n");
+                LogKeyPath(LogLevel_DebugBasic, g_traceModuleName, 0, key);
+                if (subKey) LogString(LogLevel_DebugBasic, "Sub Key", subKey);
                 LogFunctionResult(functionResult);
                 if (function_failed(functionResult))
                 {
-                    LogWin32Error(result);
+                    LogWin32Error(LogLevel_DebugBasic, result);
                 }
                 LogCallingModule();
             }
             catch (...)
             {
-                Log("RegOpenKey logging failure");
+                Log(LogLevel_DebugBasic, "RegOpenKey logging failure");
             }
         }
     }
@@ -374,28 +381,28 @@ LSTATUS __stdcall RegOpenKeyExFixup(
             }
             catch (...)
             {
-                Log("RegOpenKeyEx event logging failure");
+                Log(LogLevel_DebugBasic, "RegOpenKeyEx event logging failure");
             }
         }
         else
         {
             try
             {
-                Log("RegOpenKeyEx:\n");
-                LogKeyPath(key);
-                if (subKey) LogString("Sub Key", subKey);
+                Log(LogLevel_DebugBasic, "RegOpenKeyEx:\n");
+                LogKeyPath(LogLevel_DebugBasic, g_traceModuleName, 0, key);
+                if (subKey) LogString(LogLevel_DebugBasic, "Sub Key", subKey);
                 LogRegKeyFlags(options);
                 LogRegKeyAccess(samDesired);
                 LogFunctionResult(functionResult);
                 if (function_failed(functionResult))
                 {
-                    LogWin32Error(result);
+                    LogWin32Error(LogLevel_DebugBasic, result);
                 }
                 LogCallingModule();
             }
             catch (...)
             {
-                Log("RegOpenKeyEx logging failure");
+                Log(LogLevel_DebugBasic, "RegOpenKeyEx logging failure");
             }
         }
     }
@@ -467,22 +474,22 @@ LSTATUS __stdcall RegGetValueFixup(
             }
             catch (...)
             {
-                Log("RegGetValue event logging failure");
+                Log(LogLevel_DebugBasic, "RegGetValue event logging failure");
             }
         }
         else
         {
             try
             {
-                Log("RegGetValue:\n");
-                LogKeyPath(key);
-                if (subKey) LogString("Sub Key", subKey);
-                if (value) LogString("Value", value);
+                Log(LogLevel_DebugBasic, "RegGetValue:\n");
+                LogKeyPath(LogLevel_DebugBasic, g_traceModuleName, 0, key);
+                if (subKey) LogString(LogLevel_DebugBasic, "Sub Key", subKey);
+                if (value) LogString(LogLevel_DebugBasic, "Value", value);
                 LogRegKeyQueryFlags(flags);
                 LogFunctionResult(functionResult);
                 if (function_failed(functionResult))
                 {
-                    LogWin32Error(result);
+                    LogWin32Error(LogLevel_DebugBasic, result);
                 }
                 else if (type)
                 {
@@ -493,7 +500,7 @@ LSTATUS __stdcall RegGetValueFixup(
             }
             catch (...)
             {
-                Log("RegGetValue logging failure");
+                Log(LogLevel_DebugBasic, "RegGetValue logging failure");
             }
         }
     }
@@ -549,30 +556,30 @@ LSTATUS __stdcall RegQueryValueFixup(
             }
             catch (...)
             {
-                Log("RegQueryValue event logging failure");
+                Log(LogLevel_DebugBasic, "RegQueryValue event logging failure");
             }
         }
         else
         {
             try
             {
-                Log("RegQueryValue:\n");
-                LogKeyPath(key);
-                if (subKey) LogString("Sub Key", subKey);
+                Log(LogLevel_DebugBasic, "RegQueryValue:\n");
+                LogKeyPath(LogLevel_DebugBasic, g_traceModuleName, 0, key);
+                if (subKey) LogString(LogLevel_DebugBasic, "Sub Key", subKey);
                 LogFunctionResult(functionResult);
                 if (function_failed(functionResult))
                 {
-                    LogWin32Error(result);
+                    LogWin32Error(LogLevel_DebugBasic, result);
                 }
                 else if (data && dataSize)
                 {
-                    LogCountedString("Data", data, *dataSize / sizeof(CharT));
+                    LogCountedString(LogLevel_DebugBasic, "Data", data, *dataSize / sizeof(CharT));
                 }
                 LogCallingModule();
             }
             catch (...)
             {
-                Log("RegQueryValue logging failure");
+                Log(LogLevel_DebugBasic, "RegQueryValue logging failure");
             }
         }
     }
@@ -634,20 +641,20 @@ LSTATUS __stdcall RegQueryValueExFixup(
             }
             catch (...)
             {
-                Log("RegOpenValueEx event logging failure");
+                Log(LogLevel_DebugBasic, "RegOpenValueEx event logging failure");
             }
         }
         else
         {
             try
             {
-                Log("RegQueryValueEx:\n");
-                LogKeyPath(key);
-                if (valueName) LogString("Value Name", valueName);
+                Log(LogLevel_DebugBasic, "RegQueryValueEx:\n");
+                LogKeyPath(LogLevel_DebugBasic, g_traceModuleName, 0, key);
+                if (valueName) LogString(LogLevel_DebugBasic, "Value Name", valueName);
                 LogFunctionResult(functionResult);
                 if (function_failed(functionResult))
                 {
-                    LogWin32Error(result);
+                    LogWin32Error(LogLevel_DebugBasic, result);
                 }
                 else if (type)
                 {
@@ -658,7 +665,7 @@ LSTATUS __stdcall RegQueryValueExFixup(
             }
             catch (...)
             {
-                Log("RegOpenValueEx logging failure");
+                Log(LogLevel_DebugBasic, "RegOpenValueEx logging failure");
             }
         }
     }
@@ -720,29 +727,29 @@ LSTATUS __stdcall RegSetKeyValueFixup(
             }
             catch (...)
             {
-                Log("RegSetKeyValue event logging failure");
+                Log(LogLevel_DebugBasic, "RegSetKeyValue event logging failure");
             }
         }
         else
         {
             try
             {
-                Log("RegSetKeyValue:\n");
-                LogKeyPath(key);
-                if (subKey) LogString("Sub Key", subKey);
-                if (valueName) LogString("Value Name", valueName);
+                Log(LogLevel_DebugBasic, "RegSetKeyValue:\n");
+                LogKeyPath(LogLevel_DebugBasic, g_traceModuleName, 0, key);
+                if (subKey) LogString(LogLevel_DebugBasic, "Sub Key", subKey);
+                if (valueName) LogString(LogLevel_DebugBasic, "Value Name", valueName);
                 LogRegKeyType(type);
                 if (data) LogRegValue<CharT>(type, data, dataSize);
                 LogFunctionResult(functionResult);
                 if (function_failed(functionResult))
                 {
-                    LogWin32Error(result);
+                    LogWin32Error(LogLevel_DebugBasic, result);
                 }
                 LogCallingModule();
             }
             catch (...)
             {
-                Log("RegSetKeyValue logging failure");
+                Log(LogLevel_DebugBasic, "RegSetKeyValue logging failure");
             }
         }
     }
@@ -800,28 +807,28 @@ LSTATUS __stdcall RegSetValueFixup(
             }
             catch (...)
             {
-                Log("RegSetValue event logging failure");
+                Log(LogLevel_DebugBasic, "RegSetValue event logging failure");
             }
         }
         else
         {
             try
             {
-                Log("RegSetValue:\n");
-                LogKeyPath(key);
-                if (subKey) LogString("Sub Key", subKey);
+                Log(LogLevel_DebugBasic, "RegSetValue:\n");
+                LogKeyPath(LogLevel_DebugBasic, g_traceModuleName, 0, key);
+                if (subKey) LogString(LogLevel_DebugBasic, "Sub Key", subKey);
                 LogRegKeyType(type); // NOTE: _Must_ be REG_SZ
-                if (data) LogString("Data", data);
+                if (data) LogString(LogLevel_DebugBasic, "Data", data);
                 LogFunctionResult(functionResult);
                 if (function_failed(functionResult))
                 {
-                    LogWin32Error(result);
+                    LogWin32Error(LogLevel_DebugBasic, result);
                 }
                 LogCallingModule();
             }
             catch (...)
             {
-                Log("RegSetValue logging failure");
+                Log(LogLevel_DebugBasic, "RegSetValue logging failure");
             }
         }
     }
@@ -880,28 +887,28 @@ LSTATUS __stdcall RegSetValueExFixup(
             }
             catch (...)
             {
-                Log("RegSetValueEx event logging failure");
+                Log(LogLevel_DebugBasic, "RegSetValueEx event logging failure");
             }
         }
         else
         {
             try
             {
-                Log("RegSetValueEx:\n");
-                LogKeyPath(key);
-                if (valueName) LogString("Value Name", valueName);
+                Log(LogLevel_DebugBasic, "RegSetValueEx:\n");
+                LogKeyPath(LogLevel_DebugBasic, g_traceModuleName, 0, key);
+                if (valueName) LogString(LogLevel_DebugBasic, "Value Name", valueName);
                 LogRegKeyType(type);
                 if (data) LogRegValue<CharT>(type, data, dataSize);
                 LogFunctionResult(functionResult);
                 if (function_failed(functionResult))
                 {
-                    LogWin32Error(result);
+                    LogWin32Error(LogLevel_DebugBasic, result);
                 }
                 LogCallingModule();
             }
             catch (...)
             {
-                Log("RegSetValueEx logging failure");
+                Log(LogLevel_DebugBasic, "RegSetValueEx logging failure");
             }
         }
     }
@@ -951,26 +958,26 @@ LSTATUS __stdcall RegDeleteKeyFixup(_In_ HKEY key, _In_ const CharT* subKey)
             }
             catch (...)
             {
-                Log("RegDeleteKey event logging failure");
+                Log(LogLevel_DebugBasic, "RegDeleteKey event logging failure");
             }
         }
         else
         {
             try
             {
-                Log("RegDeleteKey:\n");
-                LogKeyPath(key);
-                LogString("Sub Key", subKey);
+                Log(LogLevel_DebugBasic, "RegDeleteKey:\n");
+                LogKeyPath(LogLevel_DebugBasic, g_traceModuleName, 0, key);
+                LogString(LogLevel_DebugBasic, "Sub Key", subKey);
                 LogFunctionResult(functionResult);
                 if (function_failed(functionResult))
                 {
-                    LogWin32Error(result);
+                    LogWin32Error(LogLevel_DebugBasic, result);
                 }
                 LogCallingModule();
             }
             catch (...)
             {
-                Log("RegDeleteKey logging failure");
+                Log(LogLevel_DebugBasic, "RegDeleteKey logging failure");
             }
         }
     }
@@ -1025,27 +1032,27 @@ LSTATUS __stdcall RegDeleteKeyExFixup(
             }
             catch (...)
             {
-                Log("RegDeleteKeyEx event logging failure");
+                Log(LogLevel_DebugBasic, "RegDeleteKeyEx event logging failure");
             }
         }
         else
         {
             try
             {
-                Log("RegDeleteKeyEx:\n");
-                LogKeyPath(key);
-                LogString("Sub Key", subKey);
+                Log(LogLevel_DebugBasic, "RegDeleteKeyEx:\n");
+                LogKeyPath(LogLevel_DebugBasic, g_traceModuleName, 0, key);
+                LogString(LogLevel_DebugBasic, "Sub Key", subKey);
                 LogRegKeyAccess(samDesired);
                 LogFunctionResult(functionResult);
                 if (function_failed(functionResult))
                 {
-                    LogWin32Error(result);
+                    LogWin32Error(LogLevel_DebugBasic, result);
                 }
                 LogCallingModule();
             }
             catch (...)
             {
-                Log("RegDeleteKeyEx logging failure");
+                Log(LogLevel_DebugBasic, "RegDeleteKeyEx logging failure");
             }
         }
     }
@@ -1097,27 +1104,27 @@ LSTATUS __stdcall RegDeleteKeyValueFixup(_In_ HKEY key, _In_opt_ const CharT* su
             }
             catch (...)
             {
-                Log("RegDeleteKeyValue event logging failure");
+                Log(LogLevel_DebugBasic, "RegDeleteKeyValue event logging failure");
             }
         }
         else
         {
             try
             {
-                Log("RegDeleteKeyValue:\n");
-                LogKeyPath(key);
-                if (subKey) LogString("Sub Key", subKey);
-                if (valueName) LogString("Value Name", valueName);
+                Log(LogLevel_DebugBasic, "RegDeleteKeyValue:\n");
+                LogKeyPath(LogLevel_DebugBasic, g_traceModuleName, 0, key);
+                if (subKey) LogString(LogLevel_DebugBasic, "Sub Key", subKey);
+                if (valueName) LogString(LogLevel_DebugBasic, "Value Name", valueName);
                 LogFunctionResult(functionResult);
                 if (function_failed(functionResult))
                 {
-                    LogWin32Error(result);
+                    LogWin32Error(LogLevel_DebugBasic, result);
                 }
                 LogCallingModule();
             }
             catch (...)
             {
-                Log("RegDeleteKeyValue logging failure");
+                Log(LogLevel_DebugBasic, "RegDeleteKeyValue logging failure");
             }
         }
     }
@@ -1167,26 +1174,26 @@ LSTATUS __stdcall RegDeleteValueFixup(_In_ HKEY key, _In_opt_ const CharT* value
             }
             catch (...)
             {
-                Log("RegDeleteValue event logging failure");
+                Log(LogLevel_DebugBasic, "RegDeleteValue event logging failure");
             }
         }
         else
         {
             try
             {
-                Log("RegDeleteValue:\n");
-                LogKeyPath(key);
-                if (valueName) LogString("Value Name", valueName);
+                Log(LogLevel_DebugBasic, "RegDeleteValue:\n");
+                LogKeyPath(LogLevel_DebugBasic, g_traceModuleName, 0, key);
+                if (valueName) LogString(LogLevel_DebugBasic, "Value Name", valueName);
                 LogFunctionResult(functionResult);
                 if (function_failed(functionResult))
                 {
-                    LogWin32Error(result);
+                    LogWin32Error(LogLevel_DebugBasic, result);
                 }
                 LogCallingModule();
             }
             catch (...)
             {
-                Log("RegDeleteValue logging failure");
+                Log(LogLevel_DebugBasic, "RegDeleteValue logging failure");
             }
         }
     }
@@ -1236,26 +1243,26 @@ LSTATUS __stdcall RegDeleteTreeFixup(_In_ HKEY key, _In_opt_ const CharT* subKey
             }
             catch (...)
             {
-                Log("RegDeleteTree event logging failure");
+                Log(LogLevel_DebugBasic, "RegDeleteTree event logging failure");
             }
         }
         else
         {
             try
             {
-                Log("RegDeleteTree:\n");
-                LogKeyPath(key);
-                if (subKey) LogString("Sub Key", subKey);
+                Log(LogLevel_DebugBasic, "RegDeleteTree:\n");
+                LogKeyPath(LogLevel_DebugBasic, g_traceModuleName, 0, key);
+                if (subKey) LogString(LogLevel_DebugBasic, "Sub Key", subKey);
                 LogFunctionResult(functionResult);
                 if (function_failed(functionResult))
                 {
-                    LogWin32Error(result);
+                    LogWin32Error(LogLevel_DebugBasic, result);
                 }
                 LogCallingModule();
             }
             catch (...)
             {
-                Log("RegDeleteTree logging failure");
+                Log(LogLevel_DebugBasic, "RegDeleteTree logging failure");
             }
         }
     }
@@ -1307,27 +1314,27 @@ LSTATUS __stdcall RegCopyTreeFixup(_In_ HKEY keySrc, _In_opt_ const CharT* subKe
             }
             catch (...)
             {
-                Log("RegCopyTree event logging failure");
+                Log(LogLevel_DebugBasic, "RegCopyTree event logging failure");
             }
         }
         else
         {
             try
             {
-                Log("RegCopyTree:\n");
-                LogKeyPath(keySrc, "Source");
-                if (subKey) LogString("Sub Key", subKey);
-                LogKeyPath(keyDest, "Dest");
+                Log(LogLevel_DebugBasic, "RegCopyTree:\n");
+                LogKeyPath(LogLevel_DebugBasic, g_traceModuleName, 0, keySrc, "Source");
+                if (subKey) LogString(LogLevel_DebugBasic, "Sub Key", subKey);
+                LogKeyPath(LogLevel_DebugBasic, g_traceModuleName, 0, keyDest, "Dest");
                 LogFunctionResult(functionResult);
                 if (function_failed(functionResult))
                 {
-                    LogWin32Error(result);
+                    LogWin32Error(LogLevel_DebugBasic, result);
                 }
                 LogCallingModule();
             }
             catch (...)
             {
-                Log("RegCopyTree logging failure");
+                Log(LogLevel_DebugBasic, "RegCopyTree logging failure");
             }
         }
     }
@@ -1385,30 +1392,30 @@ LSTATUS __stdcall RegEnumKeyFixup(
             }
             catch (...)
             {
-                Log("RegEnumKey event logging failure");
+                Log(LogLevel_DebugBasic, "RegEnumKey event logging failure");
             }
         }
         else
         {
             try
             {
-                Log("RegEnumKey:\n");
-                LogKeyPath(key);
-                Log("\tIndex=%d\n", index);
+                Log(LogLevel_DebugBasic, "RegEnumKey:\n");
+                LogKeyPath(LogLevel_DebugBasic, g_traceModuleName, 0, key);
+                Log(LogLevel_DebugBasic, "\tIndex=%d\n", index);
                 LogFunctionResult(functionResult);
                 if (function_failed(functionResult))
                 {
-                    LogWin32Error(result);
+                    LogWin32Error(LogLevel_DebugBasic, result);
                 }
                 else if (name)
                 {
-                    LogString("Name", name);
+                    LogString(LogLevel_DebugBasic, "Name", name);
                 }
                 LogCallingModule();
             }
             catch (...)
             {
-                Log("RegEnumKey logging failure");
+                Log(LogLevel_DebugBasic, "RegEnumKey logging failure");
             }
         }
     }
@@ -1472,31 +1479,31 @@ LSTATUS __stdcall RegEnumKeyExFixup(
             }
             catch (...)
             {
-                Log("RegEnumKeyEx event logging failure");
+                Log(LogLevel_DebugBasic, "RegEnumKeyEx event logging failure");
             }
         }
         else
         {
             try
             {
-                Log("RegEnumKeyEx:\n");
-                LogKeyPath(key);
-                Log("\tIndex=%d\n", index);
+                Log(LogLevel_DebugBasic, "RegEnumKeyEx:\n");
+                LogKeyPath(LogLevel_DebugBasic, g_traceModuleName, 0, key);
+                Log(LogLevel_DebugBasic, "\tIndex=%d\n", index);
                 LogFunctionResult(functionResult);
                 if (function_failed(functionResult))
                 {
-                    LogWin32Error(result);
+                    LogWin32Error(LogLevel_DebugBasic, result);
                 }
                 else
                 {
-                    if (name) LogCountedString("Name", name, *nameLength);
-                    if (className && classNameLength) LogCountedString("Class", className, *classNameLength);
+                    if (name) LogCountedString(LogLevel_DebugBasic, "Name", name, *nameLength);
+                    if (className && classNameLength) LogCountedString(LogLevel_DebugBasic, "Class", className, *classNameLength);
                 }
                 LogCallingModule();
             }
             catch (...)
             {
-                Log("RegEnumKeyEx logging failure");
+                Log(LogLevel_DebugBasic, "RegEnumKeyEx logging failure");
             }
         }
     }
@@ -1565,24 +1572,24 @@ LSTATUS __stdcall RegEnumValueFixup(
             }
             catch (...)
             {
-                Log("RegEnumValue event logging failure");
+                Log(LogLevel_DebugBasic, "RegEnumValue event logging failure");
             }
         }
         else
         {
             try
             {
-                Log("RegEnumValue:\n");
-                LogKeyPath(key);
-                Log("\tIndex=%d\n", index);
+                Log(LogLevel_DebugBasic, "RegEnumValue:\n");
+                LogKeyPath(LogLevel_DebugBasic, g_traceModuleName, 0, key);
+                Log(LogLevel_DebugBasic, "\tIndex=%d\n", index);
                 LogFunctionResult(functionResult);
                 if (function_failed(functionResult))
                 {
-                    LogWin32Error(result);
+                    LogWin32Error(LogLevel_DebugBasic, result);
                 }
                 else
                 {
-                    if (valueName) LogCountedString("Value Name", valueName, *valueNameLength);
+                    if (valueName) LogCountedString(LogLevel_DebugBasic, "Value Name", valueName, *valueNameLength);
                     if (type) LogRegKeyType(*type);
                     if (type && data && dataSize) LogRegValue<CharT>(*type, data, *dataSize);
                 }
@@ -1590,7 +1597,7 @@ LSTATUS __stdcall RegEnumValueFixup(
             }
             catch (...)
             {
-                Log("RegEnumValue logging failure");
+                Log(LogLevel_DebugBasic, "RegEnumValue logging failure");
             }
         }
     }

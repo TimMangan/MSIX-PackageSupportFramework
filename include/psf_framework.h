@@ -133,7 +133,7 @@ namespace psf
     }
 
 //#if _DEBUG
-#if DEBUG_NEW_FIXUPS
+//#if DEBUG_NEW_FIXUPS
     inline int attach_count_all()
     {
         int count = 0;
@@ -159,10 +159,10 @@ namespace psf
 
 
 
-    inline void attach_count_all_debug()
+    inline int attach_count_all_debug()
     {
-        
-        std::for_each(details::fixups_begin, details::fixups_end, [](details::detour_function_pair* target)
+        int countIntercepts = 0;
+        std::for_each(details::fixups_begin, details::fixups_end, [&](details::detour_function_pair* target)
         {
             if (target && !target->Registered)
             {
@@ -194,6 +194,7 @@ namespace psf
                         {
                             check_win32(::PSFRegister(&target->Target, target->Detour));
                             target->Registered = true;
+                            countIntercepts++;
 #if DEBUG_NEW_FIXUPS
                             pvtLog(L"<<<<<Registered FIXUP Complete.\n");
 #endif
@@ -212,9 +213,9 @@ namespace psf
                 }
             }
         });
-        return;
+        return countIntercepts;
     }
-#endif
+//#endif
 
     inline void detach_all()
     {

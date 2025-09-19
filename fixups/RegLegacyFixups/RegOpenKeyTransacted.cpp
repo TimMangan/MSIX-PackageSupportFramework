@@ -42,15 +42,13 @@ LSTATUS __stdcall RegOpenKeyTransactedFixup(
 
     DWORD RegLocalInstance = ++g_RegInterceptInstance;
 
-#if _DEBUG
-    Log(L"[%s%d] RegOpenKeyTransacted:\n", g_RegModuleName, RegLocalInstance);
-#endif
+    Log(LogLevel_DebugBasic, L"[%s%d] RegOpenKeyTransacted:\n", g_RegModuleName, RegLocalInstance);
     std::string keyOnlyath = InterpretStringA(subKey);
     std::string keypath = InterpretKeyPath(key) + "\\" + keyOnlyath;
-    REGSAM samModified = RegFixupSam(keypath, samDesired, RegLocalInstance);
+    REGSAM samModified = RegFixupSam(LogLevel_DebugMaximum, keypath, samDesired, RegLocalInstance);
 
     std::string sskey = narrow(subKey);
-    LSTATUS result = RegFixupDeletionMarker(keyOnlyath, sskey, RegLocalInstance);
+    LSTATUS result = RegFixupDeletionMarker(LogLevel_DebugMaximum, keyOnlyath, sskey, RegLocalInstance);
     if (result == ERROR_SUCCESS)
     {
         std::string fullpath = keypath;
@@ -58,7 +56,7 @@ LSTATUS __stdcall RegOpenKeyTransactedFixup(
         {
             fullpath += "\\" + sskey;
         }
-        if (!RegFixupJavaBlocker(fullpath, RegLocalInstance))
+        if (!RegFixupJavaBlocker(LogLevel_DebugMaximum, fullpath, RegLocalInstance))
         {
             result = RegOpenKeyTransactedImpl(key, subKey, options, samModified, resultKey, hTransaction, pExtendedParameter);
         }
@@ -73,37 +71,33 @@ LSTATUS __stdcall RegOpenKeyTransactedFixup(
         resultKey = NULL;
     }
 
-#if _DEBUG
-    Log(L"[%s%d] RegOpenKeyTransacted result=%d", g_RegModuleName, RegLocalInstance, result);
-#endif
+    Log(LogLevel_DebugBasic, L"[%s%d] RegOpenKeyTransacted result=%d", g_RegModuleName, RegLocalInstance, result);
 
-#if MOREDEBUG
     auto functionResult = from_win32(result);
     if (auto lock = acquire_output_lock(function_type::registry, functionResult))
     {
         try
         {
-            LogKeyPath(RegLocalInstance, key);
-            if (subKey) LogString(g_RegModuleName, RegLocalInstance, L"Sub Key", subKey);
-            LogRegKeyFlags(RegLocalInstance, options);
-            Log(L"\n[%s%d] SamDesired=%s\n", g_RegModuleName, RegLocalInstance, InterpretRegKeyAccess(samDesired).c_str());
+            LogKeyPath(LogLevel_DebugIntermediate, g_RegModuleName, RegLocalInstance, key);
+            if (subKey) LogString(LogLevel_DebugIntermediate, g_RegModuleName, RegLocalInstance, L"Sub Key", subKey);
+            LogRegKeyFlags(LogLevel_DebugIntermediate, RegLocalInstance, options);
+            Log(LogLevel_DebugIntermediate, L"\n[%s%d] SamDesired=%s\n", g_RegModuleName, RegLocalInstance, InterpretRegKeyAccess(samDesired).c_str());
             if (samDesired != samModified)
             {
-                Log(L"[%s%d] ModifiedSam=%s\n", g_RegModuleName, RegLocalInstance, InterpretRegKeyAccess(samModified).c_str());
+                Log(LogLevel_DebugIntermediate, L"[%s%d] ModifiedSam=%s\n", g_RegModuleName, RegLocalInstance, InterpretRegKeyAccess(samModified).c_str());
             }
-            LogCallingModuleInstanceCommon(g_RegModuleName,RegLocalInstance);
-            LogFunctionResultInstance(RegLocalInstance, functionResult);
+            LogCallingModuleInstanceCommon(LogLevel_DebugIntermediate, g_RegModuleName,RegLocalInstance);
+            LogFunctionResultInstance(LogLevel_DebugIntermediate, RegLocalInstance, functionResult);
             if (function_failed(functionResult))
             {
-                LogWin32ErrorInstance(RegLocalInstance, result);
+                LogWin32ErrorInstance(LogLevel_DebugIntermediate, RegLocalInstance, (DWORD)result);
             }
         }
         catch (...)
         {
-            Log(L"[%s%d] RegOpenKeyTransacted logging failure.\n", g_RegModuleName, RegLocalInstance);
+            Log(LogLevel_Exception, L"[%s%d] RegOpenKeyTransacted logging failure.\n", g_RegModuleName, RegLocalInstance);
         }
     }
-#endif
     return result;
 }
 DECLARE_STRING_FIXUP(RegOpenKeyTransactedImpl, RegOpenKeyTransactedFixup);

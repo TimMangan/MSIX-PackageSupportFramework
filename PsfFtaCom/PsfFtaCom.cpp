@@ -45,7 +45,7 @@ extern bool IsProcessRunningForThisUser(const std::filesystem::path path);
 
 int launcher_main(PCWSTR wargs, int cmdShow) noexcept try
 {
-    Log(L"[%s%d] PsfFtaCom started.", PsfFtaComName, 0);
+    Log(LogLevel_Launching, L"[%s%d] PsfFtaCom started.", PsfFtaComName, 0);
 
 
     //Log(L"[%s%d]DEBUG TEMP PsfFtaCom waiting for debugger to attach to process...\n", PsfFtaComName, 0);
@@ -64,7 +64,7 @@ int launcher_main(PCWSTR wargs, int cmdShow) noexcept try
             bool waitSignal = waitSignalPtr->as_boolean().get();
             if (waitSignal)
             {
-                Log(L"[%s%d] PsfFtaCom waiting for debugger to attach to process...\n", PsfFtaComName, 0);
+                Log(LogLevel_Launching, L"[%s%d] PsfFtaCom waiting for debugger to attach to process...\n", PsfFtaComName, 0);
                 psf::wait_for_debugger();
             }
         }
@@ -81,7 +81,7 @@ int launcher_main(PCWSTR wargs, int cmdShow) noexcept try
         std::wstring temp;
         std::vector<std::wstring> parts;
         std::wstringstream wss(wargs);
-        LogString(PsfFtaComName, 0, L"Input arguments", wargs);
+        LogString(LogLevel_Launching, PsfFtaComName, 0, L"Input arguments", wargs);
 
         while (std::getline(wss, temp, L'\"'))
             parts.push_back(temp);
@@ -97,26 +97,26 @@ int launcher_main(PCWSTR wargs, int cmdShow) noexcept try
             }
             targetFilePath = ReplaceVariablesInString(targetFilePath, true, true);
             targetArgs = ReplaceVariablesInString(targetArgs, true, true);
-            LogString(PsfFtaComName, 0, L"TargetFilePath", targetFilePath.c_str());
-            LogString(PsfFtaComName, 0, L"TargetArgs", targetArgs.c_str());
+            LogString(LogLevel_Launching, PsfFtaComName, 0, L"TargetFilePath", targetFilePath.c_str());
+            LogString(LogLevel_Launching, PsfFtaComName, 0, L"TargetArgs", targetArgs.c_str());
         }
         else if (parts.size() == 2)
         {
             targetFilePath = parts[0] + parts[1];
             targetArgs = L"";
-            LogString(PsfFtaComName, 0, L"TargetFilePath", targetFilePath.c_str());
-            LogString(PsfFtaComName, 0, L"TargetArgs", L"***none***");
+            LogString(LogLevel_Launching, PsfFtaComName, 0, L"TargetFilePath", targetFilePath.c_str());
+            LogString(LogLevel_Launching, PsfFtaComName, 0, L"TargetArgs", L"***none***");
         }
         else
         {
-            Log(L"[%s%d] Error: Invalid command line arguments passed to PsfFtaCom.", PsfFtaComName, 0);
-            Log(L"[%s%d]\tNumber of parts=%d", PsfFtaComName, 0, parts.size());
+            Log(LogLevel_Launching, L"[%s%d] Error: Invalid command line arguments passed to PsfFtaCom.", PsfFtaComName, 0);
+            Log(LogLevel_Launching, L"[%s%d]\tNumber of parts=%d", PsfFtaComName, 0, parts.size());
             return -1;
         }
     }
     else
     {
-        Log(L"[%s%d] Error: No command line arguments passed to PsfFtaCom.", PsfFtaComName, 0);
+        Log(LogLevel_Launching, L"[%s%d] Error: No command line arguments passed to PsfFtaCom.", PsfFtaComName, 0);
         return -1;
     }
 
@@ -167,14 +167,14 @@ int launcher_main(PCWSTR wargs, int cmdShow) noexcept try
 
     if (preventMultiple)
     {
-        Log(L"[%s%d] Checking for existing instances of %ls", PsfFtaComName, 0, targetFilePath.c_str());
+        Log(LogLevel_Launching, L"[%s%d] Checking for existing instances of %ls", PsfFtaComName, 0, targetFilePath.c_str());
         if (IsProcessRunningForThisUser(targetFilePath.c_str()))
         {
-            Log(L"[%s%d] Existing instance found, prompting user and exiting.", PsfFtaComName, 0);
+            Log(LogLevel_Launching, L"[%s%d] Existing instance found, prompting user and exiting.", PsfFtaComName, 0);
             MessageBox(NULL, L"An instance of this application is already running.", L"Multiple Instances Not Allowed", MB_OK | MB_ICONINFORMATION);
             return 0;
         }
-        Log(L"[%s%d] No existing instance found, continuing.", PsfFtaComName, 0);
+        Log(LogLevel_Launching, L"[%s%d] No existing instance found, continuing.", PsfFtaComName, 0);
     }
 
 
@@ -186,13 +186,13 @@ int launcher_main(PCWSTR wargs, int cmdShow) noexcept try
     }
 
 
-    LogString(PsfFtaComName, 0, L"TargetFilePath", targetFilePath.c_str());
-    LogString(PsfFtaComName, 0, L"TargetArgs", targetArgs.c_str());
+    LogString(LogLevel_Launching, PsfFtaComName, 0, L"TargetFilePath", targetFilePath.c_str());
+    LogString(LogLevel_Launching, PsfFtaComName, 0, L"TargetArgs", targetArgs.c_str());
     std::wstring quotedFullLine = L"\"" + targetFilePath + L"\" " + targetArgs.c_str();
     HRESULT hr = StartProcess(targetFilePath.c_str(), quotedFullLine.data(), currentDirectory.c_str(), cmdShow, INFINITE, true, 0, NULL, terminateChildren);
     if (hr != ERROR_SUCCESS)
     {
-        Log(L"[%s%d] Error return from launching process second try, try again 0x%x.", PsfFtaComName, 0, GetLastError());
+        Log(LogLevel_Launching, L"[%s%d] Error return from launching process second try, try again 0x%x.", PsfFtaComName, 0, GetLastError());
     }
 
 
@@ -340,11 +340,11 @@ void LogApplicationAndProcessesCollection()
 
 
             if (exeStr != NULL)
-                LogString(PsfFtaComName, 0, L"executable", exeStr);
+                LogString(LogLevel_Launching, PsfFtaComName, 0, L"executable", exeStr);
             if (idStr != NULL)
-                LogString(PsfFtaComName, 0, L"id", idStr);
+                LogString(LogLevel_Launching, PsfFtaComName, 0, L"id", idStr);
             if (hasShellVerbsStr != NULL)
-                LogString(PsfFtaComName, 0, L"shellVerbs", hasShellVerbsStr);
+                LogString(LogLevel_Launching, PsfFtaComName, 0, L"shellVerbs", hasShellVerbsStr);
         }
     }
 

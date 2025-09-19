@@ -11,6 +11,7 @@
 // 
 // We must be careful to avoid a recursion of any of these methods accidentally calling back to other intercepted counterparts 
 #pragma once
+#include <psf_logging.h>
 
 #define Intercept_NTDLL 1
 //#define DO_Intercept_NtCreateFile 1
@@ -134,11 +135,11 @@ inline Func GetNtDllInternalFunction(const char* functionName)
 #if DEBUG_NEW_FIXUPS_NTDLL
     if (functionName != NULL)
     {
-        Log(L">>>NtDll Fixup loaded name=%S from 0x%x", functionName, result);
+        Log(LogLevel_DebugIntermediate, L">>>NtDll Fixup loaded name=%S from 0x%x", functionName, result);
     }
     else
     {
-        Log(L">>>NtDll Fixup mistaken loaded name=??? 0x%x", result);
+        Log(LogLevel_Exception, L">>>NtDll Fixup mistaken loaded name=??? 0x%x", result);
     }
 #endif
 #endif

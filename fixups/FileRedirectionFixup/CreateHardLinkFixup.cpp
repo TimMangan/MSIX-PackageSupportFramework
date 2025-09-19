@@ -20,10 +20,9 @@ BOOL __stdcall CreateHardLinkFixup(
     {
         if (guard)
         {
-#if _DEBUG
-            LogString(g_FrfModuleName, CreateHardLinkInstance,L"CopyHardLinkFixup for",    fileName);
-            LogString(g_FrfModuleName, CreateHardLinkInstance,L"CopyHardLinkFixup target", existingFileName);
-#endif
+            LogString(LogLevel_DebugBasic, g_FrfModuleName, CreateHardLinkInstance,L"CopyHardLinkFixup for",    fileName);
+            LogString(LogLevel_DebugBasic, g_FrfModuleName, CreateHardLinkInstance,L"CopyHardLinkFixup target", existingFileName);
+
 
             // NOTE: We need to copy-on-read the existing file since the application may want to open the hard-link file
             //       for write in the future. As for the link file, we currently _don't_ copy-on-read it due to the fact
@@ -41,15 +40,9 @@ BOOL __stdcall CreateHardLinkFixup(
             }
         }
     }
-#if _DEBUG
     // Fall back to assuming no redirection is necessary if exception
-    LOGGED_CATCHHANDLER_MIN(g_FrfModuleName, CreateHardLinkInstance, L"CreateHardlink")
-#else
-    catch (...)
-    {
-        Log(L"[%s%d] CreateHardLink Exception=0x%x", g_FrfModuleName, CreateHardLinkInstance, GetLastError());
-    }
-#endif
+    LOGGED_CATCHHANDLER_MIN(LogLevel_Exception, g_FrfModuleName, CreateHardLinkInstance, L"CreateHardlink")
+
 
     if (fileName != nullptr && existingFileName != nullptr)
     {
@@ -71,9 +64,7 @@ BOOL __stdcall CreateHardLinkFixup(
     {
         retfinal = impl::CreateHardLink(fileName, existingFileName, securityAttributes);
     }
-#if _DEBUG
-    Log(L"[%s%d] CreateHardLinkFixup returns 0x%x", g_FrfModuleName, CreateHardLinkInstance, retfinal);
-#endif
+    Log(LogLevel_DebugBasic, L"[%s%d] CreateHardLinkFixup returns 0x%x", g_FrfModuleName, CreateHardLinkInstance, retfinal);
     return retfinal;
 }
 DECLARE_STRING_FIXUP(impl::CreateHardLink, CreateHardLinkFixup);

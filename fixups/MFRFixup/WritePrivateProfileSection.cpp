@@ -22,7 +22,7 @@
 //#define MOREDEBUG 1
 #endif
 
-#define WRAPPER_WRITEPRIVATEPROFILESECTION(theDestinationFilename, debug ) \
+#define WRAPPER_WRITEPRIVATEPROFILESECTION(theDestinationFilename) \
     { \
         std::wstring LongDestinationFilename = MakeLongPath(theDestinationFilename); \
         if constexpr (psf::is_ansi<CharT>) \
@@ -33,10 +33,7 @@
         { \
             retfinal =  impl::WritePrivateProfileSection(appName, string, LongDestinationFilename.c_str()); \
         } \
-        if (debug) \
-        { \
-            Log(L"[%s%d] WritePrivateProfileSection returns %d on file %s", g_MfrModuleName, dllInstance, retfinal, LongDestinationFilename.c_str()); \
-        } \
+        Log(LogLevel_DebugBasic, L"[%s%d] WritePrivateProfileSection returns %d on file %s", g_MfrModuleName, dllInstance, retfinal, LongDestinationFilename.c_str()); \
         return retfinal; \
     }
 
@@ -65,17 +62,16 @@ BOOL __stdcall WritePrivateProfileSectionFixup(
 
             if (fileName != NULL)
             {
-#if _DEBUG
-                LogString(g_MfrModuleName, dllInstance, L"WritePrivateProfileSectionFixup for fileName", fileName);
-#endif
-                // This get is inheirently a write operation in all cases.
+                LogString(LogLevel_DebugBasic, g_MfrModuleName, dllInstance, L"WritePrivateProfileSectionFixup for fileName", fileName);
+
+                // This get is inherently a write operation in all cases.
                 // We prefer to use the redirecton case, if present.
                 std::wstring wfileName = widen(fileName);
                 wfileName = AdjustSlashes(wfileName, dllInstance);
                 wfileName = AdjustBadUNC(wfileName, dllInstance, L"WritePrivateProfileSectionFixup");
 
                 Cohorts cohorts;
-                DetermineCohorts(wfileName, &cohorts, moredebug, dllInstance, L"WritePrivateProfileSectionFixup");
+                DetermineCohorts(LogLevel_DebugIntermediate, wfileName, &cohorts, dllInstance, L"WritePrivateProfileSectionFixup");
 
                 if (!MFRConfiguration.Ilv_Aware)
                 {
@@ -91,24 +87,24 @@ BOOL __stdcall WritePrivateProfileSectionFixup(
                                 if (cohorts.map.IsAnExclusionToRedirect == mfr::mfr_exclusion_types::not_excluded && PathExists(cohorts.WsRedirected.c_str()))
                                 {
                                     // no special acction, just write to redirected area
-                                    WRAPPER_WRITEPRIVATEPROFILESECTION(cohorts.WsRedirected, debug);
+                                    WRAPPER_WRITEPRIVATEPROFILESECTION(cohorts.WsRedirected);
                                 }
                                 else if (PathExists(cohorts.WsPackage.c_str()))
                                 {
-                                    if (Cow(cohorts.WsPackage, cohorts.WsRedirected, dllInstance, L"WritePrivateProfileSectionFixup"))
+                                    if (Cow(LogLevel_DebugBasic, cohorts.WsPackage, cohorts.WsRedirected, dllInstance, L"WritePrivateProfileSectionFixup"))
                                     {
-                                        WRAPPER_WRITEPRIVATEPROFILESECTION(cohorts.WsRedirected, debug);
+                                        WRAPPER_WRITEPRIVATEPROFILESECTION(cohorts.WsRedirected);
                                     }
                                     else
                                     {
-                                        WRAPPER_WRITEPRIVATEPROFILESECTION(cohorts.WsPackage, debug);
+                                        WRAPPER_WRITEPRIVATEPROFILESECTION(cohorts.WsPackage);
                                     }
                                 }
                                 else
                                 {
                                     // There isn't such a file anywhere.  We want to create the redirection parent folder and let this call create the redirected file.
                                     PreCreateFolders(cohorts.WsRedirected.c_str(), dllInstance, L"WritePrivateProfileSectionFixup");
-                                    WRAPPER_WRITEPRIVATEPROFILESECTION(cohorts.WsRedirected, debug);
+                                    WRAPPER_WRITEPRIVATEPROFILESECTION(cohorts.WsRedirected);
                                 }
                                 break;
                             case mfr::mfr_redirect_flags::prefer_redirection_containerized:
@@ -116,17 +112,17 @@ BOOL __stdcall WritePrivateProfileSectionFixup(
                                 // try the redirected path, then package (COW), then native (possibly via COW).
                                 if (cohorts.map.IsAnExclusionToRedirect == mfr::mfr_exclusion_types::not_excluded && PathExists(cohorts.WsRedirected.c_str()))
                                 {
-                                    WRAPPER_WRITEPRIVATEPROFILESECTION(cohorts.WsRedirected, debug);
+                                    WRAPPER_WRITEPRIVATEPROFILESECTION(cohorts.WsRedirected);
                                 }
                                 else if (PathExists(cohorts.WsPackage.c_str()))
                                 {
-                                    if (Cow(cohorts.WsPackage, cohorts.WsRedirected, dllInstance, L"WritePrivateProfileSectionFixup"))
+                                    if (Cow(LogLevel_DebugBasic, cohorts.WsPackage, cohorts.WsRedirected, dllInstance, L"WritePrivateProfileSectionFixup"))
                                     {
-                                        WRAPPER_WRITEPRIVATEPROFILESECTION(cohorts.WsRedirected, debug);
+                                        WRAPPER_WRITEPRIVATEPROFILESECTION(cohorts.WsRedirected);
                                     }
                                     else
                                     {
-                                        WRAPPER_WRITEPRIVATEPROFILESECTION(cohorts.WsPackage, debug);
+                                        WRAPPER_WRITEPRIVATEPROFILESECTION(cohorts.WsPackage);
                                     }
                                 }
                                 else if (cohorts.NativeIsValidOptionInScenario &&
@@ -137,25 +133,25 @@ BOOL __stdcall WritePrivateProfileSectionFixup(
                                     //       Setting attributes on an external file subject to traditional redirection seems an unlikely scenario that we need COW, but it might make an old app work.
                                     if (cohorts.map.DoesRuntimeMapNativeToVFS)
                                     {
-                                        if (Cow(cohorts.WsNative, cohorts.WsRedirected, dllInstance, L"WritePrivateProfileSectionFixup"))
+                                        if (Cow(LogLevel_DebugBasic, cohorts.WsNative, cohorts.WsRedirected, dllInstance, L"WritePrivateProfileSectionFixup"))
                                         {
-                                            WRAPPER_WRITEPRIVATEPROFILESECTION(cohorts.WsRedirected, debug);
+                                            WRAPPER_WRITEPRIVATEPROFILESECTION(cohorts.WsRedirected);
                                         }
                                         else
                                         {
-                                            WRAPPER_WRITEPRIVATEPROFILESECTION(cohorts.WsNative, debug);
+                                            WRAPPER_WRITEPRIVATEPROFILESECTION(cohorts.WsNative);
                                         }
                                     }
                                     else
                                     {
-                                        WRAPPER_WRITEPRIVATEPROFILESECTION(cohorts.WsNative, debug);
+                                        WRAPPER_WRITEPRIVATEPROFILESECTION(cohorts.WsNative);
                                     }
                                 }
                                 else
                                 {
                                     // There isn't such a file anywhere.  We want to create the redirection parent folder and let this call create the redirected file or write to the registry.
                                     PreCreateFolders(cohorts.WsRedirected.c_str(), dllInstance, L"WritePrivateProfileSectionFixup");
-                                    WRAPPER_WRITEPRIVATEPROFILESECTION(cohorts.WsRedirected, debug);
+                                    WRAPPER_WRITEPRIVATEPROFILESECTION(cohorts.WsRedirected);
                                 }
                                 break;
                             case mfr::mfr_redirect_flags::prefer_redirection_none:
@@ -179,36 +175,36 @@ BOOL __stdcall WritePrivateProfileSectionFixup(
                                 //// try the redirected path, then package with COW, then don't need native and create in redirected.
                                 if (cohorts.map.IsAnExclusionToRedirect == mfr::mfr_exclusion_types::not_excluded && PathExists(cohorts.WsRedirected.c_str()))
                                 {
-                                    WRAPPER_WRITEPRIVATEPROFILESECTION(cohorts.WsRedirected, debug);
+                                    WRAPPER_WRITEPRIVATEPROFILESECTION(cohorts.WsRedirected);
                                 }
                                 else if (PathExists(cohorts.WsPackage.c_str()))
                                 {
-                                    if (Cow(cohorts.WsPackage, cohorts.WsRedirected, dllInstance, L"WritePrivateProfileSectionFixup"))
+                                    if (Cow(LogLevel_DebugBasic, cohorts.WsPackage, cohorts.WsRedirected, dllInstance, L"WritePrivateProfileSectionFixup"))
                                     {
-                                        WRAPPER_WRITEPRIVATEPROFILESECTION(cohorts.WsRedirected, debug);
+                                        WRAPPER_WRITEPRIVATEPROFILESECTION(cohorts.WsRedirected);
                                     }
                                     else
                                     {
-                                        WRAPPER_WRITEPRIVATEPROFILESECTION(cohorts.WsPackage, debug);
+                                        WRAPPER_WRITEPRIVATEPROFILESECTION(cohorts.WsPackage);
                                     }
                                 }
                                 else if (cohorts.NativeIsValidOptionInScenario &&
                                     PathExists(cohorts.WsNative.c_str()))
                                 {
-                                    if (Cow(cohorts.WsNative, cohorts.WsRedirected, dllInstance, L"WritePrivateProfileSectionFixup"))
+                                    if (Cow(LogLevel_DebugBasic, cohorts.WsNative, cohorts.WsRedirected, dllInstance, L"WritePrivateProfileSectionFixup"))
                                     {
-                                        WRAPPER_WRITEPRIVATEPROFILESECTION(cohorts.WsRedirected, debug);
+                                        WRAPPER_WRITEPRIVATEPROFILESECTION(cohorts.WsRedirected);
                                     }
                                     else
                                     {
-                                        WRAPPER_WRITEPRIVATEPROFILESECTION(cohorts.WsNative, debug);
+                                        WRAPPER_WRITEPRIVATEPROFILESECTION(cohorts.WsNative);
                                     }
                                 }
                                 else
                                 {
                                     // There isn't such a file anywhere.  We want to create the redirection parent folder and let this call create the redirected file or write to the registry.
                                     PreCreateFolders(cohorts.WsRedirected.c_str(), dllInstance, L"WritePrivateProfileSectionFixup");
-                                    WRAPPER_WRITEPRIVATEPROFILESECTION(cohorts.WsRedirected, debug);
+                                    WRAPPER_WRITEPRIVATEPROFILESECTION(cohorts.WsRedirected);
                                 }
                                 break;
                             case mfr::mfr_redirect_flags::prefer_redirection_none:
@@ -228,24 +224,24 @@ BOOL __stdcall WritePrivateProfileSectionFixup(
                                 // try the redirected path, then package path (COW), then create redirected
                                 if (cohorts.map.IsAnExclusionToRedirect == mfr::mfr_exclusion_types::not_excluded && PathExists(cohorts.WsRedirected.c_str()))
                                 {
-                                    WRAPPER_WRITEPRIVATEPROFILESECTION(cohorts.WsRedirected, debug);
+                                    WRAPPER_WRITEPRIVATEPROFILESECTION(cohorts.WsRedirected);
                                 }
                                 else if (PathExists(cohorts.WsPackage.c_str()))
                                 {
-                                    if (Cow(cohorts.WsPackage, cohorts.WsRedirected, dllInstance, L"WritePrivateProfileSectionFixup"))
+                                    if (Cow(LogLevel_DebugBasic, cohorts.WsPackage, cohorts.WsRedirected, dllInstance, L"WritePrivateProfileSectionFixup"))
                                     {
-                                        WRAPPER_WRITEPRIVATEPROFILESECTION(cohorts.WsRedirected, debug);
+                                        WRAPPER_WRITEPRIVATEPROFILESECTION(cohorts.WsRedirected);
                                     }
                                     else
                                     {
-                                        WRAPPER_WRITEPRIVATEPROFILESECTION(cohorts.WsPackage, debug);
+                                        WRAPPER_WRITEPRIVATEPROFILESECTION(cohorts.WsPackage);
                                     }
                                 }
                                 else
                                 {
                                     // There isn't such a file anywhere.  We want to create the redirection parent folder and let this call create the redirected file or write to the registry.
                                     PreCreateFolders(cohorts.WsRedirected.c_str(), dllInstance, L"WritePrivateProfileSectionFixup");
-                                    WRAPPER_WRITEPRIVATEPROFILESECTION(cohorts.WsRedirected, debug);
+                                    WRAPPER_WRITEPRIVATEPROFILESECTION(cohorts.WsRedirected);
                                 }
                                 break;
                             case mfr::mfr_redirect_flags::prefer_redirection_containerized:
@@ -253,36 +249,36 @@ BOOL __stdcall WritePrivateProfileSectionFixup(
                                 // try the redirected path, then package (COW), then native (COW), then just create new in redirected.
                                 if (cohorts.map.IsAnExclusionToRedirect == mfr::mfr_exclusion_types::not_excluded && PathExists(cohorts.WsRedirected.c_str()))
                                 {
-                                    WRAPPER_WRITEPRIVATEPROFILESECTION(cohorts.WsRedirected, debug);
+                                    WRAPPER_WRITEPRIVATEPROFILESECTION(cohorts.WsRedirected);
                                 }
                                 else if (PathExists(cohorts.WsPackage.c_str()))
                                 {
-                                    if (Cow(cohorts.WsPackage, cohorts.WsRedirected, dllInstance, L"WritePrivateProfileSectionFixup"))
+                                    if (Cow(LogLevel_DebugBasic, cohorts.WsPackage, cohorts.WsRedirected, dllInstance, L"WritePrivateProfileSectionFixup"))
                                     {
-                                        WRAPPER_WRITEPRIVATEPROFILESECTION(cohorts.WsRedirected, debug);
+                                        WRAPPER_WRITEPRIVATEPROFILESECTION(cohorts.WsRedirected);
                                     }
                                     else
                                     {
-                                        WRAPPER_WRITEPRIVATEPROFILESECTION(cohorts.WsPackage, debug);
+                                        WRAPPER_WRITEPRIVATEPROFILESECTION(cohorts.WsPackage);
                                     }
                                 }
                                 else if (cohorts.NativeIsValidOptionInScenario &&
                                     PathExists(cohorts.WsNative.c_str()))
                                 {
-                                    if (Cow(cohorts.WsNative, cohorts.WsRedirected, dllInstance, L"WritePrivateProfileSectionFixup"))
+                                    if (Cow(LogLevel_DebugBasic, cohorts.WsNative, cohorts.WsRedirected, dllInstance, L"WritePrivateProfileSectionFixup"))
                                     {
-                                        WRAPPER_WRITEPRIVATEPROFILESECTION(cohorts.WsRedirected, debug);
+                                        WRAPPER_WRITEPRIVATEPROFILESECTION(cohorts.WsRedirected);
                                     }
                                     else
                                     {
-                                        WRAPPER_WRITEPRIVATEPROFILESECTION(cohorts.WsNative, debug);
+                                        WRAPPER_WRITEPRIVATEPROFILESECTION(cohorts.WsNative);
                                     }
                                 }
                                 else
                                 {
                                     // There isn't such a file anywhere.  We want to create the redirection parent folder and let this call create the redirected file or write to the registry.
                                     PreCreateFolders(cohorts.WsRedirected.c_str(), dllInstance, L"WritePrivateProfileSectionFixup");
-                                    WRAPPER_WRITEPRIVATEPROFILESECTION(cohorts.WsRedirected, debug);
+                                    WRAPPER_WRITEPRIVATEPROFILESECTION(cohorts.WsRedirected);
                                 }
                                 break;
                             case mfr::mfr_redirect_flags::prefer_redirection_none:
@@ -306,36 +302,36 @@ BOOL __stdcall WritePrivateProfileSectionFixup(
                                 // try the redirected path, then package (COW), then possibly native (COW), then create new in redirected.
                                 if (cohorts.map.IsAnExclusionToRedirect == mfr::mfr_exclusion_types::not_excluded && PathExists(cohorts.WsRedirected.c_str()))
                                 {
-                                    WRAPPER_WRITEPRIVATEPROFILESECTION(cohorts.WsRedirected, debug);
+                                    WRAPPER_WRITEPRIVATEPROFILESECTION(cohorts.WsRedirected);
                                 }
                                 else if (PathExists(cohorts.WsPackage.c_str()))
                                 {
-                                    if (Cow(cohorts.WsPackage, cohorts.WsRedirected, dllInstance, L"WritePrivateProfileSectionFixup"))
+                                    if (Cow(LogLevel_DebugBasic, cohorts.WsPackage, cohorts.WsRedirected, dllInstance, L"WritePrivateProfileSectionFixup"))
                                     {
-                                        WRAPPER_WRITEPRIVATEPROFILESECTION(cohorts.WsRedirected, debug);
+                                        WRAPPER_WRITEPRIVATEPROFILESECTION(cohorts.WsRedirected);
                                     }
                                     else
                                     {
-                                        WRAPPER_WRITEPRIVATEPROFILESECTION(cohorts.WsPackage, debug);
+                                        WRAPPER_WRITEPRIVATEPROFILESECTION(cohorts.WsPackage);
                                     }
                                 }
                                 else if (cohorts.NativeIsValidOptionInScenario &&
                                     PathExists(cohorts.WsNative.c_str()))
                                 {
-                                    if (Cow(cohorts.WsNative, cohorts.WsRedirected, dllInstance, L"WritePrivateProfileSectionFixup"))
+                                    if (Cow(LogLevel_DebugBasic, cohorts.WsNative, cohorts.WsRedirected, dllInstance, L"WritePrivateProfileSectionFixup"))
                                     {
-                                        WRAPPER_WRITEPRIVATEPROFILESECTION(cohorts.WsRedirected, debug);
+                                        WRAPPER_WRITEPRIVATEPROFILESECTION(cohorts.WsRedirected);
                                     }
                                     else
                                     {
-                                        WRAPPER_WRITEPRIVATEPROFILESECTION(cohorts.WsNative, debug);
+                                        WRAPPER_WRITEPRIVATEPROFILESECTION(cohorts.WsNative);
                                     }
                                 }
                                 else
                                 {
                                     // There isn't such a file anywhere.  We want to create the redirection parent folder and let this call create the redirected file or write to the registry.
                                     PreCreateFolders(cohorts.WsRedirected.c_str(), dllInstance, L"WritePrivateProfileSectionFixup");
-                                    WRAPPER_WRITEPRIVATEPROFILESECTION(cohorts.WsRedirected, debug);
+                                    WRAPPER_WRITEPRIVATEPROFILESECTION(cohorts.WsRedirected);
                                 }
                                 break;
                             case mfr::mfr_redirect_flags::prefer_redirection_none:
@@ -362,36 +358,26 @@ BOOL __stdcall WritePrivateProfileSectionFixup(
                 else
                 {
                     // ILV
-                    std::wstring UseFile = DetermineIlvPathForWriteOperations(cohorts, dllInstance, moredebug);
+                    std::wstring UseFile = DetermineIlvPathForWriteOperations(LogLevel_DebugIntermediate, cohorts, dllInstance);
                     // In a redirect to local scenario, we are responsible for pre-creating the local parent folders
                     // if-and-only-if they are present in the package.
-                    PreCreateLocalFoldersIfNeededForWrite(UseFile, cohorts.WsPackage, dllInstance, debug, L"WritePrivateProfileSectionFixup");
+                    PreCreateLocalFoldersIfNeededForWrite(LogLevel_DebugBasic, UseFile, cohorts.WsPackage, dllInstance, L"WritePrivateProfileSectionFixup");
                     // In a redirect to local scenario, if the file is not present locally, but is in the package, we are responsible to copy it there first.
-                    CowLocalFoldersIfNeededForWrite(UseFile, cohorts.WsPackage, dllInstance, debug, L"WritePrivateProfileSectionFixup");
+                    CowLocalFoldersIfNeededForWrite(LogLevel_DebugBasic, UseFile, cohorts.WsPackage, dllInstance, L"WritePrivateProfileSectionFixup");
                     // In a write to package scenario, folders may be needed.
-                    PreCreatePackageFoldersIfIlvNeededForWrite(UseFile, dllInstance, debug, L"WritePrivateProfileSectionFixup");
+                    PreCreatePackageFoldersIfIlvNeededForWrite(LogLevel_DebugBasic, UseFile, dllInstance, L"WritePrivateProfileSectionFixup");
 
-                    WRAPPER_WRITEPRIVATEPROFILESECTION(UseFile, debug);
+                    WRAPPER_WRITEPRIVATEPROFILESECTION(UseFile);
                 }
             }
             else
             {
-#if _DEBUG
-                Log(L"[%s%d] WritePrivateProfileSectionFixup: null fileName, don't redirect", g_MfrModuleName, dllInstance);
-#endif
+                Log(LogLevel_DebugBasic, L"[%s%d] WritePrivateProfileSectionFixup: null fileName, don't redirect", g_MfrModuleName, dllInstance);
             }
         }
     }
-#if _DEBUG
     // Fall back to assuming no redirection is necessary if exception
-    LOGGED_CATCHHANDLER_MIN(g_MfrModuleName, dllInstance, L"WritePrivateProfileSectionFixup")
-#else
-    catch (...)
-    {
-        Log(L"[%s%d] WritePrivateProfileSectionFixup: Exception=0x%x", g_MfrModuleName, dllInstance, GetLastError());
-    }
-#endif 
-
+    LOGGED_CATCHHANDLER_MIN(LogLevel_DebugBasic, g_MfrModuleName, dllInstance, L"WritePrivateProfileSectionFixup")
 
     return impl::WritePrivateProfileSection(appName, string, fileName);
 }

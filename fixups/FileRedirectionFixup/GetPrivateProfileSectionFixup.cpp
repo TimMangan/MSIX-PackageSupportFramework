@@ -23,9 +23,7 @@ DWORD __stdcall GetPrivateProfileSectionFixup(
         {
             if (fileName != NULL)
             {
-#if _DEBUG
-                LogString(g_FrfModuleName, GetPrivateProfileSectionInstance,L"GetPrivateProfileSectionFixup for fileName", widen(fileName, CP_ACP).c_str());
-#endif
+                LogString(LogLevel_DebugBasic, g_FrfModuleName, GetPrivateProfileSectionInstance,L"GetPrivateProfileSectionFixup for fileName", widen(fileName, CP_ACP).c_str());
                 if (!IsUnderUserAppDataLocalPackages(fileName))
                 {
                     path_redirect_info  pri = ShouldRedirectV2(fileName, redirect_flags::copy_on_read, GetPrivateProfileSectionInstance);
@@ -51,28 +49,18 @@ DWORD __stdcall GetPrivateProfileSectionFixup(
                 }
                 else
                 {
-#if _DEBUG
-                    Log(L"[%s%d]  Under LocalAppData\\Packages, don't redirect", g_FrfModuleName, GetPrivateProfileSectionInstance);
-#endif
+                    Log(LogLevel_DebugBasic, L"[%s%d]  Under LocalAppData\\Packages, don't redirect", g_FrfModuleName, GetPrivateProfileSectionInstance);
                 }
             }
             else
             {
-#if _DEBUG
-                Log(L"[%s%d]  null fileName, don't redirect as may be registry based or default.", g_FrfModuleName, GetPrivateProfileSectionInstance);
-#endif
+                Log(LogLevel_DebugBasic, L"[%s%d]  null fileName, don't redirect as may be registry based or default.", g_FrfModuleName, GetPrivateProfileSectionInstance);
             }
         }
     }
-#if _DEBUG
     // Fall back to assuming no redirection is necessary if exception
-    LOGGED_CATCHHANDLER_MIN(g_FrfModuleName, GetPrivateProfileSectionInstance, L"GetPrivateProfileSection")
-#else
-    catch (...)
-    {
-        Log(L"[%s%d] GetPrivateProfileSection Exception=0x%x", g_FrfModuleName, GetPrivateProfileSectionInstance, GetLastError());
-    }
-#endif
+    LOGGED_CATCHHANDLER_MIN(LogLevel_Exception, g_FrfModuleName, GetPrivateProfileSectionInstance, L"GetPrivateProfileSection")
+#
 
 
     return impl::GetPrivateProfileSection(appName, string, stringLength, fileName);

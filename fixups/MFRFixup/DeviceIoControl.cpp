@@ -50,7 +50,6 @@ BOOL __stdcall DeviceIoControlFixup(
     {
         if (guard)
         {
-#if _DEBUG
             std::wstring wsCode = L"";
             switch (dwIoControlCode)
             {
@@ -78,42 +77,41 @@ BOOL __stdcall DeviceIoControlFixup(
                 wsCode = L"Unknown IOCTL Code";
                 break;
             }
-            Log(L"[%s%d] DeviceIoControlFixup: Handle=0x%x IoControlCode=0x%x=%s", g_MfrModuleName, dllInstance, hDevice, dwIoControlCode,wsCode.c_str());
-            Log(L"[%s%d] DeviceIoControlFixup: InBuffer=0x%x Size=%d OutBuffer=0x%x Size=%d",
+            Log(LogLevel_DebugBasic, L"[%s%d] DeviceIoControlFixup: Handle=0x%x IoControlCode=0x%x=%s", g_MfrModuleName, dllInstance, hDevice, dwIoControlCode,wsCode.c_str());
+            Log(LogLevel_DebugBasic, "[%s%d] DeviceIoControlFixup: InBuffer=0x%x Size=%d OutBuffer=0x%x Size=%d",
                 g_MfrModuleName, dllInstance, lpInBuffer, nInBufferSize, lpOutBuffer, nOutBufferSize);
-#endif
+
             ;  // normally you will return here after calling the native function...
         }
     }
     catch (...)
     {
-        Log(L"[%s%d] DeviceIoControlFixup: Exception=0x%x", g_MfrModuleName, dllInstance, GetLastError());
+        Log(LogLevel_Exception, L"[%s%d] DeviceIoControlFixup: Exception=0x%x", g_MfrModuleName, dllInstance, GetLastError());
     }
     BOOL bVal = impl::DeviceIoControl(hDevice, dwIoControlCode, lpInBuffer, nInBufferSize, lpOutBuffer, nOutBufferSize, lpBytesReturned, lpOverlapped);
-#if _DEBUG
+
     if (bVal)
     {
         try
         {
             if (lpInBuffer != NULL && nInBufferSize > 0)
             {
-                Loghexdump(lpInBuffer, nInBufferSize, g_MfrModuleName, dllInstance);
-                //std::string lpInBufferStr(reinterpret_cast<const char*>(lpInBuffer), nInBufferSize);
-                //LogString(g_MfrModuleName, dllInstance, "DeviceIoControlFixup: Input Buffer", lpInBufferStr.c_str());
+                Loghexdump(LogLevel_DebugBasic, lpInBuffer, nInBufferSize, g_MfrModuleName, dllInstance);
+                std::string lpInBufferStr(reinterpret_cast<const char*>(lpInBuffer), nInBufferSize);
+                LogString(LogLevel_DebugMaximum,g_MfrModuleName, dllInstance, "DeviceIoControlFixup: Input Buffer", lpInBufferStr.c_str());
             }
             if (lpOutBuffer != NULL && *lpBytesReturned > 0)
             {
-                Loghexdump(lpOutBuffer, *lpBytesReturned, g_MfrModuleName, dllInstance);
-                //std::string lpOutBufferStr(reinterpret_cast<const char*>(lpOutBuffer), *lpBytesReturned);
-                //LogString(g_MfrModuleName, dllInstance, "DeviceIoControlFixup: Output Buffer", lpOutBufferStr.c_str());
+                Loghexdump(LogLevel_DebugBasic, lpOutBuffer, *lpBytesReturned, g_MfrModuleName, dllInstance);
+                std::string lpOutBufferStr(reinterpret_cast<const char*>(lpOutBuffer), *lpBytesReturned);
+                LogString(LogLevel_DebugMaximum,g_MfrModuleName, dllInstance, "DeviceIoControlFixup: Output Buffer", lpOutBufferStr.c_str());
             }
         }
         catch (...)
         {
         }
     }
-    Log(L"[%s%d] DeviceIoControlFixup: returns BOOL %d with error=0x%x", g_MfrModuleName, dllInstance, bVal, GetLastError());
-#endif
+    Log(LogLevel_DebugBasic, L"[%s%d] DeviceIoControlFixup: returns BOOL %d with error=0x%x", g_MfrModuleName, dllInstance, bVal, GetLastError());
     return bVal;
 }
 DECLARE_FIXUP(impl::DeviceIoControl, DeviceIoControlFixup);

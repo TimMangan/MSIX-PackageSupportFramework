@@ -6,9 +6,6 @@
 
 // Microsoft Documentation on this API: https://docs.microsoft.com/en-us/windows/win32/api/fileapi/nf-fileapi-deletefilea
 
-#if _DEBUG
-//#define MOREDEBUG 1
-#endif
 
 #include <errno.h>
 #include "FunctionImplementations.h"
@@ -20,20 +17,18 @@
 #include "DetermineIlvPaths.h"
 
 
-BOOL  WRAPPER_DELETEFILE(std::wstring theDeletingFile, DWORD dllInstance, bool debug)
+BOOL  WRAPPER_DELETEFILE(Json_Debug_Levels debugRequestLevel, std::wstring theDeletingFile, DWORD dllInstance)
 {
     std::wstring LongDeletingFile = MakeLongPath(theDeletingFile);
     BOOL retfinal = impl::DeleteFileW(LongDeletingFile.c_str());
-    if (debug)
+    
+    if (retfinal == 0)
     {
-        if (retfinal == 0)
-        {
-            Log(L"[%s%d] DeleteFile returns result FAILURE 0x%x on file '%s'", g_MfrModuleName, dllInstance, GetLastError(), LongDeletingFile.c_str());
-        }
-        else
-        {
-            Log(L"[%s%d] DeleteFile returns result SUCCESS 0x%x on file '%s'", g_MfrModuleName, dllInstance, retfinal, LongDeletingFile.c_str());
-        }
+        Log(debugRequestLevel, L"[%s%d] DeleteFile returns result FAILURE 0x%x on file '%s'", g_MfrModuleName, dllInstance, GetLastError(), LongDeletingFile.c_str());
+    }
+    else
+    {
+        Log(debugRequestLevel, L"[%s%d] DeleteFile returns result SUCCESS 0x%x on file '%s'", g_MfrModuleName, dllInstance, retfinal, LongDeletingFile.c_str());
     }
     return retfinal;
 }
@@ -43,14 +38,7 @@ template <typename CharT>
 BOOL __stdcall DeleteFileFixup(_In_ const CharT* pathName) noexcept
 {
     DWORD dllInstance = ++g_InterceptInstance;
-    bool debug = false;
-#if _DEBUG
-    debug = true;
-#endif
-    bool moredebug = false;
-#if MOREDEBUG
-    moredebug = true;
-#endif
+
 
     auto guard = g_reentrancyGuard.enter();
     BOOL retfinal;
@@ -61,18 +49,17 @@ BOOL __stdcall DeleteFileFixup(_In_ const CharT* pathName) noexcept
             std::wstring wPathName = widen(pathName);
             wPathName = AdjustSlashes(wPathName, dllInstance);
 
-#if _DEBUG
-            LogString(g_MfrModuleName, dllInstance, L"DeleteFileFixup for pathName", wPathName.c_str());
-#endif
+            LogString(LogLevel_DebugBasic, g_MfrModuleName, dllInstance, L"DeleteFileFixup for pathName", wPathName.c_str());
+
 
             wPathName = AdjustBadUNC(wPathName, dllInstance, L"DeleteFileFixup");
 
             Cohorts cohorts;
-            DetermineCohorts(wPathName, &cohorts, moredebug, dllInstance, L"DeleteFileFixup");
+            DetermineCohorts(LogLevel_DebugIntermediate, wPathName, &cohorts, dllInstance, L"DeleteFileFixup");
 
             if (!MFRConfiguration.Ilv_Aware)
             {
-                // This get is inheirently a write operation in all cases.
+                // This get is inherently a write operation in all cases.
                 // There is no need to COW, just create the redirected folder, but may need to create parent folders first.
 
                 switch (cohorts.file_mfr.Request_MfrPathType)
@@ -86,15 +73,13 @@ BOOL __stdcall DeleteFileFixup(_In_ const CharT* pathName) noexcept
                             PathExists(cohorts.WsRedirected.c_str()))
                         {
                             // Still do this to set attributes
-                            retfinal = WRAPPER_DELETEFILE(cohorts.WsRedirected, dllInstance, debug);
+                            retfinal = WRAPPER_DELETEFILE(LogLevel_DebugBasic, cohorts.WsRedirected, dllInstance);
 #if IMPROVE_RETURN_ACCURACY
                             if (PathExists(cohorts.WsPackage.c_str()))
                             {
                                 retfinal = FALSE;
                                 SetLastError(ERROR_ACCESS_DENIED);
-#if _DEBUG
-                                Log("[%s%d] DeleteFileFixup: Resetting return code to ERROR_ACCESS_DENIED.", g_MfrModuleName, dllInstance);
-#endif
+                                Log(LogLevel_DebugBasic, "[%s%d] DeleteFileFixup: Resetting return code to ERROR_ACCESS_DENIED.", g_MfrModuleName, dllInstance);
                             }
 #endif
                             return retfinal;
@@ -103,9 +88,7 @@ BOOL __stdcall DeleteFileFixup(_In_ const CharT* pathName) noexcept
                         {
                             retfinal = FALSE;
                             SetLastError(ERROR_ACCESS_DENIED);
-#if _DEBUG
-                            Log("[%s%d] DeleteFileFixup: Setting return code to ERROR_ACCESS_DENIED.", g_MfrModuleName, dllInstance);
-#endif
+                            Log(LogLevel_DebugBasic, "[%s%d] DeleteFileFixup: Setting return code to ERROR_ACCESS_DENIED.", g_MfrModuleName, dllInstance);
                             return retfinal;
                         }
                         else
@@ -113,9 +96,7 @@ BOOL __stdcall DeleteFileFixup(_In_ const CharT* pathName) noexcept
                             // There isn't such a file anywhere. 
                             retfinal = FALSE;
                             SetLastError(ERROR_FILE_NOT_FOUND);  // not important if PATH or FILE not found.
-#if _DEBUG
-                            Log("[%s%d] DeleteFileFixup: Setting return code to ERROR_FILE_NOT_FOUND.", g_MfrModuleName, dllInstance);
-#endif
+                            Log(LogLevel_DebugBasic, "[%s%d] DeleteFileFixup: Setting return code to ERROR_FILE_NOT_FOUND.", g_MfrModuleName, dllInstance);
                             return retfinal;
                         }
                     }
@@ -127,28 +108,26 @@ BOOL __stdcall DeleteFileFixup(_In_ const CharT* pathName) noexcept
                         if (cohorts.map.IsAnExclusionToRedirect == mfr::mfr_exclusion_types::not_excluded && 
                             PathExists(cohorts.WsRedirected.c_str()))
                         {
-                            retfinal = WRAPPER_DELETEFILE(cohorts.WsRedirected, dllInstance, debug);
+                            retfinal = WRAPPER_DELETEFILE(LogLevel_DebugBasic, cohorts.WsRedirected, dllInstance);
                             return retfinal;
                         }
                         else if (PathExists(cohorts.WsPackage.c_str()))
                         {
                             retfinal = FALSE;
                             SetLastError(ERROR_ACCESS_DENIED);
-#if _DEBUG
-                            Log("[%s%d] DeleteFileFixup: Setting return code to ERROR_ACCESS_DENIED.", g_MfrModuleName, dllInstance);
-#endif
+                            Log(LogLevel_DebugBasic, "[%s%d] DeleteFileFixup: Setting return code to ERROR_ACCESS_DENIED.", g_MfrModuleName, dllInstance);
                             return retfinal;
                         }
                         else if (cohorts.NativeIsValidOptionInScenario &&
                             PathExists(cohorts.WsNative.c_str()))
                         {
-                            retfinal = WRAPPER_DELETEFILE(cohorts.WsNative, dllInstance, debug);
+                            retfinal = WRAPPER_DELETEFILE(LogLevel_DebugBasic, cohorts.WsNative, dllInstance);
                             return retfinal;
                         }
                         else
                         {
                             // There isn't such a file anywhere.
-                            return WRAPPER_DELETEFILE(cohorts.WsRequested, dllInstance, debug);
+                            return WRAPPER_DELETEFILE(LogLevel_DebugBasic, cohorts.WsRequested, dllInstance);
                         }
                     }
                     break;
@@ -159,16 +138,14 @@ BOOL __stdcall DeleteFileFixup(_In_ const CharT* pathName) noexcept
                         if (cohorts.map.IsAnExclusionToRedirect == mfr::mfr_exclusion_types::not_excluded && 
                             PathExists(cohorts.WsRedirected.c_str()))
                         {
-                            retfinal = WRAPPER_DELETEFILE(cohorts.WsRedirected, dllInstance, debug);
+                            retfinal = WRAPPER_DELETEFILE(LogLevel_DebugBasic, cohorts.WsRedirected, dllInstance);
                             return retfinal;
                         }
                         else if (PathExists(cohorts.WsPackage.c_str()))
                         {
                             retfinal = FALSE;
                             SetLastError(ERROR_ACCESS_DENIED);
-#if _DEBUG
-                            Log("[%s%d] DeleteFileFixup: Ssetting return code to ERROR_ACCESS_DENIED.", g_MfrModuleName, dllInstance);
-#endif
+                            Log(LogLevel_DebugBasic, "[%s%d] DeleteFileFixup: Ssetting return code to ERROR_ACCESS_DENIED.", g_MfrModuleName, dllInstance);
                             return retfinal;
                         }
                         else
@@ -176,9 +153,7 @@ BOOL __stdcall DeleteFileFixup(_In_ const CharT* pathName) noexcept
                             // There isn't such a file anywhere.
                             retfinal = false;
                             SetLastError(ERROR_FILE_NOT_FOUND); // doesn't matter if path or file not found.
-#if _DEBUG
-                            Log("[%s%d] DeleteFileFixup: Ssetting return code to ERROR_FILE_NOT_FOUND.", g_MfrModuleName, dllInstance);
-#endif
+                            Log(LogLevel_DebugBasic, "[%s%d] DeleteFileFixup: Ssetting return code to ERROR_FILE_NOT_FOUND.", g_MfrModuleName, dllInstance);
                             return retfinal;
                         }
                     }
@@ -191,16 +166,14 @@ BOOL __stdcall DeleteFileFixup(_In_ const CharT* pathName) noexcept
                         if (cohorts.map.IsAnExclusionToRedirect == mfr::mfr_exclusion_types::not_excluded && 
                             PathExists(cohorts.WsRedirected.c_str()))
                         {
-                            retfinal = WRAPPER_DELETEFILE(cohorts.WsRedirected, dllInstance, debug);
+                            retfinal = WRAPPER_DELETEFILE(LogLevel_DebugBasic, cohorts.WsRedirected, dllInstance);
                             return retfinal;
                         }
                         else if (PathExists(cohorts.WsPackage.c_str()))
                         {
                             retfinal = false;
                             SetLastError(ERROR_ACCESS_DENIED);
-#if _DEBUG
-                            Log("[%s%d] DeleteFileFixup: Setting return code to ERROR_ACCESS_DENIED.", g_MfrModuleName, dllInstance);
-#endif
+                            Log(LogLevel_DebugBasic, "[%s%d] DeleteFileFixup: Setting return code to ERROR_ACCESS_DENIED.", g_MfrModuleName, dllInstance);
                             return retfinal;
                         }
                         else
@@ -208,9 +181,7 @@ BOOL __stdcall DeleteFileFixup(_In_ const CharT* pathName) noexcept
                             // There isn't such a file anywhere.  
                             retfinal = false;
                             SetLastError(ERROR_FILE_NOT_FOUND); // not important if file or path
-#if _DEBUG
-                            Log("[%s%d] DeleteFileFixup: Setting return code to ERROR_FILE_NOT_FOUND.", g_MfrModuleName, dllInstance);
-#endif
+                            Log(LogLevel_DebugBasic, "[%s%d] DeleteFileFixup: Setting return code to ERROR_FILE_NOT_FOUND.", g_MfrModuleName, dllInstance);
                             return retfinal;
                         }
                     }
@@ -222,31 +193,27 @@ BOOL __stdcall DeleteFileFixup(_In_ const CharT* pathName) noexcept
                         if (cohorts.map.IsAnExclusionToRedirect == mfr::mfr_exclusion_types::not_excluded && 
                             PathExists(cohorts.WsRedirected.c_str()))
                         {
-                            retfinal = WRAPPER_DELETEFILE(cohorts.WsRedirected, dllInstance, debug);
+                            retfinal = WRAPPER_DELETEFILE(LogLevel_DebugBasic, cohorts.WsRedirected, dllInstance);
                             return retfinal;
                         }
                         else if (PathExists(cohorts.WsPackage.c_str()))
                         {
                             retfinal = FALSE;
                             SetLastError(ERROR_ACCESS_DENIED);
-#if _DEBUG
-                            Log("[%s%d] DeleteFileFixup: Setting return code to ERROR_ACCESS_DENIED.", g_MfrModuleName, dllInstance);
-#endif
+                            Log(LogLevel_DebugBasic, "[%s%d] DeleteFileFixup: Setting return code to ERROR_ACCESS_DENIED.", g_MfrModuleName, dllInstance);
                             return retfinal;
                         }
                         else if (cohorts.NativeIsValidOptionInScenario &&
                             PathExists(cohorts.WsNative.c_str()))
                         {
-                            retfinal = WRAPPER_DELETEFILE(cohorts.WsNative, dllInstance, debug);
+                            retfinal = WRAPPER_DELETEFILE(LogLevel_DebugBasic, cohorts.WsNative, dllInstance);
                             return retfinal;
                         }
                         else
                         {
                             retfinal = FALSE;
                             SetLastError(ERROR_FILE_NOT_FOUND);
-#if _DEBUG
-                            Log("[%s%d] DeleteFileFixup: Setting return code to ERROR_FILE_NOT_FOUND.", g_MfrModuleName, dllInstance);
-#endif
+                            Log(LogLevel_DebugBasic, "[%s%d] DeleteFileFixup: Setting return code to ERROR_FILE_NOT_FOUND.", g_MfrModuleName, dllInstance);
                             return retfinal;
                         }
                     }
@@ -257,22 +224,20 @@ BOOL __stdcall DeleteFileFixup(_In_ const CharT* pathName) noexcept
                         if (cohorts.map.IsAnExclusionToRedirect == mfr::mfr_exclusion_types::not_excluded && 
                             PathExists(cohorts.WsRedirected.c_str()))
                         {
-                            retfinal = WRAPPER_DELETEFILE(cohorts.WsRedirected, dllInstance, debug);
+                            retfinal = WRAPPER_DELETEFILE(LogLevel_DebugBasic, cohorts.WsRedirected, dllInstance);
                             return retfinal;
                         }
                         else if (PathExists(cohorts.WsPackage.c_str()))
                         {
                             retfinal = FALSE;
                             SetLastError(ERROR_ACCESS_DENIED);
-#if _DEBUG
-                            Log("[%s%d] DeleteFileFixup: Setting return code to ERROR_ACCESS_DENIED.", g_MfrModuleName, dllInstance);
-#endif
+                            Log(LogLevel_DebugBasic, "[%s%d] DeleteFileFixup: Setting return code to ERROR_ACCESS_DENIED.", g_MfrModuleName, dllInstance);
                             return retfinal;
                         }
                         else if (cohorts.NativeIsValidOptionInScenario &&
                             PathExists(cohorts.WsNative.c_str()))
                         {
-                            retfinal = WRAPPER_DELETEFILE(cohorts.WsNative, dllInstance, debug);
+                            retfinal = WRAPPER_DELETEFILE(LogLevel_DebugBasic, cohorts.WsNative, dllInstance);
                             return retfinal;
                         }
                         else
@@ -280,9 +245,7 @@ BOOL __stdcall DeleteFileFixup(_In_ const CharT* pathName) noexcept
                             // There isn't such a file anywhere.
                             retfinal = FALSE;
                             SetLastError(ERROR_FILE_NOT_FOUND);
-#if _DEBUG
-                            Log("[%s%d] DeleteFileFixup: Setting return code to ERROR_FILE_NOT_FOUND.", g_MfrModuleName, dllInstance);
-#endif
+                            Log(LogLevel_DebugBasic, "[%s%d] DeleteFileFixup: Setting return code to ERROR_FILE_NOT_FOUND.", g_MfrModuleName, dllInstance);
                             return retfinal;
                         }
                     }
@@ -303,23 +266,17 @@ BOOL __stdcall DeleteFileFixup(_In_ const CharT* pathName) noexcept
             else
             {
                 // ILV prefers to delete in package when present
-                std::wstring usePath = DetermineIlvPathForWriteOperations( cohorts, dllInstance, moredebug);
+                std::wstring usePath = DetermineIlvPathForWriteOperations(LogLevel_DebugIntermediate, cohorts, dllInstance);
                 // Local redirection prep not required for delete
 
-                retfinal = WRAPPER_DELETEFILE(usePath, dllInstance, debug);
+                retfinal = WRAPPER_DELETEFILE(LogLevel_DebugBasic, usePath, dllInstance);
                 return retfinal;
             }
         }
     }
-#if _DEBUG
     // Fall back to assuming no redirection is necessary if exception
-    LOGGED_CATCHHANDLER_MIN(g_MfrModuleName, dllInstance, L"DeleteFile")
-#else
-    catch (...)
-    {
-        Log(L"[%s%d] DeleteFileFixup Exception=0x%x", g_MfrModuleName, dllInstance, GetLastError());
-    }
-#endif
+    LOGGED_CATCHHANDLER_MIN(LogLevel_DebugBasic, g_MfrModuleName, dllInstance, L"DeleteFile")
+
     if (pathName != nullptr)
     {
         std::wstring LongDeletingFile = MakeLongPath(widen(pathName));
@@ -330,9 +287,7 @@ BOOL __stdcall DeleteFileFixup(_In_ const CharT* pathName) noexcept
         SetLastError(ERROR_INVALID_PARAMETER);
         retfinal = 0; //  impl::DeleteFile(pathName);
     }
-#if _DEBUG
-    Log(L"[%s%d] DeleteFileFixup returns 0x%x", g_MfrModuleName, dllInstance, retfinal);
-#endif
+    Log(LogLevel_DebugBasic, L"[%s%d] DeleteFileFixup returns 0x%x", g_MfrModuleName, dllInstance, retfinal);
     return retfinal;
 }
 DECLARE_STRING_FIXUP(impl::DeleteFile, DeleteFileFixup);

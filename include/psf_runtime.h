@@ -52,11 +52,14 @@ PSFAPI const psf::json_value* __stdcall PSFQueryConfig(const wchar_t* executable
 PSFAPI const psf::json_object* __stdcall PSFQueryExeConfig(const wchar_t* executable) noexcept;
 PSFAPI const psf::json_object* __stdcall PSFQueryCurrentExeConfig() noexcept;
 PSFAPI const psf::json_value* __stdcall PSFQueryDllConfig(const wchar_t* dll) noexcept;
+PSFAPI const int __stdcall PSFGetDebugLevelFromJson() noexcept;
 
 inline const psf::json_value* PSFQueryCurrentDllConfig()
 {
     return PSFQueryDllConfig(psf::current_module_path().filename().c_str());
 }
+
+
 
 PSFAPI void __stdcall PSFReportError(const wchar_t* error) noexcept;
 

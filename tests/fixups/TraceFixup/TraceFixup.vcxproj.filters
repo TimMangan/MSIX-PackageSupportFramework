@@ -30,6 +30,9 @@
     <ClCompile Include="PrivateProfileFixup.cpp">
       <Filter>src</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\..\CommonSrc\psf_logging.cpp">
+      <Filter>inc</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Logging.h">

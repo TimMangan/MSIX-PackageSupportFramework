@@ -151,7 +151,7 @@ struct function_entry_tracker
             {
                 if (++function_call_depth == 1)
                 {
-                    Log(L"vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv\n");
+                    Log(LogLevel_DebugMaximum, L"vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv\n");
                 }
 
                 // Most functions are named "SomeFunctionFixup" where the target API is "SomeFunction". Logging the API
@@ -164,7 +164,7 @@ struct function_entry_tracker
                     name.resize(name.length() - fixupSuffix.length());
                 }
 
-                Log(L"Function Entry: %s\n", name.c_str());
+                Log(LogLevel_DebugMaximum, L"Function Entry: %s\n", name.c_str());
             }
         }
     }
@@ -178,7 +178,7 @@ struct function_entry_tracker
             {
                 if (--function_call_depth == 0)
                 {
-                    Log(L"^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n");
+                    Log(LogLevel_DebugMaximum, L"^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n");
                 }
             }
         }
@@ -191,25 +191,25 @@ template <typename T, typename U>
 constexpr bool IsFlagSet(T value, U flag);
 
 
-#define LogIfFlagSetMsg(value, flag, msg) \
+#define LogIfFlagSetMsg(debugRequestLevel, value, flag, msg) \
     if (IsFlagSet(value, flag)) \
     { \
-        Log(L"%s%s", prefix, msg); \
+        Log(debugRequestLevel, L"%s%s", prefix, msg); \
         prefix = " | "; \
     }
 
 
-#define LogIfFlagSet(value, flag) \
-    LogIfFlagSetMsg(value, flag, #flag)
+#define LogIfFlagSet(debugRequestLevel, value, flag) \
+    LogIfFlagSetMsg(debugRequestLevel, value, flag, #flag)
 
-#define LogIfEqual(value, expected) \
+#define LogIfEqual(debugRequestLevel, value, expected) \
     if (value == expected) \
     { \
-        Log(#expected); \
+        Log(debugRequestLevel,#expected); \
     }
 
-void LogCountedString(DWORD dllInstance, const char* name, const wchar_t* value, std::size_t length);
-void LogCountedString(DWORD cllInstance, const wchar_t* name, const wchar_t* value, std::size_t length);
+void LogCountedString(Json_Debug_Levels debugRequestLevel, const wchar_t* moduleName, DWORD dllInstance, const char* name, const wchar_t* value, std::size_t length);
+void LogCountedString(Json_Debug_Levels debugRequestLevel, const wchar_t* moduleName, DWORD cllInstance, const wchar_t* name, const wchar_t* value, std::size_t length);
 std::string InterpretStringA(const char* value);
 
 std::string InterpretStringA(const wchar_t* value);
@@ -227,15 +227,15 @@ std::string InterpretFrom_win32(DWORD code);
 
 std::string win32_error_description(DWORD error);
 
-void LogWin32ErrorInstance(DWORD dllInstance, DWORD error, const wchar_t* msg = L"Error");
+void LogWin32ErrorInstance(Json_Debug_Levels debugRequestLevels, DWORD dllInstance, DWORD error, const wchar_t* msg = L"Error");
 
 std::string InterpretWin32Error(DWORD error, const char* msg = "Error");
 
-void LogLastErrorInstance(DWORD dllInstance, const char* msg = "Last Error");
+void LogLastErrorInstance(Json_Debug_Levels debugRequestLevel, DWORD dllInstance, const char* msg = "Last Error");
 
 std::string InterpretLastError(const char* msg = "Last Error");
 
-void LogKeyPath(DWORD dllInstance, HKEY key, const wchar_t* msg = L"Key");
+void LogKeyPath(Json_Debug_Levels debugRequestLevel, const wchar_t* moduleName, DWORD dllInstance, HKEY key, const wchar_t* msg = L"Key");
 
 
 std::string InterpretKeyPath(HKEY key, const char* msg);
@@ -244,13 +244,13 @@ std::string InterpretKeyPath(HKEY key, const char* msg);
 
 std::string InterpretKeyPath(HKEY key);
 
-void LogRegKeyFlags(DWORD dllInstance, DWORD flags, const wchar_t* msg = L"Options");
+void LogRegKeyFlags(Json_Debug_Levels debugRequestLevel, DWORD dllInstance, DWORD flags, const wchar_t* msg = L"Options");
 
 
-void LogRegKeyDisposition(DWORD instance,DWORD disposition, const char* msg = "Disposition");
+void LogRegKeyDisposition(Json_Debug_Levels debugRequestLevel, DWORD instance,DWORD disposition, const char* msg = "Disposition");
 
 
-void LogCommonAccess(ACCESS_MASK access, const char*& prefix);
+void LogCommonAccess(Json_Debug_Levels debugRequestLevel, ACCESS_MASK access, const char*& prefix);
 
 
 std::string InterpretCommonAccess(ACCESS_MASK access, const char*& prefix);
@@ -260,13 +260,13 @@ std::string InterpretRegKeyAccess(DWORD access, const char* msg = "Access");
 
 const char* InterperetFunctionResult(function_result result);
 
-void LogFunctionResultInstance(DWORD dllInstance, function_result result, const wchar_t* msg = L"Result");
+void LogFunctionResultInstance(Json_Debug_Levels debugRequestLevels, DWORD dllInstance, function_result result, const wchar_t* msg = L"Result");
 
 #if STILLNEEDED
-void LogRegKeyAccess(DWORD access, const char* msg = "Access");
+void LogRegKeyAccess(Json_Debug_Levels debugRequestLevels, DWORD access, const char* msg = "Access");
 #endif
 
-void LogSecurityAttributes(LPSECURITY_ATTRIBUTES securityAttributes, DWORD instance);
+void LogSecurityAttributes(Json_Debug_Levels debugRequestLevel, LPSECURITY_ATTRIBUTES securityAttributes, DWORD instance);
 
 
 

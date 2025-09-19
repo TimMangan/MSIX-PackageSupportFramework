@@ -51,22 +51,21 @@ BOOL _stdcall ReadDirectoryChangesWFixup(
     auto guard = g_reentrancyGuard.enter();
     try
     {
-        Log(L"[%s%d] ReadDirectoryChangesW Fixup Handle=0x%x ", g_FrfModuleName, Instance, hDirectory);
+        Log(LogLevel_DebugBasic, L"[%s%d] ReadDirectoryChangesW Fixup Handle=0x%x ", g_FrfModuleName, Instance, hDirectory);
 
 
         if (guard)
         {
           
-#if _DEBUG
             FILE_BASIC_INFO FileBasicInfoData;
             BOOL res1 = GetFileInformationByHandleEx(hDirectory, FileBasicInfo, &FileBasicInfoData, sizeof(FileBasicInfoData));
             if (res1 != 0)
             {
-                Log(L"[%s%d] RDCW Handle FileBasicInfo OK Attributes=0x%x", g_FrfModuleName, Instance, FileBasicInfoData.FileAttributes);
+                Log(LogLevel_DebugBasic, L"[%s%d] RDCW Handle FileBasicInfo OK Attributes=0x%x", g_FrfModuleName, Instance, FileBasicInfoData.FileAttributes);
             }
             else
             {
-                Log(L"[%s%d] RDCW Handle FileBasicInfo Fail err=0x%x", g_FrfModuleName, Instance, GetLastError());
+                Log(LogLevel_DebugBasic, L"[%s%d] RDCW Handle FileBasicInfo Fail err=0x%x", g_FrfModuleName, Instance, GetLastError());
             }
             DWORD len = 512;
             PFILE_NAME_INFO pFileInformation = (PFILE_NAME_INFO)malloc(len);
@@ -75,34 +74,31 @@ BOOL _stdcall ReadDirectoryChangesWFixup(
                 BOOL res2 = GetFileInformationByHandleEx(hDirectory, FileNameInfo, pFileInformation, len);
                 if (res2 != 0)
                 {
-                    LogCountedStringW(g_FrfModuleName, Instance, "       RDCW Handle Path is", pFileInformation->FileName, pFileInformation->FileNameLength / 2 );
+                    LogCountedStringW(LogLevel_DebugBasic, g_FrfModuleName, Instance, "       RDCW Handle Path is", pFileInformation->FileName, pFileInformation->FileNameLength / 2 );
                 }
                 else
                 {
-                    Log(L"[%s%d]  RDCW Handle Path did not get returned err=0x%x.", g_FrfModuleName, Instance, GetLastError());
+                    Log(LogLevel_DebugBasic, L"[%s%d]  RDCW Handle Path did not get returned err=0x%x.", g_FrfModuleName, Instance, GetLastError());
                 }
                 free(pFileInformation);
             }
-#endif
             ; // if needed
         }
 
         BOOL bRet = impl::ReadDirectoryChangesW(hDirectory, lpBuffer, nBufferLength, bWatchSubtree, dwNotifyFilter, lpBytesReturned, lpOverlapped, lpCompletionRoutine);
-#if _DEBUG
         if (bRet == 0)
         {
-            Log(L"[%s%d] ReadDirectoryChangesW returns Failerror=0x%x", g_FrfModuleName, Instance, GetLastError());
+            Log(LogLevel_DebugBasic, L"[%s%d] ReadDirectoryChangesW returns Failerror=0x%x", g_FrfModuleName, Instance, GetLastError());
         }
         else
         {
-            Log(L"[%s%d] ReadDirectoryChangesW returns Success", g_FrfModuleName, Instance);
+            Log(LogLevel_DebugBasic, L"[%s%d] ReadDirectoryChangesW returns Success", g_FrfModuleName, Instance);
         }
-#endif
         return bRet;
     }
     catch (...)
     {
-        Log(L"[%s%d] ReadDirectoryChangesW Exception Fail", g_FrfModuleName, Instance);
+        Log(LogLevel_Exception, L"[%s%d] ReadDirectoryChangesW Exception Fail", g_FrfModuleName, Instance);
         return 0;
     }
 }
@@ -139,15 +135,14 @@ BOOL _stdcall ReadDirectoryChangesExWFixup(
     auto guard = g_reentrancyGuard.enter();
     try
     {
-        Log(L"[%s%d] ReadDirectoryChangesExW Fixup Handle=0x%x ", g_FrfModuleName, Instance, hDirectory);
+        Log(LogLevel_DebugBasic, L"[%s%d] ReadDirectoryChangesExW Fixup Handle=0x%x ", g_FrfModuleName, Instance, hDirectory);
         if (guard)
         {
-#if _DEBUG
             FILE_BASIC_INFO FileBasicInfoData;
             BOOL res1 = GetFileInformationByHandleEx(hDirectory, FileBasicInfo, &FileBasicInfoData, sizeof(FileBasicInfoData));
             if (res1 != 0)
             {
-                Log(L"[%s%d] RDCWEx RDCWEx Handle FileBasicInfo Fail err=0x%x", g_FrfModuleName, Instance, GetLastError());
+                Log(LogLevel_DebugBasic, L"[%s%d] RDCWEx RDCWEx Handle FileBasicInfo Fail err=0x%x", g_FrfModuleName, Instance, GetLastError());
             }
             DWORD len = 512;
             PFILE_NAME_INFO pFileInformation = (PFILE_NAME_INFO)malloc(len);
@@ -156,33 +151,30 @@ BOOL _stdcall ReadDirectoryChangesExWFixup(
                 BOOL res = GetFileInformationByHandleEx(hDirectory, FileNameInfo, pFileInformation, len);
                 if (res != 0)
                 {
-                    LogCountedStringW(g_FrfModuleName, Instance, "       RDCWEx Handle Path is", pFileInformation->FileName, pFileInformation->FileNameLength);
+                    LogCountedStringW(LogLevel_DebugBasic, g_FrfModuleName, Instance, "       RDCWEx Handle Path is", pFileInformation->FileName, pFileInformation->FileNameLength);
                 }
                 else
                 {
-                    Log(L"[%s%d]  RDCWEx Path did not get returned.", g_FrfModuleName, Instance);
+                    Log(LogLevel_DebugBasic, L"[%s%d]  RDCWEx Path did not get returned.", g_FrfModuleName, Instance);
         }
                 free(pFileInformation);
     }
-#endif
             ; // if needed
         }
         BOOL bRet = impl::ReadDirectoryChangesExW(hDirectory, lpBuffer, nBufferLength, bWatchSubtree, dwNotifyFilter, lpBytesReturned, lpOverlapped, lpCompletionRoutine, ReadDirectoryNotifyInformationClass);
-#if _DEBUG
         if (bRet == 0)
         {
-            Log(L"[%s%d] ReadDirectoryChangesExW returns Fail error=0x%x", g_FrfModuleName, Instance, GetLastError());
+            Log(LogLevel_DebugBasic, L"[%s%d] ReadDirectoryChangesExW returns Fail error=0x%x", g_FrfModuleName, Instance, GetLastError());
         }
         else
         {
-            Log(L"[%s%d] ReadDirectoryChangesExW returns Success", g_FrfModuleName, Instance);
+            Log(LogLevel_DebugBasic, L"[%s%d] ReadDirectoryChangesExW returns Success", g_FrfModuleName, Instance);
         }
-#endif
         return bRet;
     }
     catch (...)
     {
-        Log(L"[%s%d] ReadDirectoryChangesExW Exception Fail", g_FrfModuleName, Instance);
+        Log(LogLevel_Exception, L"[%s%d] ReadDirectoryChangesExW Exception Fail", g_FrfModuleName, Instance);
         return 0;
     }
 }

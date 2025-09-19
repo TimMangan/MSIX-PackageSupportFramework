@@ -22,14 +22,11 @@
 //#define MOREDEBUG 1
 #endif
 
-#define WRAPPER_GETPRIVATEPROFILEINT(theDestinationFilename, debug) \
+#define WRAPPER_GETPRIVATEPROFILEINT(theDestinationFilename) \
     { \
         std::wstring LongDestinationFilename = MakeLongPath(theDestinationFilename); \
         retfinal = impl::GetPrivateProfileIntW(widen_argument(sectionName).c_str(), widen_argument(key).c_str(), nDefault, LongDestinationFilename.c_str()); \
-        if (debug) \
-        { \
-        Log(L"[%s%d] GetPrivateProfileIntFixup Returned uint: %d from '%s' ", g_MfrModuleName, dllInstance, retfinal, LongDestinationFilename.c_str()); \
-        } \
+        Log(LogLevel_DebugBasic, L"[%s%d] GetPrivateProfileIntFixup Returned uint: %d from '%s' ", g_MfrModuleName, dllInstance, retfinal, LongDestinationFilename.c_str()); \
         return retfinal; \
     }
 
@@ -56,56 +53,55 @@ UINT __stdcall GetPrivateProfileIntFixup(
     {
         if (guard)
         {
-#if _DEBUG
             if constexpr (psf::is_ansi<CharT>)
             {
                 if (fileName != NULL)
                 {
-                    LogString(g_MfrModuleName, dllInstance, L"GetPrivateProfileIntFixup for fileName", widen_argument(fileName).c_str());
+                    LogString(LogLevel_DebugBasic, g_MfrModuleName, dllInstance, L"GetPrivateProfileIntFixup for fileName", widen_argument(fileName).c_str());
                 }
                 else
                 {
-                    Log(L"[%s%d] GetPrivateProfileIntFixup for null file.", g_MfrModuleName, dllInstance);
+                    Log(LogLevel_DebugBasic, L"[%s%d] GetPrivateProfileIntFixup for null file.", g_MfrModuleName, dllInstance);
                 }
                 if (sectionName != NULL)
                 {
-                    LogString(g_MfrModuleName, dllInstance, L"       Section", widen_argument(sectionName).c_str());
+                    LogString(LogLevel_DebugBasic, g_MfrModuleName, dllInstance, L"       Section", widen_argument(sectionName).c_str());
                 }
                 if (key != NULL)
                 {
-                    LogString(g_MfrModuleName, dllInstance, L"       Key", widen_argument(key).c_str());
+                    LogString(LogLevel_DebugBasic, g_MfrModuleName, dllInstance, L"       Key", widen_argument(key).c_str());
                 }
             }
             else
             {
                 if (fileName != NULL)
                 {
-                    LogString(g_MfrModuleName, dllInstance, L"GetPrivateProfileIntFixup for fileName", fileName);
+                    LogString(LogLevel_DebugBasic, g_MfrModuleName, dllInstance, L"GetPrivateProfileIntFixup for fileName", fileName);
                 }
                 else
                 {
-                    Log(L"[%s%d] GetPrivateProfileIntFixup for null file.", g_MfrModuleName, dllInstance);
+                    Log(LogLevel_DebugBasic, L"[%s%d] GetPrivateProfileIntFixup for null file.", g_MfrModuleName, dllInstance);
                 }
                 if (sectionName != NULL)
                 {
-                    LogString(g_MfrModuleName, dllInstance, L"       Section", sectionName);
+                    LogString(LogLevel_DebugBasic, g_MfrModuleName, dllInstance, L"       Section", sectionName);
                 }
                 if (key != NULL)
                 {
-                    LogString(g_MfrModuleName, dllInstance, L"       Key", key);
+                    LogString(LogLevel_DebugBasic, g_MfrModuleName, dllInstance, L"       Key", key);
                 }
             }
-#endif
+
             if (fileName != NULL)
             {
-                // This get is inheirently a read-only operation in all cases.
+                // This get is inherently a read-only operation in all cases.
                 // We prefer to use the redirecton case, if present.
                 std::wstring wfileName = widen(fileName);
                 wfileName = AdjustSlashes(wfileName, dllInstance);
                 wfileName = AdjustBadUNC(wfileName, dllInstance, L"GetPrivateProfileIntFixup");
 
                 Cohorts cohorts;
-                DetermineCohorts(wfileName, &cohorts, moredebug, dllInstance, L"GetPrivateProfileIntFixup");
+                DetermineCohorts(LogLevel_DebugIntermediate, wfileName, &cohorts, dllInstance, L"GetPrivateProfileIntFixup");
 
                 if (!MFRConfiguration.Ilv_Aware)
                 {
@@ -121,16 +117,16 @@ UINT __stdcall GetPrivateProfileIntFixup(
                                 if (cohorts.map.IsAnExclusionToRedirect == mfr::mfr_exclusion_types::not_excluded && 
                                     PathExists(cohorts.WsRedirected.c_str()))
                                 {
-                                    WRAPPER_GETPRIVATEPROFILEINT(cohorts.WsRedirected, debug);  // Returns always
+                                    WRAPPER_GETPRIVATEPROFILEINT(cohorts.WsRedirected);  // Returns always
                                 }
                                 else if (PathExists(cohorts.WsPackage.c_str()))
                                 {
-                                    WRAPPER_GETPRIVATEPROFILEINT(cohorts.WsPackage, debug);
+                                    WRAPPER_GETPRIVATEPROFILEINT(cohorts.WsPackage);
                                 }
                                 else
                                 {
                                     // No file, calling allows for default value or to get from registry.
-                                    WRAPPER_GETPRIVATEPROFILEINT(cohorts.WsRequested, debug);
+                                    WRAPPER_GETPRIVATEPROFILEINT(cohorts.WsRequested);
                                 }
                                 break;
                             case mfr::mfr_redirect_flags::prefer_redirection_containerized:
@@ -138,21 +134,21 @@ UINT __stdcall GetPrivateProfileIntFixup(
                                 if (cohorts.map.IsAnExclusionToRedirect == mfr::mfr_exclusion_types::not_excluded && 
                                     PathExists(cohorts.WsRedirected.c_str()))
                                 {
-                                    WRAPPER_GETPRIVATEPROFILEINT(cohorts.WsRedirected, debug);
+                                    WRAPPER_GETPRIVATEPROFILEINT(cohorts.WsRedirected);
                                 }
                                 else if (PathExists(cohorts.WsPackage.c_str()))
                                 {
-                                    WRAPPER_GETPRIVATEPROFILEINT(cohorts.WsPackage, debug);
+                                    WRAPPER_GETPRIVATEPROFILEINT(cohorts.WsPackage);
                                 }
                                 else if (cohorts.NativeIsValidOptionInScenario &&
                                     PathExists(cohorts.WsNative.c_str()))
                                 {
-                                    WRAPPER_GETPRIVATEPROFILEINT(cohorts.WsNative, debug);
+                                    WRAPPER_GETPRIVATEPROFILEINT(cohorts.WsNative);
                                 }
                                 else
                                 {
                                     // No file, calling allows for default value or to get from registry.
-                                    WRAPPER_GETPRIVATEPROFILEINT(cohorts.WsRequested, debug);
+                                    WRAPPER_GETPRIVATEPROFILEINT(cohorts.WsRequested);
                                 }
                                 break;
                             case mfr::mfr_redirect_flags::prefer_redirection_none:
@@ -177,16 +173,16 @@ UINT __stdcall GetPrivateProfileIntFixup(
                                 if (cohorts.map.IsAnExclusionToRedirect == mfr::mfr_exclusion_types::not_excluded && 
                                     PathExists(cohorts.WsRedirected.c_str()))
                                 {
-                                    WRAPPER_GETPRIVATEPROFILEINT(cohorts.WsRedirected, debug);
+                                    WRAPPER_GETPRIVATEPROFILEINT(cohorts.WsRedirected);
                                 }
                                 else if (PathExists(cohorts.WsPackage.c_str()))
                                 {
-                                    WRAPPER_GETPRIVATEPROFILEINT(cohorts.WsPackage, debug);
+                                    WRAPPER_GETPRIVATEPROFILEINT(cohorts.WsPackage);
                                 }
                                 else
                                 {
                                     // No file, so calling requested provides default value or gets from registry.
-                                    WRAPPER_GETPRIVATEPROFILEINT(cohorts.WsRequested, debug);
+                                    WRAPPER_GETPRIVATEPROFILEINT(cohorts.WsRequested);
                                 }
                             case mfr::mfr_redirect_flags::prefer_redirection_none:
                             case mfr::mfr_redirect_flags::disabled:
@@ -206,16 +202,16 @@ UINT __stdcall GetPrivateProfileIntFixup(
                                 if (cohorts.map.IsAnExclusionToRedirect == mfr::mfr_exclusion_types::not_excluded && 
                                     PathExists(cohorts.WsRedirected.c_str()))
                                 {
-                                    WRAPPER_GETPRIVATEPROFILEINT(cohorts.WsRedirected, debug);
+                                    WRAPPER_GETPRIVATEPROFILEINT(cohorts.WsRedirected);
                                 }
                                 else if (PathExists(cohorts.WsPackage.c_str()))
                                 {
-                                    WRAPPER_GETPRIVATEPROFILEINT(cohorts.WsPackage, debug);
+                                    WRAPPER_GETPRIVATEPROFILEINT(cohorts.WsPackage);
                                 }
                                 else
                                 {
                                     // No file, so calling requested provides default value or gets from registry.
-                                    WRAPPER_GETPRIVATEPROFILEINT(cohorts.WsRequested, debug);
+                                    WRAPPER_GETPRIVATEPROFILEINT(cohorts.WsRequested);
                                 }
                                 break;
                             case mfr::mfr_redirect_flags::prefer_redirection_containerized:
@@ -224,21 +220,21 @@ UINT __stdcall GetPrivateProfileIntFixup(
                                 if (cohorts.map.IsAnExclusionToRedirect == mfr::mfr_exclusion_types::not_excluded && 
                                     PathExists(cohorts.WsRedirected.c_str()))
                                 {
-                                    WRAPPER_GETPRIVATEPROFILEINT(cohorts.WsRedirected, debug);
+                                    WRAPPER_GETPRIVATEPROFILEINT(cohorts.WsRedirected);
                                 }
                                 else if (PathExists(cohorts.WsPackage.c_str()))
                                 {
-                                    WRAPPER_GETPRIVATEPROFILEINT(cohorts.WsPackage, debug);
+                                    WRAPPER_GETPRIVATEPROFILEINT(cohorts.WsPackage);
                                 }
                                 else if (cohorts.NativeIsValidOptionInScenario &&
                                     PathExists(cohorts.WsNative.c_str()))
                                 {
-                                    WRAPPER_GETPRIVATEPROFILEINT(cohorts.WsNative, debug);
+                                    WRAPPER_GETPRIVATEPROFILEINT(cohorts.WsNative);
                                 }
                                 else
                                 {
                                     // No file, so calling requested provides default value or gets from registry.
-                                    WRAPPER_GETPRIVATEPROFILEINT(cohorts.WsRequested, debug);
+                                    WRAPPER_GETPRIVATEPROFILEINT(cohorts.WsRequested);
                                 }
                                 break;
                             case mfr::mfr_redirect_flags::prefer_redirection_none:
@@ -263,21 +259,21 @@ UINT __stdcall GetPrivateProfileIntFixup(
                                 if (cohorts.map.IsAnExclusionToRedirect == mfr::mfr_exclusion_types::not_excluded && 
                                     PathExists(cohorts.WsRedirected.c_str()))
                                 {
-                                    WRAPPER_GETPRIVATEPROFILEINT(cohorts.WsRedirected, debug);
+                                    WRAPPER_GETPRIVATEPROFILEINT(cohorts.WsRedirected);
                                 }
                                 else if (PathExists(cohorts.WsPackage.c_str()))
                                 {
-                                    WRAPPER_GETPRIVATEPROFILEINT(cohorts.WsPackage, debug);
+                                    WRAPPER_GETPRIVATEPROFILEINT(cohorts.WsPackage);
                                 }
                                 else if (cohorts.NativeIsValidOptionInScenario &&
                                     PathExists(cohorts.WsNative.c_str()))
                                 {
-                                    WRAPPER_GETPRIVATEPROFILEINT(cohorts.WsNative, debug);
+                                    WRAPPER_GETPRIVATEPROFILEINT(cohorts.WsNative);
                                 }
                                 else
                                 {
                                     // No file, so calling requested provides default value or gets from registry.
-                                    WRAPPER_GETPRIVATEPROFILEINT(cohorts.WsRequested, debug);
+                                    WRAPPER_GETPRIVATEPROFILEINT(cohorts.WsRequested);
                                 }
                                 break;
                             case mfr::mfr_redirect_flags::prefer_redirection_none:
@@ -304,35 +300,25 @@ UINT __stdcall GetPrivateProfileIntFixup(
                 else
                 {
                     // ILV
-                    std::wstring UseFile = DetermineIlvPathForReadOperations(cohorts, dllInstance, moredebug);
-                    // In a redirect to local scenario, we are responsible for determing if source is local or in package
+                    std::wstring UseFile = DetermineIlvPathForReadOperations(LogLevel_DebugIntermediate, cohorts, dllInstance);
+                    // In a redirect to local scenario, we are responsible for determining if source is local or in package
                     UseFile = SelectLocalOrPackageForRead(UseFile, cohorts.WsPackage);
 
-                    WRAPPER_GETPRIVATEPROFILEINT(UseFile, debug);
+                    WRAPPER_GETPRIVATEPROFILEINT(UseFile);
                 }
             }
             else
             {
-#if _DEBUG
-                Log(L"[%s%d] GetPrivateProfileIntFixup: null filename, don't redirect as may be registry based or default.", g_MfrModuleName, dllInstance);
-#endif
+                Log(LogLevel_DebugBasic, L"[%s%d] GetPrivateProfileIntFixup: null filename, don't redirect as may be registry based or default.", g_MfrModuleName, dllInstance);
             }
         }
     }
-#if _DEBUG
     // Fall back to assuming no redirection is necessary if exception
-    LOGGED_CATCHHANDLER_MIN(g_MfrModuleName, dllInstance, L"GetPrivateProfileInt")
-#else
-    catch (...)
-    {
-        Log(L"[%s%d] GetPrivateProfileIntFixup Exception=0x%x", g_MfrModuleName, dllInstance, GetLastError());
-    }
-#endif
+    LOGGED_CATCHHANDLER_MIN(LogLevel_DebugBasic, g_MfrModuleName, dllInstance, L"GetPrivateProfileInt")
 
     UINT uVal = impl::GetPrivateProfileInt(sectionName, key, nDefault, fileName);
-#if MOREDEBUG
-    Log(L"[%s%d] GetPrivateProfileIntFixup Returning 0x%x from unfixed call.", g_MfrModuleName, dllInstance, uVal);
-#endif 
+    Log(LogLevel_DebugBasic, L"[%s%d] GetPrivateProfileIntFixup Returning 0x%x from unfixed call.", g_MfrModuleName, dllInstance, uVal);
+ 
     return uVal;
 }
 DECLARE_STRING_FIXUP(impl::GetPrivateProfileInt, GetPrivateProfileIntFixup);

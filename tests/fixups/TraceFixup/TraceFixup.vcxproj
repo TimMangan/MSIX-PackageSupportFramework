@@ -19,6 +19,7 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\..\..\CommonSrc\psf_logging.cpp" />
     <ClCompile Include="CreateProcessFixup.cpp" />
     <ClCompile Include="DynamicLinkLibraryFixup.cpp" />
     <ClCompile Include="FileSystemFixup.cpp" />

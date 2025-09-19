@@ -42,9 +42,14 @@ const wchar_t* g_MfrModuleName = L"M";
 
 void InitializeMFRFixup()
 {
-#if MOREDEBUG
-    Log("[%s%d]\t\tMFRFixup InitializeMFRFixup: start", g_MfrModuleName,0);
-#endif  
+
+    g_JsonDebugLevel = (Json_Debug_Levels)::PSFGetDebugLevelFromJson();
+    Json_Debug_Levels tempLog = g_JsonDebugLevel;
+    g_JsonDebugLevel = LogLevel_DebugMaximum; // force this to at least basic for the init logging
+    Log(LogLevel_DebugBasic, "[%s%d]\tMFRFixup InitializeMFRFixup: start Debug Level=%d", g_MfrModuleName, 0, tempLog);
+    g_JsonDebugLevel = tempLog;
+
+
 
     // For path comparison's sake - and the fact that std::filesystem::path doesn't handle (root-)local device paths all
     // that well - ensure that these paths are drive-absolute
@@ -63,11 +68,10 @@ void InitializeMFRFixup()
     auto finalPackageRootPath = std::wstring(::PSFQueryFinalPackageRootPath());
     g_finalPackageRootPath = psf::remove_trailing_path_separators(finalPackageRootPath);  // has \\?\ prepended to PackageRootPath
 
-#if MOREDEBUG
-    Log(L"[%s%d]\t\t\tMFRFixup g_packageRootPath =      %s", g_MfrModuleName, 0, g_packageRootPath.wstring().c_str());
-    Log(L"[%s%d]\t\t\tMFRFixup g_packageVfsRootPath =   %s", g_MfrModuleName, 0, g_packageVfsRootPath.wstring().c_str());
-    //Log(L"[%s%d]\t\t\tMFRFixup g_finalPackageRootPath = %s", g_MfrModuleName, 0, g_finalPackageRootPath.wstring().c_str());
-#endif 
+    Log(LogLevel_DebugIntermediate, L"[%s%d]\t\t\tMFRFixup g_packageRootPath =      %s", g_MfrModuleName, 0, g_packageRootPath.wstring().c_str());
+    Log(LogLevel_DebugIntermediate, L"[%s%d]\t\t\tMFRFixup g_packageVfsRootPath =   %s", g_MfrModuleName, 0, g_packageVfsRootPath.wstring().c_str());
+    //LogLogLevel_DebugIntermediate, (L"[%s%d]\t\t\tMFRFixup g_finalPackageRootPath = %s", g_MfrModuleName, 0, g_finalPackageRootPath.wstring().c_str());
+
     // Ensure that the redirected root path exists
     // We see some issues with multiple processes starting up and making the create_directories call simultaniously causing the second one to hit an exception.
     // We can ignore those issues.
@@ -79,9 +83,7 @@ void InitializeMFRFixup()
     }
     catch (...)
     {
-#ifdef _DEBUG
-        Log("[%s%d]\t\tMfrFixup ignorable exception creating directories.", g_MfrModuleName, 0);
-#endif
+        Log(LogLevel_Exception, "[%s%d]\t\tMfrFixup ignorable exception creating directories.", g_MfrModuleName, 0);
     }
 
     g_writablePackageRootPath = psf::known_folder(FOLDERID_LocalAppData) / std::filesystem::path(L"Packages") / psf::current_package_family_name() / LR"(LocalCache\Local\Microsoft\WritablePackageRoot)";
@@ -91,9 +93,7 @@ void InitializeMFRFixup()
     }
     catch (...)
     {
-#ifdef _DEBUG
-        Log("[%s%d]\t\tMfrFixup ignorable exception creating directories.", g_MfrModuleName, 0);
-#endif
+        Log(LogLevel_Exception, "[%s%d]\t\tMfrFixup ignorable exception creating directories.", g_MfrModuleName, 0);
     }
 
     g_short_packageRootPath = ConvertPathToShortPath(g_packageRootPath);
@@ -102,13 +102,9 @@ void InitializeMFRFixup()
     g_short_writablePackageRootPath = ConvertPathToShortPath(g_writablePackageRootPath);
     g_short_finalPackageRootPath = ConvertPathToShortPath(g_finalPackageRootPath);
 
-#if MOREDEBUG
-    Log("[%s%d]\t\tMFRFixup InitializeMFRFixup: mid", g_MfrModuleName, 0);
-#endif
+    Log(LogLevel_DebugIntermediate, "[%s%d]\t\tMFRFixup InitializeMFRFixup: mid", g_MfrModuleName, 0);
 
     mfr::Initialize_MFR_Mappings();
 
-#if MOREDEBUG
-    Log("[%s%d]\t\tMFRFixup InitializeMFRFixup: end", g_MfrModuleName, 0);
-#endif  
+    Log(LogLevel_DebugIntermediate, "[%s%d]\t\tMFRFixup InitializeMFRFixup: end", g_MfrModuleName, 0);
 }  //InitializeMFRFixup()

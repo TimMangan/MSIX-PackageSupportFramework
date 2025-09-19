@@ -19,10 +19,9 @@ BOOLEAN __stdcall CreateSymbolicLinkFixup(
     {
         if (guard)
         {
-#if _DEBUG
-            LogString(g_FrfModuleName, CreateSymbolicLinkInstance,L"CreateSymbolicLinkFixup for", symlinkFileName);
-            LogString(g_FrfModuleName, CreateSymbolicLinkInstance,L"CreateSymbolicLinkFixup target",  targetFileName);
-#endif
+            LogString(LogLevel_DebugBasic, g_FrfModuleName, CreateSymbolicLinkInstance,L"CreateSymbolicLinkFixup for", symlinkFileName);
+            LogString(LogLevel_DebugBasic, g_FrfModuleName, CreateSymbolicLinkInstance,L"CreateSymbolicLinkFixup target",  targetFileName);
+
             path_redirect_info  priSource = ShouldRedirectV2(symlinkFileName, redirect_flags::ensure_directory_structure, CreateSymbolicLinkInstance);
             path_redirect_info  priTarget = ShouldRedirectV2(targetFileName, redirect_flags::copy_on_read, CreateSymbolicLinkInstance);
             if (priSource.should_redirect || priTarget.should_redirect)
@@ -37,15 +36,8 @@ BOOLEAN __stdcall CreateSymbolicLinkFixup(
             }
         }
     }
-#if _DEBUG
     // Fall back to assuming no redirection is necessary if exception
-    LOGGED_CATCHHANDLER_MIN(g_FrfModuleName, CreateSymbolicLinkInstance, L"CreateSymbolicLink")
-#else
-    catch (...)
-    {
-        Log(L"[%s%d] CreateSymbolicLink Exception=0x%x", g_FrfModuleName, CreateSymbolicLinkInstance, GetLastError());
-    }
-#endif
+    LOGGED_CATCHHANDLER_MIN(LogLevel_Exception, g_FrfModuleName, CreateSymbolicLinkInstance, L"CreateSymbolicLink")
 
 
     std::wstring rldFileName = TurnPathIntoRootLocalDevice(widen_argument(symlinkFileName).c_str());

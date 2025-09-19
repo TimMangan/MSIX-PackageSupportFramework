@@ -10,6 +10,7 @@
 
 #include <psf_config.h>
 
+
 struct json_null_impl : psf::json_null
 {
 };

@@ -24,7 +24,7 @@ BOOL __stdcall WritePrivateProfileStructFixup(
 
             if (fileName != NULL)
             {
-                LogString(g_FrfModuleName, WritePrivateProfileStructInstance,L"WritePrivateProfileStructFixup for fileName", fileName);
+                LogString(LogLevel_DebugBasic, g_FrfModuleName, WritePrivateProfileStructInstance,L"WritePrivateProfileStructFixup for fileName", fileName);
                 if (!IsUnderUserAppDataLocalPackages(fileName))
                 {
                     path_redirect_info  pri = ShouldRedirectV2(fileName, redirect_flags::copy_on_read, WritePrivateProfileStructInstance);
@@ -43,24 +43,18 @@ BOOL __stdcall WritePrivateProfileStructFixup(
                 }
                 else
                 {
-                    Log(L"[%s%d]Under LocalAppData\\Packages, don't redirect", g_FrfModuleName, WritePrivateProfileStructInstance);
+                    Log(LogLevel_DebugBasic, L"[%s%d]Under LocalAppData\\Packages, don't redirect", g_FrfModuleName, WritePrivateProfileStructInstance);
                 }
             }
             else
             {
-                Log(L"[%s%d]null fileName, don't redirect", g_FrfModuleName, WritePrivateProfileStructInstance);
+                Log(LogLevel_DebugBasic, L"[%s%d]null fileName, don't redirect", g_FrfModuleName, WritePrivateProfileStructInstance);
             }
         }
     }
-#if _DEBUG
     // Fall back to assuming no redirection is necessary if exception
-    LOGGED_CATCHHANDLER_MIN(g_FrfModuleName, WritePrivateProfileStructInstance, L"WritePrivateProfileStruct")
-#else
-    catch (...)
-    {
-        Log(L"[%s%d] WritePrivateProfileStruct Exception=0x%x", g_FrfModuleName, WritePrivateProfileStructInstance, GetLastError());
-    }
-#endif 
+    LOGGED_CATCHHANDLER_MIN(LogLevel_Exception, g_FrfModuleName, WritePrivateProfileStructInstance, L"WritePrivateProfileStruct")
+
 
 
     return impl::WritePrivateProfileStruct(appName, keyName, structData, uSizeStruct, fileName);

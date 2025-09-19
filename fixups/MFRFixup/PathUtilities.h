@@ -11,6 +11,7 @@
 #include "ManagedPathTypes.h"
 #include "ManagedFileMappings.h"
 #include "MfrConfiguration.h"
+#include <psf_logging.h>
 
 
 extern std::filesystem::path g_packageRootPath;
@@ -61,7 +62,7 @@ extern bool PathParentExists(const wchar_t* path);
 
 extern void PreCreateFolders(std::wstring filepath, DWORD dllInstance, std::wstring DebugMessage);
 
-extern BOOL Cow(std::wstring from, std::wstring to, int dllInstance, std::wstring DebugString);
+extern BOOL Cow(Json_Debug_Levels debugRequestLevel, std::wstring from, std::wstring to, int dllInstance, std::wstring DebugString);
 
 extern std::filesystem::path ConvertPathToShortPath(std::filesystem::path inputPath);
 
@@ -72,7 +73,7 @@ extern bool IsPossibleCreateForDirectory(DWORD desiredAccess, DWORD creationDisp
 extern std::wstring Log_DesiredAccess(DWORD desiredAccess);
 extern std::wstring Log_ShareMode(DWORD shareMode);
 extern std::wstring Log_CreationDisposition(DWORD creationDisposition);
-extern std::wstring Log_FlagsAndAttributes(DWORD flagsAndAttributes);
+extern std::wstring Log_FlagsAndAttributes(Json_Debug_Levels debugRequestLevel, DWORD flagsAndAttributes);
 
 
 extern bool comparei(const std::wstring wstrA, const std::wstring wstrB);

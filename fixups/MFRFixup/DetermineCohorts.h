@@ -8,6 +8,7 @@
 #include <dos_paths.h>
 #include "ManagedFileMappings.h"
 #include "ManagedPathTypes.h"
+#include <psf_logging.h>
 
 struct Cohorts
 {
@@ -22,4 +23,4 @@ struct Cohorts
     bool NativeIsValidOptionInScenario = true;        // Indicates if WsNative is an option for this scenario (not is)
 };
 
-extern void DetermineCohorts(std::wstring requestedPath, Cohorts *cohorts, bool UseMoreDebug, DWORD dllInstance, const wchar_t* FixupName);
+extern void DetermineCohorts(Json_Debug_Levels debugRequestLevel, std::wstring requestedPath, Cohorts *cohorts, DWORD dllInstance, const wchar_t* FixupName);

@@ -16,6 +16,7 @@
 
 #include "ManagedFileMappings.h"
 #include "MFRConfiguration.h"
+#include "FunctionImplementations.h"
 
 using namespace std::literals;
 
@@ -39,19 +40,15 @@ void InitializeConfiguration()
     std::wstringstream traceDataStream;
 
 #if _ManualDebug
-    Log(L"PsfLauncher waiting for debugger to attach to process...\n");
+    Log(LogLevel_Exception, L"PsfLauncher waiting for debugger to attach to process...\n");
     manual_wait_for_debugger();
 #endif
-
-#if MOREDEBUG
-    Log("\t\tMFRFixup CONFIG: Look for config");
-#endif            
+    
+    Log(LogLevel_DebugIntermediate, "[%s%d]\t\tMFRFixup CONFIG: Look for config", g_MfrModuleName, 0);
 
     if (auto rootConfig = ::PSFQueryCurrentDllConfig())
     {
-#if MOREDEBUG
-        Log("\t\t\tMFRFixup CONFIG: Has config");
-#endif            
+        Log(LogLevel_DebugIntermediate, "[%s%d]\t\t\tMFRFixup CONFIG: Has config", g_MfrModuleName, 0);
         auto& rootObject = rootConfig->as_object();
         traceDataStream << " config:\n";
         try
@@ -65,9 +62,7 @@ void InitializeConfiguration()
                     if (ilvAsWstring.compare(L"true") == 0)
                     {
                         MFRConfiguration.Ilv_Aware = true;
-#if MOREDEBUG
-                        Log(L"\t\t\tMFR CONFIG: Has ilv-aware enabled");
-#endif 
+                        Log(LogLevel_DebugIntermediate, L"[%s%d]\t\t\tMFR CONFIG: Has ilv-aware enabled", g_MfrModuleName, 0);
                     }
                 }
                 else if (ilv->type() == psf::json_type::boolean)
@@ -76,9 +71,7 @@ void InitializeConfiguration()
                     if (ilvAsBoolean)
                     {
                         MFRConfiguration.Ilv_Aware = true;
-#if MOREDEBUG
-                        Log(L"\t\t\tMFR CONFIG: Has ilv-aware enabled");
-#endif 
+                        Log(LogLevel_DebugIntermediate, L"[%s%d]\t\t\tMFR CONFIG: Has ilv-aware enabled", g_MfrModuleName, 0);
                     }
                 }
             }
@@ -86,9 +79,7 @@ void InitializeConfiguration()
             if (auto overrideCOWValue = rootObject.try_get("overrideCOW"))
             {
                std::wstring CowAsWstring = overrideCOWValue->as_string().wstring().data(); //CowAsWstringView.data();
-#if MOREDEBUG
-                Log(L"\t\t\tMFR CONFIG: Has overideCOW mode=%s", CowAsWstring.c_str());
-#endif 
+                Log(LogLevel_DebugIntermediate, L"[%s%d]\t\t\tMFR CONFIG: Has overideCOW mode=%s", g_MfrModuleName, 0, CowAsWstring.c_str());
                 if (CowAsWstring.compare(L"enablePe") == 0)
                 {
                     MFRConfiguration.COW = (DWORD)mfr::mfr_COW_types::COWenablePe;
@@ -103,36 +94,33 @@ void InitializeConfiguration()
                 }
                 else
                 {
-                    Log(L"Bad json value ignored for overrideCOW %s", CowAsWstring.c_str());
+                    Log(LogLevel_DebugBasic, L"[%s%d] Bad json value ignored for overrideCOW %s", g_MfrModuleName, 0, CowAsWstring.c_str());
                     MFRConfiguration.COW = (DWORD)mfr::mfr_COW_types::COWdefault;
                 }
             }
         }
         catch (...)
         {
-            Log(L"ERROR Reading config.json:  MFRTest in std options.");
+            Log(LogLevel_Exception, L"[%s%d] ERROR Reading config.json:  MFRTest in std options.", g_MfrModuleName, 0);
         }
 
         try
         {
             if (auto ovValue = rootObject.try_get("overrideLocalRedirections"))
             {
-#if MOREDEBUG
-                Log("\t\t\tMFR CONFIG: Has overrideLocalRedirections");
-#endif 
+                Log(LogLevel_DebugIntermediate, "[%s%d]\t\t\tMFR CONFIG: Has overrideLocalRedirections", g_MfrModuleName, 0);
                 const psf::json_array& ovArray = ovValue->as_array();
 
                 for (auto& ovMemberValue : ovArray)
                 {
-                    auto& ovMemberObj = ovMemberValue.as_object();
+                   auto& ovMemberObj = ovMemberValue.as_object();
 
-                    std::wstring folderid = ovMemberObj.get("name").as_string().wstring().data();
-                    std::wstring mode = ovMemberObj.get("mode").as_string().wstring().data();
+                   std::wstring folderid = ovMemberObj.get("name").as_string().wstring().data();
+                   std::wstring mode = ovMemberObj.get("mode").as_string().wstring().data();
 
-#if MOREDEBUG
-                    Log(L"\t\t\t\tProcessing FolderId: %s mode:%s", folderid.c_str(), mode.c_str());
-#endif
-                    int MapIndex = 0;
+                   Log(LogLevel_DebugIntermediate, L"[%s%d]\t\t\t\tProcessing FolderId: %s mode:%s", g_MfrModuleName, 0, folderid.c_str(), mode.c_str());
+                    
+                   int MapIndex = 0;
                    for (mfr::mfr_folder_mapping map : mfr::g_MfrFolderMappings)
                    {
                        
@@ -142,18 +130,14 @@ void InitializeConfiguration()
                        {
                            if (std::equal(mode.begin(), mode.end(), L"disabled", psf::path_compare{}))
                            {
-#if MOREDEBUG
-                               Log(L"\t\t\t\tDisabled: index=%d %s=%s", MapIndex, folderid.c_str(), map.FolderId.c_str());
-#endif
+                               Log(LogLevel_DebugIntermediate, L"[%s%d]\t\t\t\tDisabled: index=%d %s=%s", g_MfrModuleName, 0, MapIndex, folderid.c_str(), map.FolderId.c_str());
                                mfr::mfr_folder_mapping newMap = mfr::CloneFolderMapping(map);
                                newMap.IsAnExclusionToRedirect = mfr::mfr_exclusion_types::excluded;
                                mfr::g_MfrFolderMappings[MapIndex] = newMap;
                            }
                            else if (std::equal(mode.begin(), mode.end(), L"traditional", psf::path_compare{}))
                            {
-#if MOREDEBUG
-                               Log(L"\t\t\t\tTraditioal: index=%d %s", MapIndex, folderid.c_str());
-#endif
+                               Log(LogLevel_DebugIntermediate, L"[%s%d]\t\t\t\tTraditional: index=%d %s", g_MfrModuleName, 0, MapIndex, folderid.c_str());
                                mfr::mfr_folder_mapping newMap = mfr::CloneFolderMapping(map);
                                //map.Valid_mapping = false;
                                newMap.RedirectionFlags = mfr::mfr_redirect_flags::prefer_redirection_if_package_vfs;
@@ -162,14 +146,12 @@ void InitializeConfiguration()
                            else if (std::equal(mode.begin(), mode.end(), L"default", psf::path_compare{}))
                            {
 
-#if MOREDEBUG
-                               Log(L"\t\t\t\tDefault: index=%d %s", MapIndex, folderid.c_str());
-#endif
+                               Log(LogLevel_DebugIntermediate, L"[%s%d]\t\t\t\tDefault: index=%d %s", g_MfrModuleName, 0, MapIndex, folderid.c_str());
                                // Do nothing
                            }
                            else
                            {
-                               Log(L"Bad json value ignored for overrideLocalRedirections %s %s", folderid.c_str(), mode.c_str());
+                               Log(LogLevel_DebugBasic, L"[%s%d]Bad json value ignored for overrideLocalRedirections %s %s", g_MfrModuleName, 0, folderid.c_str(), mode.c_str());
                            }
                        }
                        MapIndex++;
@@ -180,16 +162,14 @@ void InitializeConfiguration()
         }
         catch (...)
         {
-            Log(L"ERROR Reading config.json:  MFRTest in overrideLocalRedirections.");
+            Log(LogLevel_Exception, L"[%s%d] ERROR Reading config.json:  MFRTest in overrideLocalRedirections.", g_MfrModuleName, 0);
         }
 
         try
         {
             if (auto ovValue = rootObject.try_get("overrideTraditionalRedirections"))
             {
-#if MOREDEBUG
-                Log("\t\t\tMFR CONFIG: Has overrideTraditionalRedirections");
-#endif 
+                Log(LogLevel_DebugIntermediate, "[%s%d]\t\t\tMFR CONFIG: Has overrideTraditionalRedirections", g_MfrModuleName, 0);
                 const psf::json_array& ovArray = ovValue->as_array();
 
                 for (auto& ovMemberValue : ovArray)
@@ -199,9 +179,7 @@ void InitializeConfiguration()
                     std::wstring folderid = ovMemberObj.get("name").as_string().wstring().data();
                     std::wstring mode = ovMemberObj.get("mode").as_string().wstring().data();
 
-#if MOREDEBUG
-                    Log(L"\t\t\t\tProcessing FolderId: %s mode:%s", folderid.c_str(), mode.c_str());
-#endif
+                    Log(LogLevel_DebugIntermediate, L"[%s%d]\t\t\t\tProcessing FolderId: %s mode:%s", g_MfrModuleName, 0, folderid.c_str(), mode.c_str());
 
                     int MapIndex = 0;
                     for (mfr::mfr_folder_mapping map : mfr::g_MfrFolderMappings)
@@ -212,18 +190,14 @@ void InitializeConfiguration()
                         {
                             if (std::equal(mode.begin(), mode.end(), L"disabled", psf::path_compare{}))
                             {
-#if MOREDEBUG
-                                Log(L"\t\t\t\tDisabled: index=%d %s=%s", MapIndex, folderid.c_str(), map.FolderId.c_str());
-#endif
+                                Log(LogLevel_DebugIntermediate, L"[%s%d]\t\t\t\tDisabled: index=%d %s=%s", g_MfrModuleName, 0, MapIndex, folderid.c_str(), map.FolderId.c_str());
                                 mfr::mfr_folder_mapping newMap = mfr::CloneFolderMapping(map);
                                 newMap.IsAnExclusionToRedirect = mfr::mfr_exclusion_types::excluded;
                                 mfr::g_MfrFolderMappings[MapIndex] = newMap;
                             }
                             else if (std::equal(mode.begin(), mode.end(), L"local", psf::path_compare{}))
                             {
-#if MOREDEBUG
-                                Log(L"\t\t\t\tLocal: index=%d %s=%s", MapIndex, folderid.c_str(), map.FolderId.c_str());
-#endif
+                                Log(LogLevel_DebugIntermediate, L"[%s%d]\t\t\t\tLocal: index=%d %s=%s", g_MfrModuleName, 0, MapIndex, folderid.c_str(), map.FolderId.c_str());
                                 mfr::mfr_folder_mapping newMap = mfr::CloneFolderMapping(map);
                                 newMap.RedirectionFlags = mfr::mfr_redirect_flags::prefer_redirection_local;
                                 newMap.RedirectedPathBase = map.NativePathBase; // This is now the local redirection area.
@@ -231,14 +205,12 @@ void InitializeConfiguration()
                             }
                             else if (std::equal(mode.begin(), mode.end(), L"default", psf::path_compare{}))
                             {
-#if MOREDEBUG
-                                Log(L"\t\t\t\tDefault: index=%d %s", MapIndex, folderid.c_str());
-#endif
+                                Log(LogLevel_DebugIntermediate, L"[%s%d]\t\t\t\tDefault: index=%d %s", g_MfrModuleName, 0, MapIndex, folderid.c_str());
                                 // Do nothing
                             }
                             else
                             {
-                                Log(L"Bad json value ignored for overrideTraditionalredirections %s %s", folderid.c_str(), mode.c_str());
+                                Log(LogLevel_DebugBasic, L"[%s%d] Bad json value ignored for overrideTraditionalRedirections %s %s", g_MfrModuleName, 0, folderid.c_str(), mode.c_str());
                             }
                         }
                         MapIndex++;
@@ -249,24 +221,25 @@ void InitializeConfiguration()
 
         catch (...)
         {
-            Log(L"ERROR Reading config.json:  MFRTest in overrideTraditionalRedirections.");
+            Log(LogLevel_Exception, L"[%s%d] ERROR Reading config.json:  MFRTest in overrideTraditionalRedirections.", g_MfrModuleName, 0);
         }
 
-#if EVENMOREDEBUG
-        Log(L"============== Dump ====================");
-        for (mfr::mfr_folder_mapping map : mfr::g_MfrFolderMappings)
+        if (LogLevel_DebugMaximum <= g_JsonDebugLevel)
         {
-            Log(L"-----");
-            Log(L"Valid_Mapping=%d IsAnExclusionToRedirect=%d NativePathBase=%s", map.Valid_mapping, map.IsAnExclusionToRedirect, map.NativePathBase.c_str());
-            Log(L"FolderId=%s", map.FolderId.c_str());
-            Log(L"VFSFolderName=%s", map.VFSFolderName.c_str());
-            Log(L"PackagePathBase=%s", map.PackagePathBase.c_str());
-            Log(L"RedirectedPathBase=%s", map.RedirectedPathBase.c_str());
-            Log(L"DoesRuntimeMapNativeToVFS=%d", map.DoesRuntimeMapNativeToVFS);
-            Log(L"RedirectionFlags=%s", RedirectFlagsName(map.RedirectionFlags));
+            Log(LogLevel_DebugMaximum, L"[%s%d] ============== Dump ====================", g_MfrModuleName, 0);
+            for (mfr::mfr_folder_mapping map : mfr::g_MfrFolderMappings)
+            {
+                Log(LogLevel_DebugMaximum, L"[%s%d] -----", g_MfrModuleName, 0);
+                Log(LogLevel_DebugMaximum, L"[%s%d] Valid_Mapping=%d IsAnExclusionToRedirect=%d NativePathBase=%s", g_MfrModuleName, 0, map.Valid_mapping, map.IsAnExclusionToRedirect, map.NativePathBase.c_str());
+                Log(LogLevel_DebugMaximum, L"[%s%d] FolderId=%s", g_MfrModuleName, 0, map.FolderId.c_str());
+                Log(LogLevel_DebugMaximum, L"[%s%d] VFSFolderName=%s", g_MfrModuleName, 0, map.VFSFolderName.c_str());
+                Log(LogLevel_DebugMaximum, L"[%s%d] PackagePathBase=%s", g_MfrModuleName, 0, map.PackagePathBase.c_str());
+                Log(LogLevel_DebugMaximum, L"[%s%d] RedirectedPathBase=%s", g_MfrModuleName, 0, map.RedirectedPathBase.c_str());
+                Log(LogLevel_DebugMaximum, L"[%s%d] DoesRuntimeMapNativeToVFS=%d", g_MfrModuleName, 0, map.DoesRuntimeMapNativeToVFS);
+                Log(LogLevel_DebugMaximum, L"[%s%d] RedirectionFlags=%s", g_MfrModuleName, 0, RedirectFlagsName(map.RedirectionFlags));
+            }
+            Log(LogLevel_DebugMaximum, L"[%s%d] ============== Dump ====================", g_MfrModuleName, 0);
         }
-        Log(L"============== Dump ====================");
-#endif
 
         TraceLoggingWrite(
             g_Log_ETW_ComponentProvider,
@@ -280,8 +253,7 @@ void InitializeConfiguration()
 
     TraceLoggingUnregister(g_Log_ETW_ComponentProvider);
 
-#if MOREDEBUG
-    Log("\t\tMFRFixup CONFIG: Done processing.");
-#endif            
+    Log(LogLevel_DebugBasic, "[%s%d]\t\tMFRFixup CONFIG: Done processing.", g_MfrModuleName, 0);
+            
 
 }

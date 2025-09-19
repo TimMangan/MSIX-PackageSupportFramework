@@ -44,20 +44,18 @@ LSTATUS __stdcall RegCreateKeyExGeneric(
     LSTATUS result = -1;
     bool isBlocked = false;
 
-#if _DEBUG
     if constexpr (psf::is_ansi<CharT>)
     {
-        Log(L"[%s%d] RegCreateKeyEx: key=0x%x subkey=%S Options=0x%x SamDesired=0x%x", g_RegModuleName, RegLocalInstance, (ULONG)(ULONG_PTR)key, subKey, options, samDesired);
+        Log(LogLevel_DebugBasic, L"[%s%d] RegCreateKeyEx: key=0x%x subkey=%S Options=0x%x SamDesired=0x%x", g_RegModuleName, RegLocalInstance, (ULONG)(ULONG_PTR)key, subKey, options, samDesired);
     }
     else
     {
-        Log(L"[%s%d] RegCreateKeyEx: key=0x%x subKey=%ls Options=0x%x SamDesired=0x%x", g_RegModuleName, RegLocalInstance, (ULONG)(ULONG_PTR)key, subKey, options, samDesired);
+        Log(LogLevel_DebugBasic, L"[%s%d] RegCreateKeyEx: key=0x%x subKey=%ls Options=0x%x SamDesired=0x%x", g_RegModuleName, RegLocalInstance, (ULONG)(ULONG_PTR)key, subKey, options, samDesired);
     }
-#endif
 
     std::string keyonlypath = InterpretKeyPath(key);
     std::string keypath = keyonlypath + "\\" + InterpretStringA(subKey);
-    REGSAM samModified = RegFixupSam(keypath, samDesired, RegLocalInstance);
+    REGSAM samModified = RegFixupSam(LogLevel_DebugMaximum, keypath, samDesired, RegLocalInstance);
 
     bool hasRedirection = false;
 #if TRYHKLM2HKCU
@@ -96,10 +94,8 @@ LSTATUS __stdcall RegCreateKeyExGeneric(
                 }
                 RegCloseKey(altkey);
                 hasRedirection = true;
-#if _DEBUG
-                LogString(RegLocalInstance, L"\tRegCreateKeyEx Redirecting to HKCU", subKey);
-                Log(L"[%s%d] RegCreateKeyEx result=%d", g_RegModuleName, RegLocalInstance, result);
-#endif
+                LogString(LogLevel_DebugBasic, g_RegModuleName, RegLocalInstance, L"\tRegCreateKeyEx Redirecting to HKCU", subKey);
+                Log(LogLevel_DebugBasic, L"[%s%d] RegCreateKeyEx result=%d", g_RegModuleName, RegLocalInstance, result);
             }
         }
     }
@@ -108,7 +104,7 @@ LSTATUS __stdcall RegCreateKeyExGeneric(
     if (!hasRedirection)
     {
         std::string sskey = narrow(subKey);
-        result = RegFixupDeletionMarker(keyonlypath, sskey, RegLocalInstance);
+        result = RegFixupDeletionMarker(LogLevel_DebugMaximum, keyonlypath, sskey, RegLocalInstance);
         if (result == ERROR_SUCCESS)
         {
             std::string fullpath = keypath;
@@ -116,7 +112,7 @@ LSTATUS __stdcall RegCreateKeyExGeneric(
             {
                 fullpath += "\\" + sskey;
             }
-            //if (!RegFixupJavaBlocker(fullpath, RegLocalInstance))
+            //if (!RegFixupJavaBlocker(LogLevel_DebugMaximum, fullpath, RegLocalInstance))
             //{
             if constexpr (psf::is_ansi<CharT>)
             {
@@ -140,7 +136,7 @@ LSTATUS __stdcall RegCreateKeyExGeneric(
                 bool savedLogging = g_psf_NoLogging;
                 g_psf_NoLogging = true;
                 std::string subkeystring = InterpretStringA(subKey);
-                Log("[%S%d] RegCreateKeyEx result=0x%x, key=%s, name=%s; may need to precreate key in package", g_RegModuleName, RegLocalInstance, result, keyonlypath.c_str(), subkeystring.c_str());
+                Log(LogLevel_DebugBasic, "[%S%d] RegCreateKeyEx result=0x%x, key=%s, name=%s; may need to precreate key in package", g_RegModuleName, RegLocalInstance, result, keyonlypath.c_str(), subkeystring.c_str());
                 g_psf_NoLogging = savedLogging;
 
                 if (keypath._Starts_with("HKEY_CURRENT_USER"))
@@ -166,15 +162,11 @@ LSTATUS __stdcall RegCreateKeyExGeneric(
 
         if (result != ERROR_SUCCESS)
         {
-#if _DEBUG
-            Log(L"[%s%d] RegCreateKeyEx result=0x%x", g_RegModuleName, RegLocalInstance, result);
-#endif   
+            Log(LogLevel_DebugBasic, L"[%s%d] RegCreateKeyEx result=0x%x", g_RegModuleName, RegLocalInstance, result);
         }
         else
         {
-#if _DEBUG
-            Log(L"[%s%d] RegCreateKeyEx result=SUCCESS key=0x%x", g_RegModuleName, RegLocalInstance, *resultKey);
-#endif
+            Log(LogLevel_DebugBasic, L"[%s%d] RegCreateKeyEx result=SUCCESS key=0x%x", g_RegModuleName, RegLocalInstance, *resultKey);
         }
 
     }
@@ -186,40 +178,39 @@ LSTATUS __stdcall RegCreateKeyExGeneric(
         auto functionResult = from_win32(result);
         if (auto lock = acquire_output_lock(function_type::registry, functionResult))
         {
-#if _DEBUG
-#if MOREDEBUG
             try
             {
-                LogCallingModuleInstanceCommon(g_RegModuleName,RegLocalInstance);
-                LogKeyPath(RegLocalInstance, key);
-                LogString(RegLocalInstance, L"Sub Key", subKey);
-                Log(L"[%s%d] Reserved=%d\n", g_RegModuleName, RegLocalInstance, reserved);
-                if (classType) LogString(g_RegModuleName, RegLocalInstance, L"\tClass", classType);
-                LogRegKeyFlags(RegLocalInstance, options);
-                Log(L"[%s%d] samDesired=%s\n", g_RegModuleName, RegLocalInstance, widen(InterpretRegKeyAccess(samDesired)).c_str());
+                LogCallingModuleInstanceCommon(LogLevel_DebugIntermediate, g_RegModuleName, RegLocalInstance);
+                LogKeyPath(LogLevel_DebugIntermediate, g_RegModuleName, RegLocalInstance, key);
+                LogString(LogLevel_DebugIntermediate, g_RegModuleName, RegLocalInstance, L"Sub Key", subKey);
+                Log(LogLevel_DebugIntermediate, L"[%s%d] Reserved=%d\n", g_RegModuleName, RegLocalInstance, reserved);
+                if (classType)
+                {
+                    LogString(LogLevel_DebugIntermediate, g_RegModuleName, RegLocalInstance, L"\tClass", classType);
+                }
+                LogRegKeyFlags(LogLevel_DebugIntermediate, RegLocalInstance, options);
+                Log(LogLevel_DebugIntermediate, L"[%s%d] samDesired=%s\n", g_RegModuleName, RegLocalInstance, widen(InterpretRegKeyAccess(samDesired)).c_str());
                 if (samDesired != samModified)
                 {
-                    Log(L"[%s%d] ModifiedSam=%s\n", g_RegModuleName, RegLocalInstance, widen(InterpretRegKeyAccess(samModified)).c_str());
+                    Log(LogLevel_DebugBasic, L"[%s%d] ModifiedSam=%s\n", g_RegModuleName, RegLocalInstance, widen(InterpretRegKeyAccess(samModified)).c_str());
                 }
-                LogSecurityAttributes(securityAttributes, RegLocalInstance);
+                LogSecurityAttributes(LogLevel_DebugIntermediate, securityAttributes, RegLocalInstance);
 
-                LogFunctionResultInstance(RegLocalInstance, functionResult);
+                LogFunctionResultInstance(LogLevel_DebugIntermediate, RegLocalInstance, functionResult);
                 if (function_failed(functionResult))
                 {
-                    LogWin32ErrorInstance(RegLocalInstance, result);
+                    LogWin32ErrorInstance(LogLevel_DebugIntermediate, RegLocalInstance, (DWORD)result);
                 }
                 else if (disposition)
                 {
-                    LogRegKeyDisposition(RegLocalInstance,*disposition);
+                    LogRegKeyDisposition(LogLevel_DebugIntermediate, RegLocalInstance, *disposition);
                 }
-                Log(L"[%s%d] This error often indicates that the key must be added to the original package.", g_RegModuleName, RegLocalInstance);
+                Log(LogLevel_DebugIntermediate, L"[%s%d] This error often indicates that the key must be added to the original package.", g_RegModuleName, RegLocalInstance);
             }
             catch (...)
             {
-                Log(L"[%s%d] RegCreateKeyEx logging failure.\n", g_RegModuleName, RegLocalInstance);
+                Log(LogLevel_Exception, L"[%s%d] RegCreateKeyEx logging failure.\n", g_RegModuleName, RegLocalInstance);
             }
-#endif
-#endif
         }
 
 #if THISCOULDHELPBUTDOESNT
@@ -243,9 +234,7 @@ LSTATUS __stdcall RegCreateKeyExGeneric(
                     {
                         size_t offset = keyname.find_first_of(L"\\", 15) + 1;
                         newsubkeyname = keyname.substr(offset).append(L"\\").append(widen(subKey));
-#if _DEBUG
-                        LogString(RegLocalInstance, L"\tModified HKCU Sub Key", newsubkeyname.c_str());
-#endif
+                        LogString(LogLevel_DebugBasic, g_RegModuleName, RegLocalInstance, L"\tModified HKCU Sub Key", newsubkeyname.c_str());
                         if constexpr (psf::is_ansi<CharT>)
                         {
                             std::string nsknarrow = narrow(newsubkeyname);
@@ -258,17 +247,13 @@ LSTATUS __stdcall RegCreateKeyExGeneric(
                             result = ::RegCreateKeyExW(HKEY_CURRENT_USER, newsubkeyname.c_str(), reserved, classType, options, samModified, securityAttributes, resultKey, disposition);
                             //result = ::RegCreateKeyW(HKEY_CURRENT_USER, newsubkeyname.c_str(), resultKey);
                         }
-#if _DEBUG
-                        Log(L"[%s%d]\tRegCreateKeyEx modified result=%d\n", g_RegModuleName, RegLocalInstance, result);
-#endif
+                        Log(LogLevel_DebugBasic, "[%s%d]\tRegCreateKeyEx modified result=%d\n", g_RegModuleName, RegLocalInstance, result);
                     }
                     else if (keyname._Starts_with(L"\\REGISTRY\\MACHINE\\"))
                     {
                         size_t offset = keyname.find_first_of(L"\\", 18) + 1;
                         newsubkeyname = keyname.substr(offset).append(L"\\").append(widen(subKey));
-#if _DEBUG
-                        LogString(RegLocalInstance, L"\tModified HKLM Sub Key", newsubkeyname.c_str());
-#endif
+                        LogString(LogLevel_DebugBasic, g_RegModuleName, RegLocalInstance, L"\tModified HKLM Sub Key", newsubkeyname.c_str());
                         if constexpr (psf::is_ansi<CharT>)
                         {
                             std::string nsknarrow = narrow(newsubkeyname);
@@ -281,15 +266,13 @@ LSTATUS __stdcall RegCreateKeyExGeneric(
                             result = ::RegCreateKeyExW(HKEY_LOCAL_MACHINE, newsubkeyname.c_str(), reserved, classType, options, samModified, securityAttributes, resultKey, disposition);
                             //result = ::RegCreateKeyW(HKEY_LOCAL_MACHINE, newsubkeyname.c_str(), resultKey);
                         }
-#if _DEBUG
-                        Log(L"[%s%d]\tRegCreateKeyEx modified result=%d\n", g_RegModuleName, RegLocalInstance, result);
-#endif
+                        Log(LogLevel_DebugBasic, L"[%s%d]\tRegCreateKeyEx modified result=%d\n", g_RegModuleName, RegLocalInstance, result);
                     }
                 }
             }
             catch (...)
             {
-                Log(L"[%s%d]\tUnable to fix up Key Path.\n", g_RegModuleName, RegLocalInstance);
+                Log(LogLevel_Exception, L"[%s%d]\tUnable to fix up Key Path.\n", g_RegModuleName, RegLocalInstance);
                 SetLastError(ERROR_ACCESS_DENIED);
             }
         }
@@ -352,20 +335,18 @@ LSTATUS __stdcall RegCreateKeyExFixup(
     LSTATUS result = -1;
     bool isBlocked = false;
 
-#if _DEBUG
     if constexpr (psf::is_ansi<CharT>)
     {
-        Log(L"[%s%d] RegCreateKeyEx: key=0x%x subkey=%S Options=0x%x SamDesired=0x%x", g_RegModuleName, RegLocalInstance, (ULONG)(ULONG_PTR)key, subKey, options, samDesired);
+        Log(LogLevel_DebugBasic, L"[%s%d] RegCreateKeyEx: key=0x%x subkey=%S Options=0x%x SamDesired=0x%x", g_RegModuleName, RegLocalInstance, (ULONG)(ULONG_PTR)key, subKey, options, samDesired);
     }
     else
     {
-        Log(L"[%s%d] RegCreateKeyEx: key=0x%x subKey=%ls Options=0x%x SamDesired=0x%x", g_RegModuleName, RegLocalInstance, (ULONG)(ULONG_PTR)key, subKey, options, samDesired);
+        LogLogLevel_DebugBasic, (L"[%s%d] RegCreateKeyEx: key=0x%x subKey=%ls Options=0x%x SamDesired=0x%x", g_RegModuleName, RegLocalInstance, (ULONG)(ULONG_PTR)key, subKey, options, samDesired);
     }
-#endif
 
     std::string keyonlypath = InterpretKeyPath(key);
     std::string keypath = keyonlypath + "\\" + InterpretStringA(subKey);
-    REGSAM samModified = RegFixupSam(keypath, samDesired, RegLocalInstance);
+    REGSAM samModified = RegFixupSam(LogLevel_DebugMaximum, keypath, samDesired, RegLocalInstance);
 
     bool hasRedirection = false;
 #if TRYHKLM2HKCU
@@ -397,10 +378,8 @@ LSTATUS __stdcall RegCreateKeyExFixup(
                 result = RegCreateKeyExImpl(altkey, subKey, reserved, classType, options, samModified, securityAttributes, resultKey, disposition);
                 RegCloseKey(altkey);
                 hasRedirection = true;
-#if _DEBUG
-                LogString(RegLocalInstance, L"\tRegCreateKeyEx Redirecting to HKCU", subKey);
-                Log(L"[%s%d] RegCreateKeyEx result=%d", g_RegModuleName, RegLocalInstance, result);
-#endif
+                LogString(LogLevel_DebugBasic, g_RegModuleName, RegLocalInstance, L"\tRegCreateKeyEx Redirecting to HKCU", subKey);
+                Log(LogLevel_DebugBasic, L"[%s%d] RegCreateKeyEx result=%d", g_RegModuleName, RegLocalInstance, result);
             }
         }
     }
@@ -409,7 +388,7 @@ LSTATUS __stdcall RegCreateKeyExFixup(
     if (!hasRedirection)
     {
         std::string sskey = narrow(subKey);
-        result = RegFixupDeletionMarker(keyonlypath, sskey, RegLocalInstance);
+        result = RegFixupDeletionMarker(LogLevel_DebugMaximum, keyonlypath, sskey, RegLocalInstance);
         if (result == ERROR_SUCCESS)
         {
             std::string fullpath = keypath;
@@ -417,7 +396,7 @@ LSTATUS __stdcall RegCreateKeyExFixup(
             {
                 fullpath += "\\" + sskey;
             }
-            //if (!RegFixupJavaBlocker(fullpath, RegLocalInstance))
+            //if (!RegFixupJavaBlocker(LogLevel_DebugMaximum, fullpath, RegLocalInstance))
             //{
             result = RegCreateKeyExImpl(key, subKey, reserved, classType, options, samModified, securityAttributes, resultKey, disposition);
             //}
@@ -437,17 +416,13 @@ LSTATUS __stdcall RegCreateKeyExFixup(
 
         if (result != ERROR_SUCCESS)
         {
-#if _DEBUG
-            Log(L"[%s%d] RegCreateKeyEx result=0x%x", g_RegModuleName, RegLocalInstance, result);
-#endif   
+            Log(LogLevel_DebugBasic, L"[%s%d] RegCreateKeyEx result=0x%x", g_RegModuleName, RegLocalInstance, result);
+   
         }
         else
         {
-#if _DEBUG
-            Log(L"[%s%d] RegCreateKeyEx result=SUCCESS key=0x%x", g_RegModuleName, RegLocalInstance, *resultKey);
-#endif
+            Log(LogLevel_DebugBasic, L"[%s%d] RegCreateKeyEx result=SUCCESS key=0x%x", g_RegModuleName, RegLocalInstance, *resultKey);
         }
-
     }
 
 
@@ -457,40 +432,39 @@ LSTATUS __stdcall RegCreateKeyExFixup(
         auto functionResult = from_win32(result);
         if (auto lock = acquire_output_lock(function_type::registry, functionResult))
         {
-#if _DEBUG
-#if MOREDEBUG
             try
             {
-                LogCallingModuleInstanceCommon(g_RegModuleName,RegLocalInstance);
-                LogKeyPath(RegLocalInstance, key);
-                LogString(RegLocalInstance, L"Sub Key", subKey);
-                Log(L"[%s%d] Reserved=%d\n", g_RegModuleName, RegLocalInstance, reserved);
-                if (classType) LogString(g_RegModuleName, RegLocalInstance, L"\tClass", classType);
+                LogCallingModuleInstanceCommon(LogLevel_DebugIntermediate, g_RegModuleName,RegLocalInstance);
+                LogKeyPath(LogLevel_DebugIntermediate, g_ModuleName, RegLocalInstance, key);
+                LogString(LogLevel_DebugIntermediate, g_RegModuleName, RegLocalInstance, L"Sub Key", subKey);
+                Log(LogLevel_DebugIntermediate, L"[%s%d] Reserved=%d\n", g_RegModuleName, RegLocalInstance, reserved);
+                if (classType)
+                {
+                    LogString(LogLevel_DebugIntermediate, g_RegModuleName, RegLocalInstance, L"\tClass", classType);
+                }
                 LogRegKeyFlags(RegLocalInstance, options);
-                Log(L"[%s%d] samDesired=%s\n", g_RegModuleName, RegLocalInstance, widen(InterpretRegKeyAccess(samDesired)).c_str());
+                Log(LogLevel_DebugIntermediate, L"[%s%d] samDesired=%s\n", g_RegModuleName, RegLocalInstance, widen(InterpretRegKeyAccess(samDesired)).c_str());
                 if (samDesired != samModified)
                 {
-                    Log(L"[%s%d] ModifiedSam=%s\n", g_RegModuleName, RegLocalInstance, widen(InterpretRegKeyAccess(samModified)).c_str());
+                    Log(LogLevel_DebugIntermediate, L"[%s%d] ModifiedSam=%s\n", g_RegModuleName, RegLocalInstance, widen(InterpretRegKeyAccess(samModified)).c_str());
                 }
                 LogSecurityAttributes(securityAttributes, RegLocalInstance);
 
                 LogFunctionResultInstance(RegLocalInstance, functionResult);
                 if (function_failed(functionResult))
                 {
-                    LogWin32Error(RegLocalInstance, result);
+                    LogWin32ErrorInstance(LogLevel_DebugIntermediate, RegLocalInstance, (DWORD)result);
                 }
                 else if (disposition)
                 {
-                    LogRegKeyDisposition(RegLocalInstance, *disposition);
+                    LogRegKeyDisposition(LogLevel_DebugIntermediate, RegLocalInstance, *disposition);
                 }
-                Log(L"[%s%d] This error often indicates that the key must be added to the original package.", g_RegModuleName, RegLocalInstance);
+                Log(LogLevel_DebugIntermediate, L"[%s%d] This error often indicates that the key must be added to the original package.", g_RegModuleName, RegLocalInstance);
             }
             catch (...)
             {
-                Log(L"[%s%d] RegCreateKeyEx logging failure.\n", g_RegModuleName, RegLocalInstance);
+                Log(LogLevel_Exception, L"[%s%d] RegCreateKeyEx logging failure.\n", g_RegModuleName, RegLocalInstance);
             }
-#endif
-#endif
         }
 
 #if THISCOULDHELPBUTDOESNT
@@ -514,9 +488,7 @@ LSTATUS __stdcall RegCreateKeyExFixup(
                     {
                         size_t offset = keyname.find_first_of(L"\\", 15) + 1;
                         newsubkeyname = keyname.substr(offset).append(L"\\").append(widen(subKey));
-#if _DEBUG
-                        LogString(RegLocalInstance, L"\tModified HKCU Sub Key", newsubkeyname.c_str());
-#endif
+                        LogString(LogLevel_DebugIntermediate, g_RegModuleName, RegLocalInstance, L"\tModified HKCU Sub Key", newsubkeyname.c_str());
                         if constexpr (psf::is_ansi<CharT>)
                         {
                             std::string nsknarrow = narrow(newsubkeyname);
@@ -529,17 +501,13 @@ LSTATUS __stdcall RegCreateKeyExFixup(
                             result = ::RegCreateKeyExW(HKEY_CURRENT_USER, newsubkeyname.c_str(), reserved, classType, options, samModified, securityAttributes, resultKey, disposition);
                             //result = ::RegCreateKeyW(HKEY_CURRENT_USER, newsubkeyname.c_str(), resultKey);
                         }
-#if _DEBUG
-                        Log(L"[%s%d]\tRegCreateKeyEx modified result=%d\n", g_RegModuleName, RegLocalInstance, result);
-#endif
+                        Log(LogLevel_DebugIntermediate, L"[%s%d]\tRegCreateKeyEx modified result=%d\n", g_RegModuleName, RegLocalInstance, result);
                     }
                     else if (keyname._Starts_with(L"\\REGISTRY\\MACHINE\\"))
                     {
                         size_t offset = keyname.find_first_of(L"\\", 18) + 1;
                         newsubkeyname = keyname.substr(offset).append(L"\\").append(widen(subKey));
-#if _DEBUG
-                        LogString(RegLocalInstance, L"\tModified HKLM Sub Key", newsubkeyname.c_str());
-#endif
+                        LogString(LogLevel_DebugIntermediate, g_RegModuleName, RegLocalInstance, L"\tModified HKLM Sub Key", newsubkeyname.c_str());
                         if constexpr (psf::is_ansi<CharT>)
                         {
                             std::string nsknarrow = narrow(newsubkeyname);
@@ -552,15 +520,13 @@ LSTATUS __stdcall RegCreateKeyExFixup(
                             result = ::RegCreateKeyExW(HKEY_LOCAL_MACHINE, newsubkeyname.c_str(), reserved, classType, options, samModified, securityAttributes, resultKey, disposition);
                             //result = ::RegCreateKeyW(HKEY_LOCAL_MACHINE, newsubkeyname.c_str(), resultKey);
                         }
-#if _DEBUG
-                        Log(L"[%s%d]\tRegCreateKeyEx modified result=%d\n", g_RegModuleName, RegLocalInstance, result);
-#endif
+                        Log(LogLevel_DebugIntermediate, L"[%s%d]\tRegCreateKeyEx modified result=%d\n", g_RegModuleName, RegLocalInstance, result);
                     }
                 }
             }
             catch (...)
             {
-                Log(L"[%s%d]\tUnable to fix up Key Path.\n", g_RegModuleName, RegLocalInstance);
+                Log(LogLevel_Exception, L"[%s%d]\tUnable to fix up Key Path.\n", g_RegModuleName, RegLocalInstance);
                 SetLastError(ERROR_ACCESS_DENIED);
             }
         }

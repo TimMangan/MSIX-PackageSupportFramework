@@ -58,17 +58,17 @@ NTSTATUS Test_TripplePlayAlternative(NTSTATUS retfinalIn, std::wstring wThisPath
         if (thisHandle != INVALID_HANDLE_VALUE)
         {
             retfinal = ntdllimpl::NtQueryDirectoryFileImpl(thisHandle, Event, ApcRoutine, ApcContext, IoStatusBlock, FileInformation, Length, FileInformationClass, ReturnSingleEntry, FileName, RestartScan);
-            Log(L"[%s%d] NtDll_NtQueryDirectoryFileFixup %s alternative %s for %s return status=0x%x", g_MfrModuleName, dllInstance, casetype.c_str(), wThisPathName.c_str(), FileName->Buffer, retfinal);
+            Log(LogLevel_DebugBasic, L"[%s%d] NtDll_NtQueryDirectoryFileFixup %s alternative %s for %s return status=0x%x", g_MfrModuleName, dllInstance, casetype.c_str(), wThisPathName.c_str(), FileName->Buffer, retfinal);
             CloseHandle(thisHandle);
         } 
         else
         {
-            Log(L"%s%d] NtDll_NtQueryDirectoryFileFixup %s alternative %s failed to open handle.", g_MfrModuleName, dllInstance, casetype.c_str(), wThisPathName.c_str());
+            Log(LogLevel_DebugBasic, L"%s%d] NtDll_NtQueryDirectoryFileFixup %s alternative %s failed to open handle.", g_MfrModuleName, dllInstance, casetype.c_str(), wThisPathName.c_str());
         }
     }
     catch (...)
     {
-        Log(L"[%s%d] NtDll_NtQueryDirectoryFileFixup %s alternative exception.", g_MfrModuleName, dllInstance, casetype.c_str());
+        Log(LogLevel_DebugBasic, L"[%s%d] NtDll_NtQueryDirectoryFileFixup %s alternative exception.", g_MfrModuleName, dllInstance, casetype.c_str());
     }
     return retfinal;
 }
@@ -98,7 +98,7 @@ NTSTATUS TripplePlay_NtQueryDirectoryFileImpl(
     [[maybe_unused]] DWORD filePathLength = GetFinalPathNameByHandle(FileHandle, filePath, MAX_PATH, FILE_NAME_NORMALIZED);
     DirPathUsed = filePath;
     retfinal = ntdllimpl::NtQueryDirectoryFileImpl(FileHandle, Event, ApcRoutine, ApcContext, IoStatusBlock, FileInformation, Length, FileInformationClass, ReturnSingleEntry, FileName, RestartScan);
-    Log(L"[%s%d] NtDll_NtQueryDirectoryFileFixup as requested %s return status=0x%x", g_MfrModuleName, dllInstance, filePath, retfinal);
+    Log(LogLevel_DebugBasic, L"[%s%d] NtDll_NtQueryDirectoryFileFixup as requested %s return status=0x%x", g_MfrModuleName, dllInstance, filePath, retfinal);
 
     //#define STATUS_BUFFER_OVERFLOW            ((DWORD   )0x80000005L)    // Documented
     //#define STATUS_NO_MORE_FILES              ((DWORD   )0x80000006L)    // Seen
@@ -119,7 +119,7 @@ NTSTATUS TripplePlay_NtQueryDirectoryFileImpl(
 
         // Determine possible paths involved
         Cohorts cohorts;
-        DetermineCohorts(wfilePath, &cohorts, false, dllInstance, L"NtDll_NtQueryDirectoryFileFixup");
+        DetermineCohorts(LogLevel_DebugIntermediate, wfilePath, &cohorts, dllInstance, L"NtDll_NtQueryDirectoryFileFixup");
 
         // Adjust the cohorts based on the next level when it is a variablized name
         //CohortAdjustment(&cohorts, FileName->Buffer, false, dllInstance, L"NtDll_NtQueryDirectoryFileFixup");
@@ -181,11 +181,7 @@ NTSTATUS TripplePlay_NtQueryDirectoryFileImpl(
         }
     }
 
-    // Possible addtional logging, even in release build
-#if MOREDEBUG
-    bool temp = g_psf_NoLogging;
-    g_psf_NoLogging = false;
-#endif
+    // Possible additional logging
 
     try
     {
@@ -206,7 +202,7 @@ NTSTATUS TripplePlay_NtQueryDirectoryFileImpl(
             {
                 if (wideData1->FileNameLength > 0)
                 {
-                    Log(L"[%s%d] NtDll_NtQueryDirectoryFileFixup IoStatusBlock Status 0x%x Attributes=0x%x FromDir=%s FileLen %d File %s", g_MfrModuleName, dllInstance, IoStatusBlock->Status, wideData1->FileAttributes, DirPathUsed.c_str(), wideData1->FileNameLength, (const wchar_t*)wideData1->FileName);
+                    Log(LogLevel_DebugIntermediate, L"[%s%d] NtDll_NtQueryDirectoryFileFixup IoStatusBlock Status 0x%x Attributes=0x%x FromDir=%s FileLen %d File %s", g_MfrModuleName, dllInstance, IoStatusBlock->Status, wideData1->FileAttributes, DirPathUsed.c_str(), wideData1->FileNameLength, (const wchar_t*)wideData1->FileName);
                 }
                 wideData1 = wideData1->NextEntryOffset == 0 ? NULL : reinterpret_cast<FILE_DIRECTORY_INFORMATION*>(reinterpret_cast<BYTE*>(wideData1) + wideData1->NextEntryOffset);
             }
@@ -214,66 +210,64 @@ NTSTATUS TripplePlay_NtQueryDirectoryFileImpl(
         case 2: //FILE_FULL_DIRECTORY_INFORMATION:
             if (wideData2->FileNameLength > 0)
             {
-                Log(L"[%s%d] NtDll_NtQueryDirectoryFileFixup IoStatusBlock Status 0x%x Attributes=0x%x FromDir=%s FileLen %d File %s", g_MfrModuleName, dllInstance, IoStatusBlock->Status, wideData2->FileAttributes, DirPathUsed.c_str(), wideData2->FileNameLength, (const wchar_t*)wideData2->FileName);
+                Log(LogLevel_DebugIntermediate, L"[%s%d] NtDll_NtQueryDirectoryFileFixup IoStatusBlock Status 0x%x Attributes=0x%x FromDir=%s FileLen %d File %s", g_MfrModuleName, dllInstance, IoStatusBlock->Status, wideData2->FileAttributes, DirPathUsed.c_str(), wideData2->FileNameLength, (const wchar_t*)wideData2->FileName);
             }
             wideData2 = wideData2->NextEntryOffset == 0 ? NULL : reinterpret_cast<PFILE_FULL_DIRECTORY_INFORMATION>(reinterpret_cast<BYTE*>(wideData2) + wideData2->NextEntryOffset);
             break;
         case 3: //FILE_BOTH_DIRECTORY_INFORMATION:
             if (wideData3->FileNameLength > 0)
             {
-                Log(L"[%s%d] NtDll_NtQueryDirectoryFileFixup IoStatusBlock Status 0x%x Attributes=0x%x FromDir=%s FileLen %d File %s", g_MfrModuleName, dllInstance, IoStatusBlock->Status, wideData3->FileAttributes, DirPathUsed.c_str(), wideData3->FileNameLength, (const wchar_t*)wideData3->FileName);
+                Log(LogLevel_DebugIntermediate, L"[%s%d] NtDll_NtQueryDirectoryFileFixup IoStatusBlock Status 0x%x Attributes=0x%x FromDir=%s FileLen %d File %s", g_MfrModuleName, dllInstance, IoStatusBlock->Status, wideData3->FileAttributes, DirPathUsed.c_str(), wideData3->FileNameLength, (const wchar_t*)wideData3->FileName);
             }
             wideData3 = wideData3->NextEntryOffset == 0 ? NULL : reinterpret_cast<PFILE_BOTH_DIRECTORY_INFORMATION>(reinterpret_cast<BYTE*>(wideData3) + wideData3->NextEntryOffset);
             break;
         case 12: // FILE_NAMES_INFORMATION
             if (wideData12->FileNameLength > 0)
             {
-                Log(L"[%s%d] NtDll_NtQueryDirectoryFileFixup IoStatusBlock Status 0x%x FromDir=%s FileLen %d File %s", g_MfrModuleName, dllInstance, IoStatusBlock->Status, DirPathUsed.c_str(), wideData12->FileNameLength, (const wchar_t*)wideData12->FileName);
+                Log(LogLevel_DebugIntermediate, L"[%s%d] NtDll_NtQueryDirectoryFileFixup IoStatusBlock Status 0x%x FromDir=%s FileLen %d File %s", g_MfrModuleName, dllInstance, IoStatusBlock->Status, DirPathUsed.c_str(), wideData12->FileNameLength, (const wchar_t*)wideData12->FileName);
             }
             wideData12 = wideData12->NextEntryOffset == 0 ? NULL : reinterpret_cast<PFILE_NAMES_INFORMATION>(reinterpret_cast<BYTE*>(wideData12) + wideData12->NextEntryOffset);
             break;
         case 29: // FILE_OBJECT_ID:
-            Log(L"[%s%d] NtDll_NtQueryDirectoryFileFixup IoStatusBlock Status 0x%x", g_MfrModuleName, dllInstance, IoStatusBlock->Status);
+            Log(LogLevel_DebugIntermediate, L"[%s%d] NtDll_NtQueryDirectoryFileFixup IoStatusBlock Status 0x%x", g_MfrModuleName, dllInstance, IoStatusBlock->Status);
             break;
         case 32: // FILE_QUOTA_INFORMATION:
-            Log(L"[%s%d] NtDll_NtQueryDirectoryFileFixup IoStatusBlock Status 0x%x", g_MfrModuleName, dllInstance, IoStatusBlock->Status);
+            Log(LogLevel_DebugIntermediate, L"[%s%d] NtDll_NtQueryDirectoryFileFixup IoStatusBlock Status 0x%x", g_MfrModuleName, dllInstance, IoStatusBlock->Status);
             break;
         case 33: // FILE_REPARSE_POINT_INFORMATION:
-            Log(L"[%s%d] NtDll_NtQueryDirectoryFileFixup IoStatusBlock Status 0x%x", g_MfrModuleName, dllInstance, IoStatusBlock->Status);
+            Log(LogLevel_DebugIntermediate, L"[%s%d] NtDll_NtQueryDirectoryFileFixup IoStatusBlock Status 0x%x", g_MfrModuleName, dllInstance, IoStatusBlock->Status);
             break;
         case 37: //FILE_ID_BOTH_DIR_INFORMATION:
             if (wideData37->FileNameLength > 0)
             {
-                Log(L"[%s%d] NtDll_NtQueryDirectoryFileFixup IoStatusBlock Status 0x%x Attributes=0x%x FromDir=%s FileLen %d File %s", g_MfrModuleName, dllInstance, IoStatusBlock->Status, wideData37->FileAttributes, DirPathUsed.c_str(), wideData37->FileNameLength, (const wchar_t*)wideData37->FileName);
+                Log(LogLevel_DebugIntermediate, L"[%s%d] NtDll_NtQueryDirectoryFileFixup IoStatusBlock Status 0x%x Attributes=0x%x FromDir=%s FileLen %d File %s", g_MfrModuleName, dllInstance, IoStatusBlock->Status, wideData37->FileAttributes, DirPathUsed.c_str(), wideData37->FileNameLength, (const wchar_t*)wideData37->FileName);
             }
             wideData37 = wideData37->NextEntryOffset == 0 ? NULL : reinterpret_cast<PFILE_ID_BOTH_DIR_INFORMATION>(reinterpret_cast<BYTE*>(wideData37) + wideData37->NextEntryOffset);
             break; 
         case 38: //FILE_ID_DIR_INFORMATION:
             if (wideData38->FileNameLength > 0)
             {
-                Log(L"[%s%d] NtDll_NtQueryDirectoryFileFixup IoStatusBlock Status 0x%x Attributes=0x%x FromDir=%s FileLen %d File %s", g_MfrModuleName, dllInstance, IoStatusBlock->Status, wideData38->FileAttributes, DirPathUsed.c_str(), wideData38->FileNameLength, (const wchar_t*)wideData38->FileName);
+                Log(LogLevel_DebugIntermediate, L"[%s%d] NtDll_NtQueryDirectoryFileFixup IoStatusBlock Status 0x%x Attributes=0x%x FromDir=%s FileLen %d File %s", g_MfrModuleName, dllInstance, IoStatusBlock->Status, wideData38->FileAttributes, DirPathUsed.c_str(), wideData38->FileNameLength, (const wchar_t*)wideData38->FileName);
             }
             wideData38 = wideData38->NextEntryOffset == 0 ? NULL : reinterpret_cast<PFILE_ID_BOTH_DIR_INFORMATION>(reinterpret_cast<BYTE*>(wideData38) + wideData38->NextEntryOffset);
             break;
         case 50: // FILE_ID_GLOBAL_TX_DIR_INFORMATION
-            Log(L"[%s%d] NtDll_NtQueryDirectoryFileFixup IoStatusBlock Status 0x%x", g_MfrModuleName, dllInstance, IoStatusBlock->Status);
+            Log(LogLevel_DebugIntermediate, L"[%s%d] NtDll_NtQueryDirectoryFileFixup IoStatusBlock Status 0x%x", g_MfrModuleName, dllInstance, IoStatusBlock->Status);
             break;
         case 60: //  FILE_ID_EXTD_DIR_INFORMATION 
-            Log(L"[%s%d] NtDll_NtQueryDirectoryFileFixup IoStatusBlock Status 0x%x", g_MfrModuleName, dllInstance, IoStatusBlock->Status);
+            Log(LogLevel_DebugIntermediate, L"[%s%d] NtDll_NtQueryDirectoryFileFixup IoStatusBlock Status 0x%x", g_MfrModuleName, dllInstance, IoStatusBlock->Status);
             break;
         case 63: //  FILE_ID_EXTD_BOTH_DIR_INFORMATION
-            Log(L"[%s%d] NtDll_NtQueryDirectoryFileFixup IoStatusBlock Status 0x%x", g_MfrModuleName, dllInstance, IoStatusBlock->Status);
+            Log(LogLevel_DebugIntermediate, L"[%s%d] NtDll_NtQueryDirectoryFileFixup IoStatusBlock Status 0x%x", g_MfrModuleName, dllInstance, IoStatusBlock->Status);
             break;
         default:
-            Log(L"[%s%d] NtDll_NtQueryDirectoryFileFixup IoStatusBlock Status 0x%x", g_MfrModuleName, dllInstance, IoStatusBlock->Status);
+            Log(LogLevel_DebugIntermediate, L"[%s%d] NtDll_NtQueryDirectoryFileFixup IoStatusBlock Status 0x%x", g_MfrModuleName, dllInstance, IoStatusBlock->Status);
             break;
         }
     }
     catch (...) {}
 
-#if MOREDEBUG
-    g_psf_NoLogging = temp;
-#endif
+
     return retfinal;
 }
 
@@ -300,57 +294,38 @@ NtDll_NtQueryDirectoryFileFixup(
     {
         if (guard)
         {
-#if MOREDEBUG
-            bool tempLogging = g_psf_NoLogging;
-#endif
+
             g_InterceptInstance++;
             dllInstance = g_InterceptInstance;
             if (Event != NULL || ApcRoutine != NULL)
             {
                 // We do not have support for async calls at this time.  Log this, even without debug logging enabled, so we are aware.
                 
-#if MOREDEBUG
-                g_psf_NoLogging = false;
-#endif
-                Log(L"[%s%d] NtDll_NtQueryDirectoryFileFixup Async call not redirected", g_MfrModuleName, dllInstance);
+
+                Log(LogLevel_DebugBasic, L"[%s%d] NtDll_NtQueryDirectoryFileFixup Async call not redirected", g_MfrModuleName, dllInstance);
                 LogCallingModuleInstance(g_MfrModuleName, dllInstance);
-#if MOREDEBUG
-                g_psf_NoLogging = tempLogging;
-#endif
+
+
                 retfinal = ntdllimpl::NtQueryDirectoryFileImpl(FileHandle, Event, ApcRoutine, ApcContext, IoStatusBlock, FileInformation, Length, FileInformationClass, ReturnSingleEntry, FileName, RestartScan);
             }
             else if (!RestartScan)
             {
                 // We also do not support returning for more info at this time, although maybe we could...
-#if MOREDEBUG
-                g_psf_NoLogging = false;
-#endif
-                Log(L"[%s%d] NtDll_NtQueryDirectoryFileFixup Next call not redirected", g_MfrModuleName, dllInstance);
-                Log(L"[%s%d] NtDll_NtQueryDirectoryFileFixup RootDirectory=0x%x ReqClass=0x%x SingleEntry=%d Restart=%d", g_MfrModuleName, dllInstance, FileHandle, FileInformationClass, (DWORD)ReturnSingleEntry);
+                Log(LogLevel_DebugBasic, L"[%s%d] NtDll_NtQueryDirectoryFileFixup Next call not redirected", g_MfrModuleName, dllInstance);
+                Log(LogLevel_DebugBasic, L"[%s%d] NtDll_NtQueryDirectoryFileFixup RootDirectory=0x%x ReqClass=0x%x SingleEntry=%d Restart=%d", g_MfrModuleName, dllInstance, FileHandle, FileInformationClass, (DWORD)ReturnSingleEntry);
                 LogCallingModuleInstance(g_MfrModuleName, dllInstance);
-#if MOREDEBUG
-                g_psf_NoLogging = tempLogging;
-#endif
                 retfinal = ntdllimpl::NtQueryDirectoryFileImpl(FileHandle, Event, ApcRoutine, ApcContext, IoStatusBlock, FileInformation, Length, FileInformationClass, ReturnSingleEntry, FileName, RestartScan);
             }
             else
             {
-#if MOREDEBUG
-                g_psf_NoLogging = false;
-#endif
+
                 if (FileName != NULL)
                 {
-                    Log(L"[%s%d] NtDll_NtQueryDirectoryFileFixup RootDirectory=0x%x ReqClass=0x%x SingleEntry=%d Restart=%d FileName=%ls", g_MfrModuleName, dllInstance, FileHandle, FileInformationClass, (DWORD)ReturnSingleEntry, (DWORD)RestartScan, FileName->Buffer);
+                    Log(LogLevel_DebugBasic, L"[%s%d] NtDll_NtQueryDirectoryFileFixup RootDirectory=0x%x ReqClass=0x%x SingleEntry=%d Restart=%d FileName=%ls", g_MfrModuleName, dllInstance, FileHandle, FileInformationClass, (DWORD)ReturnSingleEntry, (DWORD)RestartScan, FileName->Buffer);
                 }
                 //LogCallingModuleInstance(g_MfrModuleName, dllInstance);
-#if MOREDEBUG
-                g_psf_NoLogging = tempLogging;
-#endif
                 retfinal = TripplePlay_NtQueryDirectoryFileImpl(FileHandle, Event, ApcRoutine, ApcContext, IoStatusBlock, FileInformation, Length, FileInformationClass, ReturnSingleEntry, FileName, RestartScan);
             }
-#if MOREDEBUG
-            g_psf_NoLogging = tempLogging;
-#endif
         }
         else
         {
@@ -358,15 +333,10 @@ NtDll_NtQueryDirectoryFileFixup(
         }
         return retfinal;
     }
-#if _DEBUG
     // Fall back to assuming no redirection is necessary if exception
-    LOGGED_CATCHHANDLER_MIN(g_MfrModuleName, dllInstance, L"NtDll_NtQueryDirectoryFileFixup")
-#else
-    catch (...)
-    {
-        Log(L"[%s%d] NtDll_NtQueryDirectoryFileFixup Exception=0x%x", g_MfrModuleName, dllInstance, GetLastError());
-    }
-#endif
+    LOGGED_CATCHHANDLER_MIN(LogLevel_DebugBasic, g_MfrModuleName, dllInstance, L"NtDll_NtQueryDirectoryFileFixup")
+
+
     retfinal = ntdllimpl::NtQueryDirectoryFileImpl(FileHandle, Event, ApcRoutine, ApcContext, IoStatusBlock, FileInformation, Length, FileInformationClass, ReturnSingleEntry, FileName, RestartScan);
     return retfinal;
 }

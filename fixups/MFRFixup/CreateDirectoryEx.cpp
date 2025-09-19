@@ -11,10 +11,6 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 #define IMPROVE_RETURN_ACCURACY 1
 
-#if _DEBUG
-//#define MOREDEBUG 1
-#endif
-
 #include <errno.h>
 #include "FunctionImplementations.h"
 #include <psf_logging.h>
@@ -24,44 +20,39 @@
 #include "DetermineCohorts.h"
 #include "DetermineIlvPaths.h"
 
-BOOL WRAPPER_CREATEDIRECTORYEX(std::wstring theTemplateDirectory, std::wstring theDestinationDirectory, LPSECURITY_ATTRIBUTES securityAttributes, DWORD dllInstance, bool debug, bool moredebug)
-    { 
-        std::wstring LongTemplateDirectory = MakeLongPath(theTemplateDirectory);
-        std::wstring LongDestinationDirectory = MakeLongPath(theDestinationDirectory);
-        BOOL retfinal = impl::CreateDirectoryExW(LongTemplateDirectory.c_str(), LongDestinationDirectory.c_str(), securityAttributes); 
-        if (moredebug) 
-        { 
-            Log(L"[%s%d] CreateDirectoryEx uses template '%s'", g_MfrModuleName, dllInstance, LongTemplateDirectory.c_str());
-        } 
-        if (debug) 
-        { 
-            if (retfinal == 0)
-            {
-                DWORD error = GetLastError();
-                if (error == ERROR_ALREADY_EXISTS)
-                {
-                    Log(L"[%s%d] CreateDirectoryEx returns FAILURE 0x%x Error=ALREADY_EXISTS(0x%x) and directory '%s' not found", g_MfrModuleName, dllInstance, retfinal, error, LongDestinationDirectory.c_str());
-                }
-                else if (error == ERROR_FILE_NOT_FOUND)
-                {
-                    Log(L"[%s%d] CreateDirectoryEx returns FAILURE 0x%x Error=FILE_NOT_FOUND(0x%x) and directory '%s' not found", g_MfrModuleName, dllInstance, retfinal, error, LongDestinationDirectory.c_str());
-                }
-                else if (error == ERROR_PATH_NOT_FOUND)
-                {
-                    Log(L"[%s%d] CreateDirectoryEx returns FAILURE 0x%x Error=PATH_NOT_FOUND(0x%x) and directory '%s' not found", g_MfrModuleName, dllInstance, retfinal, error, LongDestinationDirectory.c_str());
-                }
-                else
-                {
-                    Log(L"[%s%d] CreateDirectoryEx returns FAILURE 0x%x Error=0x%x and directory '%s'", g_MfrModuleName, dllInstance, retfinal, error, LongDestinationDirectory.c_str());
-                }
-            }
-            else
-            { 
-                Log(L"[%s%d] CreateDirectoryEx returns SUCCESS 0x%x and directory '%s'", g_MfrModuleName, dllInstance, retfinal, LongDestinationDirectory.c_str());
-            } 
-        } 
-        return retfinal; 
+BOOL WRAPPER_CREATEDIRECTORYEX(Json_Debug_Levels debugRequestLevel, std::wstring theTemplateDirectory, std::wstring theDestinationDirectory, LPSECURITY_ATTRIBUTES securityAttributes, DWORD dllInstance)
+{
+    std::wstring LongTemplateDirectory = MakeLongPath(theTemplateDirectory);
+    std::wstring LongDestinationDirectory = MakeLongPath(theDestinationDirectory);
+    BOOL retfinal = impl::CreateDirectoryExW(LongTemplateDirectory.c_str(), LongDestinationDirectory.c_str(), securityAttributes);
+    Log(debugRequestLevel, L"[%s%d] CreateDirectoryEx uses template '%s'", g_MfrModuleName, dllInstance, LongTemplateDirectory.c_str());
+
+    if (retfinal == 0)
+    {
+        DWORD error = GetLastError();
+        if (error == ERROR_ALREADY_EXISTS)
+        {
+            Log(debugRequestLevel, L"[%s%d] CreateDirectoryEx returns FAILURE 0x%x Error=ALREADY_EXISTS(0x%x) and directory '%s' not found", g_MfrModuleName, dllInstance, retfinal, error, LongDestinationDirectory.c_str());
+        }
+        else if (error == ERROR_FILE_NOT_FOUND)
+        {
+            Log(debugRequestLevel, L"[%s%d] CreateDirectoryEx returns FAILURE 0x%x Error=FILE_NOT_FOUND(0x%x) and directory '%s' not found", g_MfrModuleName, dllInstance, retfinal, error, LongDestinationDirectory.c_str());
+        }
+        else if (error == ERROR_PATH_NOT_FOUND)
+        {
+            Log(debugRequestLevel, L"[%s%d] CreateDirectoryEx returns FAILURE 0x%x Error=PATH_NOT_FOUND(0x%x) and directory '%s' not found", g_MfrModuleName, dllInstance, retfinal, error, LongDestinationDirectory.c_str());
+        }
+        else
+        {
+            Log(debugRequestLevel, L"[%s%d] CreateDirectoryEx returns FAILURE 0x%x Error=0x%x and directory '%s'", g_MfrModuleName, dllInstance, retfinal, error, LongDestinationDirectory.c_str());
+        }
     }
+    else
+    {
+        Log(debugRequestLevel, L"[%s%d] CreateDirectoryEx returns SUCCESS 0x%x and directory '%s'", g_MfrModuleName, dllInstance, retfinal, LongDestinationDirectory.c_str());
+    }
+    return retfinal;
+}
 
 
 
@@ -72,14 +63,6 @@ BOOL __stdcall CreateDirectoryExFixup(
     _In_opt_ LPSECURITY_ATTRIBUTES securityAttributes) noexcept
 {
     DWORD dllInstance = g_InterceptInstance;
-    bool debug = false;
-#if _DEBUG
-    debug = true;
-#endif
-    bool moredebug = false;
-#if MOREDEBUG
-    moredebug = true;
-#endif
     BOOL retfinal;
     auto guard = g_reentrancyGuard.enter();
     try
@@ -88,10 +71,9 @@ BOOL __stdcall CreateDirectoryExFixup(
         {
             // This function is very much like CopyFile, except that we have a folder instead.
             dllInstance = ++g_InterceptInstance;
-#if _DEBUG
-            LogString(g_MfrModuleName, dllInstance, L"CreateDirectoryExFixup using template", templateDirectory);
-            LogString(g_MfrModuleName, dllInstance, L"CreateDirectoryExFixup to", newDirectory);
-#endif
+            LogString(LogLevel_DebugBasic, g_MfrModuleName, dllInstance, L"CreateDirectoryExFixup using template", templateDirectory);
+            LogString(LogLevel_DebugBasic, g_MfrModuleName, dllInstance, L"CreateDirectoryExFixup to", newDirectory);
+
             std::wstring WtemplateDirectory = widen(templateDirectory);
             std::wstring WnewDirectory = widen(newDirectory);
             WtemplateDirectory = AdjustSlashes(WtemplateDirectory, dllInstance);
@@ -99,15 +81,15 @@ BOOL __stdcall CreateDirectoryExFixup(
 
             WtemplateDirectory = AdjustBadUNC(WtemplateDirectory, dllInstance, L"CreateDirectoryExFixup (template)");
             WnewDirectory = AdjustBadUNC(WnewDirectory, dllInstance, L"CreateDirectoryExFixup (new)");
-            
 
-            // This get is inheirently a write operation in all cases.
+
+            // This get is inherently a write operation in all cases.
             // We will always want the redirected location for the new directory.
             Cohorts cohortsTemplate;
-            DetermineCohorts(WtemplateDirectory, &cohortsTemplate, moredebug, dllInstance, L"CreateDirectoryExFixup (template)");
+            DetermineCohorts(LogLevel_DebugIntermediate, WtemplateDirectory, &cohortsTemplate, dllInstance, L"CreateDirectoryExFixup (template)");
 
             Cohorts cohortsNew;
-            DetermineCohorts(WnewDirectory, &cohortsNew, moredebug, dllInstance, L"CreateDirectoryExFixup (directory)");
+            DetermineCohorts(LogLevel_DebugIntermediate, WnewDirectory, &cohortsNew, dllInstance, L"CreateDirectoryExFixup (directory)");
             std::wstring newDirectoryWsRedirected;
 
             if (!MFRConfiguration.Ilv_Aware)
@@ -168,10 +150,7 @@ BOOL __stdcall CreateDirectoryExFixup(
                     newDirectoryWsRedirected = cohortsNew.WsRequested;
                     break;
                 }
-#if MOREDEBUG
-                Log(L"[%s%d] CreateDirectoryExFixup: redirected destination=%s", g_MfrModuleName, dllInstance, newDirectoryWsRedirected.c_str());
-#endif
-
+                Log(LogLevel_DebugIntermediate, L"[%s%d] CreateDirectoryExFixup: redirected destination=%s", g_MfrModuleName, dllInstance, newDirectoryWsRedirected.c_str());
 
                 switch (cohortsTemplate.file_mfr.Request_MfrPathType)
                 {
@@ -180,20 +159,18 @@ BOOL __stdcall CreateDirectoryExFixup(
                         cohortsTemplate.map.Valid_mapping == mfr::mfr_enabled_types::enabled)
                     {
                         // try the request path, which must be the local redirected version by definition, and then a package equivalent, or make original call to fail.
-                        if (cohortsTemplate.map.IsAnExclusionToRedirect == mfr::mfr_exclusion_types::not_excluded  && 
+                        if (cohortsTemplate.map.IsAnExclusionToRedirect == mfr::mfr_exclusion_types::not_excluded &&
                             PathExists(cohortsTemplate.WsRedirected.c_str()))
                         {
                             PreCreateFolders(newDirectoryWsRedirected.c_str(), dllInstance, L"CreateDirectoryExFixup");
-                            retfinal = WRAPPER_CREATEDIRECTORYEX(cohortsTemplate.WsRedirected, newDirectoryWsRedirected, securityAttributes, dllInstance, debug, moredebug);
+                            retfinal = WRAPPER_CREATEDIRECTORYEX(LogLevel_DebugBasic, cohortsTemplate.WsRedirected, newDirectoryWsRedirected, securityAttributes, dllInstance);
 #if IMPROVE_RETURN_ACCURACY
                             if (!retfinal)
                             {
                                 if (PathExists(cohortsNew.WsPackage.c_str()))
                                 {
                                     SetLastError(ERROR_ALREADY_EXISTS);
-#if _DEBUG
-                                    Log("[%s%d] CreateDirectoryExFixup: Resetting return code to ERROR_ALREADY_EXISTS.", g_MfrModuleName, dllInstance);
-#endif
+                                    Log(LogLevel_DebugBasic, "[%s%d] CreateDirectoryExFixup: Resetting return code to ERROR_ALREADY_EXISTS.", g_MfrModuleName, dllInstance);
                                 }
                             }
 #endif                  
@@ -202,16 +179,14 @@ BOOL __stdcall CreateDirectoryExFixup(
                         else if (PathExists(cohortsTemplate.WsPackage.c_str()))
                         {
                             PreCreateFolders(newDirectoryWsRedirected.c_str(), dllInstance, L"CreateDirectoryExFixup");
-                            retfinal = WRAPPER_CREATEDIRECTORYEX(cohortsTemplate.WsPackage, newDirectoryWsRedirected, securityAttributes, dllInstance, debug, moredebug);
+                            retfinal = WRAPPER_CREATEDIRECTORYEX(LogLevel_DebugBasic, cohortsTemplate.WsPackage, newDirectoryWsRedirected, securityAttributes, dllInstance);
 #if IMPROVE_RETURN_ACCURACY
                             if (!retfinal)
                             {
                                 if (PathExists(cohortsNew.WsPackage.c_str()))
                                 {
                                     SetLastError(ERROR_ALREADY_EXISTS);
-#if _DEBUG
-                                    Log("[%s%d] CreateDirectoryExFixup: Resetting return code to ERROR_ALREADY_EXISTS.", g_MfrModuleName, dllInstance);
-#endif
+                                    Log(LogLevel_DebugBasic, "[%s%d] CreateDirectoryExFixup: Resetting return code to ERROR_ALREADY_EXISTS.", g_MfrModuleName, dllInstance);
                                 }
                             }
 #endif                  
@@ -220,7 +195,7 @@ BOOL __stdcall CreateDirectoryExFixup(
                         else
                         {
                             // There isn't such a file anywhere.  So the call will fail.
-                            retfinal = WRAPPER_CREATEDIRECTORYEX(cohortsTemplate.WsRequested, newDirectoryWsRedirected, securityAttributes, dllInstance, debug, moredebug);
+                            retfinal = WRAPPER_CREATEDIRECTORYEX(LogLevel_DebugBasic, cohortsTemplate.WsRequested, newDirectoryWsRedirected, securityAttributes, dllInstance);
                             return retfinal;
                         }
                     }
@@ -229,11 +204,11 @@ BOOL __stdcall CreateDirectoryExFixup(
                         cohortsTemplate.map.Valid_mapping == mfr::mfr_enabled_types::enabled)
                     {
                         // try the redirected path, then package, then native, or let fail using original.
-                        if (cohortsTemplate.map.IsAnExclusionToRedirect == mfr::mfr_exclusion_types::not_excluded  && 
+                        if (cohortsTemplate.map.IsAnExclusionToRedirect == mfr::mfr_exclusion_types::not_excluded &&
                             PathExists(cohortsTemplate.WsRedirected.c_str()))
                         {
                             PreCreateFolders(newDirectoryWsRedirected.c_str(), dllInstance, L"CreateDirectoryExFixup");
-                            retfinal = WRAPPER_CREATEDIRECTORYEX(cohortsTemplate.WsRedirected, newDirectoryWsRedirected, securityAttributes, dllInstance, debug, moredebug);
+                            retfinal = WRAPPER_CREATEDIRECTORYEX(LogLevel_DebugBasic, cohortsTemplate.WsRedirected, newDirectoryWsRedirected, securityAttributes, dllInstance);
 #if IMPROVE_RETURN_ACCURACY
                             if (!retfinal)
                             {
@@ -242,9 +217,7 @@ BOOL __stdcall CreateDirectoryExFixup(
                                 {
                                     retfinal = FALSE;
                                     SetLastError(ERROR_ALREADY_EXISTS);
-#if _DEBUG
-                                    Log("[%s%d] CreateDirectoryExFixup: Resetting return code to ERROR_ALREADY_EXISTS.", g_MfrModuleName, dllInstance);
-#endif
+                                    Log(LogLevel_DebugBasic, "[%s%d] CreateDirectoryExFixup: Resetting return code to ERROR_ALREADY_EXISTS.", g_MfrModuleName, dllInstance);
                                 }
                             }
 #endif
@@ -253,7 +226,7 @@ BOOL __stdcall CreateDirectoryExFixup(
                         else if (PathExists(cohortsTemplate.WsPackage.c_str()))
                         {
                             PreCreateFolders(newDirectoryWsRedirected.c_str(), dllInstance, L"CreateDirectoryExFixup");
-                            retfinal = WRAPPER_CREATEDIRECTORYEX(cohortsTemplate.WsPackage, newDirectoryWsRedirected, securityAttributes, dllInstance, debug, moredebug);
+                            retfinal = WRAPPER_CREATEDIRECTORYEX(LogLevel_DebugBasic, cohortsTemplate.WsPackage, newDirectoryWsRedirected, securityAttributes, dllInstance);
 #if IMPROVE_RETURN_ACCURACY
                             if (!retfinal)
                             {
@@ -262,9 +235,7 @@ BOOL __stdcall CreateDirectoryExFixup(
                                 {
                                     retfinal = FALSE;
                                     SetLastError(ERROR_ALREADY_EXISTS);
-#if _DEBUG
-                                    Log("[%s%d] CreateDirectoryExFixup: Resetting return code to ERROR_ALREADY_EXISTS.", g_MfrModuleName, dllInstance);
-#endif
+                                    Log(LogLevel_DebugBasic, "[%s%d] CreateDirectoryExFixup: Resetting return code to ERROR_ALREADY_EXISTS.", g_MfrModuleName, dllInstance);
                                 }
                             }
 #endif
@@ -274,7 +245,7 @@ BOOL __stdcall CreateDirectoryExFixup(
                             PathExists(cohortsTemplate.WsNative.c_str()))
                         {
                             PreCreateFolders(newDirectoryWsRedirected.c_str(), dllInstance, L"CreateDirectoryExFixup");
-                            retfinal = WRAPPER_CREATEDIRECTORYEX(cohortsTemplate.WsNative, newDirectoryWsRedirected, securityAttributes, dllInstance, debug, moredebug);
+                            retfinal = WRAPPER_CREATEDIRECTORYEX(LogLevel_DebugBasic, cohortsTemplate.WsNative, newDirectoryWsRedirected, securityAttributes, dllInstance);
 #if IMPROVE_RETURN_ACCURACY
                             if (!retfinal)
                             {
@@ -283,31 +254,28 @@ BOOL __stdcall CreateDirectoryExFixup(
                                 {
                                     retfinal = FALSE;
                                     SetLastError(ERROR_ALREADY_EXISTS);
-#if _DEBUG
-                                    Log("[%s%d] CreateDirectoryExFixup: Resetting return code to ERROR_ALREADY_EXISTS.", g_MfrModuleName, dllInstance);
-#endif
+                                    Log(LogLevel_DebugBasic, "[%s%d] CreateDirectoryExFixup: Resetting return code to ERROR_ALREADY_EXISTS.", g_MfrModuleName, dllInstance);
                                 }
-                            }
 #endif
-                            return retfinal;
+                                return retfinal;
+                            }
+                            else
+                            {
+                                // There isn't such a file anywhere.  Let the call fails as requested.
+                                retfinal = WRAPPER_CREATEDIRECTORYEX(LogLevel_DebugBasic, cohortsTemplate.WsRequested, newDirectoryWsRedirected, securityAttributes, dllInstance);
+                                return retfinal;
+                            }
                         }
-                        else
-                        {
-                            // There isn't such a file anywhere.  Let the call fails as requested.
-                            retfinal = WRAPPER_CREATEDIRECTORYEX(cohortsTemplate.WsRequested, newDirectoryWsRedirected, securityAttributes, dllInstance, debug, moredebug);
-                            return retfinal;
-                        }
-                    }
-                    break;
+                        break;
                 case mfr::mfr_path_types::in_package_pvad_area:
                     if (cohortsTemplate.map.Valid_mapping == mfr::mfr_enabled_types::enabled)
                     {
                         //// try the redirected path, then package (COW), then don't need native.
-                        if (cohortsTemplate.map.IsAnExclusionToRedirect == mfr::mfr_exclusion_types::not_excluded  && 
+                        if (cohortsTemplate.map.IsAnExclusionToRedirect == mfr::mfr_exclusion_types::not_excluded &&
                             PathExists(cohortsTemplate.WsRedirected.c_str()))
                         {
                             PreCreateFolders(newDirectoryWsRedirected.c_str(), dllInstance, L"CreateDirectoryExFixup");
-                            retfinal = WRAPPER_CREATEDIRECTORYEX(cohortsTemplate.WsRedirected, newDirectoryWsRedirected, securityAttributes, dllInstance, debug, moredebug);
+                            retfinal = WRAPPER_CREATEDIRECTORYEX(LogLevel_DebugBasic, cohortsTemplate.WsRedirected, newDirectoryWsRedirected, securityAttributes, dllInstance);
 #if IMPROVE_RETURN_ACCURACY
                             if (!retfinal)
                             {
@@ -316,9 +284,7 @@ BOOL __stdcall CreateDirectoryExFixup(
                                 {
                                     retfinal = FALSE;
                                     SetLastError(ERROR_ALREADY_EXISTS);
-#if _DEBUG
-                                    Log("[%s%d] CreateDirectoryExFixup: Resetting return code to ERROR_ALREADY_EXISTS.", g_MfrModuleName, dllInstance);
-#endif
+                                    Log(LogLevel_DebugBasic, "[%s%d] CreateDirectoryExFixup: Resetting return code to ERROR_ALREADY_EXISTS.", g_MfrModuleName, dllInstance);
                                 }
                             }
 #endif
@@ -327,7 +293,7 @@ BOOL __stdcall CreateDirectoryExFixup(
                         else if (PathExists(cohortsTemplate.WsPackage.c_str()))
                         {
                             PreCreateFolders(newDirectoryWsRedirected.c_str(), dllInstance, L"CreateDirectoryExFixup");
-                            retfinal = WRAPPER_CREATEDIRECTORYEX(cohortsTemplate.WsPackage, newDirectoryWsRedirected, securityAttributes, dllInstance, debug, moredebug);
+                            retfinal = WRAPPER_CREATEDIRECTORYEX(LogLevel_DebugBasic, cohortsTemplate.WsPackage, newDirectoryWsRedirected, securityAttributes, dllInstance);
 #if IMPROVE_RETURN_ACCURACY
                             if (!retfinal)
                             {
@@ -336,9 +302,7 @@ BOOL __stdcall CreateDirectoryExFixup(
                                 {
                                     retfinal = FALSE;
                                     SetLastError(ERROR_ALREADY_EXISTS);
-#if _DEBUG
-                                    Log("[%s%d] CreateDirectoryExFixup: Resetting return code to ERROR_ALREADY_EXISTS.", g_MfrModuleName, dllInstance);
-#endif
+                                    Log(LogLevel_DebugBasic, "[%s%d] CreateDirectoryExFixup: Resetting return code to ERROR_ALREADY_EXISTS.", g_MfrModuleName, dllInstance);
                                 }
                             }
 #endif
@@ -347,7 +311,7 @@ BOOL __stdcall CreateDirectoryExFixup(
                         else
                         {
                             // There isn't such a file anywhere.  Let the call fails as requested.
-                            retfinal = WRAPPER_CREATEDIRECTORYEX(cohortsTemplate.WsRequested, newDirectoryWsRedirected, securityAttributes, dllInstance, debug, moredebug);
+                            retfinal = WRAPPER_CREATEDIRECTORYEX(LogLevel_DebugBasic, cohortsTemplate.WsRequested, newDirectoryWsRedirected, securityAttributes, dllInstance);
                             return retfinal;
                         }
                     }
@@ -357,11 +321,11 @@ BOOL __stdcall CreateDirectoryExFixup(
                         cohortsTemplate.map.Valid_mapping == mfr::mfr_enabled_types::enabled)
                     {
                         // try the redirection path, then the package (COW).
-                        if (cohortsTemplate.map.IsAnExclusionToRedirect == mfr::mfr_exclusion_types::not_excluded && 
+                        if (cohortsTemplate.map.IsAnExclusionToRedirect == mfr::mfr_exclusion_types::not_excluded &&
                             PathExists(cohortsTemplate.WsRedirected.c_str()))
                         {
                             PreCreateFolders(newDirectoryWsRedirected.c_str(), dllInstance, L"CreateDirectoryExFixup");
-                            retfinal = WRAPPER_CREATEDIRECTORYEX(cohortsTemplate.WsRedirected, newDirectoryWsRedirected, securityAttributes, dllInstance, debug, moredebug);
+                            retfinal = WRAPPER_CREATEDIRECTORYEX(LogLevel_DebugBasic, cohortsTemplate.WsRedirected, newDirectoryWsRedirected, securityAttributes, dllInstance);
 #if IMPROVE_RETURN_ACCURACY
                             if (!retfinal)
                             {
@@ -370,9 +334,7 @@ BOOL __stdcall CreateDirectoryExFixup(
                                 {
                                     retfinal = FALSE;
                                     SetLastError(ERROR_ALREADY_EXISTS);
-#if _DEBUG
-                                    Log("[%s%d] CreateDirectoryExFixup: Resetting return code to ERROR_ALREADY_EXISTS.", g_MfrModuleName, dllInstance);
-#endif
+                                    Log(LogLevel_DebugBasic, "[%s%d] CreateDirectoryExFixup: Resetting return code to ERROR_ALREADY_EXISTS.", g_MfrModuleName, dllInstance);
                                 }
                             }
 #endif
@@ -381,7 +343,7 @@ BOOL __stdcall CreateDirectoryExFixup(
                         else if (PathExists(cohortsTemplate.WsPackage.c_str()))
                         {
                             PreCreateFolders(newDirectoryWsRedirected.c_str(), dllInstance, L"CreateDirectoryExFixup");
-                            retfinal = WRAPPER_CREATEDIRECTORYEX(cohortsTemplate.WsPackage, newDirectoryWsRedirected, securityAttributes, dllInstance, debug, moredebug);
+                            retfinal = WRAPPER_CREATEDIRECTORYEX(LogLevel_DebugBasic, cohortsTemplate.WsPackage, newDirectoryWsRedirected, securityAttributes, dllInstance);
 #if IMPROVE_RETURN_ACCURACY
                             if (!retfinal)
                             {
@@ -390,9 +352,7 @@ BOOL __stdcall CreateDirectoryExFixup(
                                 {
                                     retfinal = FALSE;
                                     SetLastError(ERROR_ALREADY_EXISTS);
-#if _DEBUG
-                                    Log("[%s%d] CreateDirectoryExFixup: Resetting return code to ERROR_ALREADY_EXISTS.", g_MfrModuleName, dllInstance);
-#endif
+                                    Log(LogLevel_DebugBasic, "[%s%d] CreateDirectoryExFixup: Resetting return code to ERROR_ALREADY_EXISTS.", g_MfrModuleName, dllInstance);
                                 }
                             }
 #endif
@@ -401,7 +361,7 @@ BOOL __stdcall CreateDirectoryExFixup(
                         else
                         {
                             // There isn't such a file anywhere.  Let the call fails as requested.
-                            retfinal = WRAPPER_CREATEDIRECTORYEX(cohortsTemplate.WsRequested, newDirectoryWsRedirected, securityAttributes, dllInstance, debug, moredebug);
+                            retfinal = WRAPPER_CREATEDIRECTORYEX(LogLevel_DebugBasic, cohortsTemplate.WsRequested, newDirectoryWsRedirected, securityAttributes, dllInstance);
                             return retfinal;
                         }
                     }
@@ -410,11 +370,11 @@ BOOL __stdcall CreateDirectoryExFixup(
                         cohortsTemplate.map.Valid_mapping == mfr::mfr_enabled_types::enabled)
                     {
                         // try the redirection path, then the package (COW), then native (possibly COW)
-                        if (cohortsTemplate.map.IsAnExclusionToRedirect == mfr::mfr_exclusion_types::not_excluded && 
+                        if (cohortsTemplate.map.IsAnExclusionToRedirect == mfr::mfr_exclusion_types::not_excluded &&
                             PathExists(cohortsTemplate.WsRedirected.c_str()))
                         {
                             PreCreateFolders(newDirectoryWsRedirected.c_str(), dllInstance, L"CreateDirectoryExFixup");
-                            retfinal = WRAPPER_CREATEDIRECTORYEX(cohortsTemplate.WsRedirected, newDirectoryWsRedirected, securityAttributes, dllInstance, debug, moredebug);
+                            retfinal = WRAPPER_CREATEDIRECTORYEX(LogLevel_DebugBasic, cohortsTemplate.WsRedirected, newDirectoryWsRedirected, securityAttributes, dllInstance);
 #if IMPROVE_RETURN_ACCURACY
                             if (!retfinal)
                             {
@@ -423,9 +383,7 @@ BOOL __stdcall CreateDirectoryExFixup(
                                 {
                                     retfinal = FALSE;
                                     SetLastError(ERROR_ALREADY_EXISTS);
-#if _DEBUG
-                                    Log("[%s%d] CreateDirectoryExFixup: Resetting return code to ERROR_ALREADY_EXISTS.", g_MfrModuleName, dllInstance);
-#endif
+                                    Log(LogLevel_DebugBasic, "[%s%d] CreateDirectoryExFixup: Resetting return code to ERROR_ALREADY_EXISTS.", g_MfrModuleName, dllInstance);
                                 }
                             }
 #endif
@@ -434,7 +392,7 @@ BOOL __stdcall CreateDirectoryExFixup(
                         else if (PathExists(cohortsTemplate.WsPackage.c_str()))
                         {
                             PreCreateFolders(newDirectoryWsRedirected.c_str(), dllInstance, L"CreateDirectoryExFixup");
-                            retfinal = WRAPPER_CREATEDIRECTORYEX(cohortsTemplate.WsPackage, newDirectoryWsRedirected, securityAttributes, dllInstance, debug, moredebug);
+                            retfinal = WRAPPER_CREATEDIRECTORYEX(LogLevel_DebugBasic, cohortsTemplate.WsPackage, newDirectoryWsRedirected, securityAttributes, dllInstance);
                             return retfinal;
 #if IMPROVE_RETURN_ACCURACY
                             if (!retfinal)
@@ -444,9 +402,7 @@ BOOL __stdcall CreateDirectoryExFixup(
                                 {
                                     retfinal = FALSE;
                                     SetLastError(ERROR_ALREADY_EXISTS);
-#if _DEBUG
-                                    Log("[%s%d] CreateDirectoryExFixup: Resetting return code to ERROR_ALREADY_EXISTS.", g_MfrModuleName, dllInstance);
-#endif
+                                    Log(LogLevel_DebugBasic, "[%s%d] CreateDirectoryExFixup: Resetting return code to ERROR_ALREADY_EXISTS.", g_MfrModuleName, dllInstance);
                                 }
                             }
 #endif
@@ -455,7 +411,7 @@ BOOL __stdcall CreateDirectoryExFixup(
                             PathExists(cohortsTemplate.WsNative.c_str()))
                         {
                             PreCreateFolders(newDirectoryWsRedirected.c_str(), dllInstance, L"CreateDirectoryExFixup");
-                            retfinal = WRAPPER_CREATEDIRECTORYEX(cohortsTemplate.WsNative, newDirectoryWsRedirected, securityAttributes, dllInstance, debug, moredebug);
+                            retfinal = WRAPPER_CREATEDIRECTORYEX(LogLevel_DebugBasic, cohortsTemplate.WsNative, newDirectoryWsRedirected, securityAttributes, dllInstance);
                             return retfinal;
 #if IMPROVE_RETURN_ACCURACY
                             if (!retfinal)
@@ -465,9 +421,7 @@ BOOL __stdcall CreateDirectoryExFixup(
                                 {
                                     retfinal = FALSE;
                                     SetLastError(ERROR_ALREADY_EXISTS);
-#if _DEBUG
-                                    Log("[%s%d] CreateDirectoryExFixup: Resetting return code to ERROR_ALREADY_EXISTS.", g_MfrModuleName, dllInstance);
-#endif
+                                    Log(LogLevel_DebugBasic, "[%s%d] CreateDirectoryExFixup: Resetting return code to ERROR_ALREADY_EXISTS.", g_MfrModuleName, dllInstance);
                                 }
                             }
 #endif
@@ -475,7 +429,7 @@ BOOL __stdcall CreateDirectoryExFixup(
                         else
                         {
                             // There isn't such a file anywhere.  Let the call fails as requested.
-                            retfinal = WRAPPER_CREATEDIRECTORYEX(cohortsTemplate.WsRequested, newDirectoryWsRedirected, securityAttributes, dllInstance, debug, moredebug);
+                            retfinal = WRAPPER_CREATEDIRECTORYEX(LogLevel_DebugBasic, cohortsTemplate.WsRequested, newDirectoryWsRedirected, securityAttributes, dllInstance);
                             return retfinal;
                         }
                     }
@@ -484,11 +438,11 @@ BOOL __stdcall CreateDirectoryExFixup(
                     if (cohortsTemplate.map.Valid_mapping == mfr::mfr_enabled_types::enabled)
                     {
                         // try the redirected path, then package (COW), then possibly native (Possibly COW).
-                        if (cohortsTemplate.map.IsAnExclusionToRedirect == mfr::mfr_exclusion_types::not_excluded && 
+                        if (cohortsTemplate.map.IsAnExclusionToRedirect == mfr::mfr_exclusion_types::not_excluded &&
                             PathExists(cohortsTemplate.WsRedirected.c_str()))
                         {
                             PreCreateFolders(newDirectoryWsRedirected.c_str(), dllInstance, L"CreateDirectoryExFixup");
-                            retfinal = WRAPPER_CREATEDIRECTORYEX(cohortsTemplate.WsRedirected, newDirectoryWsRedirected, securityAttributes, dllInstance, debug, moredebug);
+                            retfinal = WRAPPER_CREATEDIRECTORYEX(LogLevel_DebugBasic, cohortsTemplate.WsRedirected, newDirectoryWsRedirected, securityAttributes, dllInstance);
 #if IMPROVE_RETURN_ACCURACY
                             if (!retfinal)
                             {
@@ -497,9 +451,7 @@ BOOL __stdcall CreateDirectoryExFixup(
                                 {
                                     retfinal = FALSE;
                                     SetLastError(ERROR_ALREADY_EXISTS);
-#if _DEBUG
-                                    Log("[%s%d] CreateDirectoryExFixup: Resetting return code to ERROR_ALREADY_EXISTS.", g_MfrModuleName, dllInstance);
-#endif
+                                    Log(LogLevel_DebugBasic, "[%s%d] CreateDirectoryExFixup: Resetting return code to ERROR_ALREADY_EXISTS.", g_MfrModuleName, dllInstance);
                                 }
                             }
 #endif
@@ -508,7 +460,7 @@ BOOL __stdcall CreateDirectoryExFixup(
                         else if (PathExists(cohortsTemplate.WsPackage.c_str()))
                         {
                             PreCreateFolders(newDirectoryWsRedirected.c_str(), dllInstance, L"CreateDirectoryExFixup");
-                            retfinal = WRAPPER_CREATEDIRECTORYEX(cohortsTemplate.WsPackage, newDirectoryWsRedirected, securityAttributes, dllInstance, debug, moredebug);
+                            retfinal = WRAPPER_CREATEDIRECTORYEX(LogLevel_DebugBasic, cohortsTemplate.WsPackage, newDirectoryWsRedirected, securityAttributes, dllInstance);
 #if IMPROVE_RETURN_ACCURACY
                             if (!retfinal)
                             {
@@ -517,9 +469,7 @@ BOOL __stdcall CreateDirectoryExFixup(
                                 {
                                     retfinal = FALSE;
                                     SetLastError(ERROR_ALREADY_EXISTS);
-#if _DEBUG
-                                    Log("[%s%d] CreateDirectoryExFixup: Resetting return code to ERROR_ALREADY_EXISTS.", g_MfrModuleName, dllInstance);
-#endif
+                                    Log(LogLevel_DebugBasic, "[%s%d] CreateDirectoryExFixup: Resetting return code to ERROR_ALREADY_EXISTS.", g_MfrModuleName, dllInstance);
                                 }
                             }
 #endif
@@ -529,7 +479,7 @@ BOOL __stdcall CreateDirectoryExFixup(
                             PathExists(cohortsTemplate.WsNative.c_str()))
                         {
                             PreCreateFolders(newDirectoryWsRedirected.c_str(), dllInstance, L"CreateDirectoryExFixup");
-                            retfinal = WRAPPER_CREATEDIRECTORYEX(cohortsTemplate.WsNative, newDirectoryWsRedirected, securityAttributes, dllInstance, debug, moredebug);
+                            retfinal = WRAPPER_CREATEDIRECTORYEX(LogLevel_DebugBasic, cohortsTemplate.WsNative, newDirectoryWsRedirected, securityAttributes, dllInstance);
 #if IMPROVE_RETURN_ACCURACY
                             if (!retfinal)
                             {
@@ -538,9 +488,7 @@ BOOL __stdcall CreateDirectoryExFixup(
                                 {
                                     retfinal = FALSE;
                                     SetLastError(ERROR_ALREADY_EXISTS);
-#if _DEBUG
-                                    Log("[%s%d] CreateDirectoryExFixup: Resetting return code to ERROR_ALREADY_EXISTS.", g_MfrModuleName, dllInstance);
-#endif
+                                    Log(LogLevel_DebugBasic, "[%s%d] CreateDirectoryExFixup: Resetting return code to ERROR_ALREADY_EXISTS.", g_MfrModuleName, dllInstance);
                                 }
                             }
 #endif
@@ -549,7 +497,7 @@ BOOL __stdcall CreateDirectoryExFixup(
                         else
                         {
                             // There isn't such a file anywhere.  Let the call fails as requested.
-                            retfinal = WRAPPER_CREATEDIRECTORYEX(cohortsTemplate.WsRequested, newDirectoryWsRedirected, securityAttributes, dllInstance, debug, moredebug);
+                            retfinal = WRAPPER_CREATEDIRECTORYEX(LogLevel_DebugBasic, cohortsTemplate.WsRequested, newDirectoryWsRedirected, securityAttributes, dllInstance);
                             return retfinal;
                         }
                     }
@@ -565,36 +513,30 @@ BOOL __stdcall CreateDirectoryExFixup(
                 case mfr::mfr_path_types::unknown:
                 default:
                     break;
+                    }
                 }
             }
             else
             {
                 // ILVAware
-                std::wstring UseNewDir = DetermineIlvPathForWriteOperations(cohortsNew, dllInstance, moredebug);
+                std::wstring UseNewDir = DetermineIlvPathForWriteOperations(LogLevel_DebugIntermediate, cohortsNew, dllInstance);
                 // In a redirect to local scenario, we are responsible for pre-creating the local parent folders
                 // if-and-only-if they are present in the package.
-                PreCreateLocalFoldersIfNeededForWrite(UseNewDir, cohortsNew.WsPackage, dllInstance, debug, L"CreateDirectoryExFixup");
+                PreCreateLocalFoldersIfNeededForWrite(LogLevel_DebugBasic, UseNewDir, cohortsNew.WsPackage, dllInstance, L"CreateDirectoryExFixup");
                 if (!cohortsNew.NativeIsValidOptionInScenario)
                 {
-                    PreCreatePackageFoldersIfIlvNeededForWrite(UseNewDir, dllInstance, debug, L"CreateDirectoryExFixup");
+                    PreCreatePackageFoldersIfIlvNeededForWrite(LogLevel_DebugBasic, UseNewDir, dllInstance, L"CreateDirectoryExFixup");
                 }
-                std::wstring UseTemplate = DetermineIlvPathForReadOperations(cohortsTemplate, dllInstance, moredebug);
+                std::wstring UseTemplate = DetermineIlvPathForReadOperations(LogLevel_DebugIntermediate, cohortsTemplate, dllInstance);
                 UseTemplate = SelectLocalOrPackageForRead(UseTemplate, cohortsTemplate.WsPackage);
 
-                retfinal = WRAPPER_CREATEDIRECTORYEX(UseTemplate, UseNewDir, securityAttributes, dllInstance, debug, moredebug);
+                retfinal = WRAPPER_CREATEDIRECTORYEX(LogLevel_DebugBasic, UseTemplate, UseNewDir, securityAttributes, dllInstance);
                 return retfinal;
             }
         }
     }
-#if _DEBUG
     // Fall back to assuming no redirection is necessary if exception
-    LOGGED_CATCHHANDLER_MIN(g_MfrModuleName, dllInstance, L"CreateDirectoryExFixup")
-#else
-    catch (...)
-    {
-        Log(L"[%s%d] CreateDirectoryExFixup Exception=0x%x", g_MfrModuleName, dllInstance, GetLastError());
-    }
-#endif
+    LOGGED_CATCHHANDLER_MIN(LogLevel_DebugBasic, g_MfrModuleName, dllInstance, L"CreateDirectoryExFixup")
 
     if (templateDirectory != nullptr && newDirectory != nullptr)
     {
@@ -607,9 +549,9 @@ BOOL __stdcall CreateDirectoryExFixup(
         SetLastError(ERROR_INVALID_PARAMETER);
         retfinal = 0; //impl::CreateDirectoryEx(templateDirectory, newDirectory, securityAttributes);
     }
-#if _DEBUG
-    Log(L"[%s%d] CreateDirectoryExFixup returns 0x%x", g_MfrModuleName, dllInstance, retfinal);
-#endif
+    Log(LogLevel_DebugBasic, L"[%s%d] CreateDirectoryExFixup returns 0x%x", g_MfrModuleName, dllInstance, retfinal);
     return retfinal;
 }
 DECLARE_STRING_FIXUP(impl::CreateDirectoryEx, CreateDirectoryExFixup);
+
+

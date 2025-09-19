@@ -17,11 +17,9 @@ BOOL __stdcall CopyFileFixup(_In_ const CharT* existingFileName, _In_ const Char
     {
         if (guard)
         {
-#if _DEBUG
-            LogString(g_FrfModuleName, CopyFileInstance,L"CopyFileFixup from", existingFileName);
-            LogString(g_FrfModuleName, CopyFileInstance,L"CopyFileFixup to",   newFileName);
-            Log(L"[%s%d] CopyFileFixup FileIfExists %d", g_FrfModuleName, CopyFileInstance, failIfExists);
-#endif
+            LogString(LogLevel_DebugBasic, g_FrfModuleName, CopyFileInstance,L"CopyFileFixup from", existingFileName);
+            LogString(LogLevel_DebugBasic, g_FrfModuleName, CopyFileInstance,L"CopyFileFixup to",   newFileName);
+            Log(LogLevel_DebugBasic, L"[%s%d] CopyFileFixup FileIfExists %d", g_FrfModuleName, CopyFileInstance, failIfExists);
             
             // NOTE: We don't want to copy either file in the event one/both exist. Copying the source file would be
             //       wasteful since it's not the file that we care about (nor do we need write permissions to it); we
@@ -47,18 +45,16 @@ BOOL __stdcall CopyFileFixup(_In_ const CharT* existingFileName, _In_ const Char
                     rldSourceRedirectPath.c_str(),
                     rldRedirectDest.c_str(),
                     failIfExists);
-#if _DEBUG
-                LogString(g_FrfModuleName, CopyFileInstance, L"CopyFileFixup: Actual From", rldSourceRedirectPath.c_str());
-                LogString(g_FrfModuleName, CopyFileInstance, L"CopyFileFixup: Actual To", rldRedirectDest.c_str());
+                LogString(LogLevel_DebugBasic, g_FrfModuleName, CopyFileInstance, L"CopyFileFixup: Actual From", rldSourceRedirectPath.c_str());
+                LogString(LogLevel_DebugBasic, g_FrfModuleName, CopyFileInstance, L"CopyFileFixup: Actual To", rldRedirectDest.c_str());
                 if (bRet)
                 {
-                    Log(L"[%s%d] CopyFileFixup: return SUCCESS", g_FrfModuleName, CopyFileInstance);
+                    Log(LogLevel_DebugBasic, L"[%s%d] CopyFileFixup: return SUCCESS", g_FrfModuleName, CopyFileInstance);
                 }
                 else
                 {
-                    Log(L"[%s%d] CopyFileFixup: return FAIL err=0x%x", g_FrfModuleName, CopyFileInstance, GetLastError());
+                    Log(LogLevel_DebugBasic, L"[%s%d] CopyFileFixup: return FAIL err=0x%x", g_FrfModuleName, CopyFileInstance, GetLastError());
                 }
-#endif
                 return bRet;
             }
             else
@@ -72,31 +68,23 @@ BOOL __stdcall CopyFileFixup(_In_ const CharT* existingFileName, _In_ const Char
                     rldExistingFileName.c_str(),
                     rldNewDirectory.c_str(),
                     failIfExists);
-#if _DEBUG
-                LogString(g_FrfModuleName, CopyFileInstance, L"CopyFileFixup: Actual From", rldExistingFileName.c_str());
-                LogString(g_FrfModuleName, CopyFileInstance, L"CopyFileFixup: Actual To", rldNewDirectory.c_str());
+                LogString(LogLevel_DebugBasic, g_FrfModuleName, CopyFileInstance, L"CopyFileFixup: Actual From", rldExistingFileName.c_str());
+                LogString(LogLevel_DebugBasic, g_FrfModuleName, CopyFileInstance, L"CopyFileFixup: Actual To", rldNewDirectory.c_str());
                 if (bRet)
                 {
-                    Log(L"[%s%d] CopyFileFixup: return SUCCESS", g_FrfModuleName, CopyFileInstance);
+                    Log(LogLevel_DebugBasic, L"[%s%d] CopyFileFixup: return SUCCESS", g_FrfModuleName, CopyFileInstance);
                 }
                 else
                 {
-                    Log(L"[%s%d] CopyFileFixup: return FAIL err=0x%x", g_FrfModuleName, CopyFileInstance, GetLastError());
+                    Log(LogLevel_DebugBasic, L"[%s%d] CopyFileFixup: return FAIL err=0x%x", g_FrfModuleName, CopyFileInstance, GetLastError());
                 }
-#endif
                 return bRet;
             }
         }
     }
-#if _DEBUG
     // Fall back to assuming no redirection is necessary if exception
-    LOGGED_CATCHHANDLER_MIN(g_FrfModuleName, CopyFileInstance, L"CopyFile")
-#else
-    catch (...)
-    {
-        Log(L"[%s%d] CopyFile Exception=0x%x", g_FrfModuleName, CopyFileInstance, GetLastError());
-    }
-#endif
+    LOGGED_CATCHHANDLER_MIN(LogLevel_Exception, g_FrfModuleName, CopyFileInstance, L"CopyFile")
+
 
     // In the spirit of app compatability, make the path long formed just in case.
     if constexpr (psf::is_ansi<CharT>)
@@ -130,10 +118,8 @@ BOOL __stdcall CopyFileExFixup(
     {
         if (guard)
         {
-#if _DEBUG
-            LogString(g_FrfModuleName, CopyFileExInstance,L"CopyFileExFixup from", existingFileName);
-            LogString(g_FrfModuleName, CopyFileExInstance,L"CopyFileExFixup to",   newFileName);
-#endif
+            LogString(LogLevel_DebugBasic, g_FrfModuleName, CopyFileExInstance,L"CopyFileExFixup from", existingFileName);
+            LogString(LogLevel_DebugBasic, g_FrfModuleName, CopyFileExInstance,L"CopyFileExFixup to",   newFileName);
 
             // See note in CopyFileFixup for commentary on copy-on-read policy
             path_redirect_info  priSource = ShouldRedirectV2(existingFileName, redirect_flags::check_file_presence | redirect_flags::ok_if_parent_in_pkg, CopyFileExInstance);
@@ -165,15 +151,9 @@ BOOL __stdcall CopyFileExFixup(
             }
         }
     }
-#if _DEBUG
     // Fall back to assuming no redirection is necessary if exception
-    LOGGED_CATCHHANDLER_MIN(g_FrfModuleName, CopyFileExInstance, L"CopyFileEx")
-#else
-    catch (...)
-    {
-        Log(L"[%s%d] CopyFileEx Exception=0x%x", g_FrfModuleName, CopyFileExInstance, GetLastError());
-    }
-#endif
+    LOGGED_CATCHHANDLER_MIN(LogLevel_Exception, g_FrfModuleName, CopyFileExInstance, L"CopyFileEx")
+
 
     if constexpr (psf::is_ansi<CharT>)
     {
@@ -202,10 +182,8 @@ HRESULT __stdcall CopyFile2Fixup(
     {
         if (guard)
         {
-#if _DEBUG
-            LogString(g_FrfModuleName, CopyFile2Instance,L"CopyFile2Fixup from", existingFileName);
-            LogString(g_FrfModuleName, CopyFile2Instance,L"CopyFile2Fixup to",   newFileName);
-#endif
+            LogString(LogLevel_DebugBasic, g_FrfModuleName, CopyFile2Instance,L"CopyFile2Fixup from", existingFileName);
+            LogString(LogLevel_DebugBasic, g_FrfModuleName, CopyFile2Instance,L"CopyFile2Fixup to",   newFileName);
 
             // See note in CopyFileFixup for commentary on copy-on-read policy
             path_redirect_info  priSource = ShouldRedirectV2(existingFileName, redirect_flags::check_file_presence | redirect_flags::ok_if_parent_in_pkg, CopyFile2Instance);
@@ -230,15 +208,8 @@ HRESULT __stdcall CopyFile2Fixup(
             }
         }
     }
-#if _DEBUG
         // Fall back to assuming no redirection is necessary if exception
-        LOGGED_CATCHHANDLER_MIN(g_FrfModuleName, CopyFile2Instance, L"CopyFile2")
-#else
-catch (...)
-{
-    Log(L"[%s%d] CopyFile2 Exception=0x%x", g_FrfModuleName, CopyFile2Instance, GetLastError());
-}
-#endif
+        LOGGED_CATCHHANDLER_MIN(LogLevel_Exception, g_FrfModuleName, CopyFile2Instance, L"CopyFile2")
 
     return impl::CopyFile2(existingFileName, newFileName, extendedParameters);
 }

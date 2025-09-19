@@ -29,15 +29,12 @@ static BOOL __stdcall FindCloseFixup(_Inout_ HANDLE findHandle) noexcept
     auto guard = g_reentrancyGuard.enter();
     if (!guard)
     {
-#if _DEBUG
-        Log(L"[%s%d] FindCloseFixup", g_MfrModuleName, g_InterceptInstance);
-#endif
+        Log(LogLevel_DebugBasic, L"[%s%d] FindCloseFixup", g_MfrModuleName, g_InterceptInstance);
         return impl::FindClose(findHandle);
     }
 
-#if _DEBUG
     DWORD dllInstance = ++g_InterceptInstance;
-#endif
+
     if (findHandle == INVALID_HANDLE_VALUE)
     {
         ::SetLastError(ERROR_INVALID_PARAMETER);
@@ -46,9 +43,15 @@ static BOOL __stdcall FindCloseFixup(_Inout_ HANDLE findHandle) noexcept
 
     auto data3A = reinterpret_cast<FindData3A*>(findHandle);
     auto data3W = reinterpret_cast<FindData3W*>(findHandle);
-#if _DEBUG
-    Log(L"[%s%d][%s%d] FindCloseFixup handle=0x%x.", g_MfrModuleName, data3A->RememberedInstance, g_MfrModuleName, dllInstance, findHandle);
-#endif
+    if (data3A->RememberedInstance == 0)
+    {
+        // Possibly not one of ours, or was a case of something like NtQueryDirectoryFile now closing.
+        Log(LogLevel_DebugBasic, L"[%s%d] FindCloseFixup (but not from FindFirstFile) handle=0x%x.", g_MfrModuleName,  dllInstance, findHandle);
+    }
+    else
+    {
+        Log(LogLevel_DebugBasic, L"[%s%d][%s%d] FindCloseFixup handle=0x%x.", g_MfrModuleName, data3A->RememberedInstance, g_MfrModuleName, dllInstance, findHandle);
+    }
     if (data3A && data3A->IsAnsi)
     {
         // This is an ANSI FindData3A structure

@@ -13,10 +13,6 @@
 //        But we could catch the error 0x91, look for the known MMPT dummy file name, remove that file, and retry. 
 
 
-#if _DEBUG
-//#define MOREDEBUG 1
-#endif
-
 #include <errno.h>
 #include "FunctionImplementations.h"
 #include <psf_logging.h>
@@ -26,20 +22,17 @@
 #include "DetermineCohorts.h"
 #include "DetermineIlvPaths.h"
 
-BOOL  WRAPPER_REMOVEDIRECTORY(std::wstring theRemovingDirectory,  DWORD dllInstance, bool debug)
+BOOL  WRAPPER_REMOVEDIRECTORY(Json_Debug_Levels debugRequestLevel, std::wstring theRemovingDirectory, DWORD dllInstance)
 {
     std::wstring LongRemovingDirectory = MakeLongPath(theRemovingDirectory);
     BOOL retfinal = impl::RemoveDirectoryW(LongRemovingDirectory.c_str());
-    if (debug)
+    if (retfinal == 0)
     {
-        if (retfinal == 0)
-        {
-            Log(L"[%s%d] RemoveDirectory returns result FAILURE 0x%x on file '%s'", g_MfrModuleName, dllInstance, GetLastError(), LongRemovingDirectory.c_str());
-        }
-        else
-        {
-            Log(L"[%s%d] RemoveDirectory returns result SUCCESS 0x%x on file '%s'", g_MfrModuleName, dllInstance, retfinal, LongRemovingDirectory.c_str());
-        }
+        Log(debugRequestLevel, L"[%s%d] RemoveDirectory returns result FAILURE 0x%x on file '%s'", g_MfrModuleName, dllInstance, GetLastError(), LongRemovingDirectory.c_str());
+    }
+    else
+    {
+        Log(debugRequestLevel, L"[%s%d] RemoveDirectory returns result SUCCESS 0x%x on file '%s'", g_MfrModuleName, dllInstance, retfinal, LongRemovingDirectory.c_str());
     }
     return retfinal;
 }
@@ -49,14 +42,6 @@ template <typename CharT>
 BOOL __stdcall RemoveDirectoryFixup(_In_ const CharT* pathName) noexcept
 {
     DWORD dllInstance = ++g_InterceptInstance;
-    bool debug = false;
-#if _DEBUG
-    debug = true;
-#endif
-    bool moredebug = false;
-#if MOREDEBUG
-    moredebug = true;
-#endif
 
     auto guard = g_reentrancyGuard.enter();
     BOOL retfinal;
@@ -66,18 +51,16 @@ BOOL __stdcall RemoveDirectoryFixup(_In_ const CharT* pathName) noexcept
         {
             std::wstring wPathName = widen(pathName);
             wPathName = AdjustSlashes(wPathName, dllInstance);
-#if _DEBUG
-            LogString(g_MfrModuleName, dllInstance, L"RemoveDirectoryFixup for pathName", wPathName.c_str());
-#endif
+            LogString(LogLevel_DebugBasic, g_MfrModuleName, dllInstance, L"RemoveDirectoryFixup for pathName", wPathName.c_str());
 
             wPathName = AdjustBadUNC(wPathName, dllInstance, L"RemoveDirectoryFixup");
 
             Cohorts cohorts;
-            DetermineCohorts(wPathName, &cohorts, moredebug, dllInstance, L"RemoveDirectoryFixup");
+            DetermineCohorts(LogLevel_DebugIntermediate, wPathName, &cohorts, dllInstance, L"RemoveDirectoryFixup");
 
             if (!MFRConfiguration.Ilv_Aware)
             {
-                // This get is inheirently a write operation in all cases.
+                // This get is inherently a write operation in all cases.
                 // There is no need to COW, just create the redirected folder, but may need to create parent folders first.
 
                 switch (cohorts.file_mfr.Request_MfrPathType)
@@ -91,15 +74,13 @@ BOOL __stdcall RemoveDirectoryFixup(_In_ const CharT* pathName) noexcept
                             PathExists(cohorts.WsRedirected.c_str()))
                         {
                             // Still do this to set attributes
-                            retfinal = WRAPPER_REMOVEDIRECTORY(cohorts.WsRedirected, dllInstance, debug);
+                            retfinal = WRAPPER_REMOVEDIRECTORY(LogLevel_DebugBasic, cohorts.WsRedirected, dllInstance);
 #if IMPROVE_RETURN_ACCURACY
                             if (PathExists(cohortsWsPackage.c_str()))
                             {
                                 retfinal = FALSE;
                                 SetLastError(ERROR_ACCESS_DENIED);
-#if _DEBUG
-                                Log("[%s%d] RemoveDirectoryFixup: Resetting return code to ERROR_ACCESS_DENIED.", g_MfrModuleName, dllInstance );
-#endif
+                                Log(LogLevel_DebugBasic, "[%s%d] RemoveDirectoryFixup: Resetting return code to ERROR_ACCESS_DENIED.", g_MfrModuleName, dllInstance );
                             }
 #endif
                             return retfinal;
@@ -108,9 +89,7 @@ BOOL __stdcall RemoveDirectoryFixup(_In_ const CharT* pathName) noexcept
                         {
                             retfinal = FALSE;
                             SetLastError(ERROR_ACCESS_DENIED);
-#if _DEBUG
-                            Log("[%s%d] RemoveDirectoryFixup: Setting return code to ERROR_ACCESS_DENIED.", g_MfrModuleName, dllInstance);
-#endif
+                            Log(LogLevel_DebugBasic, "[%s%d] RemoveDirectoryFixup: Setting return code to ERROR_ACCESS_DENIED.", g_MfrModuleName, dllInstance);
                             return retfinal;
                         }
                         else
@@ -118,9 +97,8 @@ BOOL __stdcall RemoveDirectoryFixup(_In_ const CharT* pathName) noexcept
                             // There isn't such a file anywhere. 
                             retfinal = FALSE;
                             SetLastError(ERROR_FILE_NOT_FOUND);  // not important if PATH or FILE not found.
-#if _DEBUG
-                            Log("[%s%d] RemoveDirectoryFixup: Setting return code to ERROR_FILE_NOT_FOUND.", g_MfrModuleName, dllInstance);
-#endif
+                            Log(LogLevel_DebugBasic, "[%s%d] RemoveDirectoryFixup: Setting return code to ERROR_FILE_NOT_FOUND.", g_MfrModuleName, dllInstance);
+
                             return retfinal;
                         }
                     }
@@ -132,28 +110,26 @@ BOOL __stdcall RemoveDirectoryFixup(_In_ const CharT* pathName) noexcept
                         if (cohorts.map.IsAnExclusionToRedirect == mfr::mfr_exclusion_types::not_excluded && 
                             PathExists(cohorts.WsRedirected.c_str()))
                         {
-                            retfinal = WRAPPER_REMOVEDIRECTORY(cohorts.WsRedirected, dllInstance, debug);
+                            retfinal = WRAPPER_REMOVEDIRECTORY(LogLevel_DebugBasic, cohorts.WsRedirected, dllInstance);
                             return retfinal;
                         }
                         else if (PathExists(cohorts.WsPackage.c_str()))
                         {
                             retfinal = FALSE;
                             SetLastError(ERROR_ACCESS_DENIED);
-#if _DEBUG
-                            Log("[%s%d] RemoveDirectoryFixup: Setting return code to ERROR_ACCESS_DENIED.", g_MfrModuleName, dllInstance);
-#endif
+                            Log(LogLevel_DebugBasic, "[%s%d] RemoveDirectoryFixup: Setting return code to ERROR_ACCESS_DENIED.", g_MfrModuleName, dllInstance);
                             return retfinal;
                         }
                         else if (cohorts.NativeIsValidOptionInScenario &&
                             PathExists(cohorts.WsNative.c_str()))
                         {
-                            retfinal = WRAPPER_REMOVEDIRECTORY(cohorts.WsNative, dllInstance, debug);
+                            retfinal = WRAPPER_REMOVEDIRECTORY(LogLevel_DebugBasic, cohorts.WsNative, dllInstance);
                             return retfinal;
                         }
                         else
                         {
                             // There isn't such a file anywhere.
-                            return WRAPPER_REMOVEDIRECTORY(cohorts.WsRequested, dllInstance, debug);
+                            return WRAPPER_REMOVEDIRECTORY(LogLevel_DebugBasic, cohorts.WsRequested, dllInstance);
                         }
                     }
                     break;
@@ -164,16 +140,14 @@ BOOL __stdcall RemoveDirectoryFixup(_In_ const CharT* pathName) noexcept
                         if (cohorts.map.IsAnExclusionToRedirect == mfr::mfr_exclusion_types::not_excluded && 
                             PathExists(cohorts.WsRedirected.c_str()))
                         {
-                            retfinal = WRAPPER_REMOVEDIRECTORY(cohorts.WsRedirected, dllInstance, debug);
+                            retfinal = WRAPPER_REMOVEDIRECTORY(LogLevel_DebugBasic, cohorts.WsRedirected, dllInstance);
                             return retfinal;
                         }
                         else if (PathExists(cohorts.WsPackage.c_str()))
                         {
                             retfinal = FALSE;
                             SetLastError(ERROR_ACCESS_DENIED);
-#if _DEBUG
-                            Log("[%s%d] RemoveDirectoryFixup: Ssetting return code to ERROR_ACCESS_DENIED.", g_MfrModuleName, dllInstance);
-#endif
+                            Log(LogLevel_DebugBasic, "[% s % d] RemoveDirectoryFixup: Setting return code to ERROR_ACCESS_DENIED.", g_MfrModuleName, dllInstance);
                             return retfinal;
                         }
                         else
@@ -181,9 +155,7 @@ BOOL __stdcall RemoveDirectoryFixup(_In_ const CharT* pathName) noexcept
                             // There isn't such a file anywhere.
                             retfinal = false;
                             SetLastError(ERROR_FILE_NOT_FOUND); // doesn't matter if path or file not found.
-#if _DEBUG
-                            Log("[%s%d] RemoveDirectoryFixup: Ssetting return code to ERROR_FILE_NOT_FOUND.", g_MfrModuleName, dllInstance);
-#endif
+                            Log(LogLevel_DebugBasic, "[%s%d] RemoveDirectoryFixup: Setting return code to ERROR_FILE_NOT_FOUND.", g_MfrModuleName, dllInstance);
                             return retfinal;
                         }
                     }
@@ -196,16 +168,14 @@ BOOL __stdcall RemoveDirectoryFixup(_In_ const CharT* pathName) noexcept
                         if (cohorts.map.IsAnExclusionToRedirect == mfr::mfr_exclusion_types::not_excluded && 
                             PathExists(cohorts.WsRedirected.c_str()))
                         {
-                            retfinal = WRAPPER_REMOVEDIRECTORY(cohorts.WsRedirected, dllInstance, debug);
+                            retfinal = WRAPPER_REMOVEDIRECTORY(LogLevel_DebugBasic, cohorts.WsRedirected, dllInstance);
                             return retfinal;
                         }
                         else if (PathExists(cohorts.WsPackage.c_str()))
                         {
                             retfinal = false;
                             SetLastError(ERROR_ACCESS_DENIED);
-#if _DEBUG
-                            Log("[%s%d] RemoveDirectoryFixup: Setting return code to ERROR_ACCESS_DENIED.", g_MfrModuleName, dllInstance);
-#endif
+                            Log(LogLevel_DebugBasic, "[%s%d] RemoveDirectoryFixup: Setting return code to ERROR_ACCESS_DENIED.", g_MfrModuleName, dllInstance);
                             return retfinal;
                         }
                         else
@@ -213,9 +183,7 @@ BOOL __stdcall RemoveDirectoryFixup(_In_ const CharT* pathName) noexcept
                             // There isn't such a file anywhere.  
                             retfinal = false;
                             SetLastError(ERROR_FILE_NOT_FOUND); // not important if file or path
-#if _DEBUG
-                            Log("[%s%d] RemoveDirectoryFixup: Setting return code to ERROR_FILE_NOT_FOUND.", g_MfrModuleName, dllInstance);
-#endif
+                            Log(LogLevel_DebugBasic, "[%s%d] RemoveDirectoryFixup: Setting return code to ERROR_FILE_NOT_FOUND.", g_MfrModuleName, dllInstance);
                             return retfinal;
                         }
                     }
@@ -227,31 +195,27 @@ BOOL __stdcall RemoveDirectoryFixup(_In_ const CharT* pathName) noexcept
                         if (cohorts.map.IsAnExclusionToRedirect == mfr::mfr_exclusion_types::not_excluded && 
                             PathExists(cohorts.WsRedirected.c_str()))
                         {
-                            retfinal = WRAPPER_REMOVEDIRECTORY(cohorts.WsRedirected, dllInstance, debug);
+                            retfinal = WRAPPER_REMOVEDIRECTORY(LogLevel_DebugBasic, cohorts.WsRedirected, dllInstance);
                             return retfinal;
                         }
                         else if (PathExists(cohorts.WsPackage.c_str()))
                         {
                             retfinal = FALSE;
                             SetLastError(ERROR_ACCESS_DENIED);
-#if _DEBUG
-                            Log("[%s%d] RemoveDirectoryFixup: Setting return code to ERROR_ACCESS_DENIED.", g_MfrModuleName, dllInstance);
-#endif
+                            Log(LogLevel_DebugBasic, "[%s%d] RemoveDirectoryFixup: Setting return code to ERROR_ACCESS_DENIED.", g_MfrModuleName, dllInstance);
                             return retfinal;
                         }
                         else if (cohorts.NativeIsValidOptionInScenario &&
                             PathExists(cohorts.WsNative.c_str()))
                         {
-                            retfinal = WRAPPER_REMOVEDIRECTORY(cohorts.WsNative, dllInstance, debug);
+                            retfinal = WRAPPER_REMOVEDIRECTORY(LogLevel_DebugBasic, cohorts.WsNative, dllInstance);
                             return retfinal;
                         }
                         else
                         {
                             retfinal = FALSE;
                             SetLastError(ERROR_FILE_NOT_FOUND);
-#if _DEBUG
-                            Log("[%s%d] RemoveDirectoryFixup: Setting return code to ERROR_FILE_NOT_FOUND.", g_MfrModuleName, dllInstance);
-#endif
+                            Log(LogLevel_DebugBasic, "[%s%d] RemoveDirectoryFixup: Setting return code to ERROR_FILE_NOT_FOUND.", g_MfrModuleName, dllInstance);
                             return retfinal;
                         }
                     }
@@ -263,22 +227,20 @@ BOOL __stdcall RemoveDirectoryFixup(_In_ const CharT* pathName) noexcept
                         if (cohorts.map.IsAnExclusionToRedirect == mfr::mfr_exclusion_types::not_excluded && 
                             PathExists(cohorts.WsRedirected.c_str()))
                         {
-                            retfinal = WRAPPER_REMOVEDIRECTORY(cohorts.WsRedirected, dllInstance, debug);
+                            retfinal = WRAPPER_REMOVEDIRECTORY(LogLevel_DebugBasic, cohorts.WsRedirected, dllInstance);
                             return retfinal;
                         }
                         else if (PathExists(cohorts.WsPackage.c_str()))
                         {
                             retfinal = FALSE;
                             SetLastError(ERROR_ACCESS_DENIED);
-#if _DEBUG
-                            Log("[%s%d] RemoveDirectoryFixup: Setting return code to ERROR_ACCESS_DENIED.", g_MfrModuleName, dllInstance);
-#endif
+                            Log(LogLevel_DebugBasic, "[%s%d] RemoveDirectoryFixup: Setting return code to ERROR_ACCESS_DENIED.", g_MfrModuleName, dllInstance);
                             return retfinal;
                         }
                         else if (cohorts.NativeIsValidOptionInScenario &&
                             PathExists(cohorts.WsNative.c_str()))
                         {
-                            retfinal = WRAPPER_REMOVEDIRECTORY(cohorts.WsNative, dllInstance, debug);
+                            retfinal = WRAPPER_REMOVEDIRECTORY(LogLevel_DebugBasic, cohorts.WsNative, dllInstance);
                             return retfinal;
                         }
                         else
@@ -286,9 +248,7 @@ BOOL __stdcall RemoveDirectoryFixup(_In_ const CharT* pathName) noexcept
                             // There isn't such a file anywhere.
                             retfinal = FALSE;
                             SetLastError(ERROR_FILE_NOT_FOUND);
-#if _DEBUG
-                            Log("[%s%d] RemoveDirectoryFixup: Setting return code to ERROR_FILE_NOT_FOUND.", g_MfrModuleName, dllInstance);
-#endif
+                            Log(LogLevel_DebugBasic, "[%s%d] RemoveDirectoryFixup: Setting return code to ERROR_FILE_NOT_FOUND.", g_MfrModuleName, dllInstance);
                             return retfinal;
                         }
                     }
@@ -309,23 +269,17 @@ BOOL __stdcall RemoveDirectoryFixup(_In_ const CharT* pathName) noexcept
             else
             {
                 // ILV prefers to delete in package when present
-                std::wstring usePath = DetermineIlvPathForWriteOperations( cohorts, dllInstance, moredebug);
+                std::wstring usePath = DetermineIlvPathForWriteOperations(LogLevel_DebugIntermediate, cohorts, dllInstance);
                 // Local redirection prep not required for remove operation
 
-                retfinal = WRAPPER_REMOVEDIRECTORY(usePath, dllInstance, debug);
+                retfinal = WRAPPER_REMOVEDIRECTORY(LogLevel_DebugBasic, usePath, dllInstance);
                 return retfinal;
             }
         }
     }
-#if _DEBUG
     // Fall back to assuming no redirection is necessary if exception
-    LOGGED_CATCHHANDLER_MIN(g_MfrModuleName, dllInstance, L"RemoveDirectory")
-#else
-    catch (...)
-    {
-        Log(L"[%s%d] RemoveDirectoryFixup Exception=0x%x", g_MfrModuleName, dllInstance, GetLastError());
-    }
-#endif
+    LOGGED_CATCHHANDLER_MIN(LogLevel_DebugBasic, g_MfrModuleName, dllInstance, L"RemoveDirectory")
+
     if (pathName != nullptr)
     {
         std::wstring LongRemovingDirectory = MakeLongPath(widen(pathName));
@@ -336,9 +290,7 @@ BOOL __stdcall RemoveDirectoryFixup(_In_ const CharT* pathName) noexcept
         SetLastError(ERROR_INVALID_PARAMETER);
         retfinal = 0; // impl::RemoveDirectory(pathName);
     }
-#if _DEBUG
-    Log(L"[%s%d] RemoveDirectoryFixup returns 0x%x", g_MfrModuleName, dllInstance, retfinal);
-#endif
+    Log(LogLevel_DebugBasic, L"[%s%d] RemoveDirectoryFixup returns 0x%x", g_MfrModuleName, dllInstance, retfinal);
     return retfinal;
 }
 DECLARE_STRING_FIXUP(impl::RemoveDirectory, RemoveDirectoryFixup);

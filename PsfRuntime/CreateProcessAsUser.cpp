@@ -34,6 +34,7 @@
 
 
 #include <psf_utils.h>
+#include <psf_logging.h>
 #include <psf_config.h>
 #include "JsonConfig.h"
 
@@ -51,8 +52,8 @@ extern wchar_t g_PsfRunTimeModulePath[];
 extern const wchar_t* g_PsfRunTimeName; 
 extern DWORD g_CreateProcessIntceptInstance;
 extern std::wstring FixDllBitness(std::wstring originalName, USHORT bitness);
-extern USHORT ProcessBitness(HANDLE hProcess);
-extern void LogCreationFlags(const wchar_t* moduleName, DWORD Instance, DWORD CreationFlags, LPCWSTR InterceptName);
+extern USHORT GetProcessBitness(Json_Debug_Levels debugLevel, HANDLE hProcess, const wchar_t * moduleName, int instance);
+extern void LogCreationFlags(Json_Debug_Levels debugRequestLevel, const wchar_t* moduleName, DWORD Instance, DWORD CreationFlags, LPCWSTR InterceptName);
 extern BOOL WINAPI CreateProcessWithPsfRunDll(
     [[maybe_unused]] _In_opt_ LPCWSTR applicationName,
     _Inout_opt_ LPWSTR commandLine,
@@ -146,37 +147,35 @@ BOOL WINAPI CreateProcessAsUserFixup(
     };
     STARTUPINFOEX* MyReplacementStartupInfo = reinterpret_cast<STARTUPINFOEX*>(lpStartupInfo);
 
-    LogString(g_PsfRunTimeName, DllInstance, L"CreateProcessAsUserFixup: commandline", lpCommandLine);
-#if _DEBUG
-    LogCreationFlags(g_PsfRunTimeName, DllInstance, PossiblyModifiedCreationFlags, L"CreateProcessAsUserFixup");
-#endif
-#ifdef MOREDEBUG
+    LogString(LogLevel_Launching, g_PsfRunTimeName, DllInstance, L"CreateProcessAsUserFixup: commandline", lpCommandLine);
+    LogCreationFlags(LogLevel_DebugBasic, g_PsfRunTimeName, DllInstance, PossiblyModifiedCreationFlags, L"CreateProcessAsUserFixup");
+
+
     if (lpProcessAttributes != NULL)
     {
         if (lpProcessAttributes->lpSecurityDescriptor != NULL)
         {
-            Log(L" [%s%d] CreateProcessAsUserFixup: Request has a ProcessAttributes/Security Descriptor.", g_PsfRunTimeName, DllInstance);
+            Log(LogLevel_DebugIntermediate, L" [%s%d] CreateProcessAsUserFixup: Request has a ProcessAttributes/Security Descriptor.", g_PsfRunTimeName, DllInstance);
         }
-        Log(L" [%s%d] CreateProcessAsUserFixup: Request ProcessAttributes bInheritHandle = 0x%x", g_PsfRunTimeName, DllInstance, lpProcessAttributes->bInheritHandle);
+        Log(LogLevel_DebugIntermediate, L" [%s%d] CreateProcessAsUserFixup: Request ProcessAttributes bInheritHandle = 0x%x", g_PsfRunTimeName, DllInstance, lpProcessAttributes->bInheritHandle);
     }
     if (lpThreadAttributes != NULL)
     {
         if (lpThreadAttributes->lpSecurityDescriptor != NULL)
         {
-            Log(L" [%s%d] CreateProcessAsUserFixup: Request has a ThreadAttributes/Security Descriptor.", g_PsfRunTimeName, DllInstance);
+            Log(LogLevel_DebugIntermediate, L" [%s%d] CreateProcessAsUserFixup: Request has a ThreadAttributes/Security Descriptor.", g_PsfRunTimeName, DllInstance);
         }
-        Log(L" [%s%d] CreateProcessAsUserFixup: Request ThreadAttributes bInheritHandle = 0x%x", g_PsfRunTimeName, DllInstance, lpThreadAttributes->bInheritHandle);
+        Log(LogLevel_DebugIntermediate, L" [%s%d] CreateProcessAsUserFixup: Request ThreadAttributes bInheritHandle = 0x%x", g_PsfRunTimeName, DllInstance, lpThreadAttributes->bInheritHandle);
     }
-    Log(L" [%s%d] CreateProcessAsUserFixup: Request base bInheritHandles = 0x%x", g_PsfRunTimeName, DllInstance, bInheritHandles);
+    Log(LogLevel_DebugIntermediate, L" [%s%d] CreateProcessAsUserFixup: Request base bInheritHandles = 0x%x", g_PsfRunTimeName, DllInstance, bInheritHandles);
     if (lpEnvironment != NULL)
     {
-        Log(L" [%s%d] CreateProcessAsUserFixup: Request has Environment.", g_PsfRunTimeName, DllInstance);
+        Log(LogLevel_DebugIntermediate, L" [%s%d] CreateProcessAsUserFixup: Request has Environment.", g_PsfRunTimeName, DllInstance);
     }
     if (lpCurrentDirectory != NULL)
     {
-        Log(L" [%s%d] CreateProcessAsUserFixup: Request has currentDirectory=%s", g_PsfRunTimeName, DllInstance, lpCurrentDirectory);
+        Log(LogLevel_DebugBasic, L" [%s%d] CreateProcessAsUserFixup: Request has currentDirectory=%s", g_PsfRunTimeName, DllInstance, lpCurrentDirectory);
     }
-#endif
          
 
     if constexpr (psf::is_ansi<CharT>)
@@ -184,9 +183,8 @@ BOOL WINAPI CreateProcessAsUserFixup(
         if (findStringIC(lpCommandLine, "conhost"))
         {
             skipForce = true;
-#ifdef _DEBUG
-            Log(L"\t[%s%d] CreateProcessAsUserFixup: skipForce.", g_PsfRunTimeName, DllInstance);
-#endif
+
+            Log(LogLevel_DebugBasic, L"\t[%s%d] CreateProcessAsUserFixup: skipForce.", g_PsfRunTimeName, DllInstance);
         }
     }
     else
@@ -194,9 +192,7 @@ BOOL WINAPI CreateProcessAsUserFixup(
         if (findStringIC(lpCommandLine, L"conhost"))
         {
             skipForce = true;
-#ifdef _DEBUG
-            Log(L"\t[%s%d] CreateProcessAsUserFixup: skipForce.", g_PsfRunTimeName, DllInstance);
-#endif
+            Log(LogLevel_DebugBasic, L"\t[%s%d] CreateProcessAsUserFixup: skipForce.", g_PsfRunTimeName, DllInstance);
         }
     }
 
@@ -221,9 +217,7 @@ BOOL WINAPI CreateProcessAsUserFixup(
 
         if ((dwCreationFlags & EXTENDED_STARTUPINFO_PRESENT) != 0)
         {
-#if _DEBUG
-            Log(L"\t[%s%d] CreateProcessAsUserFixup: Extended StartupInfo present but want to force running inside container unless app requested otherwise.", g_PsfRunTimeName, DllInstance);
-#endif
+            Log(LogLevel_DebugBasic, L"\t[%s%d] CreateProcessAsUserFixup: Extended StartupInfo present but want to force running inside container unless app requested otherwise.", g_PsfRunTimeName, DllInstance);
 
             // Hopefully it is set to start in the container anyway.
             if constexpr (psf::is_ansi<CharT>)
@@ -231,21 +225,15 @@ BOOL WINAPI CreateProcessAsUserFixup(
                 STARTUPINFOEXA* si = reinterpret_cast<STARTUPINFOEXA*>(lpStartupInfo);
                 if (!si->lpAttributeList)
                 {
-#ifdef MOREDEBUG
-                    Log(L"\t[%s%d] CreateProcessAsUserFixup no existing attributelist, just add one", g_PsfRunTimeName, DllInstance);
-#endif
+                    Log(LogLevel_DebugIntermediate, L"\t[%s%d] CreateProcessAsUserFixup no existing attributelist, just add one", g_PsfRunTimeName, DllInstance);
                     si->lpAttributeList = partialList->get();
                 }
                 else
                 {
-#ifdef MOREDEBUG
-                    Log(L"\t[%s%d] CreateProcessAsUserFixup has existing attributelist, fix it up.", g_PsfRunTimeName, DllInstance);
-#endif
+                    Log(LogLevel_DebugIntermediate, L"\t[%s%d] CreateProcessAsUserFixup has existing attributelist, fix it up.", g_PsfRunTimeName, DllInstance);
                     partialList = new MyProcThreadAttributeList(si->lpAttributeList, true, true);
                     si->lpAttributeList = partialList->get();
-#if MOREDEBUG
-                    DumpStartupAttributes(reinterpret_cast<SIH_PROC_THREAD_ATTRIBUTE_LIST*>(si->lpAttributeList), g_PsfRunTimeName, DllInstance);
-#endif
+                    DumpStartupAttributes(LogLevel_DebugIntermediate, reinterpret_cast<SIH_PROC_THREAD_ATTRIBUTE_LIST*>(si->lpAttributeList), g_PsfRunTimeName, DllInstance);
                 }
             }
             else
@@ -253,29 +241,21 @@ BOOL WINAPI CreateProcessAsUserFixup(
                 STARTUPINFOEXW* si = reinterpret_cast<STARTUPINFOEXW*>(lpStartupInfo);
                 if (!si->lpAttributeList)
                 {
-#ifdef MOREDEBUG
-                    Log(L"\t[%s%d] CreateProcessAsUserFixup no existing attributelist, just add one.", g_PsfRunTimeName, DllInstance);
-#endif
+                    Log(LogLevel_DebugIntermediate, L"\t[%s%d] CreateProcessAsUserFixup no existing attributelist, just add one.", g_PsfRunTimeName, DllInstance);
                     si->lpAttributeList = partialList->get();
                 }
                 else
                 {
-#ifdef MOREDEBUG
-                    Log(L"\t[%s%d] CreateProcessAsUserFixup has existing attributelist, fix it up.", g_PsfRunTimeName, DllInstance);
-#endif
+                    Log(LogLevel_DebugIntermediate, L"\t[%s%d] CreateProcessAsUserFixup has existing attributelist, fix it up.", g_PsfRunTimeName, DllInstance);
                     partialList = new MyProcThreadAttributeList(si->lpAttributeList, true, true);
                     si->lpAttributeList = partialList->get();
-#if MOREDEBUG
-                    DumpStartupAttributes(reinterpret_cast<SIH_PROC_THREAD_ATTRIBUTE_LIST*>(si->lpAttributeList), g_PsfRunTimeName, DllInstance);
-#endif
+                    DumpStartupAttributes(LogLevel_DebugIntermediate, reinterpret_cast<SIH_PROC_THREAD_ATTRIBUTE_LIST*>(si->lpAttributeList), g_PsfRunTimeName, DllInstance);
                 }
             }
         }
         else
         {
-#if _DEBUG
-            Log(L"\t[%s%d] CreateProcessAsUserFixup: Add Extended StartupInfo to force running inside container.", g_PsfRunTimeName, DllInstance);
-#endif
+            Log(LogLevel_DebugBasic, L"\t[%s%d] CreateProcessAsUserFixup: Add Extended StartupInfo to force running inside container.", g_PsfRunTimeName, DllInstance);
             // There are situations where processes jump out of the container and this helps to make them stay within.
             // Both cmd and powershell are such cases.
             PossiblyModifiedCreationFlags |= EXTENDED_STARTUPINFO_PRESENT;
@@ -355,9 +335,7 @@ BOOL WINAPI CreateProcessAsUserFixup(
 #endif
     PossiblyModifiedCreationFlags |= CREATE_SUSPENDED;
 
-#if MOREDEBUG
-    LogCreationFlags(g_PsfRunTimeName, DllInstance, PossiblyModifiedCreationFlags, L"CreateProcessAsUserFixup");
-#endif
+    LogCreationFlags(LogLevel_DebugIntermediate, g_PsfRunTimeName, DllInstance, PossiblyModifiedCreationFlags, L"CreateProcessAsUserFixup");
 
 #if IGNORE_USER
     // So while we can start the new process in the bubble, even using the same user's token, bad things happen.  So let's try to just run it in
@@ -392,7 +370,7 @@ BOOL WINAPI CreateProcessAsUserFixup(
     }
     if (worked == TRUE)
     {
-        Log(L"\t[%s%d] CreateProcessAsUserFixup: Returns TRUE", g_PsfRunTimeName, DllInstance);
+        Log(LogLevel_DebugBasic, L"\t[%s%d] CreateProcessAsUserFixup: Returns TRUE", g_PsfRunTimeName, DllInstance);
         return TRUE;
     }
     if (worked == FALSE)
@@ -414,7 +392,7 @@ BOOL WINAPI CreateProcessAsUserFixup(
         DWORD err = GetLastError();
         if (err == 0x2e4)
         {
-            Log(L"\t[%s%d] CreateProcessAsUserFixup: Creation returned false due to elevation", g_PsfRunTimeName, DllInstance);
+            Log(LogLevel_Launching, L"\t[%s%d] CreateProcessAsUserFixup: Creation returned false due to elevation", g_PsfRunTimeName, DllInstance);
 
             // The app requires elevation, so try it this way.  Not perfect.
             // The better solution is to determine the need during packaging and add
@@ -443,8 +421,8 @@ BOOL WINAPI CreateProcessAsUserFixup(
         }
         else
         {
-            Log(L"\t[%s%d] CreateProcessAsUserFixup: Creation returned false trying to force in container without prot 0x%x retry with prot.", g_PsfRunTimeName, DllInstance, err);
-            Log(L"\t[%s%d] CreateProcessAsUserFixup: pid reported as 0x%x", g_PsfRunTimeName, DllInstance, lpProcessInformation->dwProcessId);
+            Log(LogLevel_Launching, "\t[%s%d] CreateProcessAsUserFixup: Creation returned false trying to force in container without prot 0x%x retry with prot.", g_PsfRunTimeName, DllInstance, err);
+            Log(LogLevel_Launching, L"\t[%s%d] CreateProcessAsUserFixup: pid reported as 0x%x", g_PsfRunTimeName, DllInstance, lpProcessInformation->dwProcessId);
             if (lpProcessInformation->dwProcessId == 0)
             {
                 return FALSE;
@@ -470,7 +448,7 @@ BOOL WINAPI CreateProcessAsUserFixup(
         else
         {
             // Unexpected error
-            Log(L"\t[%s%d] CreateProcessAsUserFixup: Unable to retrieve process.", g_PsfRunTimeName, DllInstance);
+            Log(LogLevel_Exception, L"\t[%s%d] CreateProcessAsUserFixup: Unable to retrieve process.", g_PsfRunTimeName, DllInstance);
             ::TerminateProcess(lpProcessInformation->hProcess, ~0u);
             ::CloseHandle(lpProcessInformation->hProcess);
             ::CloseHandle(lpProcessInformation->hThread);
@@ -496,9 +474,8 @@ BOOL WINAPI CreateProcessAsUserFixup(
     fixupPath(finalPackagePath);
     fixupPath(exePath);
 
-#if _DEBUG
-    Log(L"\t[%s%d] CreateProcessAsUserFixup: Possible injection to process %ls %d.\n", g_PsfRunTimeName, DllInstance, exePath.data(), lpProcessInformation->dwProcessId);
-#endif
+    Log(LogLevel_DebugIntermediate, L"\t[%s%d] CreateProcessAsUserFixup: Possible injection to process %ls %d.\n", g_PsfRunTimeName, DllInstance, exePath.data(), lpProcessInformation->dwProcessId);
+    
     //if (((exePath.length() >= packagePath.length()) && (exePath.substr(0, packagePath.length()) == packagePath)) ||
     //    ((exePath.length() >= finalPackagePath.length()) && (exePath.substr(0, finalPackagePath.length()) == finalPackagePath)))
     // TRM: 2021-10-21 We do want to inject into exe processes that are outside of the package structure, for example PowerShell for a cmd file,
@@ -510,63 +487,47 @@ BOOL WINAPI CreateProcessAsUserFixup(
         if ((PossiblyModifiedCreationFlags & EXTENDED_STARTUPINFO_PRESENT) != 0)
         {
 
-#if MOREDEBUG
-            Log(L"\t[%s%d] CreateProcessAsUserFixup: CreateProcessImpl Attribute: Has extended Attribute.", g_PsfRunTimeName, DllInstance);
-#endif
+            Log(LogLevel_DebugIntermediate, L"\t[%s%d] CreateProcessAsUserFixup: CreateProcessImpl Attribute: Has extended Attribute.", g_PsfRunTimeName, DllInstance);
             if constexpr (psf::is_ansi<CharT>)
             {
-#if MOREDEBUG
-                Log(L"\t[%s%d] CreateProcessAsUserFixup: CreateProcessImpl Attribute: narrow", g_PsfRunTimeName, DllInstance);
-#endif
+                Log(LogLevel_DebugIntermediate, L"\t[%s%d] CreateProcessAsUserFixup: CreateProcessImpl Attribute: narrow", g_PsfRunTimeName, DllInstance);
                 STARTUPINFOEXA* si = reinterpret_cast<STARTUPINFOEXA*>(MyReplacementStartupInfo);
                 if (si->lpAttributeList != NULL)
                 {
-#if MOREDEBUG
-                    DumpStartupAttributes(reinterpret_cast<SIH_PROC_THREAD_ATTRIBUTE_LIST*>(si->lpAttributeList), g_PsfRunTimeName, DllInstance);
-#endif
+                    DumpStartupAttributes(LogLevel_DebugIntermediate, reinterpret_cast<SIH_PROC_THREAD_ATTRIBUTE_LIST*>(si->lpAttributeList), g_PsfRunTimeName, DllInstance);
                     allowInjection = DoesAttributeSpecifyInside(reinterpret_cast<SIH_PROC_THREAD_ATTRIBUTE_LIST*>(si->lpAttributeList));
                 }
                 else
                 {
-#if MOREDEBUG
-                    Log(L"\t[%s%d] CreateProcessAsUserFixup: CreateProcessImpl Attribute: attlist is null.", g_PsfRunTimeName, DllInstance);
-#endif
+                    Log(LogLevel_DebugIntermediate, L"\t[%s%d] CreateProcessAsUserFixup: CreateProcessImpl Attribute: attrList is null.", g_PsfRunTimeName, DllInstance);
                     allowInjection = true;
                 }
             }
             else
             {
-#if MOREDEBUG
-                Log(L"\t[%s%d] CreateProcessFixup: CreateProcessAsUserImpl Attribute:: wide", g_PsfRunTimeName, DllInstance);
-#endif
+                Log(LogLevel_DebugIntermediate, L"\t[%s%d] CreateProcessFixup: CreateProcessAsUserImpl Attribute:: wide", g_PsfRunTimeName, DllInstance);
                 STARTUPINFOEXW* si = reinterpret_cast<STARTUPINFOEXW*>(MyReplacementStartupInfo);
                 if (si->lpAttributeList != NULL)
                 {
-#if MOREDEBUG
-                    DumpStartupAttributes(reinterpret_cast<SIH_PROC_THREAD_ATTRIBUTE_LIST*>(si->lpAttributeList), g_PsfRunTimeName, DllInstance);
-#endif
+                    DumpStartupAttributes(LogLevel_DebugIntermediate, reinterpret_cast<SIH_PROC_THREAD_ATTRIBUTE_LIST*>(si->lpAttributeList), g_PsfRunTimeName, DllInstance);
                     allowInjection = DoesAttributeSpecifyInside(reinterpret_cast<SIH_PROC_THREAD_ATTRIBUTE_LIST*>(si->lpAttributeList));
                 }
                 else
                 {
-#if MOREDEBUG
-                    Log(L"\t[%s%d] CreateProcessAsUserFixup: CreateProcessAsUserImpl Attribute: attlist is null.", g_PsfRunTimeName, DllInstance);
-#endif
+                    Log(LogLevel_DebugIntermediate, "\t[%s%d] CreateProcessAsUserFixup: CreateProcessAsUserImpl Attribute: attlist is null.", g_PsfRunTimeName, DllInstance);
                     allowInjection = true;
                 }
             }
         }
         else
         {
-#if MOREDEBUG
-            Log(L"\t[%s%d] CreateProcessAsUserFixup: CreateProcessAsUserImpl Attribute: Does not have extended attribute and should be added.", g_PsfRunTimeName, DllInstance);
-#endif
+            Log(LogLevel_DebugIntermediate, L"\t[%s%d] CreateProcessAsUserFixup: CreateProcessAsUserImpl Attribute: Does not have extended attribute and should be added.", g_PsfRunTimeName, DllInstance);
             allowInjection = true;
         }
     }
     catch (...)
     {
-        Log(L"\t[%s%d] CreateProcessAsUserFixup: Exception testing for attribute list, assuming none.", g_PsfRunTimeName, DllInstance);
+        Log(LogLevel_Exception, L"\t[%s%d] CreateProcessAsUserFixup: Exception testing for attribute list, assuming none.", g_PsfRunTimeName, DllInstance);
         allowInjection = false;
     }
 
@@ -583,23 +544,23 @@ BOOL WINAPI CreateProcessAsUserFixup(
                 if (b == false)
                 {
                     allowInjection = false;
-                    Log(L"\t[%s%d] CreateProcessAsUserFixup: New process has broken away from container, do not inject.", g_PsfRunTimeName, DllInstance);
+                    Log(LogLevel_Launching, L"\t[%s%d] CreateProcessAsUserFixup: New process has broken away from container, do not inject.", g_PsfRunTimeName, DllInstance);
                 }
                 else
                 {
-                    Log(L"\t[%s%d] CreateProcessAsUserFixup: New process is in a job, allow injection.", g_PsfRunTimeName, DllInstance);
+                    Log(LogLevel_Launching, L"\t[%s%d] CreateProcessAsUserFixup: New process is in a job, allow injection.", g_PsfRunTimeName, DllInstance);
                     // NOTE: we could maybe try to see if in the same job, but this is probably good enough.
                 }
             }
             else
             {
-                Log(L"\t[%s%d] CreateProcessAsUserFixup: Unable to detect job status of new process, ignore for now and try to inject 0x%x 0x%x 0x%x.", g_PsfRunTimeName, DllInstance, res, GetLastError(), b);
+                Log(LogLevel_Exception, L"\t[%s%d] CreateProcessAsUserFixup: Unable to detect job status of new process, ignore for now and try to inject 0x%x 0x%x 0x%x.", g_PsfRunTimeName, DllInstance, res, GetLastError(), b);
             }
         }
         catch (...)
         {
             allowInjection = false;
-            Log(L"\t[%s%d] CreateProcessAsUserFixup: Exception while trying to determine job status of new process. Do not inject.", g_PsfRunTimeName, DllInstance);
+            Log(LogLevel_Exception, L"\t[%s%d] CreateProcessAsUserFixup: Exception while trying to determine job status of new process. Do not inject.", g_PsfRunTimeName, DllInstance);
         }
     }
 
@@ -634,37 +595,32 @@ BOOL WINAPI CreateProcessAsUserFixup(
             }
             if (!foundany)
             {
-                Log(L"\t[%s%d] CreateProcessAsUserFixup: skip Injections due to json process match without fixup dlls.", g_PsfRunTimeName, DllInstance);
+                Log(LogLevel_Launching, L"\t[%s%d] CreateProcessAsUserFixup: skip Injections due to json process match without fixup dlls.", g_PsfRunTimeName, DllInstance);
                 allowInjection = false;
             }
         }
         else
         {
-            Log(L"\t[%s%d] CreateProcessAsUserFixup: skip Injections due to json process match without fixups.", g_PsfRunTimeName, DllInstance);
+            Log(LogLevel_Exception, L"\t[%s%d] CreateProcessAsUserFixup: skip Injections due to json process match without fixups.", g_PsfRunTimeName, DllInstance);
             allowInjection = false;
         }
     }
     else
     {
-        Log("\t[%s%d] CreateProcessAsUserFixup: Child process match not found?; allow injections anyway.", g_PsfRunTimeName, DllInstance);
+        Log(LogLevel_Exception, "\t[%s%d] CreateProcessAsUserFixup: Child process match not found?; allow injections anyway.", g_PsfRunTimeName, DllInstance);
     }
 
 
     if (allowInjection)
     {
         // The target executable is in the package, so we _do_ want to fixup it
-#if _DEBUG
-        Log(L"\t[%s%d] CreateProcessAsUserFixup: Allowed Injection, so yes", g_PsfRunTimeName, DllInstance);
-#endif
+        Log(LogLevel_DebugBasic, L"\t[%s%d] CreateProcessAsUserFixup: Allowed Injection, so yes", g_PsfRunTimeName, DllInstance);
         // Fix for issue #167: allow subprocess to be a different bitness than this process.
-        USHORT bitness = ProcessBitness(lpProcessInformation->hProcess);
-#if _DEBUG
-        Log(L"\t[%s%d] CreateProcessAsUserFixup: Injection for PID=%d Bitness=%d", g_PsfRunTimeName, DllInstance, lpProcessInformation->dwProcessId, bitness);
-#endif  
+        USHORT bitness = GetProcessBitness(LogLevel_Launching, lpProcessInformation->hProcess, g_PsfRunTimeName, DllInstance);
+        Log(LogLevel_DebugBasic, L"\t[%s%d] CreateProcessAsUserFixup: Injection for PID=%d Bitness=%d", g_PsfRunTimeName, DllInstance, lpProcessInformation->dwProcessId, bitness);
+        
         std::wstring wtargetDllName = FixDllBitness(std::wstring(psf::runtime_dll_name), bitness);
-#if _DEBUG
-        Log(L"\t[%s%d] CreateProcessAsUserFixup: Use runtime %ls", g_PsfRunTimeName, DllInstance, wtargetDllName.c_str());
-#endif
+        Log(LogLevel_DebugBasic, L"\t[%s%d] CreateProcessAsUserFixup: Use runtime %ls", g_PsfRunTimeName, DllInstance, wtargetDllName.c_str());
         ///static const auto pathToPsfRuntime = (PackageRootPath() / wtargetDllName.c_str()).string();
         static std::string pathToPsfRuntime;
         if (g_PsfRunTimeModulePath[0] != 0x0)
@@ -677,9 +633,7 @@ BOOL WINAPI CreateProcessAsUserFixup(
             pathToPsfRuntime = (PackageRootPath() / wtargetDllName.c_str()).string();
         }
         const char* targetDllPath = NULL;
-#if _DEBUG
-        Log("\t[%s%d] CreateProcessAsUserFixup: Inject %s into PID=%d", g_PsfRunTimeName, DllInstance, pathToPsfRuntime.c_str(), lpProcessInformation->dwProcessId);
-#endif
+        Log(LogLevel_DebugBasic, "\t[%s%d] CreateProcessAsUserFixup: Inject %s into PID=%d", g_PsfRunTimeName, DllInstance, pathToPsfRuntime.c_str(), lpProcessInformation->dwProcessId);
 
         if (std::filesystem::exists(pathToPsfRuntime))
         {
@@ -688,27 +642,19 @@ BOOL WINAPI CreateProcessAsUserFixup(
         else
         {
             // Possibly the dll is in the folder with the exe and not at the package root.
-#if _DEBUG
-            Log(L"\t[%s%d] CreateProcessAsUserFixup: %ls not found at package root, try target folder.", g_PsfRunTimeName, DllInstance, wtargetDllName.c_str());
-#endif
+            Log(LogLevel_DebugBasic, L"\t[%s%d] CreateProcessAsUserFixup: %ls not found at package root, try target folder.", g_PsfRunTimeName, DllInstance, wtargetDllName.c_str());
 
             std::filesystem::path altPathToExeRuntime = exePath.data();
             static const auto altPathToPsfRuntime = (altPathToExeRuntime.parent_path() / pathToPsfRuntime.c_str()).string();
-#if _DEBUG
-            Log(L"\t[%s%d] CreateProcessAsUserFixup: alt target filename is now %s", g_PsfRunTimeName, DllInstance, altPathToPsfRuntime.c_str());
-#endif
+            Log(LogLevel_DebugBasic, L"\t[%s%d] CreateProcessAsUserFixup: alt target filename is now %s", g_PsfRunTimeName, DllInstance, altPathToPsfRuntime.c_str());
             if (std::filesystem::exists(altPathToPsfRuntime))
             {
                 targetDllPath = altPathToPsfRuntime.c_str();
-#if _DEBUG
-                Log(L"\t[%s%d] CreateProcessAsUserFixup: alt target exists.", g_PsfRunTimeName, DllInstance);
-#endif
+                Log(LogLevel_DebugBasic, L"\t[%s%d] CreateProcessAsUserFixup: alt target exists.", g_PsfRunTimeName, DllInstance);
             }
             else
             {
-#if _DEBUG
-                Log(L"\t[%s%d] CreateProcessAsUserFixup: Not present there either, try elsewhere in package.", g_PsfRunTimeName, DllInstance);
-#endif
+                Log(LogLevel_DebugBasic, L"\t[%s%d] CreateProcessAsUserFixup: Not present there either, try elsewhere in package.", g_PsfRunTimeName, DllInstance);
                 // If not in those two locations, must check everywhere in package.
                 // The child process might also be in another package folder, so look elsewhere in the package.
                 for (auto& dentry : std::filesystem::recursive_directory_iterator(PackageRootPath()))
@@ -718,16 +664,14 @@ BOOL WINAPI CreateProcessAsUserFixup(
                         if (dentry.path().filename().compare(wtargetDllName) == 0)
                         {
                             static const auto altDirPathToPsfRuntime = narrow(dentry.path().c_str());
-#if _DEBUG
-                            Log(L"\t[%s%d] CreateProcessAsUserFixup: Found match as %ls", g_PsfRunTimeName, DllInstance, dentry.path().c_str());
-#endif
+                            Log(LogLevel_DebugBasic, L"\t[%s%d] CreateProcessAsUserFixup: Found match as %ls", g_PsfRunTimeName, DllInstance, dentry.path().c_str());
                             targetDllPath = altDirPathToPsfRuntime.c_str();
                             break;
                         }
                     }
                     catch (...)
                     {
-                        Log(L"\t[%s%d] CreateProcessAsUserFixup: Non-fatal error enumerating directories while looking for PsfRuntime.", g_PsfRunTimeName, DllInstance);
+                        Log(LogLevel_Exception, L"\t[%s%d] CreateProcessAsUserFixup: Non-fatal error enumerating directories while looking for PsfRuntime.", g_PsfRunTimeName, DllInstance);
                     }
                 }
 
@@ -736,16 +680,16 @@ BOOL WINAPI CreateProcessAsUserFixup(
 
         if (targetDllPath != NULL)
         {
-            Log("\t[%s%d] CreateProcessAsUserFixup: Attempt injection into %d using %s", g_PsfRunTimeName, DllInstance, lpProcessInformation->dwProcessId, targetDllPath);
+            Log(LogLevel_Launching, "\t[%s%d] CreateProcessAsUserFixup: Attempt injection into %d using %s", g_PsfRunTimeName, DllInstance, lpProcessInformation->dwProcessId, targetDllPath);
             if (!::DetourUpdateProcessWithDll(lpProcessInformation->hProcess, &targetDllPath, 1))
             {
-                Log("\t[%s%d] CreateProcessAsUserFixup: %s unable to inject, err=0x%x.", g_PsfRunTimeName, DllInstance, targetDllPath, ::GetLastError());
+                Log(LogLevel_Launching, "\t[%s%d] CreateProcessAsUserFixup: %s unable to inject, err=0x%x.", g_PsfRunTimeName, DllInstance, targetDllPath, ::GetLastError());
                 // We failed to detour the created process. Assume that the failure was due to an architecture mis-match
                 // and try the launch using PsfRunDl
                 if (!::DetourProcessViaHelperDllsW(lpProcessInformation->dwProcessId, 1, &targetDllPath, CreateProcessWithPsfRunDll))
                 {
                     auto err = ::GetLastError();
-                    Log("\t[%s%d] CreateProcessAsUserixup: %s unable to inject with RunDll either (Skipping), err=0x%x.", g_PsfRunTimeName, DllInstance, targetDllPath, err);
+                    Log(LogLevel_Launching, "\t[%s%d] CreateProcessAsUserixup: %s unable to inject with RunDll either (Skipping), err=0x%x.", g_PsfRunTimeName, DllInstance, targetDllPath, err);
                     ::TerminateProcess(lpProcessInformation->hProcess, ~0u);
                     ::CloseHandle(lpProcessInformation->hProcess);
                     ::CloseHandle(lpProcessInformation->hThread);
@@ -756,22 +700,22 @@ BOOL WINAPI CreateProcessAsUserFixup(
             }
             else
             {
-                Log(L"\t[%s%d] CreateProcessAsUserFixup: Injected %ls into PID=%d\n", g_PsfRunTimeName, DllInstance, wtargetDllName.c_str(), lpProcessInformation->dwProcessId);
+                Log(LogLevel_Launching, L"\t[%s%d] CreateProcessAsUserFixup: Injected %ls into PID=%d\n", g_PsfRunTimeName, DllInstance, wtargetDllName.c_str(), lpProcessInformation->dwProcessId);
             }
         }
         else
         {
-            Log(L"\t[%s%d] CreateProcessAsUserFixup: %ls not found, skipping.", g_PsfRunTimeName, DllInstance, wtargetDllName.c_str());
+            Log(LogLevel_Launching, L"\t[%s%d] CreateProcessAsUserFixup: %ls not found, skipping.", g_PsfRunTimeName, DllInstance, wtargetDllName.c_str());
         }
     }
     else
     {
-        Log(L"\t[%s%d] CreateProcessAsUserFixup: The new process is not inside the container, so doesn't inject...", g_PsfRunTimeName, DllInstance);
+        Log(LogLevel_Launching, L"\t[%s%d] CreateProcessAsUserFixup: The new process is not inside the container, so doesn't inject...", g_PsfRunTimeName, DllInstance);
     }
     if ((dwCreationFlags & CREATE_SUSPENDED) != CREATE_SUSPENDED)
     {
         // Caller did not want the process to start suspended
-        Log(L"\t[%s%d] CreateProcesAsUserFixup: Resume PID=%d\n", g_PsfRunTimeName, DllInstance, lpProcessInformation->dwProcessId);
+        Log(LogLevel_Launching, L"\t[%s%d] CreateProcessAsUserFixup: Resume PID=%d\n", g_PsfRunTimeName, DllInstance, lpProcessInformation->dwProcessId);
         ::ResumeThread(lpProcessInformation->hThread);
         SetLastError(0);
     }
@@ -783,19 +727,17 @@ BOOL WINAPI CreateProcessAsUserFixup(
         ::CloseHandle(lpProcessInformation->hThread);
     }
 
-    Log(L"\t[%s%d] CreateProcessAsUserFixup: Returns TRUE", g_PsfRunTimeName, DllInstance);
+    Log(LogLevel_Launching, L"\t[%s%d] CreateProcessAsUserFixup: Returns TRUE", g_PsfRunTimeName, DllInstance);
     return TRUE;
 
 
-#ifdef _DEBUG
-    Log(L"\t[%s%d] CreateProcessAsUserFixup: Process has started as suspended, now consider injections...", g_PsfRunTimeName, DllInstance);
-#endif
+    Log(LogLevel_DebugBasic, L"\t[%s%d] CreateProcessAsUserFixup: Process has started as suspended, now consider injections...", g_PsfRunTimeName, DllInstance);
 
 }
 catch (...)
 {
     int err = win32_from_caught_exception();
-    Log(L"[%s%d] CreateProcessAsUserFixup: exception 0x%x", g_PsfRunTimeName, g_CreateProcessIntceptInstance, err);
+    Log(LogLevel_Exception, L"[%s%d] CreateProcessAsUserFixup: exception 0x%x", g_PsfRunTimeName, g_CreateProcessIntceptInstance, err);
     ::SetLastError(err);
     return FALSE;
 }

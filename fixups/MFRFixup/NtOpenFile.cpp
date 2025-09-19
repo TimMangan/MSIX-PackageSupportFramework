@@ -55,31 +55,25 @@ NTSTATUS __stdcall NtDll_NtOpenFileFixup(
             // Release level logging for detection
             bool temp = g_psf_NoLogging;
             g_psf_NoLogging = false;
-            Log(L"[%s%d] NtDll_NtOpenFileFixup unguarded and informational", g_MfrModuleName, dllInstance);
+            Log(LogLevel_DebugBasic, L"[%s%d] NtDll_NtOpenFileFixup unguarded and informational", g_MfrModuleName, dllInstance);
             if (ObjectAttributes->ObjectName != NULL)
             {
-                Log(L"[%s%d] NtDll_NtOpenFileFixup RootDirectory=0x%x ObjectName=%ls", g_MfrModuleName, dllInstance, ObjectAttributes->RootDirectory, ObjectAttributes->ObjectName->Buffer);
+                Log(LogLevel_DebugBasic, L"[%s%d] NtDll_NtOpenFileFixup RootDirectory=0x%x ObjectName=%ls", g_MfrModuleName, dllInstance, ObjectAttributes->RootDirectory, ObjectAttributes->ObjectName->Buffer);
             }
             else
             {
-                Log(L"[%s%d] NtDll_NtOpenFileFixup RootDirectory=0x%x ObjectName=NULL", g_MfrModuleName, dllInstance, ObjectAttributes->RootDirectory);
+                Log(LogLevel_DebugBasic, L"[%s%d] NtDll_NtOpenFileFixup RootDirectory=0x%x ObjectName=NULL", g_MfrModuleName, dllInstance, ObjectAttributes->RootDirectory);
             }
             LogCallingModuleInstance(g_MfrModuleName, dllInstance);
             g_psf_NoLogging = temp;
         }
         retfinal = ntdllimpl::NtOpenFileImpl(FileHandle, DesiredAccess, ObjectAttributes, IoStatusBlock,ShareAccess, OpenOptions);
-        Log(L"[%s%d] NtDll_NtOpenFileFixup result=0x%x", g_MfrModuleName, dllInstance, retfinal);
+        Log(LogLevel_DebugBasic, L"[%s%d] NtDll_NtOpenFileFixup result=0x%x", g_MfrModuleName, dllInstance, retfinal);
         return retfinal;
     }
-#if _DEBUG
     // Fall back to assuming no redirection is necessary if exception
-    LOGGED_CATCHHANDLER_MIN(g_MfrModuleName, dllInstance, L"NtDll_NtOpenFileFixup")
-#else
-    catch (...)
-    {
-        Log(L"[%s%d] NtDll_NtOpenFileFixup Exception=0x%x", g_MfrModuleName, dllInstance, GetLastError());
-    }
-#endif
+    LOGGED_CATCHHANDLER_MIN(LogLevel_DebugBasic, g_MfrModuleName, dllInstance, L"NtDll_NtOpenFileFixup")
+
     retfinal = ntdllimpl::NtOpenFileImpl(FileHandle, DesiredAccess, ObjectAttributes, IoStatusBlock, ShareAccess, OpenOptions);
     return retfinal;
 }

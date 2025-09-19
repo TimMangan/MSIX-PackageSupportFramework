@@ -38,114 +38,115 @@ void InitializeConfiguration();
 
 extern "C" {
 
-#if MOREDEBUG
     void PrintDebugAddrs()
     {
+        if (LogLevel_DebugMaximum <= g_JsonDebugLevel)
+        {
 #if DEBUG_NEW_FIXUPS_MFR
-        Log("CopyFile Ansi=%p Wide=%p\n", &impl::CopyFileW.ansi, &impl::CopyFileW.wide);
-        Log("CopyFile2 neutral=%p\n", &impl::CopyFile2);
-        Log("CopyFileEx Ansi=%p Wide=%p\n", &impl::CopyFileExW.ansi, &impl::CopyFileExW.wide);
-        Log("CreateDirectory  Ansi=%p Wide=%p\n", &impl::CreateDirectoryW.ansi, &impl::CreateDirectoryW.wide);
-        Log("CreateDirectoryEx  Ansi=%p Wide=%p\n", &impl::CreateDirectoryExW.ansi, &impl::CreateDirectoryExW.wide);
-        Log("CreateFile  Ansi=%p Wide=%p\n", &impl::CreateFileW.ansi, &impl::CreateFileW.wide);
-        Log("CreateFile2  neutral=%p\n", &impl::CreateFile2);
-        Log("CreateHardLink  Ansi=%p Wide=%p\n", &impl::CreateHardLinkW.ansi, &impl::CreateHardLinkW.wide);
-        Log("CreateSymbolicLink  Ansi=%p Wide=%p\n", &impl::CreateSymbolicLinkW.ansi, &impl::CreateSymbolicLinkW.wide);
-        Log("DeleteFile  Ansi=%p Wide=%p\n", &impl::DeleteFileW.ansi, &impl::DeleteFileW.wide);
-        Log("FindClose  neutral=%p\n", &impl::FindClose);
-        Log("FindFirstFile  Ansi=%p Wide=%p\n", &impl::FindFirstFileW.ansi, &impl::FindFirstFileW.wide);
-        Log("FindFirstFileEx  Ansi=%p Wide=%p\n", &impl::FindFirstFileExW.ansi, &impl::FindFirstFileExW.wide);
-        Log("FindNextFile  Ansi=%p Wide=%p\n", &impl::FindNextFileW.ansi, &impl::FindNextFileW.wide);
+            Log(LogLevel_DebugMaximum, "CopyFile Ansi=%p Wide=%p\n", &impl::CopyFileW.ansi, &impl::CopyFileW.wide);
+            Log(LogLevel_DebugMaximum, "CopyFile2 neutral=%p\n", &impl::CopyFile2);
+            Log(LogLevel_DebugMaximum, "CopyFileEx Ansi=%p Wide=%p\n", &impl::CopyFileExW.ansi, &impl::CopyFileExW.wide);
+            Log(LogLevel_DebugMaximum, "CreateDirectory  Ansi=%p Wide=%p\n", &impl::CreateDirectoryW.ansi, &impl::CreateDirectoryW.wide);
+            Log(LogLevel_DebugMaximum, "CreateDirectoryEx  Ansi=%p Wide=%p\n", &impl::CreateDirectoryExW.ansi, &impl::CreateDirectoryExW.wide);
+            Log(LogLevel_DebugMaximum, "CreateFile  Ansi=%p Wide=%p\n", &impl::CreateFileW.ansi, &impl::CreateFileW.wide);
+            Log(LogLevel_DebugMaximum, "CreateFile2  neutral=%p\n", &impl::CreateFile2);
+            Log(LogLevel_DebugMaximum, "CreateHardLink  Ansi=%p Wide=%p\n", &impl::CreateHardLinkW.ansi, &impl::CreateHardLinkW.wide);
+            Log(LogLevel_DebugMaximum, "CreateSymbolicLink  Ansi=%p Wide=%p\n", &impl::CreateSymbolicLinkW.ansi, &impl::CreateSymbolicLinkW.wide);
+            Log(LogLevel_DebugMaximum, "DeleteFile  Ansi=%p Wide=%p\n", &impl::DeleteFileW.ansi, &impl::DeleteFileW.wide);
+            Log(LogLevel_DebugMaximum, "FindClose  neutral=%p\n", &impl::FindClose);
+            Log(LogLevel_DebugMaximum, "FindFirstFile  Ansi=%p Wide=%p\n", &impl::FindFirstFileW.ansi, &impl::FindFirstFileW.wide);
+            Log(LogLevel_DebugMaximum, "FindFirstFileEx  Ansi=%p Wide=%p\n", &impl::FindFirstFileExW.ansi, &impl::FindFirstFileExW.wide);
+            Log(LogLevel_DebugMaximum, "FindNextFile  Ansi=%p Wide=%p\n", &impl::FindNextFileW.ansi, &impl::FindNextFileW.wide);
 
 #if FIXUP_FROM_KernelBase
-        Log("(KernelBase)MoveFileExW  Wide=%p\n", kernelbaseimpl::MoveFileExWImpl);
+            Log(LogLevel_DebugMaximum, "(KernelBase)MoveFileExW  Wide=%p\n", kernelbaseimpl::MoveFileExWImpl);
 #endif
 
-        Log("MoveFile  Ansi=%p Wide=%p\n", &impl::MoveFileW.ansi, &impl::MoveFileW.wide);
-        Log("MoveFileEx  Ansi=%p Wide=%p\n", &impl::MoveFileExW.ansi, &impl::MoveFileExW.wide);
-        Log("MoveFileWithProgress  Ansi=%p Wide=%p\n", &impl::MoveFileWithProgressW.ansi, &impl::MoveFileWithProgressW.wide);
-        Log("RemoveDirectory  Ansi=%p Wide=%p\n", &impl::RemoveDirectoryW.ansi, &impl::RemoveDirectoryW.wide);
-        Log("ReplaceFile  Ansi=%p Wide=%p\n", &impl::ReplaceFileW.ansi, &impl::ReplaceFileW.wide);
-        Log("SetFileAttributes  Ansi=%p Wide=%p\n", &impl::SetFileAttributesW.ansi, &impl::SetFileAttributesW.wide);
+            Log(LogLevel_DebugMaximum, "MoveFile  Ansi=%p Wide=%p\n", &impl::MoveFileW.ansi, &impl::MoveFileW.wide);
+            Log(LogLevel_DebugMaximum, "MoveFileEx  Ansi=%p Wide=%p\n", &impl::MoveFileExW.ansi, &impl::MoveFileExW.wide);
+            Log(LogLevel_DebugMaximum, "MoveFileWithProgress  Ansi=%p Wide=%p\n", &impl::MoveFileWithProgressW.ansi, &impl::MoveFileWithProgressW.wide);
+            Log(LogLevel_DebugMaximum, "RemoveDirectory  Ansi=%p Wide=%p\n", &impl::RemoveDirectoryW.ansi, &impl::RemoveDirectoryW.wide);
+            Log(LogLevel_DebugMaximum, "ReplaceFile  Ansi=%p Wide=%p\n", &impl::ReplaceFileW.ansi, &impl::ReplaceFileW.wide);
+            Log(LogLevel_DebugMaximum, "SetFileAttributes  Ansi=%p Wide=%p\n", &impl::SetFileAttributesW.ansi, &impl::SetFileAttributesW.wide);
 
-        Log("GetFileAttributes  Ansi=%p Wide=%p\n", &impl::GetFileAttributesW.ansi, &impl::GetFileAttributesW.wide);
-        Log("GetFileAttributesEx  Ansi=%p Wide=%p\n", &impl::GetFileAttributesExW.ansi, &impl::GetFileAttributesExW.wide);
-        Log("GetPrivateProfileInt  Ansi=%p Wide=%p\n", &impl::GetPrivateProfileIntW.ansi, &impl::GetPrivateProfileIntW.wide);
-        Log("GetPrivateProfileSection  Ansi=%p Wide=%p\n", &impl::GetPrivateProfileSectionW.ansi, &impl::GetPrivateProfileSectionW.wide);
-        Log("GetPrivateProfileSectionNames  Ansi=%p Wide=%p\n", &impl::GetPrivateProfileSectionNamesW.ansi, &impl::GetPrivateProfileSectionNamesW.wide);
-        Log("GetPrivateProfileString  Ansi=%p Wide=%p\n", &impl::GetPrivateProfileStringW.ansi, &impl::GetPrivateProfileStringW.wide);
-        Log("GetPrivateProfileStruct  Ansi=%p Wide=%p\n", &impl::GetPrivateProfileStructW.ansi, &impl::GetPrivateProfileStructW.wide);
-        
-        //Log("GetCurrentDirectory  Ansi=%p Wide=%p\n", &::GetCurrentDirectoryA, &::GetCurrentDirectoryW);
-        
-        Log("SetCurrentDirectory  Ansi=%p Wide=%p\n", &impl::SetCurrentDirectoryW.wide, &impl::SetCurrentDirectoryW.wide);
-        Log("WritePrivateProfileSection  Ansi=%p Wide=%p\n", &impl::WritePrivateProfileSectionW.wide, &impl::WritePrivateProfileSectionW.wide);
-        Log("WritePrivateProfileString  Ansi=%p Wide=%p\n", &impl::WritePrivateProfileStringW.ansi, &impl::WritePrivateProfileStringW.wide);
-        Log("WritePrivateProfileStruct  Ansi=%p Wide=%p\n", &impl::WritePrivateProfileStructW.ansi, &impl::WritePrivateProfileStructW.wide);
+            Log(LogLevel_DebugMaximum, "GetFileAttributes  Ansi=%p Wide=%p\n", &impl::GetFileAttributesW.ansi, &impl::GetFileAttributesW.wide);
+            Log(LogLevel_DebugMaximum, "GetFileAttributesEx  Ansi=%p Wide=%p\n", &impl::GetFileAttributesExW.ansi, &impl::GetFileAttributesExW.wide);
+            Log(LogLevel_DebugMaximum, "GetPrivateProfileInt  Ansi=%p Wide=%p\n", &impl::GetPrivateProfileIntW.ansi, &impl::GetPrivateProfileIntW.wide);
+            Log(LogLevel_DebugMaximum, "GetPrivateProfileSection  Ansi=%p Wide=%p\n", &impl::GetPrivateProfileSectionW.ansi, &impl::GetPrivateProfileSectionW.wide);
+            Log(LogLevel_DebugMaximum, "GetPrivateProfileSectionNames  Ansi=%p Wide=%p\n", &impl::GetPrivateProfileSectionNamesW.ansi, &impl::GetPrivateProfileSectionNamesW.wide);
+            Log(LogLevel_DebugMaximum, "GetPrivateProfileString  Ansi=%p Wide=%p\n", &impl::GetPrivateProfileStringW.ansi, &impl::GetPrivateProfileStringW.wide);
+            Log(LogLevel_DebugMaximum, "GetPrivateProfileStruct  Ansi=%p Wide=%p\n", &impl::GetPrivateProfileStructW.ansi, &impl::GetPrivateProfileStructW.wide);
 
-        //Log("SearchPath  Ansi=%p Wide=%p\n", &::SearchPathA, &::SearchPathW);
+            //Log(LogLevel_DebugMaximum, "GetCurrentDirectory  Ansi=%p Wide=%p\n", &::GetCurrentDirectoryA, &::GetCurrentDirectoryW);
+
+            Log(LogLevel_DebugMaximum, "SetCurrentDirectory  Ansi=%p Wide=%p\n", &impl::SetCurrentDirectoryW.wide, &impl::SetCurrentDirectoryW.wide);
+            Log(LogLevel_DebugMaximum, "WritePrivateProfileSection  Ansi=%p Wide=%p\n", &impl::WritePrivateProfileSectionW.wide, &impl::WritePrivateProfileSectionW.wide);
+            Log(LogLevel_DebugMaximum, "WritePrivateProfileString  Ansi=%p Wide=%p\n", &impl::WritePrivateProfileStringW.ansi, &impl::WritePrivateProfileStringW.wide);
+            Log(LogLevel_DebugMaximum, "WritePrivateProfileStruct  Ansi=%p Wide=%p\n", &impl::WritePrivateProfileStructW.ansi, &impl::WritePrivateProfileStructW.wide);
+
+            //Log(LogLevel_DebugMaximum, "SearchPath  Ansi=%p Wide=%p\n", &::SearchPathA, &::SearchPathW);
 
 #if FIXUP_ORIGINAL_SHELLEXECUTE
-        Log("ShellExecute  Ansi=%p Wide=%p\n", &::ShellExecuteA, &::ShellExecuteW);
+            Log(LogLevel_DebugMaximum, "ShellExecute  Ansi=%p Wide=%p\n", &::ShellExecuteA, &::ShellExecuteW);
 #endif
 #if FIXUP_ORIGINAL_SHELLEXECUTEEX
-        Log("SHellExecuteEx  Ansi=%p Wide=%p\n", &::ShellExecuteExA, &::ShellExecuteExW);
+            Log(LogLevel_DebugMaximum, "SHellExecuteEx  Ansi=%p Wide=%p\n", &::ShellExecuteExA, &::ShellExecuteExW);
 #endif
 
 #if Intercept_WindowsStorage
 #if DO_WS_Shex_A
-        if (windowsstorageimpl::ShellExecuteAImpl == nullptr)
-            Log("(windows.storage)ShellExecuteA to  Ansi=NULL\n");
-        else
-            Log("(windows.storage)ShellExecuteA to  Ansi=%p\n", windowsstorageimpl::ShellExecuteAImpl);
+            if (windowsstorageimpl::ShellExecuteAImpl == nullptr)
+                Log(LogLevel_DebugMaximum, "(windows.storage)ShellExecuteA to  Ansi=NULL\n");
+            else
+                Log(LogLevel_DebugMaximum, "(windows.storage)ShellExecuteA to  Ansi=%p\n", windowsstorageimpl::ShellExecuteAImpl);
 #endif
 #if DO_WS_Shex_W
-        if (windowsstorageimpl::ShellExecuteWImpl == nullptr)
-            Log("(windows.storage)ShellExecuteW to  Wide=NULL\n");
-        else
-            Log("(windows.storage)ShellExecuteW to  Wide=%p\n",  windowsstorageimpl::ShellExecuteWImpl);
+            if (windowsstorageimpl::ShellExecuteWImpl == nullptr)
+                Log(LogLevel_DebugMaximum, "(windows.storage)ShellExecuteW to  Wide=NULL\n");
+            else
+                Log(LogLevel_DebugMaximum, "(windows.storage)ShellExecuteW to  Wide=%p\n", windowsstorageimpl::ShellExecuteWImpl);
 #endif
 #if DO_WS_ShexEx_A
-        if (windowsstorageimpl::ShellExecuteExAImpl == nullptr)
-            Log("(windows.storage)ShellExecuteExA to  Ansi=NULL\n");
-        else
-            Log("(windows.storage)ShellExecuteExA  Ansi=%p\n", &windowsstorageimpl::ShellExecuteExAImpl);
+            if (windowsstorageimpl::ShellExecuteExAImpl == nullptr)
+                Log(LogLevel_DebugMaximum, "(windows.storage)ShellExecuteExA to  Ansi=NULL\n");
+            else
+                Log(LogLevel_DebugMaximum, "(windows.storage)ShellExecuteExA  Ansi=%p\n", &windowsstorageimpl::ShellExecuteExAImpl);
 #endif
 #if DO_WS_ShexEx_W
-        if (windowsstorageimpl::ShellExecuteExWImpl == nullptr)
-            Log("(windows.storage)ShellExecuteExW to  Wide=NULL\n");
-        else
-            Log("(windows.storage)ShellExecuteExW  Wide=%p\n", &windowsstorageimpl::ShellExecuteExWImpl);
-        Log("WindowsStorage Fixups loaded.\n");
+            if (windowsstorageimpl::ShellExecuteExWImpl == nullptr)
+                Log(LogLevel_DebugMaximum, "(windows.storage)ShellExecuteExW to  Wide=NULL\n");
+            else
+                Log(LogLevel_DebugMaximum, "(windows.storage)ShellExecuteExW  Wide=%p\n", &windowsstorageimpl::ShellExecuteExWImpl);
+            Log(LogLevel_DebugMaximum, "WindowsStorage Fixups loaded.\n");
 #endif
 
 
 #ifdef Intercept_NTDLL
 #ifdef DO_Intercept_NtCreateFile
-        if (ntdllimpl::NtCreateFileImpl != nullptr)
-            Log("(ntdll)NtCreateFile Neutral=%p\n", &ntdllimpl::NtCreateFileImpl);
+            if (ntdllimpl::NtCreateFileImpl != nullptr)
+                Log(LogLevel_DebugMaximum, "(ntdll)NtCreateFile Neutral=%p\n", &ntdllimpl::NtCreateFileImpl);
 #endif
 #ifdef DO_Intercept_NtOpenFile
-        if (ntdllimpl::NtOpenFileImpl != nullptr)
-            Log("(ntdll)NtOpenFile Neutral=%p\n", &ntdllimpl::NtOpenFileImpl);
+            if (ntdllimpl::NtOpenFileImpl != nullptr)
+                Log(LogLevel_DebugMaximum, "(ntdll)NtOpenFile Neutral=%p\n", &ntdllimpl::NtOpenFileImpl);
 #endif
 #ifdef DO_Intercept_NtQueryDirectoryFile
-        if (ntdllimpl::NtQueryDirectoryFileImpl != nullptr)
-            Log("(ntdll)NtQueryDirectoryFile Neutral=%p\n", &ntdllimpl::NtQueryDirectoryFileImpl);
+            if (ntdllimpl::NtQueryDirectoryFileImpl != nullptr)
+                Log(LogLevel_DebugMaximum, "(ntdll)NtQueryDirectoryFile Neutral=%p\n", &ntdllimpl::NtQueryDirectoryFileImpl);
 #endif
 
 #ifdef DO_Intercept_NtQueryDirectoryFileEx
-        if (ntdllimpl::NtQueryDirectoryFileExImpl != nullptr)
-            Log("(ntdll)NtQueryDirectoryFileEx Neutral=%p\n", &ntdllimpl::NtQueryDirectoryFileExImpl);
+            if (ntdllimpl::NtQueryDirectoryFileExImpl != nullptr)
+                Log(LogLevel_DebugMaximum, "(ntdll)NtQueryDirectoryFileEx Neutral=%p\n", &ntdllimpl::NtQueryDirectoryFileExImpl);
 #endif
 
-        Log("ntdll Fixups loaded.\n");
+            Log(LogLevel_DebugMaximum, "ntdll Fixups loaded.\n");
 #endif
 
 #endif
 #endif
+        }
     }
-#endif
 
 #if _ManualDebug
     void manual_LogWFD(const wchar_t* msg)
@@ -155,17 +156,17 @@ extern "C" {
 
     void manual_wait_for_debugger()
     {
-        manual_LogWFD(L"Start WFD");
+        manual_LogWFD(LogLevel_DebugBasic, L"Start WFD");
         // If a debugger is already attached, ignore as they have likely already set all breakpoints, etc. they need
         if (!::IsDebuggerPresent())
         {
-            manual_LogWFD(L"WFD: not yet.");
+            manual_LogWFD(LogLevel_DebugBasic, L"WFD: not yet.");
             while (!::IsDebuggerPresent())
             {
-                manual_LogWFD(L"WFD: still not yet.");
+                manual_LogWFD(LogLevel_DebugBasic, L"WFD: still not yet.");
                 ::Sleep(1000);
             }
-            manual_LogWFD(L"WFD: Yes.");
+            manual_LogWFD(LogLevel_DebugBasic, L"WFD: Yes.");
             // NOTE: When a debugger attaches (invasively), it will inject a DebugBreak in a new thread. Unfortunately,
             //       that does not synchronize with, and may occur _after_ IsDebuggerPresent returns true, allowing
             //       execution to continue for a short period of time. In order to get around this, we'll insert our own
@@ -176,7 +177,7 @@ extern "C" {
             std::this_thread::yield();
             ::DebugBreak();
         }
-        manual_LogWFD(L"WFD: Done.\n");
+        manual_LogWFD(LogLevel_DebugBasic, L"WFD: Done.\n");
     }
 #endif
 
@@ -188,8 +189,8 @@ extern "C" {
 
 #if MOREDEBUG
         PrintDebugAddrs();
-        psf::attach_count_all_debug();
-        //Log(L"[0] MFRFixup attaches %d fixups.", count);
+        int count = psf::attach_count_all_debug();
+        Log(LogLevel_DebugIntermediate, L"[0] MFRFixup attaches %d fixups.", count);
 #else
         psf::attach_all();
 #endif

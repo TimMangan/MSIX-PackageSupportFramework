@@ -34,10 +34,12 @@ extern const wchar_t* g_EnvVarName;
 void InitializeFixups()
 {
 
+    g_JsonDebugLevel = (Json_Debug_Levels)::PSFGetDebugLevelFromJson();
+    Json_Debug_Levels tempLog = g_JsonDebugLevel;
+    g_JsonDebugLevel = LogLevel_DebugMaximum; // force this to at least basic for the init logging
+    Log(LogLevel_DebugBasic, "[%s%d]\tEnvVarFixup InitializeFixups: start Debug Level=%d", g_EnvVarName, 0, tempLog);
+    g_JsonDebugLevel = tempLog;
 
-#if _DEBUG
-    Log(L"[%s%d] Initializing EnvVarFixup", g_EnvVarName, 0);
-#endif
 
     // For path comparison's sake - and the fact that std::filesystem::path doesn't handle (root-)local device paths all
     // that well - ensure that these paths are drive-absolute
@@ -56,9 +58,7 @@ void InitializeFixups()
 
 void InitializeConfiguration()
 {
-#if _DEBUG
-    Log(L"[%s%d] EnvVarFixup InitializeConfiguration()", g_EnvVarName, 0);
-#endif
+    Log(LogLevel_DebugBasic, L"[%s%d] EnvVarFixup InitializeConfiguration()", g_EnvVarName, 0);
     if (auto rootConfig = ::PSFQueryCurrentDllConfig())
     {
         auto& rootObject = rootConfig->as_object();
@@ -66,6 +66,8 @@ void InitializeConfiguration()
 
         if (auto EnvVarsValue = rootObject.try_get("envVars"))
         {
+
+
             if (EnvVarsValue)
             {
                 const psf::json_array& dllArray = EnvVarsValue->as_array();
@@ -79,11 +81,11 @@ void InitializeConfiguration()
                     auto variablevalue = specObject.get("value").as_string().wstring();
 
                     auto useregistry = specObject.get("useregistry").as_string().wstring();
-#if _DEBUG
-                    LogString(g_EnvVarName, 0, L"GetEnvFixup Config: name", variablenamePattern.data());
-                    LogString(g_EnvVarName, 0, L"GetEnvFixup Config: value", variablevalue.data());
-                    LogString(g_EnvVarName, 0, L"GetEnvFixup Config: useregistry", useregistry.data());
-#endif
+
+                    LogString(LogLevel_DebugBasic, g_EnvVarName, 0, L"GetEnvFixup Config: name", variablenamePattern.data());
+                    LogString(LogLevel_DebugBasic, g_EnvVarName, 0, L"GetEnvFixup Config: value", variablevalue.data());
+                    LogString(LogLevel_DebugBasic, g_EnvVarName, 0, L"GetEnvFixup Config: useregistry", useregistry.data());
+
                     g_envvar_envVarSpecs.emplace_back();
                     g_envvar_envVarSpecs.back().variablename.assign(variablenamePattern.data(), variablenamePattern.length());
                     g_envvar_envVarSpecs.back().variablevalue = variablevalue;
@@ -99,16 +101,12 @@ void InitializeConfiguration()
                     }
                     count++;
                 };
-#if _DEBUG
-                Log(L"[%s%d] EnvVarFixup: %d config items read.", g_EnvVarName, 0, count);
-#endif
+                Log(LogLevel_DebugBasic, L"[%s%d] EnvVarFixup: %d config items read.", g_EnvVarName, 0, count);
             }
         }
         if (g_envvar_envVarSpecs.size() == 0)
         {
-#if _DEBUG
-            Log(L"[%s%d] EnvVarFixup: Zero config items read.", g_EnvVarName, 0);
-#endif
+            Log(LogLevel_DebugBasic, L"[%s%d] EnvVarFixup: Zero config items read.", g_EnvVarName, 0);
         }
     }
 }

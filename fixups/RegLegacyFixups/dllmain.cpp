@@ -66,15 +66,10 @@ extern "C" {
 
     int __stdcall PSFInitialize() noexcept try
     {
-#if _DEBUG
-        //int count = psf::attach_count_all();
-        psf::attach_count_all_debug();
-        //Log(L"[0] RegLegacyFixup debug attaches %d fixups.", 0, count);
+        int count = psf::attach_count_all_debug();
+        Log(LogLevel_DebugMaximum, L"[0] RegLegacyFixup debug attaches %d fixups.", 0, count);
 #if _ManualDebug
         manual_wait_for_debugger();
-#endif
-#else
-        psf::attach_all();
 #endif
         return ERROR_SUCCESS;
     }
@@ -111,9 +106,7 @@ extern "C" {
         switch (ul_reason_for_call)
         {
         case DLL_PROCESS_ATTACH:
-#if _DEBUG
-            Log(L"[R0] Attaching RegLegacyFixups\n");
-#endif
+            Log(LogLevel_DebugBasic, L"[R0] Attaching RegLegacyFixups\n");
             InitializeFixups();
             InitializeConfiguration();
             break;
@@ -126,7 +119,7 @@ extern "C" {
     }
     catch (...)
     {
-        Log(L"[R0] RegLegacyFixups attach ERROR\n");
+        Log(LogLevel_Exception, L"[R0] RegLegacyFixups attach ERROR\n");
         ::SetLastError(win32_from_caught_exception());
         return FALSE;
     }

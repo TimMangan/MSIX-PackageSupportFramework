@@ -28,6 +28,7 @@
 
 #include "Config.h"
 #include "JsonConfig.h"
+#include "psf_logging.h"
 
 using namespace std::literals;
 
@@ -216,6 +217,7 @@ static struct
     std::string error_message;
 
     bool enableReportError{ true };
+    int  debugLevel = 2;
 } g_JsonHandler;
 
 static const psf::json_object* g_CurrentExeConfig = nullptr;
@@ -227,17 +229,17 @@ void load_json()
     auto file = _wfopen((g_PackageRootPath / L"config.json").c_str(), L"rb, ccs=UTF-8");
     if (!file)
     {
-        Log(L"[%s%d] Config.json not found in root of package %ls, look elsewhere.", g_PsfRunTimeName, 0, g_PackageRootPath.c_str());
+        Log(LogLevel_Launching, L"[%s%d] Config.json not found in root of package %ls, look elsewhere.", g_PsfRunTimeName, 0, g_PackageRootPath.c_str());
         ///Check folder with application, then everyhwere in package if needed
 #pragma warning(suppress:4996) // Nonsense warning; _wfopen is perfectly safe
         file = _wfopen((g_CurrentExecutable.parent_path() / L"config.json").c_str(), L"rb, ccs=UTF-8");
         if (file)
         {
-            Log(L"[%s%d] Config.json found in executable folder of package %ls", g_PsfRunTimeName, 0, g_PackageRootPath.c_str());
+            Log(LogLevel_Launching, L"[%s%d] Config.json found in executable folder of package %ls", g_PsfRunTimeName, 0, g_PackageRootPath.c_str());
         }
         else
         {
-            Log(L"[%s%d] Config.json not found in executable folder of package %ls, continue looking elsewhere.", g_PsfRunTimeName, 0, g_PackageRootPath.c_str());
+            Log(LogLevel_Launching, L"[%s%d] Config.json not found in executable folder of package %ls, continue looking elsewhere.", g_PsfRunTimeName, 0, g_PackageRootPath.c_str());
             // If not in those two locations, must check everywhere in package.
             for (auto& dentry : std::filesystem::recursive_directory_iterator(g_PackageRootPath))
             {
@@ -247,7 +249,7 @@ void load_json()
                     {
                         if (dentry.path().filename().compare(L"config.json") == 0)
                         {
-                            Log(L"[%s%d] Found config at: %ls", g_PsfRunTimeName, 0, dentry.path().c_str());
+                            Log(LogLevel_Launching, L"[%s%d] Found config at: %ls", g_PsfRunTimeName, 0, dentry.path().c_str());
 #pragma warning(suppress:4996) // Nonsense warning; _wfopen is perfectly safe
                             file = _wfopen(dentry.path().c_str(), L"rb, ccs=UTF-8");
                             break;
@@ -256,7 +258,7 @@ void load_json()
                 }
                 catch (...)
                 {
-                    Log(L"[%s%d] Non-fatal error enumerating directories while looking for config.json." ,g_PsfRunTimeName,0);
+                    Log(LogLevel_Exception, L"[%s%d] Non-fatal error enumerating directories while looking for config.json." ,g_PsfRunTimeName,0);
                 }
             }
         }
@@ -292,10 +294,39 @@ void load_json()
         {
             throw std::runtime_error("config.json has no contents");
         }
+        else
+        {
+            try
+            {
+#if _DEBUG
+                // Use the maximum debug level in debug builds always
+                g_JsonDebugLevel = LogLevel_DebugMaximum;
+                g_JsonHandler.debugLevel = static_cast<int>(g_JsonDebugLevel);
+#else
+                auto dbgLvl = g_JsonHandler.root->as_object().try_get("debugLevel");
+                if (dbgLvl)
+                {
+                    g_JsonHandler.debugLevel = (int)(dbgLvl->as_number().get_unsigned());
+                    g_JsonDebugLevel = static_cast<Json_Debug_Levels>(g_JsonHandler.debugLevel);
+                }
+                else
+                {
+                    Log(LogLevel_Exception, L"[%s%d]Config.json root object not found in package %ls", g_PsfRunTimeName, 0, g_PackageRootPath.c_str());
+                    ; // Leave at default
+                }
+#endif
+
+            }
+            catch (...)
+            {
+                Log(LogLevel_Exception, L"[%s%d]Config.json exception getting root object from package %ls", g_PsfRunTimeName, 0, g_PackageRootPath.c_str());
+                ; // Leave at default
+            }
+        }
     }
     else
     {
-        Log(L"[%s%d]Config.json not found in package %ls", g_PsfRunTimeName, 0, g_PackageRootPath.c_str());
+        Log(LogLevel_Exception, L"[%s%d]Config.json not found in package %ls", g_PsfRunTimeName, 0, g_PackageRootPath.c_str());
         PSFReportError(L"Config.json not found in package. Unable to configure the PSF.");
     }
     assert(g_JsonHandler.state_stack.empty());
@@ -313,23 +344,23 @@ void load_json()
                 if (!g_CurrentExeConfig && std::regex_match(currentExe.native(), std::wregex(exe.data(), exe.length())))
                 {
                     g_CurrentExeConfig = &obj;
-                    LogCountedStringW(g_PsfRunTimeName, 0,"Processes config match", exe.data(), exe.length());
+                    LogCountedStringW(LogLevel_Launching, g_PsfRunTimeName, 0,"Processes config match", exe.data(), exe.length());
                     break;
                 }
                 else if (!g_CurrentExeConfig)
                 {
-                    //LogCountedStringW(g_PsfRunTimeName, 0, Instance"Processes config notmatched", exe.data(), exe.length());
+                    //LogCountedStringW(LogLevel_Launching, g_PsfRunTimeName, 0, Instance"Processes config notmatched", exe.data(), exe.length());
                 }
             }
         }
         else
         {
-            Log(L"[%s%d] No processes to match; no fixups to load.", g_PsfRunTimeName, 0);
+            Log(LogLevel_Launching, L"[%s%d] No processes to match; no fixups to load.", g_PsfRunTimeName, 0);
         }
     }
     else
     {
-        Log(L"[%s%d] No Processes to match; no fixups to load.", g_PsfRunTimeName, 0);
+        Log(LogLevel_Launching, L"[%s%d] No Processes to match; no fixups to load.", g_PsfRunTimeName, 0);
     }
 
     // Permit ReportError disabling iff basic config.json parse succeeded
@@ -351,16 +382,23 @@ bool LoadConfig()
         g_PackageRootPath = psf::current_package_path();
         g_FinalPackageRootPath = psf::get_final_path_name(g_PackageRootPath);
         g_CurrentExecutable = psf::current_executable_path();
+#if DEBUG
+        g_JsonDebugLevel = LogLevel_DebugMaximum;
+#else
+        g_JsonDebugLevel = LogLevel_Launching;
+#endif
 
 
-        LogCountedStringW(g_PsfRunTimeName, 0, "g_PackageFullName", g_PackageFullName.data(), g_PackageFullName.length());
-        LogCountedStringW(g_PsfRunTimeName, 0, "g_PackageFamilyName", g_PackageFamilyName.data(), g_PackageFamilyName.length());
-        LogCountedStringW(g_PsfRunTimeName, 0, "g_ApplicationUserModelId", g_ApplicationUserModelId.data(), g_ApplicationUserModelId.length());
-        LogCountedStringW(g_PsfRunTimeName, 0, "g_ApplicationId", g_ApplicationId.data(), g_ApplicationId.length());
-        LogString(g_PsfRunTimeName, 0, L"g_PackageRootPath", g_PackageRootPath.c_str());
-        LogString(g_PsfRunTimeName, 0, L"g_FinalPackageRootPath", g_FinalPackageRootPath.c_str());
-        LogString(g_PsfRunTimeName, 0, L"g_CurrentExecutable", g_CurrentExecutable.c_str());
+
+        LogCountedStringW(LogLevel_Launching, g_PsfRunTimeName, 0, "g_PackageFullName", g_PackageFullName.data(), g_PackageFullName.length());
+        LogCountedStringW(LogLevel_Launching, g_PsfRunTimeName, 0, "g_PackageFamilyName", g_PackageFamilyName.data(), g_PackageFamilyName.length());
+        LogCountedStringW(LogLevel_Launching, g_PsfRunTimeName, 0, "g_ApplicationUserModelId", g_ApplicationUserModelId.data(), g_ApplicationUserModelId.length());
+        LogCountedStringW(LogLevel_Launching, g_PsfRunTimeName, 0, "g_ApplicationId", g_ApplicationId.data(), g_ApplicationId.length());
+        LogString(LogLevel_Launching, g_PsfRunTimeName, 0, L"g_PackageRootPath", g_PackageRootPath.c_str());
+        LogString(LogLevel_Launching, g_PsfRunTimeName, 0, L"g_FinalPackageRootPath", g_FinalPackageRootPath.c_str());
+        LogString(LogLevel_Launching, g_PsfRunTimeName, 0, L"g_CurrentExecutable", g_CurrentExecutable.c_str());
         load_json();
+        Log(LogLevel_Launching, L"[%s%d] Json Debug Level now: %d", g_PsfRunTimeName, 0, g_JsonDebugLevel);
         return true;
     }
     else
@@ -370,7 +408,7 @@ bool LoadConfig()
         //Log(L"App is not running inside the container and will be terminated.");
         //std::terminate();
         // The future is now, why terminate?  Just let it run without fixup.
-        Log(L"[%s%d] App is not running inside the container and will be ignored by the Psf.", g_PsfRunTimeName, 0);
+        Log(LogLevel_Exception, L"[%s%d] App is not running inside the container and will be ignored by the Psf.", g_PsfRunTimeName, 0);
         return false;
     }
 }
@@ -451,6 +489,13 @@ PSFAPI const psf::json_value* __stdcall PSFQueryConfigRoot() noexcept
     return g_JsonHandler.root.get();
 }
 
+PSFAPI const int  PSFQueryConfigLogLevel() noexcept
+{
+    auto val = g_JsonHandler.root->as_object().try_get("debugLevel")->as_number().get_signed();
+
+    return (int)val;
+}
+
 PSFAPI const psf::json_object* __stdcall PSFQueryAppLaunchConfig(_In_ const wchar_t* applicationId, bool verbose) noexcept try
 {
     for (auto& app : g_JsonHandler.root->as_object().get("applications").as_array())
@@ -462,7 +507,7 @@ PSFAPI const psf::json_object* __stdcall PSFQueryAppLaunchConfig(_In_ const wcha
         {
             if (verbose)
             {
-                LogCountedStringW(g_PsfRunTimeName, 0, "Json Application match against id", appId.data(), appId.length());
+                LogCountedStringW(LogLevel_Launching, g_PsfRunTimeName, 0, "Json Application match against id", appId.data(), appId.length());
             }
             return &appObj;
         }
@@ -470,7 +515,7 @@ PSFAPI const psf::json_object* __stdcall PSFQueryAppLaunchConfig(_In_ const wcha
 
     if (verbose)
     {
-        Log(L"\t[%s%d] No Matches", g_PsfRunTimeName, 0);
+        Log(LogLevel_Launching, L"\t[%s%d] No Matches", g_PsfRunTimeName, 0);
     }
 
     return nullptr;
@@ -629,6 +674,20 @@ catch (...)
 {
     return nullptr;
 }
+
+PSFAPI const int __stdcall  PSFGetDebugLevelFromJson() noexcept try
+{
+    if (g_JsonHandler.root)
+    {
+        return g_JsonHandler.debugLevel;
+    }
+    return 9; // debug maximum    
+}
+catch (...)
+{
+    return 10;
+}
+
 
 PSFAPI void __stdcall PSFReportError(const wchar_t* error) noexcept
 {

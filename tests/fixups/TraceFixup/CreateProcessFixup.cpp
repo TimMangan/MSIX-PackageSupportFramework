@@ -104,7 +104,7 @@ BOOL __stdcall CreateProcessFixup(
                 LogFunctionResult(functionResult);
                 if (function_failed(functionResult))
                 {
-                    LogLastError();
+                    LogLastError(LogLevel_DebugBasic) ;
                 }
                 LogCallingModule();
             }
@@ -216,7 +216,7 @@ BOOL __stdcall CreateProcessAsUserFixup(
                 LogFunctionResult(functionResult);
                 if (function_failed(functionResult))
                 {
-                    LogLastError();
+                    LogLastError(LogLevel_DebugBasic) ;
                 }
                 LogCallingModule();
             }

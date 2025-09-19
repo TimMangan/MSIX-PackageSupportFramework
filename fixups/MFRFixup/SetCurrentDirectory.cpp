@@ -5,10 +5,6 @@
 
 // Microsoft Documentation on this API: https://learn.microsoft.com/en-us/windows/win32/api/winbase/nf-winbase-setcurrentdirectory
 
-#if _DEBUG
-//#define MOREDEBUG 1
-#endif
-
 
 
 #include <errno.h>
@@ -26,20 +22,17 @@
 // exists inside the package.  
 
 
-BOOL  WRAPPER_SETCURRENTDIRECTORY(std::wstring thePath, DWORD dllInstance, bool debug)
+BOOL  WRAPPER_SETCURRENTDIRECTORY(std::wstring thePath, DWORD dllInstance)
 {
     std::wstring LongThePath = MakeLongPath(thePath);
     BOOL retfinal = impl::SetCurrentDirectoryW(LongThePath.c_str());
-    if (debug)
+    if (retfinal == 0)
     {
-        if (retfinal == 0)
-        {
-            Log(L"[%s%d] SetCurrentDirectory returns result FAILURE 0x%x on file '%s'", g_MfrModuleName, dllInstance, GetLastError(), LongThePath.c_str());
-        }
-        else
-        {
-            Log(L"[%s%d] SetCurrentDirectory returns result SUCCESS 0x%x on file '%s'", g_MfrModuleName, dllInstance, retfinal, LongThePath.c_str());
-        }
+        Log(LogLevel_DebugBasic, L"[%s%d] SetCurrentDirectory returns result FAILURE 0x%x on file '%s'", g_MfrModuleName, dllInstance, GetLastError(), LongThePath.c_str());
+    }
+    else
+    {
+        Log(LogLevel_DebugBasic, L"[%s%d] SetCurrentDirectory returns result SUCCESS 0x%x on file '%s'", g_MfrModuleName, dllInstance, retfinal, LongThePath.c_str());
     }
     return retfinal;
 }
@@ -49,14 +42,6 @@ template <typename CharT>
 BOOL __stdcall SetCurrentDirectoryFixup(_In_ const CharT* pathName) noexcept
 {
     DWORD dllInstance = ++g_InterceptInstance;
-    bool debug = false;
-#if _DEBUG
-    debug = true;
-#endif
-    bool moredebug = false;
-#if MOREDEBUG
-    moredebug = true;
-#endif
 
     auto guard = g_reentrancyGuard.enter();
     BOOL retfinal;
@@ -67,14 +52,12 @@ BOOL __stdcall SetCurrentDirectoryFixup(_In_ const CharT* pathName) noexcept
             std::wstring wPathName = widen(pathName);
             wPathName = AdjustSlashes(wPathName, dllInstance);
 
+            LogString(LogLevel_DebugBasic, g_MfrModuleName, dllInstance, L"SetCurrentDirectory for pathName", wPathName.c_str());
 
-#if _DEBUG
-            LogString(g_MfrModuleName, dllInstance, L"SetCurrentDirectory for pathName", wPathName.c_str());
-#endif
             ///if (MFRConfiguration.Ilv_Aware)
             {
                 Cohorts cohorts;
-                DetermineCohorts(wPathName, &cohorts, moredebug, dllInstance, L"SetCurrentDirectory");
+                DetermineCohorts(LogLevel_DebugIntermediate, wPathName, &cohorts, dllInstance, L"SetCurrentDirectory");
 
                 switch (cohorts.file_mfr.Request_MfrPathType)
                 {
@@ -86,7 +69,7 @@ BOOL __stdcall SetCurrentDirectoryFixup(_In_ const CharT* pathName) noexcept
                     }
                     else if (PathExists(cohorts.WsPackage.c_str()))
                     {
-                        retfinal = WRAPPER_SETCURRENTDIRECTORY(cohorts.WsPackage, dllInstance,debug);
+                        retfinal = WRAPPER_SETCURRENTDIRECTORY(cohorts.WsPackage, dllInstance);
                         return retfinal;
                     }
                     break;
@@ -100,7 +83,7 @@ BOOL __stdcall SetCurrentDirectoryFixup(_In_ const CharT* pathName) noexcept
                     // treat as is for now in the package (necessary if not ILV)
                     if (PathExists(cohorts.WsPackage.c_str()))
                     {
-                        retfinal = WRAPPER_SETCURRENTDIRECTORY(cohorts.WsPackage, dllInstance, debug);
+                        retfinal = WRAPPER_SETCURRENTDIRECTORY(cohorts.WsPackage, dllInstance);
                         return retfinal;
                     }
                     break;
@@ -122,15 +105,9 @@ BOOL __stdcall SetCurrentDirectoryFixup(_In_ const CharT* pathName) noexcept
             }
         }
     }
-#if _DEBUG
     // Fall back to assuming no redirection is necessary if exception
-    LOGGED_CATCHHANDLER_MIN(g_MfrModuleName, dllInstance, L"SetCurrentDirectoryFixup")
-#else
-    catch (...)
-    {
-        Log(L"[%s%d] SetCurrentDirectoryFixup Exception=0x%x", g_MfrModuleName, dllInstance, GetLastError());
-    }
-#endif
+    LOGGED_CATCHHANDLER_MIN(LogLevel_DebugBasic, g_MfrModuleName, dllInstance, L"SetCurrentDirectoryFixup")
+
     if (pathName != nullptr)
     {
         std::wstring LongDeletingFile = MakeLongPath(widen(pathName));
@@ -141,9 +118,7 @@ BOOL __stdcall SetCurrentDirectoryFixup(_In_ const CharT* pathName) noexcept
         SetLastError(ERROR_INVALID_PARAMETER);
         retfinal = 0; 
     }
-#if _DEBUG
-    Log(L"[%s%d] SetCurrentDirectoryFixup returns 0x%x", g_MfrModuleName, dllInstance, retfinal);
-#endif
+    Log(LogLevel_DebugBasic, L"[%s%d] SetCurrentDirectoryFixup returns 0x%x", g_MfrModuleName, dllInstance, retfinal);
     return retfinal;
 }
 DECLARE_STRING_FIXUP(impl::SetCurrentDirectory, SetCurrentDirectoryFixup);

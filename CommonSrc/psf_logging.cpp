@@ -10,506 +10,593 @@
 #include <assert.h>
 
 #include <utilities.h>
+#include <psf_logging.h>
+#include <psf_runtime.h>
 
 bool g_psf_NoLogging = false;
+Json_Debug_Levels g_JsonDebugLevel = LogLevel_Launching;
 
-void Log(const char* fmt, ...)
+
+void Log(Json_Debug_Levels debugRequestLevel, const char* fmt, ...)
 {
     if (!g_psf_NoLogging)
     {
-        try
+        if (debugRequestLevel <= g_JsonDebugLevel)
         {
-            int bufferSize = 1024;
-            std::string str;
-            int count = -1;
-
-            while (true)
+            try
             {
-                str.resize(bufferSize);
-                va_list args;
-                va_start(args, fmt);
-                count = _vsnprintf_s(str.data(), bufferSize, _TRUNCATE, fmt, args);
-                va_end(args);
+                int bufferSize = 1024;
+                std::string str;
+                int count = -1;
 
-                if (count >= 0 && count < bufferSize)
+                while (true)
                 {
-                    str.resize(count);
-                    ::OutputDebugStringA(str.c_str());
-                    break;
+                    str.resize(bufferSize);
+                    va_list args;
+                    va_start(args, fmt);
+                    count = _vsnprintf_s(str.data(), bufferSize, _TRUNCATE, fmt, args);
+                    va_end(args);
+
+                    if (count >= 0 && count < bufferSize)
+                    {
+                        str.resize(count);
+                        ::OutputDebugStringA(str.c_str());
+                        break;
+                    }
+                    else if (bufferSize >= 65536)
+                    {
+                        ::OutputDebugStringA("Error in Log() wide string too long or format error");
+                        break;
+                    }
+                    bufferSize *= 2;
                 }
-                else if (bufferSize >= 65536)
-                {
-                    ::OutputDebugStringA("Error in Log() wide string too long or format error");
-                    break;
-                }
-                bufferSize *= 2;
+            }
+            catch (...)
+            {
+                ::OutputDebugStringA("Exception in Log()");
+                ::OutputDebugStringA(fmt);
             }
         }
-        catch (...)
-        {
-            ::OutputDebugStringA("Exception in Log()");
-            ::OutputDebugStringA(fmt);
-        }
     }
 }
 
-void Log(const wchar_t* fmt, ...)
+void Log(Json_Debug_Levels debugRequestLevel, const wchar_t* fmt, ...)
 {
     if (!g_psf_NoLogging)
     {
-        try
+        if (debugRequestLevel <= g_JsonDebugLevel)
         {
-            int bufferSize = 1024;
-            std::wstring wstr;
-            int count = -1;
-
-            while (true)
+            try
             {
-                wstr.resize(bufferSize);
-                va_list args;
-                va_start(args, fmt);
-                count = _vsnwprintf_s(wstr.data(), bufferSize, _TRUNCATE, fmt, args);
-                va_end(args);
+                int bufferSize = 1024;
+                std::wstring wstr;
+                int count = -1;
 
-                if (count >= 0 && count < bufferSize)
+                while (true)
                 {
-                    wstr.resize(count);
-                    ::OutputDebugStringW(wstr.c_str());
-                    break;
+                    wstr.resize(bufferSize);
+                    va_list args;
+                    va_start(args, fmt);
+                    count = _vsnwprintf_s(wstr.data(), bufferSize, _TRUNCATE, fmt, args);
+                    va_end(args);
+
+                    if (count >= 0 && count < bufferSize)
+                    {
+                        wstr.resize(count);
+                        ::OutputDebugStringW(wstr.c_str());
+                        break;
+                    }
+                    else if (bufferSize >= 65536)
+                    {
+                        ::OutputDebugStringA("Error in Log() wide string too long or format error");
+                        break;
+                    }
+                    bufferSize *= 2;
                 }
-                else if (bufferSize >= 65536)
-                {
-                    ::OutputDebugStringA("Error in Log() wide string too long or format error");
-                    break;
-                }
-                bufferSize *= 2;
+            }
+            catch (...)
+            {
+                ::OutputDebugStringA("Exception in wide Log()");
+                ::OutputDebugStringW(fmt);
             }
         }
-        catch (...)
-        {
-            ::OutputDebugStringA("Exception in wide Log()");
-            ::OutputDebugStringW(fmt);
-        }
     }
 }
 
-void LogString(const char* name, const char* value)
+void LogString(Json_Debug_Levels debugRequestLevel, const char* name, const char* value)
 {
     if (!g_psf_NoLogging)
     {
-        if ((value != NULL && value[1] != 0x0))
+        if (debugRequestLevel <= g_JsonDebugLevel)
         {
-            Log(L"%S=%S\n", name, value);
-        }
-        else
-        {
-            Log(L"%s=%s", name, (wchar_t*)value);
+            if ((value != NULL && value[1] != 0x0))
+            {
+                Log(debugRequestLevel, L"%S=%S\n", name, value);
+            }
+            else
+            {
+                Log(debugRequestLevel, L"%s=%s", name, (wchar_t*)value);
+            }
         }
     }
 }
 
-void LogString(const char* name, const wchar_t* value)
+void LogString(Json_Debug_Levels debugRequestLevel, const char* name, const wchar_t* value)
 {
     if (!g_psf_NoLogging)
     {
-        if ((value != NULL && ((char*)value)[1] == 0x0))
+        if (debugRequestLevel <= g_JsonDebugLevel)
         {
-            Log(L"%S=%s\n", name, value);
-        }
-        else
-        {
-            Log(L"%S=%S", name, (char*)value);
+            if ((value != NULL && ((char*)value)[1] == 0x0))
+            {
+                Log(debugRequestLevel, L"%S=%s\n", name, value);
+            }
+            else
+            {
+                Log(debugRequestLevel, L"%S=%S", name, (char*)value);
+            }
         }
     }
 }
 
-void LogString(const wchar_t* name, const char* value)
+void LogString(Json_Debug_Levels debugRequestLevel, const wchar_t* name, const char* value)
 {
     if (!g_psf_NoLogging)
     {
-        Log(L"%s=%S\n", name, widen(value).c_str());
+        if (debugRequestLevel <= g_JsonDebugLevel)
+        {
+            Log(debugRequestLevel, L"%s=%S\n", name, widen(value).c_str());
+        }
     }
 }
 
-void LogString(const wchar_t* name, const wchar_t* value)
+void LogString(Json_Debug_Levels debugRequestLevel, const wchar_t* name, const wchar_t* value)
 {
     if (!g_psf_NoLogging)
     {
-        Log(L"%s=%s\n", name, value);
+        if (debugRequestLevel <= g_JsonDebugLevel)
+        {
+            Log(debugRequestLevel, L"%s=%s\n", name, value);
+        }
     }
 }
 
-void LogCountedStringW(const char* name, const wchar_t* value, std::size_t length)
+void LogCountedStringW(Json_Debug_Levels debugRequestLevel, const char* name, const wchar_t* value, std::size_t length)
 {
     // Still used in PsfRuntime initialization
     if (!g_psf_NoLogging)
     {
-        Log("\t%s=%.*ls\n", name, length, value);
+        if (debugRequestLevel <= g_JsonDebugLevel)
+        {
+            if (debugRequestLevel <= g_JsonDebugLevel)
+            {
+                Log(debugRequestLevel, "\t%s=%.*ls\n", name, length, value);
+            }
+        }
     }
 }
 
-void Loghexdump(void* pAddressIn, long  lSize, const wchar_t* ModuleName, DWORD instance = 0)
+void Loghexdump(Json_Debug_Levels debugRequestLevel, void* pAddressIn, long  lSize, const wchar_t* ModuleName, DWORD instance)
 {
     if (!g_psf_NoLogging)
     {
-        char szBuf[128];
-        long lIndent = 1;
-        long lOutLen, lIndex, lIndex2, lOutLen2;
-        long lRelPos;
-        struct { char* pData; unsigned long lSize; } buf;
-        unsigned char* pTmp, ucTmp;
-        unsigned char* rememberPtmp;
-        unsigned char* pAddress = (unsigned char*)pAddressIn;
-
-        buf.pData = (char*)pAddress;
-        buf.lSize = lSize;
-
-        while (buf.lSize > 0)
+        if (debugRequestLevel <= g_JsonDebugLevel)
         {
-            pTmp = (unsigned char*)buf.pData;
-            lOutLen = (int)buf.lSize;
-            if (lOutLen > 16)
-                lOutLen = 16;
+            char szBuf[128];
+            long lIndent = 1;
+            long lOutLen, lIndex, lIndex2, lOutLen2;
+            long lRelPos;
+            struct { char* pData; unsigned long lSize; } buf;
+            unsigned char* pTmp, ucTmp;
+            unsigned char* rememberPtmp;
+            unsigned char* pAddress = (unsigned char*)pAddressIn;
 
-            // create a 64-character formatted output line:
-            sprintf_s(szBuf, 100, " >                            "
-                "                      "
-                "         ");
-            rememberPtmp = pTmp;
-            lOutLen2 = lOutLen;
+            buf.pData = (char*)pAddress;
+            buf.lSize = lSize;
 
-            for (lIndex = 1 + lIndent, lIndex2 = 53 - 15 + lIndent, lRelPos = 0;
-                lOutLen2;
-                lOutLen2--, lIndex += 2, lIndex2++
-                )
+            while (buf.lSize > 0)
             {
-                ucTmp = *pTmp++;
+                pTmp = (unsigned char*)buf.pData;
+                lOutLen = (int)buf.lSize;
+                if (lOutLen > 16)
+                    lOutLen = 16;
 
-                sprintf_s(szBuf + lIndex, 100 - lIndex, "%02X ", (unsigned short)ucTmp);
-                if (!isprint(ucTmp))  ucTmp = '.'; // nonprintable char
-                szBuf[lIndex2] = ucTmp;
+                // create a 64-character formatted output line:
+                sprintf_s(szBuf, 100, " >                            "
+                    "                      "
+                    "         ");
+                rememberPtmp = pTmp;
+                lOutLen2 = lOutLen;
 
-                if (!(++lRelPos & 3))     // extra blank after 4 bytes
+                for (lIndex = 1 + lIndent, lIndex2 = 53 - 15 + lIndent, lRelPos = 0;
+                    lOutLen2;
+                    lOutLen2--, lIndex += 2, lIndex2++
+                    )
                 {
-                    lIndex++; szBuf[lIndex + 2] = ' ';
+                    ucTmp = *pTmp++;
+
+                    sprintf_s(szBuf + lIndex, 100 - lIndex, "%02X ", (unsigned short)ucTmp);
+                    if (!isprint(ucTmp))  ucTmp = '.'; // nonprintable char
+                    szBuf[lIndex2] = ucTmp;
+
+                    if (!(++lRelPos & 3))     // extra blank after 4 bytes
+                    {
+                        lIndex++; szBuf[lIndex + 2] = ' ';
+                    }
                 }
-            }
 
-            if (!(lRelPos & 3)) lIndex--;
+                if (!(lRelPos & 3)) lIndex--;
 
-            sprintf_s(szBuf + lIndex, 100 - lIndex, "<%08lx  ", (unsigned long)(rememberPtmp - pAddress));
-            szBuf[lIndex + 14] = 0x0;
+                sprintf_s(szBuf + lIndex, 100 - lIndex, "<%08lx  ", (unsigned long)(rememberPtmp - pAddress));
+                szBuf[lIndex + 14] = 0x0;
 
-            if (ModuleName != nullptr)
-            {
-                std::wstring wBuf = widen(szBuf);
-                Log(L"    [%s%d]\t\t%s", ModuleName, instance, wBuf.c_str());
-            }
-            else
-            {
-
-                if (instance == 0)
+                if (ModuleName != nullptr)
                 {
-                    ::OutputDebugStringA(szBuf);
+                    std::wstring wBuf = widen(szBuf);
+                    Log(debugRequestLevel, L"    [%s%d]\t\t%s", ModuleName, instance, wBuf.c_str());
                 }
                 else
                 {
-                    Log("    [%d]\t\t%s", instance, szBuf);
+
+                    if (instance == 0)
+                    {
+                        ::OutputDebugStringA(szBuf);
+                    }
+                    else
+                    {
+                        Log(debugRequestLevel, "    [%d]\t\t%s", instance, szBuf);
+                    }
                 }
+                buf.pData += lOutLen;
+                buf.lSize -= lOutLen;
             }
-            buf.pData += lOutLen;
-            buf.lSize -= lOutLen;
         }
     }
 }
 
 /////// WITH_INSTONLY
-void LogString(DWORD inst, const char* name, const char* value)
+void LogString(Json_Debug_Levels debugRequestLevel, DWORD inst, const char* name, const char* value)
 {
     if (!g_psf_NoLogging)
     {
-        if ((value != NULL && value[1] != 0x0))
+        if (debugRequestLevel <= g_JsonDebugLevel)
         {
-            Log(L"[%d] %S=%S\n", inst, name, value);
-        }
-        else
-        {
-            Log(L"[%d] %S=%s", inst, name, (wchar_t*)value);
-        }
-    }
-}
-
-void LogString(DWORD inst, const char* name, const wchar_t* value)
-{
-    if (!g_psf_NoLogging)
-    {
-        if ((value != NULL && ((char*)value)[1] == 0x0))
-        {
-            Log(L"[%d] %S=%s\n", inst, name, value);
-        }
-        else
-        {
-            Log(L"[%d] %S=%S", inst, name, (char*)value);
-        }
-    }
-}
-
-void LogStringAA(DWORD inst, const char* name, const char* value)
-{
-    if (!g_psf_NoLogging)
-    {
-        Log(L"[%d] %s=%s\n", inst, name, value);
-    }
-}
-void LogStringAW(DWORD inst, const char* name, const wchar_t* value)
-{
-    if (!g_psf_NoLogging)
-    {
-        Log(L"[%d] %s=%ls", inst, name, value);
-    }
-}
-
-void LogString(DWORD inst, const wchar_t* name, const char* value)
-{
-    if (!g_psf_NoLogging)
-    {
-        if ((value != NULL && value[1] != 0x0))
-        {
-            //Log(L"[%d] %ls=%ls\n", inst, name, widen(value).c_str());
-            Log(L"[%d] %s=%S\n", inst, name, value);
-        }
-        else
-        {
-            Log(L"[%d] %s=%s", inst, name, (wchar_t*)value);
-        }
-    }
-}
-
-void LogString(DWORD inst, const wchar_t* name, const wchar_t* value)
-{
-    if (!g_psf_NoLogging)
-    {
-        if ((value != NULL && ((char*)value)[1] == 0x0))
-        {
-            Log(L"[%d] %s=%s\n", inst, name, value);
-        }
-        else
-        {
-            if (value != nullptr)
+            if ((value != NULL && value[1] != 0x0))
             {
-                //Log(L"[%d] %ls=%ls", inst, name, widen((const char*)value).c_str());
-                Log(L"[%d] %s=%S", inst, name, (char*)value);
+                Log(debugRequestLevel, L"[%d] %S=%S\n", inst, name, value);
             }
             else
             {
-                Log(L"[%d] %ls=NULL", inst, name);
+                Log(debugRequestLevel, L"[%d] %S=%s", inst, name, (wchar_t*)value);
             }
         }
     }
 }
 
-void LogStringWA(DWORD inst, const wchar_t* name, const char* value)
+void LogString(Json_Debug_Levels debugRequestLevel, DWORD inst, const char* name, const wchar_t* value)
 {
     if (!g_psf_NoLogging)
     {
-        Log(L"[%d] %ls=%ls\n", inst, name, widen(value).c_str());
-    }
-}
-void LogStringWW(DWORD inst, const wchar_t* name, const wchar_t* value)
-{
-    if (!g_psf_NoLogging)
-    {
-        Log(L"[%d] %ls=%ls", inst, name, value);
-    }
-}
-
-
-void LogString(DWORD rememberedInst, DWORD inst, const wchar_t* name, const char* value)
-{
-    if (!g_psf_NoLogging)
-    {
-        if ((value != NULL && value[1] != 0x0))
+        if (debugRequestLevel <= g_JsonDebugLevel)
         {
-            Log(L"[%d][F%d] %s=%s\n", rememberedInst, inst, name, widen(value).c_str());
-        }
-        else
-        {
-            Log(L"[%d][F%d] %s=%s", rememberedInst, inst, name, (wchar_t*)value);
-        }
-    }
-}
-
-void LogString(DWORD rememberedInst, DWORD inst, const wchar_t* name, const wchar_t* value)
-{
-    if (!g_psf_NoLogging)
-    {
-        if ((value != NULL && ((char*)value)[1] == 0x0))
-        {
-            Log(L"[%d][%d] %s=%s\n", rememberedInst, inst, name, value);
-        }
-        else
-        {
-            if (value != nullptr)
+            if ((value != NULL && ((char*)value)[1] == 0x0))
             {
-                Log(L"[%d][%d] %s=%s", rememberedInst, inst, name, widen((const char*)value).c_str());
+                Log(debugRequestLevel, L"[%d] %S=%s\n", inst, name, value);
             }
             else
             {
-                Log(L"[%d][%d] %ls=NULL", rememberedInst, inst, name);
+                Log(debugRequestLevel, L"[%d] %S=%S", inst, name, (char*)value);
             }
         }
     }
 }
 
-void LogCountedStringW(DWORD dllInstance, const char* name, const wchar_t* value, std::size_t length)
+void LogStringAA(Json_Debug_Levels debugRequestLevel, DWORD inst, const char* name, const char* value)
 {
     if (!g_psf_NoLogging)
     {
-        Log("[%d]\t%s=%.*ls\n", dllInstance, name, length, value);
+        if (debugRequestLevel <= g_JsonDebugLevel)
+        {
+            Log(debugRequestLevel, L"[%d] %s=%s\n", inst, name, value);
+        }
     }
 }
+void LogStringAW(Json_Debug_Levels debugRequestLevel, DWORD inst, const char* name, const wchar_t* value)
+{
+    if (!g_psf_NoLogging)
+    {
+        if (debugRequestLevel <= g_JsonDebugLevel)
+        {
+            Log(debugRequestLevel, L"[%d] %s=%ls", inst, name, value);
+        }
+    }
+}
+
+void LogString(Json_Debug_Levels debugRequestLevel, DWORD inst, const wchar_t* name, const char* value)
+{
+    if (!g_psf_NoLogging)
+    {
+        if (debugRequestLevel <= g_JsonDebugLevel)
+        {
+            if ((value != NULL && value[1] != 0x0))
+            {
+                //Log(L"[%d] %ls=%ls\n", inst, name, widen(value).c_str());
+                Log(debugRequestLevel, L"[%d] %s=%S\n", inst, name, value);
+            }
+            else
+            {
+                Log(debugRequestLevel, L"[%d] %s=%s", inst, name, (wchar_t*)value);
+            }
+        }
+    }
+}
+
+void LogString(Json_Debug_Levels debugRequestLevel, DWORD inst, const wchar_t* name, const wchar_t* value)
+{
+    if (!g_psf_NoLogging)
+    {
+        if (debugRequestLevel <= g_JsonDebugLevel)
+        {
+            if ((value != NULL && ((char*)value)[1] == 0x0))
+            {
+                Log(debugRequestLevel, L"[%d] %s=%s\n", inst, name, value);
+            }
+            else
+            {
+                if (value != nullptr)
+                {
+                    //Log(L"[%d] %ls=%ls", inst, name, widen((const char*)value).c_str());
+                    Log(debugRequestLevel, L"[%d] %s=%S", inst, name, (char*)value);
+                }
+                else
+                {
+                    Log(debugRequestLevel, L"[%d] %ls=NULL", inst, name);
+                }
+            }
+        }
+    }
+}
+
+void LogStringWA(Json_Debug_Levels debugRequestLevel, DWORD inst, const wchar_t* name, const char* value)
+{
+    if (!g_psf_NoLogging)
+    {
+        if (debugRequestLevel <= g_JsonDebugLevel)
+        {
+            Log(debugRequestLevel, L"[%d] %ls=%ls\n", inst, name, widen(value).c_str());
+        }
+    }
+}
+void LogStringWW(Json_Debug_Levels debugRequestLevel, DWORD inst, const wchar_t* name, const wchar_t* value)
+{
+    if (!g_psf_NoLogging)
+    {
+        if (debugRequestLevel <= g_JsonDebugLevel)
+        {
+            Log(debugRequestLevel, L"[%d] %ls=%ls", inst, name, value);
+        }
+    }
+}
+
+
+void LogString(Json_Debug_Levels debugRequestLevel, DWORD rememberedInst, DWORD inst, const wchar_t* name, const char* value)
+{
+    if (!g_psf_NoLogging)
+    {
+        if (debugRequestLevel <= g_JsonDebugLevel)
+        {
+            if ((value != NULL && value[1] != 0x0))
+            {
+                Log(debugRequestLevel, L"[%d][F%d] %s=%s\n", rememberedInst, inst, name, widen(value).c_str());
+            }
+            else
+            {
+                Log(debugRequestLevel, L"[%d][F%d] %s=%s", rememberedInst, inst, name, (wchar_t*)value);
+            }
+        }
+    }
+}
+
+void LogString(Json_Debug_Levels debugRequestLevel, DWORD rememberedInst, DWORD inst, const wchar_t* name, const wchar_t* value)
+{
+    if (!g_psf_NoLogging)
+    {
+        if (debugRequestLevel <= g_JsonDebugLevel)
+        {
+            if ((value != NULL && ((char*)value)[1] == 0x0))
+            {
+                Log(debugRequestLevel, L"[%d][%d] %s=%s\n", rememberedInst, inst, name, value);
+            }
+            else
+            {
+                if (value != nullptr)
+                {
+                    Log(debugRequestLevel, L"[%d][%d] %s=%s", rememberedInst, inst, name, widen((const char*)value).c_str());
+                }
+                else
+                {
+                    Log(debugRequestLevel, L"[%d][%d] %ls=NULL", rememberedInst, inst, name);
+                }
+            }
+        }
+    }
+}
+
 
 
 ///// WITH_MODULE_AND_INST
-void LogString(const wchar_t* moduleName, DWORD inst, const char* name, const char* value)
+void LogString(Json_Debug_Levels debugRequestLevel, const wchar_t* moduleName, DWORD inst, const char* name, const char* value)
 {
     if (!g_psf_NoLogging)
     {
-        if ((value != NULL && value[1] != 0x0))
+        if (debugRequestLevel <= g_JsonDebugLevel)
         {
-            Log(L"[%s%d] %S=%S\n", moduleName, inst, name, value);
-        }
-        else
-        {
-            Log(L"[%s%d] %S=%s", moduleName, inst, name, (wchar_t*)value);
-        }
-    }
-}
-
-void LogString(const wchar_t* moduleName, DWORD inst, const char* name, const wchar_t* value)
-{
-    if (!g_psf_NoLogging)
-    {
-        if ((value != NULL && ((char*)value)[1] == 0x0))
-        {
-            Log(L"[%s%d] %S=%s\n", moduleName, inst, name, value);
-        }
-        else
-        {
-            Log(L"[%s%d] %S=%S", moduleName, inst, name, (char*)value);
-        }
-    }
-}
-
-void LogStringAA(const wchar_t* moduleName, DWORD inst, const char* name, const char* value)
-{
-    if (!g_psf_NoLogging)
-    {
-        Log(L"[%s%d] %s=%s\n", moduleName, inst, name, value);
-    }
-}
-void LogStringAW(const wchar_t* moduleName, DWORD inst, const char* name, const wchar_t* value)
-{
-    if (!g_psf_NoLogging)
-    {
-        Log(L"[%s%d] %s=%ls", moduleName, inst, name, value);
-    }
-}
-
-void LogString(const wchar_t* moduleName, DWORD inst, const wchar_t* name, const char* value)
-{
-    if (!g_psf_NoLogging)
-    {
-        if ((value != NULL && value[1] != 0x0))
-        {
-            Log(L"[%s%d] %s=%S\n", moduleName, inst, name, value);
-        }
-        else
-        {
-            Log(L"[%s%d] %s=%s", moduleName, inst, name, (wchar_t*)value);
-        }
-    }
-}
-
-void LogString(const wchar_t* moduleName, DWORD inst, const wchar_t* name, const wchar_t* value)
-{
-    if (!g_psf_NoLogging)
-    {
-        if ((value != NULL && ((char*)value)[1] == 0x0))
-        {
-            Log(L"[%s%d] %s=%s\n", moduleName, inst, name, value);
-        }
-        else
-        {
-            if (value != nullptr)
+            if ((value != NULL && value[1] != 0x0))
             {
-                Log(L"[%s%d] %s=%S", moduleName, inst, name, (char*)value);
+                Log(debugRequestLevel, L"[%s%d] %S=%S\n", moduleName, inst, name, value);
             }
             else
             {
-                Log(L"[%s%d] %ls=NULL", moduleName, inst, name);
+                Log(debugRequestLevel, L"[%s%d] %S=%s", moduleName, inst, name, (wchar_t*)value);
             }
         }
     }
 }
-void LogStringWA(const wchar_t* moduleName, DWORD inst, const wchar_t* name, const char* value)
-{
-    if (!g_psf_NoLogging)
-    {
-        Log(L"[%s%d] %ls=%ls\n", moduleName, inst, name, widen(value).c_str());
-    }
-}
-void LogStringWW(const wchar_t* moduleName, DWORD inst, const wchar_t* name, const wchar_t* value)
-{
-    if (!g_psf_NoLogging)
-    {
-        Log(L"[%s%d] %ls=%ls", moduleName, inst, name, value);
-    }
-}
 
-
-void LogString(const wchar_t* moduleName, DWORD rememberedInst, DWORD inst, const wchar_t* name, const char* value)
+void LogString(Json_Debug_Levels debugRequestLevel, const wchar_t* moduleName, DWORD inst, const char* name, const wchar_t* value)
 {
     if (!g_psf_NoLogging)
     {
-        if ((value != NULL && value[1] != 0x0))
+        if (debugRequestLevel <= g_JsonDebugLevel)
         {
-            Log(L"[%s%d][%s%d] %s=%s\n", moduleName, rememberedInst, moduleName, inst, name, widen(value).c_str());
-        }
-        else
-        {
-            Log(L"[%s%d][%s%d] %s=%s", moduleName, rememberedInst, moduleName, inst, name, (wchar_t*)value);
-        }
-    }
-}
-
-void LogString(const wchar_t* moduleName, DWORD rememberedInst, DWORD inst, const wchar_t* name, const wchar_t* value)
-{
-    if (!g_psf_NoLogging)
-    {
-        if ((value != NULL && ((char*)value)[1] == 0x0))
-        {
-            Log(L"[%s%d][%s%d] %s=%s\n", moduleName, rememberedInst, moduleName, inst, name, value);
-        }
-        else
-        {
-            if (value != nullptr)
+            if ((value != NULL && ((char*)value)[1] == 0x0))
             {
-                Log(L"[%s%d][%s%d] %s=%s", moduleName, rememberedInst, moduleName, inst, name, widen((const char*)value).c_str());
+                Log(debugRequestLevel, L"[%s%d] %S=%s\n", moduleName, inst, name, value);
             }
             else
             {
-                Log(L"[%s%d][%s%d] %ls=NULL", moduleName, rememberedInst, moduleName, inst, name);
+                Log(debugRequestLevel, L"[%s%d] %S=%S", moduleName, inst, name, (char*)value);
             }
         }
     }
 }
 
-void LogCountedStringW(const wchar_t* moduleName, DWORD dllInstance, const char* name, const wchar_t* value, std::size_t length)
+void LogStringAA(Json_Debug_Levels debugRequestLevel, const wchar_t* moduleName, DWORD inst, const char* name, const char* value)
 {
     if (!g_psf_NoLogging)
     {
-        Log("[%S%d]\t%s=%.*ls\n", moduleName, dllInstance, name, length, value);
+        if (debugRequestLevel <= g_JsonDebugLevel)
+        {
+            Log(debugRequestLevel, L"[%s%d] %s=%s\n", moduleName, inst, name, value);
+        }
+    }
+}
+void LogStringAW(Json_Debug_Levels debugRequestLevel, const wchar_t* moduleName, DWORD inst, const char* name, const wchar_t* value)
+{
+    if (!g_psf_NoLogging)
+    {
+        if (debugRequestLevel <= g_JsonDebugLevel)
+        {
+            Log(debugRequestLevel, L"[%s%d] %s=%ls", moduleName, inst, name, value);
+        }
+    }
+}
+
+void LogString(Json_Debug_Levels debugRequestLevel, const wchar_t* moduleName, DWORD inst, const wchar_t* name, const char* value)
+{
+    if (!g_psf_NoLogging)
+    {
+        if (debugRequestLevel <= g_JsonDebugLevel)
+        {
+            if ((value != NULL && value[1] != 0x0))
+            {
+                Log(debugRequestLevel, L"[%s%d] %s=%S\n", moduleName, inst, name, value);
+            }
+            else
+            {
+                Log(debugRequestLevel, L"[%s%d] %s=%s", moduleName, inst, name, (wchar_t*)value);
+            }
+        }
+    }
+}
+
+void LogString(Json_Debug_Levels debugRequestLevel, const wchar_t* moduleName, DWORD inst, const wchar_t* name, const wchar_t* value)
+{
+    if (!g_psf_NoLogging)
+    {
+        if (debugRequestLevel <= g_JsonDebugLevel)
+        {
+            if ((value != NULL && ((char*)value)[1] == 0x0))
+            {
+                Log(debugRequestLevel, L"[%s%d] %s=%s\n", moduleName, inst, name, value);
+            }
+            else
+            {
+                if (value != nullptr)
+                {
+                    Log(debugRequestLevel, L"[%s%d] %s=%S", moduleName, inst, name, (char*)value);
+                }
+                else
+                {
+                    Log(debugRequestLevel, L"[%s%d] %ls=NULL", moduleName, inst, name);
+                }
+            }
+        }
+    }
+}
+void LogStringWA(Json_Debug_Levels debugRequestLevel, const wchar_t* moduleName, DWORD inst, const wchar_t* name, const char* value)
+{
+    if (!g_psf_NoLogging)
+    {
+        if (debugRequestLevel <= g_JsonDebugLevel)
+        {
+            Log(debugRequestLevel, L"[%s%d] %ls=%ls\n", moduleName, inst, name, widen(value).c_str());
+        }
+    }
+}
+void LogStringWW(Json_Debug_Levels debugRequestLevel, const wchar_t* moduleName, DWORD inst, const wchar_t* name, const wchar_t* value)
+{
+    if (!g_psf_NoLogging)
+    {
+        if (debugRequestLevel <= g_JsonDebugLevel)
+        {
+            Log(debugRequestLevel, L"[%s%d] %ls=%ls", moduleName, inst, name, value);
+        }
+    }
+}
+
+
+void LogString(Json_Debug_Levels debugRequestLevel, const wchar_t* moduleName, DWORD rememberedInst, DWORD inst, const wchar_t* name, const char* value)
+{
+    if (!g_psf_NoLogging)
+    {
+        if (debugRequestLevel <= g_JsonDebugLevel)
+        {
+            if ((value != NULL && value[1] != 0x0))
+            {
+                Log(debugRequestLevel, L"[%s%d][%s%d] %s=%s\n", moduleName, rememberedInst, moduleName, inst, name, widen(value).c_str());
+            }
+            else
+            {
+                Log(debugRequestLevel, L"[%s%d][%s%d] %s=%s", moduleName, rememberedInst, moduleName, inst, name, (wchar_t*)value);
+            }
+        }
+    }
+}
+
+void LogString(Json_Debug_Levels debugRequestLevel, const wchar_t* moduleName, DWORD rememberedInst, DWORD inst, const wchar_t* name, const wchar_t* value)
+{
+    if (!g_psf_NoLogging)
+    {
+        if (debugRequestLevel <= g_JsonDebugLevel)
+        {
+            if ((value != NULL && ((char*)value)[1] == 0x0))
+            {
+                Log(debugRequestLevel, L"[%s%d][%s%d] %s=%s\n", moduleName, rememberedInst, moduleName, inst, name, value);
+            }
+            else
+            {
+                if (value != nullptr)
+                {
+                    Log(debugRequestLevel, L"[%s%d][%s%d] %s=%s", moduleName, rememberedInst, moduleName, inst, name, widen((const char*)value).c_str());
+                }
+                else
+                {
+                    Log(debugRequestLevel, L"[%s%d][%s%d] %ls=NULL", moduleName, rememberedInst, moduleName, inst, name);
+                }
+            }
+        }
+    }
+}
+
+void LogCountedStringW(Json_Debug_Levels debugRequestLevel, const wchar_t* moduleName, DWORD dllInstance, const char* name, const wchar_t* value, std::size_t length)
+{
+    if (!g_psf_NoLogging)
+    {
+        if (debugRequestLevel <= g_JsonDebugLevel)
+        {
+            Log(debugRequestLevel, "[%S%d]\t%s=%.*ls\n", moduleName, dllInstance, name, length, value);
+        }
     }
 }
 

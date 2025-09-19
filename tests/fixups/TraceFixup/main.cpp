@@ -35,6 +35,7 @@ bool wait_for_debugger = false;
 bool trace_function_entry = false;
 bool trace_calling_module = true;
 bool ignore_dll_load = true;
+const wchar_t* g_traceModuleName = L"T";
 
 static const psf::json_object* g_traceLevels = nullptr;
 static trace_level g_defaultTraceLevel = trace_level::unexpected_failures;

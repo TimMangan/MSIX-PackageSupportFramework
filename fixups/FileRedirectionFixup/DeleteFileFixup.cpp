@@ -16,9 +16,7 @@ BOOL __stdcall DeleteFileFixup(_In_ const CharT* fileName) noexcept
     {
         if (guard)
         {
-#if _DEBUG
-            LogString(g_FrfModuleName, DeleteFileInstance,L"DeleteFileFixup for fileName", fileName);
-#endif
+            LogString(LogLevel_DebugBasic, g_FrfModuleName, DeleteFileInstance,L"DeleteFileFixup for fileName", fileName);
             
             if (!IsUnderUserAppDataLocalPackages(fileName))
             {
@@ -38,18 +36,14 @@ BOOL __stdcall DeleteFileFixup(_In_ const CharT* fileName) noexcept
                     {
                         // If the file does not exist in the redirected location, but does in the non-redirected location,
                         // then we want to give the "illusion" that the delete succeeded
-#if _DEBUG
-                        Log(L"[%s%d]DeleteFileFixup Exists in package but not redir, so fake success.", g_FrfModuleName, DeleteFileInstance);
-#endif
+                        Log(LogLevel_DebugBasic, L"[%s%d]DeleteFileFixup Exists in package but not redir, so fake success.", g_FrfModuleName, DeleteFileInstance);
                         SetLastError(ERROR_SUCCESS);
                         return TRUE;
                     }
                     else
                     {
                         BOOL bRet = impl::DeleteFile(rldRedirPath.c_str());
-#if _DEBUG
-                        Log(L"[%s%d]DeleteFileFixup deletes from redir with result: %d %ls", g_FrfModuleName, DeleteFileInstance,bRet, rldRedirPath.c_str());
-#endif
+                        Log(LogLevel_DebugBasic, L"[%s%d]DeleteFileFixup deletes from redir with result: %d %ls", g_FrfModuleName, DeleteFileInstance,bRet, rldRedirPath.c_str());
                         return bRet;
                     }
                 }
@@ -58,28 +52,18 @@ BOOL __stdcall DeleteFileFixup(_In_ const CharT* fileName) noexcept
             {
                 std::wstring rldFileName = TurnPathIntoRootLocalDevice(widen_argument(fileName).c_str());
                 BOOL bRet = impl::DeleteFile(rldFileName.c_str());
-#if _DEBUG
-                Log(L"[%s%d]DeleteFileFixup Under LocalAppData\\Packages, don't redirect. deletes with result: %d", g_FrfModuleName, DeleteFileInstance, bRet);
-#endif
+                Log(LogLevel_DebugBasic, L"[%s%d]DeleteFileFixup Under LocalAppData\\Packages, don't redirect. deletes with result: %d", g_FrfModuleName, DeleteFileInstance, bRet);
                 return bRet;
             }
         }
         else
         {
-#if _DEBUG
-            LogString(g_FrfModuleName, 0, L"DeleteFileFixup Unguarded for fileName", fileName);
-#endif
+            LogString(LogLevel_DebugBasic, g_FrfModuleName, 0, L"DeleteFileFixup Unguarded for fileName", fileName);
         }
     }
-#if _DEBUG
     // Fall back to assuming no redirection is necessary if exception
-    LOGGED_CATCHHANDLER_MIN(g_FrfModuleName, DeleteFileInstance, L"DeleteFile")
-#else
-    catch (...)
-    {
-        Log(L"[%s%d] DeleteFile Exception=0x%x", g_FrfModuleName, DeleteFileInstance, GetLastError());
-    }
-#endif
+    LOGGED_CATCHHANDLER_MIN(LogLevel_Exception, g_FrfModuleName, DeleteFileInstance, L"DeleteFile")
+
 
     std::wstring rldFileName = TurnPathIntoRootLocalDevice(widen_argument(fileName).c_str());
     return impl::DeleteFile(rldFileName.c_str());

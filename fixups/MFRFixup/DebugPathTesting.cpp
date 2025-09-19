@@ -17,7 +17,7 @@ void DebugPathTesting(DWORD dllInstance)
 {
     if (DebugPathTestingList.size() == 0)
     {
-        //Log(L"[%s%d]  DEBUGPATHTESTING: initialize test list.", g_MfrModuleName, dllInstance);
+        //Log(LogLevel_DebugBasic, L"[%s%d]  DEBUGPATHTESTING: initialize test list.", g_MfrModuleName, dllInstance);
         DebugPathTestingList.push_back(L"C:\\Windows\\System32\\foo.xxx");
         DebugPathTestingList.push_back(L"C:\\Nonesuch\\OrSomething.yxy");
         DebugPathTestingList.push_back(L"C:Relative\\nonesuch.xxx");
@@ -33,47 +33,47 @@ void DebugPathTesting(DWORD dllInstance)
         DebugPathTestingList.push_back(L"\\\\?\\C:\\Windows\\System32\\Drivers\\..\\foo.xxx");
         DebugPathTestingList.push_back(L"C:\\Nonesuch\\Orthis\\..\\..\\OrSomething.yxy");
 
-        //Log(L"[%s%d]  DEBUGPATHTESTING: define g_packageRootPath=%s", g_MfrModuleName, dllInstance, g_packageRootPath.c_str());
+        //Log(LogLevel_DebugBasic, L"[%s%d]  DEBUGPATHTESTING: define g_packageRootPath=%s", g_MfrModuleName, dllInstance, g_packageRootPath.c_str());
         DebugPathTestingList.push_back(g_packageRootPath.c_str());
 
         auto testPvdFileWS = widen(g_packageRootPath.c_str());
         testPvdFileWS.append(L"\\packagepvad.txt");
-        //Log(L"[%s%d]  DEBUGPATHTESTING: define testPvdFileWS=%s", g_MfrModuleName, dllInstance, testPvdFileWS.c_str());
+        //Log(LogLevel_DebugBasic, L"[%s%d]  DEBUGPATHTESTING: define testPvdFileWS=%s", g_MfrModuleName, dllInstance, testPvdFileWS.c_str());
         DebugPathTestingList.push_back(testPvdFileWS.c_str());
 
         std::filesystem::path testPathVfs = g_packageVfsRootPath;
         testPathVfs /= L"ProgramFilesX64";
         testPathVfs /= L"packagedvfs.txt";
-        //Log(L"[%s%d]  DEBUGPATHTESTING: define testPathVfs=%s", g_MfrModuleName, dllInstance, testPathVfs.c_str());
+        //Log(LogLevel_DebugBasic, L"[%s%d]  DEBUGPATHTESTING: define testPathVfs=%s", g_MfrModuleName, dllInstance, testPathVfs.c_str());
         DebugPathTestingList.push_back(testPathVfs.c_str());
 
         std::filesystem::path testPathRedir = g_writablePackageRootPath;
         testPathRedir /= L"redirectedpad.txt";
-        //Log(L"[%s%d]  DEBUGPATHTESTING: define testPathRedir=%s", g_MfrModuleName, , testPathRedir.c_str());
+        //Log(LogLevel_DebugBasic, L"[%s%d]  DEBUGPATHTESTING: define testPathRedir=%s", g_MfrModuleName, , testPathRedir.c_str());
         DebugPathTestingList.push_back(testPathRedir.c_str());
 
         std::filesystem::path testPathRedirVfs = g_writablePackageRootPath;
         testPathRedirVfs /= L"VFS\\ProgramFilesX64\\packagedvfs.txt";
-        //Log(L"[%s%d]  DEBUGPATHTESTING: define testPathRedirVfs=%s", g_MfrModuleName, dllInstance, testPathRedir.c_str());
+        //Log(LogLevel_DebugBasic, L"[%s%d]  DEBUGPATHTESTING: define testPathRedirVfs=%s", g_MfrModuleName, dllInstance, testPathRedir.c_str());
         DebugPathTestingList.push_back(testPathRedirVfs.c_str());
 
 
-        Log(L"[%s%d]  DEBUGPATHTESTING: test list initialized for %d tests.", g_MfrModuleName, dllInstance, DebugPathTestingList.size());
+        Log(LogLevel_DebugBasic, L"[%s%d]  DEBUGPATHTESTING: test list initialized for %d tests.", g_MfrModuleName, dllInstance, DebugPathTestingList.size());
         std::filesystem::path cwd = std::filesystem::current_path();
-        //Log(L"[%s%d]  DEBUGPATHTESTING: cwd=%s", g_MfrModuleName, dllInstance, cwd.c_str());
-        Log(L" ");
+        //Log(LogLevel_DebugBasic, L"[%s%d]  DEBUGPATHTESTING: cwd=%s", g_MfrModuleName, dllInstance, cwd.c_str());
+        Log(LogLevel_DebugBasic, L" ");
     }
     for (std::wstring testInput : DebugPathTestingList)
     {
         try
         {
-            //Log(L"[%s%d]  DEBUGPATHTESTING: index at %d", g_MfrModuleName, dllInstance, index++);
-            //LogString(g_MfrModuleName, dllInstance, L"DEBUGPATHTESTING: testInput", testInput.c_str());
+            //Log(LogLevel_DebugBasic, L"[%s%d]  DEBUGPATHTESTING: index at %d", g_MfrModuleName, dllInstance, index++);
+            //LogString(LogLevel_DebugBasic, g_MfrModuleName, dllInstance, L"DEBUGPATHTESTING: testInput", testInput.c_str());
             mfr::mfr_path test_mfr = mfr::create_mfr_path(testInput);
-            Log(L"[%s%d]  DEBUGPATHTESTING: request=%s", g_MfrModuleName, dllInstance, test_mfr.Request_OriginalPath.c_str());
-            Log(L"[%s%d]  DEBUGPATHTESTING: dos_type=%s", g_MfrModuleName, dllInstance, psf::DosPathTypeName(test_mfr.Request_DosPathType));
-            Log(L"[%s%d]  DEBUGPATHTESTING: mfr_type=%s", g_MfrModuleName, dllInstance, MfrPathTypeName(test_mfr.Request_MfrPathType));
-            Log(L"[%s%d]  DEBUGPATHTESTING: normalized=%s", g_MfrModuleName, dllInstance, test_mfr.Request_NormalizedPath.c_str());
+            Log(LogLevel_DebugBasic, L"[%s%d]  DEBUGPATHTESTING: request=%s", g_MfrModuleName, dllInstance, test_mfr.Request_OriginalPath.c_str());
+            Log(LogLevel_DebugBasic, L"[%s%d]  DEBUGPATHTESTING: dos_type=%s", g_MfrModuleName, dllInstance, psf::DosPathTypeName(test_mfr.Request_DosPathType));
+            Log(LogLevel_DebugBasic, L"[%s%d]  DEBUGPATHTESTING: mfr_type=%s", g_MfrModuleName, dllInstance, MfrPathTypeName(test_mfr.Request_MfrPathType));
+            Log(LogLevel_DebugBasic, L"[%s%d]  DEBUGPATHTESTING: normalized=%s", g_MfrModuleName, dllInstance, test_mfr.Request_NormalizedPath.c_str());
             mfr::mfr_folder_mapping map;
             std::wstring resultWS;
             switch (test_mfr.Request_MfrPathType)
@@ -82,35 +82,35 @@ void DebugPathTesting(DWORD dllInstance)
                 map = mfr::Find_RedirMapping_FromNativePath_ForwardSearch(test_mfr.Request_NormalizedPath.c_str(),dllInstance );
                 if (map.Valid_mapping == mfr::mfr_enabled_types::enabled)
                 {
-                    Log(L"[%s%d]  DEBUGPATHTESTING:   map=LocalRedirection", g_MfrModuleName, dllInstance);
-                    Log(L"[%s%d]  DEBUGPATHTESTING:       map DoesRuntimeMapNativeToVFS=%d", g_MfrModuleName, dllInstance, map.DoesRuntimeMapNativeToVFS);
-                    Log(L"[%s%d]  DEBUGPATHTESTING:       map     NativePathBase=%s", g_MfrModuleName, dllInstance, map.NativePathBase.c_str());
-                    Log(L"[%s%d]  DEBUGPATHTESTING:       map    PackagePathBase=%s", g_MfrModuleName, dllInstance, map.PackagePathBase.c_str());
-                    Log(L"[%s%d]  DEBUGPATHTESTING:       map   RedirectionFlags=%s", g_MfrModuleName, dllInstance, mfr::RedirectFlagsName(map.RedirectionFlags));
+                    Log(LogLevel_DebugBasic, L"[%s%d]  DEBUGPATHTESTING:   map=LocalRedirection", g_MfrModuleName, dllInstance);
+                    Log(LogLevel_DebugBasic, L"[%s%d]  DEBUGPATHTESTING:       map DoesRuntimeMapNativeToVFS=%d", g_MfrModuleName, dllInstance, map.DoesRuntimeMapNativeToVFS);
+                    Log(LogLevel_DebugBasic, L"[%s%d]  DEBUGPATHTESTING:       map     NativePathBase=%s", g_MfrModuleName, dllInstance, map.NativePathBase.c_str());
+                    Log(LogLevel_DebugBasic, L"[%s%d]  DEBUGPATHTESTING:       map    PackagePathBase=%s", g_MfrModuleName, dllInstance, map.PackagePathBase.c_str());
+                    Log(LogLevel_DebugBasic, L"[%s%d]  DEBUGPATHTESTING:       map   RedirectionFlags=%s", g_MfrModuleName, dllInstance, mfr::RedirectFlagsName(map.RedirectionFlags));
                     resultWS = ReplacePathPart(test_mfr.Request_NormalizedPath.c_str(), map.NativePathBase, map.PackagePathBase);
-                    Log(L"[%s%d]  DEBUGPATHTESTING:       map        PackagePath=%s", g_MfrModuleName, dllInstance, resultWS.c_str());
+                    Log(LogLevel_DebugBasic, L"[%s%d]  DEBUGPATHTESTING:       map        PackagePath=%s", g_MfrModuleName, dllInstance, resultWS.c_str());
                     resultWS = ReplacePathPart(test_mfr.Request_NormalizedPath.c_str(), map.NativePathBase, map.RedirectedPathBase);
-                    Log(L"[%s%d]  DEBUGPATHTESTING:       map     RedirectedPath=%s", g_MfrModuleName, dllInstance, resultWS.c_str());
+                    Log(LogLevel_DebugBasic, L"[%s%d]  DEBUGPATHTESTING:       map     RedirectedPath=%s", g_MfrModuleName, dllInstance, resultWS.c_str());
                 }
                 else
                 {
                     map = mfr::Find_TraditionalRedirMapping_FromNativePath_ForwardSearch(test_mfr.Request_NormalizedPath.c_str(), dllInstance);
                     if (map.Valid_mapping == mfr::mfr_enabled_types::enabled)
                     {
-                        Log(L"[%s%d]  DEBUGPATHTESTING:   map=TraditionalRedirection", g_MfrModuleName, dllInstance);
-                        Log(L"[%s%d]  DEBUGPATHTESTING:       map DoesRuntimeMapNativeToVFS=%d", g_MfrModuleName, dllInstance, map.DoesRuntimeMapNativeToVFS);
-                        Log(L"[%s%d]  DEBUGPATHTESTING:       map     NativePathBase=%s", g_MfrModuleName, dllInstance, map.NativePathBase.c_str());
-                        Log(L"[%s%d]  DEBUGPATHTESTING:       map    PackagePathBase=%s", g_MfrModuleName, dllInstance, map.PackagePathBase.c_str());
-                        Log(L"[%s%d]  DEBUGPATHTESTING:       map RedirectedPathBase=%s", g_MfrModuleName, dllInstance, map.RedirectedPathBase.c_str());
-                        Log(L"[%s%d]  DEBUGPATHTESTING:       map   RedirectionFlags=%s", g_MfrModuleName, dllInstance, mfr::RedirectFlagsName(map.RedirectionFlags));
+                        Log(LogLevel_DebugBasic, L"[%s%d]  DEBUGPATHTESTING:   map=TraditionalRedirection", g_MfrModuleName, dllInstance);
+                        Log(LogLevel_DebugBasic, L"[%s%d]  DEBUGPATHTESTING:       map DoesRuntimeMapNativeToVFS=%d", g_MfrModuleName, dllInstance, map.DoesRuntimeMapNativeToVFS);
+                        Log(LogLevel_DebugBasic, L"[%s%d]  DEBUGPATHTESTING:       map     NativePathBase=%s", g_MfrModuleName, dllInstance, map.NativePathBase.c_str());
+                        Log(LogLevel_DebugBasic, L"[%s%d]  DEBUGPATHTESTING:       map    PackagePathBase=%s", g_MfrModuleName, dllInstance, map.PackagePathBase.c_str());
+                        Log(LogLevel_DebugBasic, L"[%s%d]  DEBUGPATHTESTING:       map RedirectedPathBase=%s", g_MfrModuleName, dllInstance, map.RedirectedPathBase.c_str());
+                        Log(LogLevel_DebugBasic, L"[%s%d]  DEBUGPATHTESTING:       map   RedirectionFlags=%s", g_MfrModuleName, dllInstance, mfr::RedirectFlagsName(map.RedirectionFlags));
                         resultWS = ReplacePathPart(test_mfr.Request_NormalizedPath.c_str(), map.NativePathBase, map.PackagePathBase);
-                        Log(L"[%s%d]  DEBUGPATHTESTING:       map        PackagePath=%s", g_MfrModuleName, dllInstance, resultWS.c_str());
+                        Log(LogLevel_DebugBasic, L"[%s%d]  DEBUGPATHTESTING:       map        PackagePath=%s", g_MfrModuleName, dllInstance, resultWS.c_str());
                         resultWS = ReplacePathPart(test_mfr.Request_NormalizedPath.c_str(), map.NativePathBase, map.RedirectedPathBase);
-                        Log(L"[%s%d]  DEBUGPATHTESTING:       map     RedirectedPath=%s", g_MfrModuleName, dllInstance, resultWS.c_str());
+                        Log(LogLevel_DebugBasic, L"[%s%d]  DEBUGPATHTESTING:       map     RedirectedPath=%s", g_MfrModuleName, dllInstance, resultWS.c_str());
                     }
                     else
                     {
-                        Log(L"[%s%d] DEBUGPATHTESTING:    ERROR NO MAPPING.", g_MfrModuleName, dllInstance);
+                        Log(LogLevel_DebugBasic, L"[%s%d] DEBUGPATHTESTING:    ERROR NO MAPPING.", g_MfrModuleName, dllInstance);
                     }
                 }
                 break;
@@ -118,12 +118,12 @@ void DebugPathTesting(DWORD dllInstance)
                 map = mfr::Find_RedirMapping_FromPackagePath_ForwardSearch(test_mfr.Request_NormalizedPath.c_str(), dllInstance);
                 if (map.Valid_mapping == mfr::mfr_enabled_types::enabled)
                 {
-                    Log(L"[%s%d]  DEBUGPATHTESTING:   map=LocalRedirection", g_MfrModuleName, dllInstance);
-                    Log(L"[%s%d]  DEBUGPATHTESTING:       map DoesRuntimeMapNativeToVFS=%d", g_MfrModuleName, dllInstance, map.DoesRuntimeMapNativeToVFS);
-                    Log(L"[%s%d]  DEBUGPATHTESTING:       map     NativePathBase=%s", g_MfrModuleName, dllInstance, map.NativePathBase.c_str());
-                    Log(L"[%s%d]  DEBUGPATHTESTING:       map    PackagePathBase=%s", g_MfrModuleName, dllInstance, map.PackagePathBase.c_str());
-                    Log(L"[%s%d]  DEBUGPATHTESTING:       map RedirectedPathBase=%s", g_MfrModuleName, dllInstance, map.RedirectedPathBase.c_str());
-                    Log(L"[%s%d]  DEBUGPATHTESTING:       map   RedirectionFlags=%s", g_MfrModuleName, dllInstance, mfr::RedirectFlagsName(map.RedirectionFlags));
+                    Log(LogLevel_DebugBasic, L"[%s%d]  DEBUGPATHTESTING:   map=LocalRedirection", g_MfrModuleName, dllInstance);
+                    Log(LogLevel_DebugBasic, L"[%s%d]  DEBUGPATHTESTING:       map DoesRuntimeMapNativeToVFS=%d", g_MfrModuleName, dllInstance, map.DoesRuntimeMapNativeToVFS);
+                    Log(LogLevel_DebugBasic, L"[%s%d]  DEBUGPATHTESTING:       map     NativePathBase=%s", g_MfrModuleName, dllInstance, map.NativePathBase.c_str());
+                    Log(LogLevel_DebugBasic, L"[%s%d]  DEBUGPATHTESTING:       map    PackagePathBase=%s", g_MfrModuleName, dllInstance, map.PackagePathBase.c_str());
+                    Log(LogLevel_DebugBasic, L"[%s%d]  DEBUGPATHTESTING:       map RedirectedPathBase=%s", g_MfrModuleName, dllInstance, map.RedirectedPathBase.c_str());
+                    Log(LogLevel_DebugBasic, L"[%s%d]  DEBUGPATHTESTING:       map   RedirectionFlags=%s", g_MfrModuleName, dllInstance, mfr::RedirectFlagsName(map.RedirectionFlags));
                     if (map.DoesRuntimeMapNativeToVFS)
                     {
                         resultWS = ReplacePathPart(test_mfr.Request_NormalizedPath.c_str(), map.PackagePathBase, map.NativePathBase);
@@ -132,29 +132,29 @@ void DebugPathTesting(DWORD dllInstance)
                     {
                         resultWS = test_mfr.Request_NormalizedPath.c_str();
                     }
-                    Log(L"[%s%d]  DEBUGPATHTESTING:       map          DeVFSPath=%s", g_MfrModuleName, dllInstance, resultWS.c_str());
+                    Log(LogLevel_DebugBasic, L"[%s%d]  DEBUGPATHTESTING:       map          DeVFSPath=%s", g_MfrModuleName, dllInstance, resultWS.c_str());
                     resultWS = ReplacePathPart(test_mfr.Request_NormalizedPath.c_str(), map.PackagePathBase, map.RedirectedPathBase);
-                    Log(L"[%s%d]  DEBUGPATHTESTING:       map     RedirectedPath=%s", g_MfrModuleName, dllInstance, resultWS.c_str());
+                    Log(LogLevel_DebugBasic, L"[%s%d]  DEBUGPATHTESTING:       map     RedirectedPath=%s", g_MfrModuleName, dllInstance, resultWS.c_str());
                 }
                 else
                 {
                     map = mfr::Find_TraditionalRedirMapping_FromPackagePath_ForwardSearch(test_mfr.Request_NormalizedPath.c_str(), dllInstance);
                     if (map.Valid_mapping == mfr::mfr_enabled_types::enabled)
                     {
-                        Log(L"[%s%d]  DEBUGPATHTESTING:   map=TraditionalRedirection", g_MfrModuleName, dllInstance);
-                        Log(L"[%s%d]  DEBUGPATHTESTING:       map DoesRuntimeMapNativeToVFS=%d", g_MfrModuleName, dllInstance, map.DoesRuntimeMapNativeToVFS);
-                        Log(L"[%s%d]  DEBUGPATHTESTING:       map     NativePathBase=%s", g_MfrModuleName, dllInstance, map.NativePathBase.c_str());
-                        Log(L"[%s%d]  DEBUGPATHTESTING:       map    PackagePathBase=%s", g_MfrModuleName, dllInstance, map.PackagePathBase.c_str());
-                        Log(L"[%s%d]  DEBUGPATHTESTING:       map RedirectedPathBase=%s", g_MfrModuleName, dllInstance, map.RedirectedPathBase.c_str());
-                        Log(L"[%s%d]  DEBUGPATHTESTING:       map   RedirectionFlags=%s", g_MfrModuleName, dllInstance, mfr::RedirectFlagsName(map.RedirectionFlags));
+                        Log(LogLevel_DebugBasic, L"[%s%d]  DEBUGPATHTESTING:   map=TraditionalRedirection", g_MfrModuleName, dllInstance);
+                        Log(LogLevel_DebugBasic, L"[%s%d]  DEBUGPATHTESTING:       map DoesRuntimeMapNativeToVFS=%d", g_MfrModuleName, dllInstance, map.DoesRuntimeMapNativeToVFS);
+                        Log(LogLevel_DebugBasic, L"[%s%d]  DEBUGPATHTESTING:       map     NativePathBase=%s", g_MfrModuleName, dllInstance, map.NativePathBase.c_str());
+                        Log(LogLevel_DebugBasic, L"[%s%d]  DEBUGPATHTESTING:       map    PackagePathBase=%s", g_MfrModuleName, dllInstance, map.PackagePathBase.c_str());
+                        Log(LogLevel_DebugBasic, L"[%s%d]  DEBUGPATHTESTING:       map RedirectedPathBase=%s", g_MfrModuleName, dllInstance, map.RedirectedPathBase.c_str());
+                        Log(LogLevel_DebugBasic, L"[%s%d]  DEBUGPATHTESTING:       map   RedirectionFlags=%s", g_MfrModuleName, dllInstance, mfr::RedirectFlagsName(map.RedirectionFlags));
                         resultWS = ReplacePathPart(test_mfr.Request_NormalizedPath.c_str(), map.PackagePathBase, map.NativePathBase);
-                        Log(L"[%s%d]  DEBUGPATHTESTING:       map          DeVFSPath=%s", g_MfrModuleName, dllInstance, resultWS.c_str());
+                        Log(LogLevel_DebugBasic, L"[%s%d]  DEBUGPATHTESTING:       map          DeVFSPath=%s", g_MfrModuleName, dllInstance, resultWS.c_str());
                         resultWS = ReplacePathPart(test_mfr.Request_NormalizedPath.c_str(), map.PackagePathBase, map.RedirectedPathBase);
-                        Log(L"[%s%d]  DEBUGPATHTESTING:       map     RedirectedPath=%s", g_MfrModuleName, dllInstance, resultWS.c_str());
+                        Log(LogLevel_DebugBasic, L"[%s%d]  DEBUGPATHTESTING:       map     RedirectedPath=%s", g_MfrModuleName, dllInstance, resultWS.c_str());
                     }
                     else
                     {
-                        Log(L"[%s%d] DEBUGPATHTESTING:    ERROR NO MAPPING.", g_MfrModuleName, dllInstance);
+                        Log(LogLevel_DebugBasic, L"[%s%d] DEBUGPATHTESTING:    ERROR NO MAPPING.", g_MfrModuleName, dllInstance);
                     }
                 }
                 break;
@@ -162,36 +162,36 @@ void DebugPathTesting(DWORD dllInstance)
                 map = mfr::Find_RedirMapping_FromPackagePath_ForwardSearch(test_mfr.Request_NormalizedPath.c_str(), dllInstance);
                 if (map.Valid_mapping == mfr::mfr_enabled_types::enabled)
                 {
-                    Log(L"[%s%d]  DEBUGPATHTESTING:   map=LocalRedirection", g_MfrModuleName, dllInstance);
-                    Log(L"[%s%d]  DEBUGPATHTESTING:       map DoesRuntimeMapNativeToVFS=%d", g_MfrModuleName, dllInstance, map.DoesRuntimeMapNativeToVFS);
-                    Log(L"[%s%d]  DEBUGPATHTESTING:       map     NativePathBase=%s", g_MfrModuleName, dllInstance, map.NativePathBase.c_str());
-                    Log(L"[%s%d]  DEBUGPATHTESTING:       map    PackagePathBase=%s", g_MfrModuleName, dllInstance, map.PackagePathBase.c_str());
-                    Log(L"[%s%d]  DEBUGPATHTESTING:       map RedirectedPathBase=%s", g_MfrModuleName, dllInstance, map.RedirectedPathBase.c_str());
-                    Log(L"[%s%d]  DEBUGPATHTESTING:       map RedirectionFlags=%s", g_MfrModuleName, dllInstance, mfr::RedirectFlagsName(map.RedirectionFlags));
+                    Log(LogLevel_DebugBasic, L"[%s%d]  DEBUGPATHTESTING:   map=LocalRedirection", g_MfrModuleName, dllInstance);
+                    Log(LogLevel_DebugBasic, L"[%s%d]  DEBUGPATHTESTING:       map DoesRuntimeMapNativeToVFS=%d", g_MfrModuleName, dllInstance, map.DoesRuntimeMapNativeToVFS);
+                    Log(LogLevel_DebugBasic, L"[%s%d]  DEBUGPATHTESTING:       map     NativePathBase=%s", g_MfrModuleName, dllInstance, map.NativePathBase.c_str());
+                    Log(LogLevel_DebugBasic, L"[%s%d]  DEBUGPATHTESTING:       map    PackagePathBase=%s", g_MfrModuleName, dllInstance, map.PackagePathBase.c_str());
+                    Log(LogLevel_DebugBasic, L"[%s%d]  DEBUGPATHTESTING:       map RedirectedPathBase=%s", g_MfrModuleName, dllInstance, map.RedirectedPathBase.c_str());
+                    Log(LogLevel_DebugBasic, L"[%s%d]  DEBUGPATHTESTING:       map RedirectionFlags=%s", g_MfrModuleName, dllInstance, mfr::RedirectFlagsName(map.RedirectionFlags));
                     resultWS = ReplacePathPart(test_mfr.Request_NormalizedPath.c_str(), map.PackagePathBase, map.NativePathBase);
-                    Log(L"[%s%d]  DEBUGPATHTESTING:       map          DeVFSPath=%s", g_MfrModuleName, dllInstance, resultWS.c_str());
+                    Log(LogLevel_DebugBasic, L"[%s%d]  DEBUGPATHTESTING:       map          DeVFSPath=%s", g_MfrModuleName, dllInstance, resultWS.c_str());
                     resultWS = ReplacePathPart(test_mfr.Request_NormalizedPath.c_str(), map.PackagePathBase, map.RedirectedPathBase);
-                    Log(L"[%s%d]  DEBUGPATHTESTING:       map     RedirectedPath=%s", g_MfrModuleName, dllInstance, resultWS.c_str());
+                    Log(LogLevel_DebugBasic, L"[%s%d]  DEBUGPATHTESTING:       map     RedirectedPath=%s", g_MfrModuleName, dllInstance, resultWS.c_str());
                 }
                 else
                 {
                     map = mfr::Find_TraditionalRedirMapping_FromPackagePath_ForwardSearch(test_mfr.Request_NormalizedPath.c_str(), dllInstance);
                     if (map.Valid_mapping == mfr::mfr_enabled_types::enabled)
                     {
-                        Log(L"[%s%d]  DEBUGPATHTESTING:   map=TraditionalRedirection", g_MfrModuleName, dllInstance);
-                        Log(L"[%s%d]  DEBUGPATHTESTING:       map DoesRuntimeMapNativeToVFS=%d", g_MfrModuleName, dllInstance, map.DoesRuntimeMapNativeToVFS);
-                        Log(L"[%s%d]  DEBUGPATHTESTING:       map     NativePathBase=%s", g_MfrModuleName, dllInstance, map.NativePathBase.c_str());
-                        Log(L"[%s%d]  DEBUGPATHTESTING:       map    PackagePathBase=%s", g_MfrModuleName, dllInstance, map.PackagePathBase.c_str());
-                        Log(L"[%s%d]  DEBUGPATHTESTING:       map RedirectedPathBase=%s", g_MfrModuleName, dllInstance, map.RedirectedPathBase.c_str());
-                        Log(L"[%s%d]  DEBUGPATHTESTING:       map RedirectionFlags=%s", g_MfrModuleName, dllInstance, mfr::RedirectFlagsName(map.RedirectionFlags));
+                        Log(LogLevel_DebugBasic, L"[%s%d]  DEBUGPATHTESTING:   map=TraditionalRedirection", g_MfrModuleName, dllInstance);
+                        Log(LogLevel_DebugBasic, L"[%s%d]  DEBUGPATHTESTING:       map DoesRuntimeMapNativeToVFS=%d", g_MfrModuleName, dllInstance, map.DoesRuntimeMapNativeToVFS);
+                        Log(LogLevel_DebugBasic, L"[%s%d]  DEBUGPATHTESTING:       map     NativePathBase=%s", g_MfrModuleName, dllInstance, map.NativePathBase.c_str());
+                        Log(LogLevel_DebugBasic, L"[%s%d]  DEBUGPATHTESTING:       map    PackagePathBase=%s", g_MfrModuleName, dllInstance, map.PackagePathBase.c_str());
+                        Log(LogLevel_DebugBasic, L"[%s%d]  DEBUGPATHTESTING:       map RedirectedPathBase=%s", g_MfrModuleName, dllInstance, map.RedirectedPathBase.c_str());
+                        Log(LogLevel_DebugBasic, L"[%s%d]  DEBUGPATHTESTING:       map RedirectionFlags=%s", g_MfrModuleName, dllInstance, mfr::RedirectFlagsName(map.RedirectionFlags));
                         resultWS = ReplacePathPart(test_mfr.Request_NormalizedPath.c_str(), map.PackagePathBase, map.NativePathBase);
-                        Log(L"[%s%d]  DEBUGPATHTESTING:       map          DeVFSPath=%s", g_MfrModuleName, dllInstance, resultWS.c_str());
+                        Log(LogLevel_DebugBasic, L"[%s%d]  DEBUGPATHTESTING:       map          DeVFSPath=%s", g_MfrModuleName, dllInstance, resultWS.c_str());
                         resultWS = ReplacePathPart(test_mfr.Request_NormalizedPath.c_str(), map.PackagePathBase, map.RedirectedPathBase);
-                        Log(L"[%s%d]  DEBUGPATHTESTING:       map     RedirectedPath=%s", g_MfrModuleName, dllInstance, resultWS.c_str());
+                        Log(LogLevel_DebugBasic, L"[%s%d]  DEBUGPATHTESTING:       map     RedirectedPath=%s", g_MfrModuleName, dllInstance, resultWS.c_str());
                     }
                     else
                     {
-                        Log(L"[%s%d] DEBUGPATHTESTING:    ERROR NO MAPPING.", g_MfrModuleName, dllInstance);
+                        Log(LogLevel_DebugBasic, L"[%s%d] DEBUGPATHTESTING:    ERROR NO MAPPING.", g_MfrModuleName, dllInstance);
                     }
                 }
                 break;
@@ -199,51 +199,51 @@ void DebugPathTesting(DWORD dllInstance)
                 map = mfr::Find_TraditionalRedirMapping_FromRedirectedPath_ForwardSearch(test_mfr.Request_NormalizedPath.c_str(), dllInstance);
                 if (map.Valid_mapping == mfr::mfr_enabled_types::enabled)
                 {
-                    Log(L"[%s%d]  DEBUGPATHTESTING:   map=TraditionalRedirection", g_MfrModuleName, dllInstance);
-                    Log(L"[%s%d]  DEBUGPATHTESTING:   map DoesRuntimeMapNativeToVFS=%d", g_MfrModuleName, dllInstance, map.DoesRuntimeMapNativeToVFS);
-                    Log(L"[%s%d]  DEBUGPATHTESTING:   map     NativePathBase=%s", g_MfrModuleName, dllInstance, map.NativePathBase.c_str());
-                    Log(L"[%s%d]  DEBUGPATHTESTING:   map    PackagePathBase=%s", g_MfrModuleName, dllInstance, map.PackagePathBase.c_str());
-                    Log(L"[%s%d]  DEBUGPATHTESTING:   map RedirectedPathBase=%s", g_MfrModuleName, dllInstance, map.RedirectedPathBase.c_str());
-                    Log(L"[%s%d]  DEBUGPATHTESTING:   map RedirectionFlags=%s", g_MfrModuleName, dllInstance, mfr::RedirectFlagsName(map.RedirectionFlags));
+                    Log(LogLevel_DebugBasic, L"[%s%d]  DEBUGPATHTESTING:   map=TraditionalRedirection", g_MfrModuleName, dllInstance);
+                    Log(LogLevel_DebugBasic, L"[%s%d]  DEBUGPATHTESTING:   map DoesRuntimeMapNativeToVFS=%d", g_MfrModuleName, dllInstance, map.DoesRuntimeMapNativeToVFS);
+                    Log(LogLevel_DebugBasic, L"[%s%d]  DEBUGPATHTESTING:   map     NativePathBase=%s", g_MfrModuleName, dllInstance, map.NativePathBase.c_str());
+                    Log(LogLevel_DebugBasic, L"[%s%d]  DEBUGPATHTESTING:   map    PackagePathBase=%s", g_MfrModuleName, dllInstance, map.PackagePathBase.c_str());
+                    Log(LogLevel_DebugBasic, L"[%s%d]  DEBUGPATHTESTING:   map RedirectedPathBase=%s", g_MfrModuleName, dllInstance, map.RedirectedPathBase.c_str());
+                    Log(LogLevel_DebugBasic, L"[%s%d]  DEBUGPATHTESTING:   map RedirectionFlags=%s", g_MfrModuleName, dllInstance, mfr::RedirectFlagsName(map.RedirectionFlags));
                     resultWS = ReplacePathPart(test_mfr.Request_NormalizedPath.c_str(), map.RedirectedPathBase, map.PackagePathBase);
-                    Log(L"[%s%d]  DEBUGPATHTESTING:   map          DeVFSPath=%s", g_MfrModuleName, dllInstance, resultWS.c_str());
+                    Log(LogLevel_DebugBasic, L"[%s%d]  DEBUGPATHTESTING:   map          DeVFSPath=%s", g_MfrModuleName, dllInstance, resultWS.c_str());
                     resultWS = ReplacePathPart(test_mfr.Request_NormalizedPath.c_str(), map.RedirectedPathBase, map.NativePathBase);
-                    Log(L"[%s%d]  DEBUGPATHTESTING:   map        DeRedirPath=%s", g_MfrModuleName, dllInstance, resultWS.c_str());
+                    Log(LogLevel_DebugBasic, L"[%s%d]  DEBUGPATHTESTING:   map        DeRedirPath=%s", g_MfrModuleName, dllInstance, resultWS.c_str());
                 }
                 else
                 {
-                    Log(L"[%s%d] DEBUGPATHTESTING:    ERROR NO MAPPING.", g_MfrModuleName, dllInstance);
+                    Log(LogLevel_DebugBasic, L"[%s%d] DEBUGPATHTESTING:    ERROR NO MAPPING.", g_MfrModuleName, dllInstance);
                 }
                 break;
             case mfr::mfr_path_types::is_Protocol:
-                Log("[%s%d]  DEBUGPATHTESTING:   protocol; unspupported for redirection.", g_MfrModuleName, dllInstance);
+                Log(LogLevel_DebugBasic, "[%s%d]  DEBUGPATHTESTING:   protocol; unspupported for redirection.", g_MfrModuleName, dllInstance);
                 break;
             case mfr::mfr_path_types::is_DosSpecial:
-                Log("[%s%d]  DEBUGPATHTESTING:   DOS Special path; unspupported for redirection.", g_MfrModuleName, dllInstance);
+                Log(LogLevel_DebugBasic, "[%s%d]  DEBUGPATHTESTING:   DOS Special path; unspupported for redirection.", g_MfrModuleName, dllInstance);
                 break;
             case mfr::mfr_path_types::is_Shell:
-                Log("[%s%d]  DEBUGPATHTESTING:   shell; unspupported for redirection.", g_MfrModuleName, dllInstance);
+                Log(LogLevel_DebugBasic, "[%s%d]  DEBUGPATHTESTING:   shell; unspupported for redirection.", g_MfrModuleName, dllInstance);
                 break;
             case mfr::mfr_path_types::in_redirection_area_other:
-                Log("[%s%d]  DEBUGPATHTESTING:   in microsoft-runtime redirection area; unspupported for redirection by us.", g_MfrModuleName, dllInstance);
+                Log(LogLevel_DebugBasic, "[%s%d]  DEBUGPATHTESTING:   in microsoft-runtime redirection area; unspupported for redirection by us.", g_MfrModuleName, dllInstance);
                 break;
             case mfr::mfr_path_types::in_other_drive_area:
-                Log("[%s%d]  DEBUGPATHTESTING:   on a different drive letter; unspupported for redirection.", g_MfrModuleName, dllInstance);
+                Log(LogLevel_DebugBasic, "[%s%d]  DEBUGPATHTESTING:   on a different drive letter; unspupported for redirection.", g_MfrModuleName, dllInstance);
                 break;
             case mfr::mfr_path_types::is_UNC_path:
-                Log("[%s%d]  DEBUGPATHTESTING:   unc path; unspupported for redirection.", g_MfrModuleName, dllInstance);
+                Log(LogLevel_DebugBasic, "[%s%d]  DEBUGPATHTESTING:   unc path; unspupported for redirection.", g_MfrModuleName, dllInstance);
                 break;
             case mfr::mfr_path_types::unsupported_for_intercepts:
-                Log("[%s%d]  DEBUGPATHTESTING:   unspupported for redirection.", g_MfrModuleName, dllInstance);
+                Log(LogLevel_DebugBasic, "[%s%d]  DEBUGPATHTESTING:   unspupported for redirection.", g_MfrModuleName, dllInstance);
                 break;
             default:
                 break;
             }
-            Log(L" ");
+            Log(LogLevel_DebugBasic, L" ");
         }
         catch (...)
         {
-            Log(L"[%s%d]  DEBUGPATHTESTING: Exception 0x%x.", g_MfrModuleName, dllInstance, GetLastError());
+            Log(LogLevel_DebugBasic, L"[%s%d]  DEBUGPATHTESTING: Exception 0x%x.", g_MfrModuleName, dllInstance, GetLastError());
         }
     }
 }

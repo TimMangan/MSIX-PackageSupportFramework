@@ -298,9 +298,8 @@ std::string AdjustSlashes(std::string path, [[maybe_unused]] DWORD dllInstance)
         size_t found = aPathName.find("\\\\", start);
         while (found != std::string::npos)
         {
-#ifdef _DEBUG
-            Log("[%s%d] Adjusting for double backslash.", g_MfrModuleName, dllInstance);
-#endif
+            Log(LogLevel_DebugBasic, "[%s%d] Adjusting for double backslash.", g_MfrModuleName, dllInstance);
+
             // We see calls made with extra backslashes which will fail in FindFirst
             //aPathName.replace(found + start, 2, "\\");
             std::string temp = aPathName.substr(0, found);
@@ -331,9 +330,7 @@ std::wstring AdjustSlashes(std::wstring path, [[maybe_unused]] DWORD dllInstance
         size_t found = wPathName.find(L"\\\\", start);
         while (found != std::wstring::npos)
         {
-#ifdef _DEBUG
-            Log(L"[%s%d] Adjusting for double backslash.", g_MfrModuleName, dllInstance);
-#endif
+            Log(LogLevel_DebugBasic, L"[%s%d] Adjusting for double backslash.", g_MfrModuleName, dllInstance);
             // We see calls made with extra backslashes which will fail in FindFirst
             //wPathName.replace(found + start, 2, L"\\");
             std::wstring temp = wPathName.substr(0, found);
@@ -359,9 +356,7 @@ std::string AdjustBadUNC(std::string path, [[maybe_unused]] DWORD dllInstance, [
         if (aPathName._Starts_with("\\\\?\\UNC"))
         {
             aPathName = "\\" + aPathName.substr(7);
-#if _DEBUG
-            Log("[%s%d] %s adjustment to existing UNC FilePath to %s", g_MfrModuleName, dllInstance, CallerName.c_str(), widen(aPathName).c_str());
-#endif
+            Log(LogLevel_DebugIntermediate, "[%s%d] %s adjustment to existing UNC FilePath to %s", g_MfrModuleName, dllInstance, CallerName.c_str(), widen(aPathName).c_str());
         }
     }
     return aPathName;
@@ -374,9 +369,7 @@ std::wstring AdjustBadUNC(std::wstring path, [[maybe_unused]] DWORD dllInstance,
         if (wPathName._Starts_with(L"\\\\?\\UNC"))
         {
             wPathName = L"\\" + wPathName.substr(7);
-#if _DEBUG
-            Log(L"[%s%d] %s adjustment to existing UNC filePath to %s", g_MfrModuleName, dllInstance, CallerName.c_str(), wPathName.c_str());
-#endif
+            Log(LogLevel_DebugIntermediate, L"[%s%d] %s adjustment to existing UNC filePath to %s", g_MfrModuleName, dllInstance, CallerName.c_str(), wPathName.c_str());
         }
     }
     return wPathName;
@@ -390,9 +383,7 @@ std::string AdjustPFx64Path(std::string afileName, [[maybe_unused]] DWORD dllIns
     {
         // This is a bad path, so let's fix it up.
         afileName = "C:\\Program Files\\WindowsApps" + afileName.substr(30);
-#if _DEBUG
-        Log(L"[%s%d] %s adjustment to existing improbable filename to %s", g_MfrModuleName, dllInstance, CallerName.c_str(), widen(afileName).c_str());
-#endif
+        Log(LogLevel_DebugIntermediate, L"[%s%d] %s adjustment to existing improbable filename to %s", g_MfrModuleName, dllInstance, CallerName.c_str(), widen(afileName).c_str());
     }
     return afileName;
 }
@@ -402,9 +393,7 @@ std::wstring AdjustPFx64Path(std::wstring wfileName, [[maybe_unused]] DWORD dllI
     {
         // This is a bad path, so let's fix it up.
         wfileName = L"C:\\Program Files\\WindowsApps" + wfileName.substr(30);
-#if _DEBUG
-        Log(L"[%s%d] %s adjustment to existing improbable FileName to %s", g_MfrModuleName, dllInstance, CallerName.c_str(),wfileName.c_str());
-#endif
+        Log(LogLevel_DebugIntermediate, L"[%s%d] %s adjustment to existing improbable FileName to %s", g_MfrModuleName, dllInstance, CallerName.c_str(),wfileName.c_str());
     }
     return wfileName;
 }
@@ -482,9 +471,7 @@ bool PathParentExists(const wchar_t* path)
 /// <param name="filepath"></param>
 void PreCreateFolders(std::wstring filepath, [[maybe_unused]] DWORD dllInstance, [[maybe_unused]] std::wstring DebugMessage)
 {
-#if _DEBUG
-    Log(L"[%s%d] PreCreateFolders[%s] %s", g_MfrModuleName, dllInstance, DebugMessage.c_str(), filepath.c_str());
-#endif
+    Log(LogLevel_DebugIntermediate, L"[%s%d] PreCreateFolders[%s] %s", g_MfrModuleName, dllInstance, DebugMessage.c_str(), filepath.c_str());
 
     std::wstring notlongfilepath = MakeNotLongPath(filepath);
     mfr::mfr_path mfr = mfr::create_mfr_path(notlongfilepath);
@@ -557,15 +544,13 @@ void PreCreateFolders(std::wstring filepath, [[maybe_unused]] DWORD dllInstance,
         // Note: Name Collision is expected to occur often here, it just means that it already existed
         if (bDebug != 0)
         {
-#if _DEBUG
-            Log(L"[%s%d] %s pre-created folder '%s'", g_MfrModuleName, dllInstance, DebugMessage.c_str(), (*partial).c_str());
-#endif
+            Log(LogLevel_DebugIntermediate, L"[%s%d] %s pre-created folder '%s'", g_MfrModuleName, dllInstance, DebugMessage.c_str(), (*partial).c_str());
         }
         
     }
 } // PreCreateFolders()
 
-BOOL Cow(std::wstring from, std::wstring to, [[maybe_unused]] int dllInstance, [[maybe_unused]] std::wstring DebugString)
+BOOL Cow(Json_Debug_Levels debugRequestLevel, std::wstring from, std::wstring to, int dllInstance, std::wstring DebugString)
 {
     switch (MFRConfiguration.COW)
     {
@@ -610,48 +595,36 @@ BOOL Cow(std::wstring from, std::wstring to, [[maybe_unused]] int dllInstance, [
     {
         if ((AFrom & FILE_ATTRIBUTE_DIRECTORY) != 0)
         {
-#if _DEBUG
-            Log(L"[%s%d] %s COW folder '%s' just create '%s'", g_MfrModuleName, dllInstance, DebugString.c_str(), RdlFrom.c_str(), RdlTo.c_str());
-#endif
+            Log(debugRequestLevel, L"[%s%d] %s COW folder '%s' just create '%s'", g_MfrModuleName, dllInstance, DebugString.c_str(), RdlFrom.c_str(), RdlTo.c_str());
             BOOL bRet = ::CreateDirectoryW(RdlTo.c_str(), NULL);
-#if _DEBUG
             if (bRet == 0)
             {
                 DWORD eCode = GetLastError();
-                Log(L"[%s%d] %s COW CreateDirectory failed, error=0x%d", g_MfrModuleName, dllInstance, DebugString.c_str(), eCode);
+                Log(debugRequestLevel, L"[%s%d] %s COW CreateDirectory failed, error=0x%d", g_MfrModuleName, dllInstance, DebugString.c_str(), eCode);
             }
-#endif
             return bRet;
         }
         else
         {
-#if _DEBUG
-            Log(L"[%s%d] %s COW file '%s' to '%s'", g_MfrModuleName, dllInstance, DebugString.c_str(), RdlFrom.c_str(), RdlTo.c_str());
-#endif
+            Log(debugRequestLevel, L"[%s%d] %s COW file '%s' to '%s'", g_MfrModuleName, dllInstance, DebugString.c_str(), RdlFrom.c_str(), RdlTo.c_str());
             BOOL bRet = ::CopyFileW(RdlFrom.c_str(), RdlTo.c_str(), true);
-#if _DEBUG
             if (bRet == 0)
             {
                 DWORD eCode = GetLastError();
-                Log(L"[%s%d] %s COW failed, error=0x%d", g_MfrModuleName, dllInstance, DebugString.c_str(), eCode);
+                Log(debugRequestLevel, L"[%s%d] %s COW failed, error=0x%d", g_MfrModuleName, dllInstance, DebugString.c_str(), eCode);
             }
-#endif
             return bRet;
         }
     }
     else
     {
-#if _DEBUG
-        Log(L"[%s%d] %s COW missing '%s' to '%s'", g_MfrModuleName, dllInstance, DebugString.c_str(), RdlFrom.c_str(), RdlTo.c_str());
-#endif
+        Log(debugRequestLevel, L"[%s%d] %s COW missing '%s' to '%s'", g_MfrModuleName, dllInstance, DebugString.c_str(), RdlFrom.c_str(), RdlTo.c_str());
         BOOL bRet = ::CopyFileW(MakeLongPath(from).c_str(), MakeLongPath(to).c_str(), true);
-#if _DEBUG
         if (bRet == 0)
         {
             DWORD eCode = GetLastError();
-            Log(L"[%s%d] %s COW failed, error=0x%d", g_MfrModuleName, dllInstance, DebugString.c_str(), eCode);
+            Log(debugRequestLevel, L"[%s%d] %s COW failed, error=0x%d", g_MfrModuleName, dllInstance, DebugString.c_str(), eCode);
         }
-#endif
         return bRet;
     }
 
@@ -751,7 +724,7 @@ bool comparei(const std::wstring wstrA, const std::wstring wstrB)
     }
     catch (...)
     {
-        Log("IteratorW issue");
+        Log(LogLevel_Exception, "IteratorW issue in comparei");
     }
     return false;
 }
@@ -771,7 +744,7 @@ bool comparei(const std::string strA, const std::string strB)
     }
     catch (...)
     {
-        Log("IteratorA issue");
+        Log(LogLevel_Exception, "IteratorA issue in comparei");
     }
     return false;
 }
@@ -889,45 +862,49 @@ std::wstring Log_CreationDisposition(DWORD creationDisposition)
     return sRet;
 }   // Log_CreationDisposition()
 
-std::wstring Log_FlagsAndAttributes(DWORD flagsAndAttributes)
+std::wstring Log_FlagsAndAttributes(Json_Debug_Levels debugRequestLevel, DWORD flagsAndAttributes)
 {
-    std::stringstream stream;
-    stream << "0x" << std::hex << flagsAndAttributes;
-    std::string result = stream.str();
-    std::wstring sRet = widen(result) + L" FLAGS[";
-    if ((flagsAndAttributes & FILE_FLAG_WRITE_THROUGH) != 0) { sRet.append(L" WRITE_THROUGH"); }
-    if ((flagsAndAttributes & FILE_FLAG_SEQUENTIAL_SCAN) != 0) { sRet.append(L" SEQUENTIAL_SCAN"); }
-    if ((flagsAndAttributes & FILE_FLAG_SESSION_AWARE) != 0) { sRet.append(L" SESSION_AWARE"); }
-    if ((flagsAndAttributes & FILE_FLAG_RANDOM_ACCESS) != 0) { sRet.append(L" RANDOM_ACCESS"); }
-    if ((flagsAndAttributes & FILE_FLAG_POSIX_SEMANTICS) != 0) { sRet.append(L" POSIX_SEMANTICS"); }
-    if ((flagsAndAttributes & FILE_FLAG_OPEN_REPARSE_POINT) != 0) { sRet.append(L" OPEN_REPARSE_POINT"); }
-    if ((flagsAndAttributes & FILE_FLAG_OPEN_NO_RECALL) != 0) { sRet.append(L" OPEN_NO_RECALL"); }
-    if ((flagsAndAttributes & FILE_FLAG_NO_BUFFERING) != 0) { sRet.append(L" NO_BUFFERING"); }
-    if ((flagsAndAttributes & FILE_FLAG_DELETE_ON_CLOSE) != 0) { sRet.append(L" DELETE_ON_CLOSE"); }
-    if ((flagsAndAttributes & FILE_FLAG_BACKUP_SEMANTICS) != 0) { sRet.append(L" BACKUP_SEMANTICS"); }
-    sRet.append(L"] ATTRIBUTES[");
-    if ((flagsAndAttributes & FILE_ATTRIBUTE_RECALL_ON_OPEN) != 0) { sRet.append(L" RECALL_ON_OPEN"); }
-    if ((flagsAndAttributes & FILE_ATTRIBUTE_UNPINNED) != 0) { sRet.append(L" UNPINNED"); }
-    if ((flagsAndAttributes & FILE_ATTRIBUTE_PINNED) != 0) { sRet.append(L" PINNED"); }
-    if ((flagsAndAttributes & FILE_ATTRIBUTE_EA) != 0) { sRet.append(L" EA"); }
-    if ((flagsAndAttributes & FILE_ATTRIBUTE_NO_SCRUB_DATA) != 0) { sRet.append(L" NO_SCRUB_DATA"); }
-    if ((flagsAndAttributes & FILE_ATTRIBUTE_VIRTUAL) != 0) { sRet.append(L" VIRTUAL"); }
-    if ((flagsAndAttributes & FILE_ATTRIBUTE_INTEGRITY_STREAM) != 0) { sRet.append(L" INTEGRITY_STREAM"); }
-    if ((flagsAndAttributes & FILE_ATTRIBUTE_ENCRYPTED) != 0) { sRet.append(L" ENCRYPTED"); }
-    if ((flagsAndAttributes & FILE_ATTRIBUTE_NOT_CONTENT_INDEXED) != 0) { sRet.append(L" NOT_CONTENT_INDEXED"); }
-    if ((flagsAndAttributes & FILE_ATTRIBUTE_OFFLINE) != 0) { sRet.append(L" OFFLINE"); }
-    if ((flagsAndAttributes & FILE_ATTRIBUTE_COMPRESSED) != 0) { sRet.append(L" COMPRESSED"); }
-    if ((flagsAndAttributes & FILE_ATTRIBUTE_REPARSE_POINT) != 0) { sRet.append(L" REPARSE_POINT"); }
-    if ((flagsAndAttributes & FILE_ATTRIBUTE_SPARSE_FILE) != 0) { sRet.append(L" SPARSE_FILE"); }
-    if ((flagsAndAttributes & FILE_ATTRIBUTE_TEMPORARY) != 0) { sRet.append(L" TEMPORARY"); }
-    if ((flagsAndAttributes & FILE_ATTRIBUTE_NORMAL) != 0) { sRet.append(L" NORMAL"); }
-    if ((flagsAndAttributes & FILE_ATTRIBUTE_DEVICE) != 0) { sRet.append(L" DEVICE"); }
-    if ((flagsAndAttributes & FILE_ATTRIBUTE_ARCHIVE) != 0) { sRet.append(L" ARCHIVE"); }
-    if ((flagsAndAttributes & FILE_ATTRIBUTE_DIRECTORY) != 0) { sRet.append(L" DIRECTORY"); }
-    if ((flagsAndAttributes & FILE_ATTRIBUTE_SYSTEM) != 0) { sRet.append(L" SYSTEM"); }
-    if ((flagsAndAttributes & FILE_ATTRIBUTE_HIDDEN) != 0) { sRet.append(L" HIDDEN"); }
-    if ((flagsAndAttributes & FILE_ATTRIBUTE_READONLY) != 0) { sRet.append(L" READONLY"); }
+    if (debugRequestLevel <= g_JsonDebugLevel)
+    {
+        std::stringstream stream;
+        stream << "0x" << std::hex << flagsAndAttributes;
+        std::string result = stream.str();
+        std::wstring sRet = widen(result) + L" FLAGS[";
+        if ((flagsAndAttributes & FILE_FLAG_WRITE_THROUGH) != 0) { sRet.append(L" WRITE_THROUGH"); }
+        if ((flagsAndAttributes & FILE_FLAG_SEQUENTIAL_SCAN) != 0) { sRet.append(L" SEQUENTIAL_SCAN"); }
+        if ((flagsAndAttributes & FILE_FLAG_SESSION_AWARE) != 0) { sRet.append(L" SESSION_AWARE"); }
+        if ((flagsAndAttributes & FILE_FLAG_RANDOM_ACCESS) != 0) { sRet.append(L" RANDOM_ACCESS"); }
+        if ((flagsAndAttributes & FILE_FLAG_POSIX_SEMANTICS) != 0) { sRet.append(L" POSIX_SEMANTICS"); }
+        if ((flagsAndAttributes & FILE_FLAG_OPEN_REPARSE_POINT) != 0) { sRet.append(L" OPEN_REPARSE_POINT"); }
+        if ((flagsAndAttributes & FILE_FLAG_OPEN_NO_RECALL) != 0) { sRet.append(L" OPEN_NO_RECALL"); }
+        if ((flagsAndAttributes & FILE_FLAG_NO_BUFFERING) != 0) { sRet.append(L" NO_BUFFERING"); }
+        if ((flagsAndAttributes & FILE_FLAG_DELETE_ON_CLOSE) != 0) { sRet.append(L" DELETE_ON_CLOSE"); }
+        if ((flagsAndAttributes & FILE_FLAG_BACKUP_SEMANTICS) != 0) { sRet.append(L" BACKUP_SEMANTICS"); }
+        sRet.append(L"] ATTRIBUTES[");
+        if ((flagsAndAttributes & FILE_ATTRIBUTE_RECALL_ON_OPEN) != 0) { sRet.append(L" RECALL_ON_OPEN"); }
+        if ((flagsAndAttributes & FILE_ATTRIBUTE_UNPINNED) != 0) { sRet.append(L" UNPINNED"); }
+        if ((flagsAndAttributes & FILE_ATTRIBUTE_PINNED) != 0) { sRet.append(L" PINNED"); }
+        if ((flagsAndAttributes & FILE_ATTRIBUTE_EA) != 0) { sRet.append(L" EA"); }
+        if ((flagsAndAttributes & FILE_ATTRIBUTE_NO_SCRUB_DATA) != 0) { sRet.append(L" NO_SCRUB_DATA"); }
+        if ((flagsAndAttributes & FILE_ATTRIBUTE_VIRTUAL) != 0) { sRet.append(L" VIRTUAL"); }
+        if ((flagsAndAttributes & FILE_ATTRIBUTE_INTEGRITY_STREAM) != 0) { sRet.append(L" INTEGRITY_STREAM"); }
+        if ((flagsAndAttributes & FILE_ATTRIBUTE_ENCRYPTED) != 0) { sRet.append(L" ENCRYPTED"); }
+        if ((flagsAndAttributes & FILE_ATTRIBUTE_NOT_CONTENT_INDEXED) != 0) { sRet.append(L" NOT_CONTENT_INDEXED"); }
+        if ((flagsAndAttributes & FILE_ATTRIBUTE_OFFLINE) != 0) { sRet.append(L" OFFLINE"); }
+        if ((flagsAndAttributes & FILE_ATTRIBUTE_COMPRESSED) != 0) { sRet.append(L" COMPRESSED"); }
+        if ((flagsAndAttributes & FILE_ATTRIBUTE_REPARSE_POINT) != 0) { sRet.append(L" REPARSE_POINT"); }
+        if ((flagsAndAttributes & FILE_ATTRIBUTE_SPARSE_FILE) != 0) { sRet.append(L" SPARSE_FILE"); }
+        if ((flagsAndAttributes & FILE_ATTRIBUTE_TEMPORARY) != 0) { sRet.append(L" TEMPORARY"); }
+        if ((flagsAndAttributes & FILE_ATTRIBUTE_NORMAL) != 0) { sRet.append(L" NORMAL"); }
+        if ((flagsAndAttributes & FILE_ATTRIBUTE_DEVICE) != 0) { sRet.append(L" DEVICE"); }
+        if ((flagsAndAttributes & FILE_ATTRIBUTE_ARCHIVE) != 0) { sRet.append(L" ARCHIVE"); }
+        if ((flagsAndAttributes & FILE_ATTRIBUTE_DIRECTORY) != 0) { sRet.append(L" DIRECTORY"); }
+        if ((flagsAndAttributes & FILE_ATTRIBUTE_SYSTEM) != 0) { sRet.append(L" SYSTEM"); }
+        if ((flagsAndAttributes & FILE_ATTRIBUTE_HIDDEN) != 0) { sRet.append(L" HIDDEN"); }
+        if ((flagsAndAttributes & FILE_ATTRIBUTE_READONLY) != 0) { sRet.append(L" READONLY"); }
 
-    sRet.append(L"]");
-    return sRet;
+        sRet.append(L"]");
+        return sRet;
+    }
+    return L"";
 }   // Log_FlagsAndAttributes()

@@ -6,10 +6,6 @@
 
 // Microsoft Documentation on this API: https://docs.microsoft.com/en-us/windows/win32/api/fileapi/nf-fileapi-createfile2
 
-#if _DEBUG
-//#define MOREDEBUG 1
-#endif
-
 #include <errno.h>
 #include "FunctionImplementations.h"
 #include <psf_logging.h>
@@ -28,25 +24,23 @@
 #pragma comment(linker, "/EXPORT:CreateFile2Fixup_Fixup=CreateFile2Fixup_Fixup_v")  // A test to see if exporting these names helps ProcessMonitor stack traces.
 #endif
 
-HANDLE  WRAPPER_CREATEFILE2(std::wstring theDestinationFile,
-    _In_ DWORD desiredAccess,
-    _In_ DWORD shareMode,
-    _In_ DWORD creationDisposition,
-    _In_opt_ LPCREATEFILE2_EXTENDED_PARAMETERS createExParams,
-    DWORD dllInstance, bool debug)
+HANDLE  WRAPPER_CREATEFILE2(Json_Debug_Levels debugRequestLevel, 
+                            std::wstring theDestinationFile,
+                            _In_ DWORD desiredAccess,
+                            _In_ DWORD shareMode,
+                            _In_ DWORD creationDisposition,
+                            _In_opt_ LPCREATEFILE2_EXTENDED_PARAMETERS createExParams,
+                            DWORD dllInstance)
 {
     std::wstring LongDestinationFile = MakeLongPath(theDestinationFile);
     HANDLE retfinal = impl::CreateFile2(LongDestinationFile.c_str(), desiredAccess, shareMode, creationDisposition, createExParams);
-    if (debug)
+    if (retfinal == INVALID_HANDLE_VALUE)
     {
-        if (retfinal == INVALID_HANDLE_VALUE)
-        {
-            Log(L"[%s%d] CreateFile2 returns FAILURE 0x%x on file '%s'", g_MfrModuleName, dllInstance, GetLastError(), LongDestinationFile.c_str());
-        }
-        else
-        {
-            Log(L"[%s%d] CreateFile2 returns handle 0x%x and file '%s'", g_MfrModuleName, dllInstance, retfinal, LongDestinationFile.c_str());
-        }       
+        Log(debugRequestLevel, L"[%s%d] CreateFile2 returns FAILURE 0x%x on file '%s'", g_MfrModuleName, dllInstance, GetLastError(), LongDestinationFile.c_str());
+    }
+    else
+    {
+        Log(debugRequestLevel, L"[%s%d] CreateFile2 returns handle 0x%x and file '%s'", g_MfrModuleName, dllInstance, retfinal, LongDestinationFile.c_str());
     }
     return retfinal;
 }
@@ -60,14 +54,7 @@ HANDLE __stdcall CreateFile2Fixup(
     _In_opt_ LPCREATEFILE2_EXTENDED_PARAMETERS createExParams) noexcept
 {
     DWORD dllInstance = g_InterceptInstance;
-    bool debug = false;
-#if _DEBUG
-    debug = true;
-#endif
-    bool moredebug = false;
-#if MOREDEBUG
-    moredebug = true;
-#endif
+
 
     auto guard = g_reentrancyGuard.enter();
     HANDLE retfinal;
@@ -82,19 +69,15 @@ HANDLE __stdcall CreateFile2Fixup(
             wPathName = AdjustSlashes(wPathName, dllInstance);
             wPathName = AdjustLocalPipeName(wPathName);
 
-#if _DEBUG
-            LogString(g_MfrModuleName, dllInstance, L"CreateFile2Fixup for ", fileName);
-#if MOREDEBUG
-            Log(L"[%s%d]        DesiredAccess %s", g_MfrModuleName, dllInstance, Log_DesiredAccess(desiredAccess).c_str());
-            Log(L"[%s%d]        ShareMode %s", g_MfrModuleName, dllInstance, Log_ShareMode(shareMode).c_str());
-            Log(L"[%s%d]        creationDisposition %s", g_MfrModuleName, dllInstance, Log_CreationDisposition(creationDisposition).c_str());
+            LogString(LogLevel_DebugBasic, g_MfrModuleName, dllInstance, L"CreateFile2Fixup for ", fileName);
+            Log(LogLevel_DebugBasic, L"[%s%d]        DesiredAccess %s", g_MfrModuleName, dllInstance, Log_DesiredAccess(desiredAccess).c_str());
+            Log(LogLevel_DebugBasic, L"[%s%d]        ShareMode %s", g_MfrModuleName, dllInstance, Log_ShareMode(shareMode).c_str());
+            Log(LogLevel_DebugBasic, L"[%s%d]        creationDisposition %s", g_MfrModuleName, dllInstance, Log_CreationDisposition(creationDisposition).c_str());
             if (createExParams)
             {
-                Log(L"[%s%d]        flags %s", g_MfrModuleName, dllInstance, Log_FlagsAndAttributes(createExParams->dwFileFlags).c_str());
-                Log(L"[%s%d]        Attributes %s", g_MfrModuleName, dllInstance, Log_FlagsAndAttributes(createExParams->dwFileAttributes).c_str());
+                Log(LogLevel_DebugBasic, L"[%s%d]        flags %s", g_MfrModuleName, dllInstance, Log_FlagsAndAttributes(LogLevel_None, createExParams->dwFileFlags).c_str());
+                Log(LogLevel_DebugBasic, L"[%s%d]        Attributes %s", g_MfrModuleName, dllInstance, Log_FlagsAndAttributes(LogLevel_None, createExParams->dwFileAttributes).c_str());
             }
-#endif
-#endif
 
 
             wPathName = AdjustBadUNC(wPathName, dllInstance, L"CreateFile2Fixup");
@@ -128,21 +111,19 @@ HANDLE __stdcall CreateFile2Fixup(
             }
 #endif
 
-#if MOREDEBUG
-            Log(L"[%s%d] CreateFile2Fixup: Could be a write operation=%d", g_MfrModuleName, dllInstance, IsAWriteCase);
-            Log(L"[%s%d] CreateFile2Fixup: Is possibly a directory operation=%d", g_MfrModuleName, dllInstance, IsPossibleDirectoryCase);
-#endif
+            Log(LogLevel_DebugBasic, L"[%s%d] CreateFile2Fixup: Could be a write operation=%d", g_MfrModuleName, dllInstance, IsAWriteCase);
+            Log(LogLevel_DebugBasic, L"[%s%d] CreateFile2Fixup: Is possibly a directory operation=%d", g_MfrModuleName, dllInstance, IsPossibleDirectoryCase);
 
             // This get is may or may not be a write operation.
             // There may be a need to COW, jand may need to create parent folders in redirection area first.
             Cohorts cohorts;
-            DetermineCohorts(wPathName, &cohorts, moredebug, dllInstance, L"CreateFile2Fixup");
-#if MOREDEBUG
-            //LogString(g_MfrModuleName, dllInstance, L"CreateFileFixup: Cohort redirection", cohorts.WsRedirected.c_str());
-            //LogString(g_MfrModuleName, dllInstance, L"CreateFileFixup: Cohort package", cohorts.WsPackage.c_str());
-            //LogString(g_MfrModuleName, dllInstance, L"CreateFileFixup: Cohort native", cohorts.WsNative.c_str());
-            Log(L"[%s%d] CreateFile2Fixup: MfrPathType=%s", g_MfrModuleName, dllInstance, MfrFlagTypesString(cohorts.file_mfr.Request_MfrPathType));
-#endif
+            DetermineCohorts(LogLevel_DebugMaximum, wPathName, &cohorts, dllInstance, L"CreateFile2Fixup");
+
+            LogString(LogLevel_DebugIntermediate, g_MfrModuleName, dllInstance, L"CreateFileFixup: Cohort redirection", cohorts.WsRedirected.c_str());
+            LogString(LogLevel_DebugIntermediate, g_MfrModuleName, dllInstance, L"CreateFileFixup: Cohort package", cohorts.WsPackage.c_str());
+            LogString(LogLevel_DebugIntermediate, g_MfrModuleName, dllInstance, L"CreateFileFixup: Cohort native", cohorts.WsNative.c_str());
+            Log(LogLevel_DebugBasic, L"[%s%d] CreateFile2Fixup: MfrPathType=%s", g_MfrModuleName, dllInstance, MfrFlagTypesString(cohorts.file_mfr.Request_MfrPathType));
+            
             if (!MFRConfiguration.Ilv_Aware)
             {
                 switch (cohorts.file_mfr.Request_MfrPathType)
@@ -155,7 +136,7 @@ HANDLE __stdcall CreateFile2Fixup(
                         if (cohorts.map.IsAnExclusionToRedirect == mfr::mfr_exclusion_types::not_excluded && 
                             PathExists(cohorts.WsRedirected.c_str()))
                         {
-                            retfinal = WRAPPER_CREATEFILE2(cohorts.WsRedirected, desiredAccess, shareMode, creationDisposition, createExParams, dllInstance, debug);
+                            retfinal = WRAPPER_CREATEFILE2(LogLevel_DebugBasic, cohorts.WsRedirected, desiredAccess, shareMode, creationDisposition, createExParams, dllInstance);
                             return retfinal;
                         }
                         if (cohorts.WsPackage.compare(cohorts.WsRedirected) != 0 &&
@@ -164,27 +145,27 @@ HANDLE __stdcall CreateFile2Fixup(
                             if (IsAWriteCase)
                             {
                                 // COW is applicable first.
-                                if (Cow(cohorts.WsPackage, cohorts.WsRedirected, dllInstance, L"CreateFile2Fixup"))
+                                if (Cow(LogLevel_DebugBasic, cohorts.WsPackage, cohorts.WsRedirected, dllInstance, L"CreateFile2Fixup"))
                                 {
                                     //PreCreateFolders(testWsRedirected.c_str(), dllInstance, L"CreateFileFixup");
-                                    retfinal = WRAPPER_CREATEFILE2(cohorts.WsRedirected, desiredAccess, shareMode, creationDisposition, createExParams, dllInstance, debug);
+                                    retfinal = WRAPPER_CREATEFILE2(LogLevel_DebugBasic, cohorts.WsRedirected, desiredAccess, shareMode, creationDisposition, createExParams, dllInstance);
                                     return retfinal;
                                 }
                                 else
                                 {
-                                    retfinal = WRAPPER_CREATEFILE2(cohorts.WsPackage, desiredAccess, shareMode, creationDisposition, createExParams, dllInstance, debug);
+                                    retfinal = WRAPPER_CREATEFILE2(LogLevel_DebugBasic, cohorts.WsPackage, desiredAccess, shareMode, creationDisposition, createExParams, dllInstance);
                                     return retfinal;
                                 }
                             }
                             else
                             {
-                                retfinal = WRAPPER_CREATEFILE2(cohorts.WsPackage, desiredAccess, shareMode, creationDisposition, createExParams, dllInstance, debug);
+                                retfinal = WRAPPER_CREATEFILE2(LogLevel_DebugBasic, cohorts.WsPackage, desiredAccess, shareMode, creationDisposition, createExParams, dllInstance);
                                 return retfinal;
                             }
                         }
                         // There isn't such a file anywhere.  We want to create the redirection parent folder and let this call against the redirected file to create there.
                         PreCreateFolders(cohorts.WsRedirected.c_str(), dllInstance, L"CreateFile2Fixup");
-                        retfinal = WRAPPER_CREATEFILE2(cohorts.WsRedirected, desiredAccess, shareMode, creationDisposition, createExParams, dllInstance, debug);
+                        retfinal = WRAPPER_CREATEFILE2(LogLevel_DebugBasic, cohorts.WsRedirected, desiredAccess, shareMode, creationDisposition, createExParams, dllInstance);
                         return retfinal;
                     }
                     else if (cohorts.map.Valid_mapping == mfr::mfr_enabled_types::enabled &&
@@ -199,7 +180,7 @@ HANDLE __stdcall CreateFile2Fixup(
                         if (cohorts.map.IsAnExclusionToRedirect == mfr::mfr_exclusion_types::not_excluded && 
                             PathExists(cohorts.WsRedirected.c_str()))
                         {
-                            retfinal = WRAPPER_CREATEFILE2(cohorts.WsRedirected, desiredAccess, shareMode, creationDisposition, createExParams, dllInstance, debug);
+                            retfinal = WRAPPER_CREATEFILE2(LogLevel_DebugBasic, cohorts.WsRedirected, desiredAccess, shareMode, creationDisposition, createExParams, dllInstance);
                             return retfinal;
                         }
                         if (cohorts.WsPackage.compare(cohorts.WsRedirected) != 0 &&
@@ -208,21 +189,21 @@ HANDLE __stdcall CreateFile2Fixup(
                             if (IsAWriteCase)
                             {
                                 // COW is applicable first.
-                                if (Cow(cohorts.WsPackage, cohorts.WsRedirected, dllInstance, L"CreateFile2Fixup"))
+                                if (Cow(LogLevel_DebugBasic, cohorts.WsPackage, cohorts.WsRedirected, dllInstance, L"CreateFile2Fixup"))
                                 {
                                     //PreCreateFolders(testWsRedirected.c_str(), dllInstance, L"CreateFileFixup");
-                                    retfinal = WRAPPER_CREATEFILE2(cohorts.WsRedirected, desiredAccess, shareMode, creationDisposition, createExParams, dllInstance, debug);
+                                    retfinal = WRAPPER_CREATEFILE2(LogLevel_DebugBasic, cohorts.WsRedirected, desiredAccess, shareMode, creationDisposition, createExParams, dllInstance);
                                     return retfinal;
                                 }
                                 else
                                 {
-                                    retfinal = WRAPPER_CREATEFILE2(cohorts.WsPackage, desiredAccess, shareMode, creationDisposition, createExParams, dllInstance, debug);
+                                    retfinal = WRAPPER_CREATEFILE2(LogLevel_DebugBasic, cohorts.WsPackage, desiredAccess, shareMode, creationDisposition, createExParams, dllInstance);
                                     return retfinal;
                                 }
                             }
                             else
                             {
-                                retfinal = WRAPPER_CREATEFILE2(cohorts.WsPackage, desiredAccess, shareMode, creationDisposition, createExParams, dllInstance, debug);
+                                retfinal = WRAPPER_CREATEFILE2(LogLevel_DebugBasic, cohorts.WsPackage, desiredAccess, shareMode, creationDisposition, createExParams, dllInstance);
                                 return retfinal;
                             }
                         }
@@ -231,27 +212,27 @@ HANDLE __stdcall CreateFile2Fixup(
                         {
                             if (IsAWriteCase)
                             {
-                                if (Cow(cohorts.WsNative, cohorts.WsRedirected, dllInstance, L"CreateFile2Fixup"))
+                                if (Cow(LogLevel_DebugBasic, cohorts.WsNative, cohorts.WsRedirected, dllInstance, L"CreateFile2Fixup"))
                                 {
                                     ///PreCreateFolders(testWsRedirected.c_str(), dllInstance, L"CreateFileFixup");
-                                    retfinal = WRAPPER_CREATEFILE2(cohorts.WsRedirected, desiredAccess, shareMode, creationDisposition, createExParams, dllInstance, debug);
+                                    retfinal = WRAPPER_CREATEFILE2(LogLevel_DebugBasic, cohorts.WsRedirected, desiredAccess, shareMode, creationDisposition, createExParams, dllInstance);
                                     return retfinal;
                                 }
                                 else
                                 {
-                                    retfinal = WRAPPER_CREATEFILE2(cohorts.WsNative, desiredAccess, shareMode, creationDisposition, createExParams, dllInstance, debug);
+                                    retfinal = WRAPPER_CREATEFILE2(LogLevel_DebugBasic, cohorts.WsNative, desiredAccess, shareMode, creationDisposition, createExParams, dllInstance);
                                     return retfinal;
                                 }
                             }
                             else
                             {
-                                retfinal = WRAPPER_CREATEFILE2(cohorts.WsNative, desiredAccess, shareMode, creationDisposition, createExParams, dllInstance, debug);
+                                retfinal = WRAPPER_CREATEFILE2(LogLevel_DebugBasic, cohorts.WsNative, desiredAccess, shareMode, creationDisposition, createExParams, dllInstance);
                                 return retfinal;
                             }
                         }
                         // There isn't such a file anywhere.  We want to create the redirection parent folder and let this call against the redirected file to create there.
                         PreCreateFolders(cohorts.WsRedirected.c_str(), dllInstance, L"CreateFile2Fixup");
-                        retfinal = WRAPPER_CREATEFILE2(cohorts.WsRedirected, desiredAccess, shareMode, creationDisposition, createExParams, dllInstance, debug);
+                        retfinal = WRAPPER_CREATEFILE2(LogLevel_DebugBasic, cohorts.WsRedirected, desiredAccess, shareMode, creationDisposition, createExParams, dllInstance);
                         return retfinal;
                     }
                     break;
@@ -262,7 +243,7 @@ HANDLE __stdcall CreateFile2Fixup(
                         {
                             if (MFRConfiguration.Ilv_Aware)
                             {
-                                retfinal = WRAPPER_CREATEFILE2(cohorts.WsPackage, desiredAccess, shareMode, creationDisposition, createExParams, dllInstance, debug);
+                                retfinal = WRAPPER_CREATEFILE2(LogLevel_DebugBasic, cohorts.WsPackage, desiredAccess, shareMode, creationDisposition, createExParams, dllInstance);
                                 return retfinal;
                             }
                             else
@@ -272,35 +253,35 @@ HANDLE __stdcall CreateFile2Fixup(
                                     cohorts.WsRedirected.compare(cohorts.WsPackage) != 0 &&
                                     PathExists(cohorts.WsRedirected.c_str()))
                                 {
-                                    retfinal = WRAPPER_CREATEFILE2(cohorts.WsRedirected, desiredAccess, shareMode, creationDisposition, createExParams, dllInstance, debug);
+                                    retfinal = WRAPPER_CREATEFILE2(LogLevel_DebugBasic, cohorts.WsRedirected, desiredAccess, shareMode, creationDisposition, createExParams, dllInstance);
                                     return retfinal;
                                 }
 
                                 if (IsAWriteCase)
                                 {
                                     // COW is applicable first.
-                                    if (Cow(cohorts.WsPackage, cohorts.WsRedirected, dllInstance, L"CreateFile2Fixup"))
+                                    if (Cow(LogLevel_DebugBasic, cohorts.WsPackage, cohorts.WsRedirected, dllInstance, L"CreateFile2Fixup"))
                                     {
                                         //PreCreateFolders(testWsRedirected.c_str(), dllInstance, L"CreateFileFixup");
-                                        retfinal = WRAPPER_CREATEFILE2(cohorts.WsRedirected, desiredAccess, shareMode, creationDisposition, createExParams, dllInstance, debug);
+                                        retfinal = WRAPPER_CREATEFILE2(LogLevel_DebugBasic, cohorts.WsRedirected, desiredAccess, shareMode, creationDisposition, createExParams, dllInstance);
                                         return retfinal;
                                     }
                                     else
                                     {
-                                        retfinal = WRAPPER_CREATEFILE2(cohorts.WsPackage, desiredAccess, shareMode, creationDisposition, createExParams, dllInstance, debug);
+                                        retfinal = WRAPPER_CREATEFILE2(LogLevel_DebugBasic, cohorts.WsPackage, desiredAccess, shareMode, creationDisposition, createExParams, dllInstance);
                                         return retfinal;
                                     }
                                 }
                                 else
                                 {
-                                    retfinal = WRAPPER_CREATEFILE2(cohorts.WsPackage, desiredAccess, shareMode, creationDisposition, createExParams, dllInstance, debug);
+                                    retfinal = WRAPPER_CREATEFILE2(LogLevel_DebugBasic, cohorts.WsPackage, desiredAccess, shareMode, creationDisposition, createExParams, dllInstance);
                                     return retfinal;
                                 }
                             }
                         }
                         // There isn't such a file anywhere.  We want to create the redirection parent folder and let this call against the redirected file to create there.
                         PreCreateFolders(cohorts.WsRedirected.c_str(), dllInstance, L"CreateFile2Fixup");
-                        retfinal = WRAPPER_CREATEFILE2(cohorts.WsRedirected, desiredAccess, shareMode, creationDisposition, createExParams, dllInstance, debug);
+                        retfinal = WRAPPER_CREATEFILE2(LogLevel_DebugBasic, cohorts.WsRedirected, desiredAccess, shareMode, creationDisposition, createExParams, dllInstance);
                         return retfinal;
                     }
                     break;
@@ -312,7 +293,7 @@ HANDLE __stdcall CreateFile2Fixup(
                         if (cohorts.map.IsAnExclusionToRedirect == mfr::mfr_exclusion_types::not_excluded && 
                             PathExists(cohorts.WsRedirected.c_str()))
                         {
-                            retfinal = WRAPPER_CREATEFILE2(cohorts.WsRedirected, desiredAccess, shareMode, creationDisposition, createExParams, dllInstance, debug);
+                            retfinal = WRAPPER_CREATEFILE2(LogLevel_DebugBasic, cohorts.WsRedirected, desiredAccess, shareMode, creationDisposition, createExParams, dllInstance);
                             return retfinal;
                         }
                         if (PathExists(cohorts.WsPackage.c_str()))
@@ -320,26 +301,26 @@ HANDLE __stdcall CreateFile2Fixup(
                             if (IsAWriteCase)
                             {
                                 // COW is applicable first.
-                                if (Cow(cohorts.WsPackage, cohorts.WsRedirected, dllInstance, L"CreateFile2Fixup"))
+                                if (Cow(LogLevel_DebugBasic, cohorts.WsPackage, cohorts.WsRedirected, dllInstance, L"CreateFile2Fixup"))
                                 {
-                                    retfinal = WRAPPER_CREATEFILE2(cohorts.WsRedirected, desiredAccess, shareMode, creationDisposition, createExParams, dllInstance, debug);
+                                    retfinal = WRAPPER_CREATEFILE2(LogLevel_DebugBasic, cohorts.WsRedirected, desiredAccess, shareMode, creationDisposition, createExParams, dllInstance);
                                     return retfinal;
                                 }
                                 else
                                 {
-                                    retfinal = WRAPPER_CREATEFILE2(cohorts.WsPackage, desiredAccess, shareMode, creationDisposition, createExParams, dllInstance, debug);
+                                    retfinal = WRAPPER_CREATEFILE2(LogLevel_DebugBasic, cohorts.WsPackage, desiredAccess, shareMode, creationDisposition, createExParams, dllInstance);
                                     return retfinal;
                                 }
                             }
                             else
                             {
-                                retfinal = WRAPPER_CREATEFILE2(cohorts.WsPackage, desiredAccess, shareMode, creationDisposition, createExParams, dllInstance, debug);
+                                retfinal = WRAPPER_CREATEFILE2(LogLevel_DebugBasic, cohorts.WsPackage, desiredAccess, shareMode, creationDisposition, createExParams, dllInstance);
                                 return retfinal;
                             }
                         }
                         // There isn't such a file anywhere.  We want to create the redirection parent folder and let this call against the redirected file to create there.
                         PreCreateFolders(cohorts.WsRedirected.c_str(), dllInstance, L"CreateFile2Fixup");
-                        retfinal = WRAPPER_CREATEFILE2(cohorts.WsRedirected, desiredAccess, shareMode, creationDisposition, createExParams, dllInstance, debug);
+                        retfinal = WRAPPER_CREATEFILE2(LogLevel_DebugBasic, cohorts.WsRedirected, desiredAccess, shareMode, creationDisposition, createExParams, dllInstance);
                         return retfinal;
                     }
                     else if (cohorts.map.Valid_mapping == mfr::mfr_enabled_types::enabled &&
@@ -351,7 +332,7 @@ HANDLE __stdcall CreateFile2Fixup(
                         {
                             if (MFRConfiguration.Ilv_Aware)
                             {
-                                retfinal = WRAPPER_CREATEFILE2(cohorts.WsPackage, desiredAccess, shareMode, creationDisposition, createExParams, dllInstance, debug);
+                                retfinal = WRAPPER_CREATEFILE2(LogLevel_DebugBasic, cohorts.WsPackage, desiredAccess, shareMode, creationDisposition, createExParams, dllInstance);
                                 return retfinal;
                             }
                             else
@@ -360,26 +341,26 @@ HANDLE __stdcall CreateFile2Fixup(
                                     cohorts.WsRedirected.compare(cohorts.WsPackage) != 0 &&
                                     PathExists(cohorts.WsRedirected.c_str()))
                                 {
-                                    retfinal = WRAPPER_CREATEFILE2(cohorts.WsRedirected, desiredAccess, shareMode, creationDisposition, createExParams, dllInstance, debug);
+                                    retfinal = WRAPPER_CREATEFILE2(LogLevel_DebugBasic, cohorts.WsRedirected, desiredAccess, shareMode, creationDisposition, createExParams, dllInstance);
                                     return retfinal;
                                 }
                                 if (IsAWriteCase)
                                 {
                                     // COW is applicable first.
-                                    if (Cow(cohorts.WsPackage, cohorts.WsRedirected, dllInstance, L"CreateFile2Fixup"))
+                                    if (Cow(LogLevel_DebugBasic, cohorts.WsPackage, cohorts.WsRedirected, dllInstance, L"CreateFile2Fixup"))
                                     {
-                                        retfinal = WRAPPER_CREATEFILE2(cohorts.WsRedirected, desiredAccess, shareMode, creationDisposition, createExParams, dllInstance, debug);
+                                        retfinal = WRAPPER_CREATEFILE2(LogLevel_DebugBasic, cohorts.WsRedirected, desiredAccess, shareMode, creationDisposition, createExParams, dllInstance);
                                         return retfinal;
                                     }
                                     else
                                     {
-                                        retfinal = WRAPPER_CREATEFILE2(cohorts.WsPackage, desiredAccess, shareMode, creationDisposition, createExParams, dllInstance, debug);
+                                        retfinal = WRAPPER_CREATEFILE2(LogLevel_DebugBasic, cohorts.WsPackage, desiredAccess, shareMode, creationDisposition, createExParams, dllInstance);
                                         return retfinal;
                                     }
                                 }
                                 else
                                 {
-                                    retfinal = WRAPPER_CREATEFILE2(cohorts.WsPackage, desiredAccess, shareMode, creationDisposition, createExParams, dllInstance, debug);
+                                    retfinal = WRAPPER_CREATEFILE2(LogLevel_DebugBasic, cohorts.WsPackage, desiredAccess, shareMode, creationDisposition, createExParams, dllInstance);
                                     return retfinal;
                                 }
                             }
@@ -390,26 +371,26 @@ HANDLE __stdcall CreateFile2Fixup(
                             if (IsAWriteCase)
                             {
                                 // COW is applicable first.
-                                if (Cow(cohorts.WsNative, cohorts.WsRedirected, dllInstance, L"CreateFile2Fixup"))
+                                if (Cow(LogLevel_DebugBasic, cohorts.WsNative, cohorts.WsRedirected, dllInstance, L"CreateFile2Fixup"))
                                 {
-                                    retfinal = WRAPPER_CREATEFILE2(cohorts.WsRedirected, desiredAccess, shareMode, creationDisposition, createExParams, dllInstance, debug);
+                                    retfinal = WRAPPER_CREATEFILE2(LogLevel_DebugBasic, cohorts.WsRedirected, desiredAccess, shareMode, creationDisposition, createExParams, dllInstance);
                                     return retfinal;
                                 }
                                 else
                                 {
-                                    retfinal = WRAPPER_CREATEFILE2(cohorts.WsNative, desiredAccess, shareMode, creationDisposition, createExParams, dllInstance, debug);
+                                    retfinal = WRAPPER_CREATEFILE2(LogLevel_DebugBasic, cohorts.WsNative, desiredAccess, shareMode, creationDisposition, createExParams, dllInstance);
                                     return retfinal;
                                 }
                             }
                             else
                             {
-                                retfinal = WRAPPER_CREATEFILE2(cohorts.WsNative, desiredAccess, shareMode, creationDisposition, createExParams, dllInstance, debug);
+                                retfinal = WRAPPER_CREATEFILE2(LogLevel_DebugBasic, cohorts.WsNative, desiredAccess, shareMode, creationDisposition, createExParams, dllInstance);
                                 return retfinal;
                             }
                         }
                         // There isn't such a file anywhere.  We want to create the redirection parent folder and let this call against the redirected file to create there.
                         PreCreateFolders(cohorts.WsRedirected.c_str(), dllInstance, L"CreateFile2Fixup");
-                        retfinal = WRAPPER_CREATEFILE2(cohorts.WsRedirected, desiredAccess, shareMode, creationDisposition, createExParams, dllInstance, debug);
+                        retfinal = WRAPPER_CREATEFILE2(LogLevel_DebugBasic, cohorts.WsRedirected, desiredAccess, shareMode, creationDisposition, createExParams, dllInstance);
                         return retfinal;
                     }
                     break;
@@ -420,7 +401,7 @@ HANDLE __stdcall CreateFile2Fixup(
                         if (cohorts.map.IsAnExclusionToRedirect == mfr::mfr_exclusion_types::not_excluded && 
                             PathExists(cohorts.WsRedirected.c_str()))
                         {
-                            retfinal = WRAPPER_CREATEFILE2(cohorts.WsRedirected, desiredAccess, shareMode, creationDisposition, createExParams, dllInstance, debug);
+                            retfinal = WRAPPER_CREATEFILE2(LogLevel_DebugBasic, cohorts.WsRedirected, desiredAccess, shareMode, creationDisposition, createExParams, dllInstance);
                             return retfinal;
                         }
                         if (PathExists(cohorts.WsPackage.c_str()))
@@ -428,20 +409,20 @@ HANDLE __stdcall CreateFile2Fixup(
                             if (IsAWriteCase)
                             {
                                 // COW is applicable first.
-                                if (Cow(cohorts.WsPackage, cohorts.WsRedirected, dllInstance, L"CreateFile2Fixup"))
+                                if (Cow(LogLevel_DebugBasic, cohorts.WsPackage, cohorts.WsRedirected, dllInstance, L"CreateFile2Fixup"))
                                 {
-                                    retfinal = WRAPPER_CREATEFILE2(cohorts.WsRedirected, desiredAccess, shareMode, creationDisposition, createExParams, dllInstance, debug);
+                                    retfinal = WRAPPER_CREATEFILE2(LogLevel_DebugBasic, cohorts.WsRedirected, desiredAccess, shareMode, creationDisposition, createExParams, dllInstance);
                                     return retfinal;
                                 }
                                 else
                                 {
-                                    retfinal = WRAPPER_CREATEFILE2(cohorts.WsPackage, desiredAccess, shareMode, creationDisposition, createExParams, dllInstance, debug);
+                                    retfinal = WRAPPER_CREATEFILE2(LogLevel_DebugBasic, cohorts.WsPackage, desiredAccess, shareMode, creationDisposition, createExParams, dllInstance);
                                     return retfinal;
                                 }
                             }
                             else
                             {
-                                retfinal = WRAPPER_CREATEFILE2(cohorts.WsPackage, desiredAccess, shareMode, creationDisposition, createExParams, dllInstance, debug);
+                                retfinal = WRAPPER_CREATEFILE2(LogLevel_DebugBasic, cohorts.WsPackage, desiredAccess, shareMode, creationDisposition, createExParams, dllInstance);
                                 return retfinal;
                             }
                         }
@@ -451,26 +432,26 @@ HANDLE __stdcall CreateFile2Fixup(
                             if (IsAWriteCase)
                             {
                                 // COW is applicable first.
-                                if (Cow(cohorts.WsNative, cohorts.WsRedirected, dllInstance, L"CreateFile2Fixup"))
+                                if (Cow(LogLevel_DebugBasic, cohorts.WsNative, cohorts.WsRedirected, dllInstance, L"CreateFile2Fixup"))
                                 {
-                                    retfinal = WRAPPER_CREATEFILE2(cohorts.WsRedirected, desiredAccess, shareMode, creationDisposition, createExParams, dllInstance, debug);
+                                    retfinal = WRAPPER_CREATEFILE2(LogLevel_DebugBasic, cohorts.WsRedirected, desiredAccess, shareMode, creationDisposition, createExParams, dllInstance);
                                     return retfinal;
                                 }
                                 else
                                 {
-                                    retfinal = WRAPPER_CREATEFILE2(cohorts.WsNative, desiredAccess, shareMode, creationDisposition, createExParams, dllInstance, debug);
+                                    retfinal = WRAPPER_CREATEFILE2(LogLevel_DebugBasic, cohorts.WsNative, desiredAccess, shareMode, creationDisposition, createExParams, dllInstance);
                                     return retfinal;
                                 }
                             }
                             else
                             {
-                                retfinal = WRAPPER_CREATEFILE2(cohorts.WsNative, desiredAccess, shareMode, creationDisposition, createExParams, dllInstance, debug);
+                                retfinal = WRAPPER_CREATEFILE2(LogLevel_DebugBasic, cohorts.WsNative, desiredAccess, shareMode, creationDisposition, createExParams, dllInstance);
                                 return retfinal;
                             }
                         }
                         // There isn't such a file anywhere.  We want to create the redirection parent folder and let this call against the redirected file to create there.
                         PreCreateFolders(cohorts.WsRedirected.c_str(), dllInstance, L"CreateFile2Fixup");
-                        retfinal = WRAPPER_CREATEFILE2(cohorts.WsRedirected, desiredAccess, shareMode, creationDisposition, createExParams, dllInstance, debug);
+                        retfinal = WRAPPER_CREATEFILE2(LogLevel_DebugBasic, cohorts.WsRedirected, desiredAccess, shareMode, creationDisposition, createExParams, dllInstance);
                         return retfinal;
                     }
                     break;
@@ -490,6 +471,7 @@ HANDLE __stdcall CreateFile2Fixup(
             else
             {
                 // ILV in use
+                Log(LogLevel_DebugBasic, "[%s%d]\t\tScenario includes ILV", g_MfrModuleName, dllInstance);
                 if (!IsThisUnsupportedForInterceptsNow(cohorts.WsRequested))
                 {
                     std::wstring usePath = L"";
@@ -504,31 +486,31 @@ HANDLE __stdcall CreateFile2Fixup(
                             (att & FILE_ATTRIBUTE_DIRECTORY) != 0)
                         {
                             usePath = cohorts.WsRequested;
-                            Log("[%s%d] Native Directory requested that exists, use that directory.", g_MfrModuleName, dllInstance);
+                            Log(LogLevel_DebugBasic, "[%s%d] Native Directory requested that exists, use that directory.", g_MfrModuleName, dllInstance);
                         }
                     }
                     if (usePath.length() == 0)
                     {
                         if (IsAWriteCase)
                         {
-                            usePath = DetermineIlvPathForWriteOperations(cohorts, dllInstance, moredebug);
+                            usePath = DetermineIlvPathForWriteOperations(LogLevel_DebugIntermediate, cohorts, dllInstance);
                             // In a redirect to local scenario, we are responsible for pre-creating the local parent folders
                             // if-and-only-if they are present in the package.
-                            PreCreateLocalFoldersIfNeededForWrite(usePath, cohorts.WsPackage, dllInstance, debug, L"CreateFile2Fixup");
+                            PreCreateLocalFoldersIfNeededForWrite(LogLevel_DebugBasic, usePath, cohorts.WsPackage, dllInstance, L"CreateFile2Fixup");
                             // In a redirect to local scenario, if the file is not present locally, but is in the package, we are responsible to copy it there first.
-                            CowLocalFoldersIfNeededForWrite(usePath, cohorts.WsPackage, dllInstance, debug, L"CreateFile2Fixup");
+                            CowLocalFoldersIfNeededForWrite(LogLevel_DebugBasic, usePath, cohorts.WsPackage, dllInstance, L"CreateFile2Fixup");
                             // In a write to package scenario, folders may be needed.
-                            PreCreatePackageFoldersIfIlvNeededForWrite(usePath, dllInstance, debug, L"CreateFile2Fixup");
+                            PreCreatePackageFoldersIfIlvNeededForWrite(LogLevel_DebugBasic, usePath, dllInstance, L"CreateFile2Fixup");
                         }
                         else
                         {
-                            usePath = DetermineIlvPathForReadOperations(cohorts, dllInstance, moredebug);
-                            // In a redirect to local scenario, we are responsible for determing if source is local or in package
+                            usePath = DetermineIlvPathForReadOperations(LogLevel_DebugIntermediate, cohorts, dllInstance);
+                            // In a redirect to local scenario, we are responsible for determining if source is local or in package
                             usePath = SelectLocalOrPackageForRead(usePath, cohorts.WsPackage);
                         }
                     }
 
-                    retfinal = WRAPPER_CREATEFILE2(usePath, desiredAccess, shareMode, creationDisposition, createExParams, dllInstance, debug);
+                    retfinal = WRAPPER_CREATEFILE2(LogLevel_DebugBasic, usePath, desiredAccess, shareMode, creationDisposition, createExParams, dllInstance);
 
                     // Special case to keep app from getting confused by giving them VFS\AppVPackageRoot instead of C:\.
                     // We still want to precreate that folder in case they are going to add to it.
@@ -542,7 +524,7 @@ HANDLE __stdcall CreateFile2Fixup(
                             wStringToLower(wpath) == L"c:\\" )
                         {
                             CloseHandle(retfinal);
-                            retfinal = WRAPPER_CREATEFILE2(fileName, desiredAccess, shareMode, creationDisposition, createExParams, dllInstance, debug);
+                            retfinal = WRAPPER_CREATEFILE2(LogLevel_DebugBasic, fileName, desiredAccess, shareMode, creationDisposition, createExParams, dllInstance);
                         }
                     }
                     return retfinal;
@@ -551,15 +533,9 @@ HANDLE __stdcall CreateFile2Fixup(
             }
         }
     }
-#if _DEBUG
     // Fall back to assuming no redirection is necessary if exception
-    LOGGED_CATCHHANDLER_MIN(g_MfrModuleName, dllInstance, L"CreateFile2Fixup")
-#else
-    catch (...)
-    {
-        Log(L"[%s%d] CreateFile2Fixup Exception=0x%x", g_MfrModuleName, dllInstance, GetLastError());
-    }
-#endif
+    LOGGED_CATCHHANDLER_MIN(LogLevel_DebugBasic, g_MfrModuleName, dllInstance, L"CreateFile2Fixup")
+
     if (fileName != nullptr)
     {
         std::wstring LongDirectory = MakeLongPath(fileName);
@@ -570,9 +546,7 @@ HANDLE __stdcall CreateFile2Fixup(
         SetLastError(ERROR_INVALID_PARAMETER);
         retfinal = INVALID_HANDLE_VALUE; //impl::CreateFile2(fileName, desiredAccess, shareMode, creationDisposition, createExParams);
     }
-#if _DEBUG
-    Log(L"[%s%d] CreateFile2Fixup returns handle 0x%x", g_MfrModuleName, dllInstance, retfinal);
-#endif
+    Log(LogLevel_DebugBasic, L"[%s%d] CreateFile2Fixup returns handle 0x%x", g_MfrModuleName, dllInstance, retfinal);
     return retfinal;
 }
 DECLARE_FIXUP(impl::CreateFile2, CreateFile2Fixup);

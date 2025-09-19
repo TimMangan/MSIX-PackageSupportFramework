@@ -56,55 +56,41 @@ LSTATUS __stdcall RegDeleteKeyExGeneric(
         {
             try
             {
-#if _DEBUG
-                Log(L"[%s%d] RegDeleteKeyEx: key=9x%x\n", g_RegModuleName, RegLocalInstance,key);
-#endif
+                Log(LogLevel_DebugBasic, L"[%s%d] RegDeleteKeyEx: key=0x%x\n", g_RegModuleName, RegLocalInstance,key);
                 std::string keypath = ReplaceAppRegistrySyntax(InterpretKeyPath(key) + "\\" + InterpretStringA(subKey));
                 if (keypath.find("InterpretKeyPath failure") != std::string::npos)
                 {
-#if _DEBUG
                     if constexpr (psf::is_ansi<CharT>)
                     {
-                        Log(L"[%s%d] RegDeleteKeyEx (A): Path=%S", g_RegModuleName, RegLocalInstance, keypath.c_str());
+                        Log(LogLevel_DebugIntermediate, L"[%s%d] RegDeleteKeyEx (A): Path=%S", g_RegModuleName, RegLocalInstance, keypath.c_str());
                     }
                     else
                     {
-                        Log(L"[%s%d] RegDeleteKeyEx (W): Path=%S", g_RegModuleName, RegLocalInstance, keypath.c_str());
+                        Log(LogLevel_DebugIntermediate, L"[%s%d] RegDeleteKeyEx (W): Path=%S", g_RegModuleName, RegLocalInstance, keypath.c_str());
                     }
-#endif
                     result = 0;
                 }
                 else
                 {
-#if _DEBUG
-                    Log(L"[%s%d] RegDeleteKeyEx: Path=%S", g_RegModuleName, RegLocalInstance, keypath.c_str());
-                    if (RegFixupFakeDelete(keypath, RegLocalInstance) == true)
-#else
-                    if (RegFixupFakeDelete(keypath, RegLocalInstance) == true)
-#endif
+                    Log(LogLevel_DebugIntermediate, L"[%s%d] RegDeleteKeyEx: Path=%S", g_RegModuleName, RegLocalInstance, keypath.c_str());
+                    if (RegFixupFakeDelete(LogLevel_DebugIntermediate, keypath, RegLocalInstance) == true)
                     {
-#if _DEBUG
-                        LogCallingModuleInstanceCommon(g_RegModuleName, RegLocalInstance);
-                        Log(L"[%s%d] RegDeleteKeyEx:Fake Success\n", g_RegModuleName, RegLocalInstance);
-#endif
+                        LogCallingModuleInstanceCommon(LogLevel_DebugIntermediate, g_RegModuleName, RegLocalInstance);
+                        Log(LogLevel_DebugIntermediate, L"[%s%d] RegDeleteKeyEx:Fake Success\n", g_RegModuleName, RegLocalInstance);
                         result = 0;
                     }
                 }
             }
             catch (...)
             {
-                Log(L"[%s%d] RegDeleteKeyEx logging failure.\n", g_RegModuleName,RegLocalInstance);
+                Log(LogLevel_Exception, L"[%s%d] RegDeleteKeyEx logging failure.\n", g_RegModuleName,RegLocalInstance);
             }
         }
-#if _DEBUG
-        Log(L"[%s%d] RegDeleteKeyEx:Fake returns %d\n", g_RegModuleName, RegLocalInstance, result);
-#endif
+        Log(LogLevel_DebugBasic, L"[%s%d] RegDeleteKeyEx:Fake returns %d\n", g_RegModuleName, RegLocalInstance, result);
     }
     else
     {
-#if _DEBUG
-        Log(L"[%s%d] RegDeleteKeyEx:Real returns %d\n", g_RegModuleName, RegLocalInstance, result);
-#endif
+        Log(LogLevel_DebugBasic, L"[%s%d] RegDeleteKeyEx:Real returns %d\n", g_RegModuleName, RegLocalInstance, result);
     }
     return result;
 }
@@ -153,33 +139,23 @@ LSTATUS __stdcall RegDeleteKeyExFixup(
         {
             try
             {
-#if _DEBUG
-                Log(L"[%s%d] RegDeleteKeyEx:\n", g_RegModuleName, RegLocalInstance);
-#endif
+                Log(LogLevel_DebugBasic, L"[%s%d] RegDeleteKeyEx:\n", g_RegModuleName, RegLocalInstance);
                 std::string keypath = ReplaceAppRegistrySyntax(InterpretKeyPath(key) + "\\" + InterpretStringA(subKey));
-#if _DEBUG
-                Log(L"[%s%d] RegDeleteKeyEx: Path=%s", g_RegModuleName, RegLocalInstance, keypath.c_str());
-                if (RegFixupFakeDelete(keypath, RegLocalInstance) == true)
-#else
-                if (RegFixupFakeDelete(keypath, RegLocalInstance) == true)
-#endif
+                Log(LogLevel_DebugIntermediate, L"[%s%d] RegDeleteKeyEx: Path=%s", g_RegModuleName, RegLocalInstance, keypath.c_str());
+                if (RegFixupFakeDelete(LogLevel_DebugIntermediate, keypath, RegLocalInstance) == true)
                 {
-#if _DEBUG
-                    LogCallingModuleInstanceCommon(g_RegModuleName,RegLocalInstance);
-                    Log(L"[%s%d] RegDeleteKeyEx:Fake Success\n", g_RegModuleName, RegLocalInstance);
-#endif
+                    LogCallingModuleInstanceCommon(LogLevel_DebugIntermediate, g_RegModuleName,RegLocalInstance);
+                    Log(LogLevel_DebugIntermediate, L"[%s%d] RegDeleteKeyEx:Fake Success\n", g_RegModuleName, RegLocalInstance);
                     result = 0;
                 }
             }
             catch (...)
             {
-                Log(L"[%s%d] RegDeleteKeyEx logging failure.\n", g_RegModuleName, RegLocalInstance);
+                Log(LogLevel_Exception, L"[%s%d] RegDeleteKeyEx logging failure.\n", g_RegModuleName, RegLocalInstance);
             }
         }
     }
-#if _DEBUG
-    Log(L"[%s%d] RegDeleteKeyEx:Fake returns %d\n", g_RegModuleName, RegLocalInstance, result);
-#endif
+    Log(LogLevel_DebugBasic, L"[%s%d] RegDeleteKeyEx:Fake returns %d\n", g_RegModuleName, RegLocalInstance, result);
     return result;
 }
 DECLARE_STRING_FIXUP(RegDeleteKeyExImpl, RegDeleteKeyExFixup);

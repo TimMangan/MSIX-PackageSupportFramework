@@ -41,71 +41,66 @@ DWORD __stdcall SearchPathFixup(
         if (!guard)
         {
 
-#if _DEBUG
             if (lpPath != NULL)
             {
                 if (lpExtension != NULL)
                 {
-                    Log(L"[%s%d]\tSearchPathFixup (unguarded): for folder=%s fileName=%s ext=%s", g_FrfModuleName, SearchPathInstance,lpPath, lpFileName, lpExtension);
+                    Log(LogLevel_DebugBasic, L"[%s%d]\tSearchPathFixup (unguarded): for folder=%s fileName=%s ext=%s", g_FrfModuleName, SearchPathInstance,lpPath, lpFileName, lpExtension);
                 }
                 else
                 {
-                    Log(L"[%s%d]\tSearchPathFixup (unguarded): for folder=%s fileName=%s", g_FrfModuleName, SearchPathInstance, lpPath, lpFileName);
+                    Log(LogLevel_DebugBasic, L"[%s%d]\tSearchPathFixup (unguarded): for folder=%s fileName=%s", g_FrfModuleName, SearchPathInstance, lpPath, lpFileName);
                 }
             }
             else
             {
                 if (lpExtension != NULL)
                 {
-                    Log(L"[%s%d]\tSearchPathFixup (unguarded): for  fileName=%s ext=%s", g_FrfModuleName, SearchPathInstance, lpFileName, lpExtension);
+                    Log(LogLevel_DebugBasic, L"[%s%d]\tSearchPathFixup (unguarded): for  fileName=%s ext=%s", g_FrfModuleName, SearchPathInstance, lpFileName, lpExtension);
                 }
                 else
                 {
-                    Log(L"[%s%d]\tSearchPathFixup (unguarded): for  fileName=%s", g_FrfModuleName, SearchPathInstance, lpFileName);
+                    Log(LogLevel_DebugBasic, L"[%s%d]\tSearchPathFixup (unguarded): for  fileName=%s", g_FrfModuleName, SearchPathInstance, lpFileName);
                 }
             }
-#endif
+
             return impl::SearchPath(lpPath, lpFileName, lpExtension, nBufferLength, lpBuffer, lpFilePart);
         }
 
         
         SearchPathInstance = ++g_FileIntceptInstance;
-#if _DEBUG
         if (lpPath != NULL)
         {
             if (lpExtension != NULL)
             {
-                Log(L"[%s%d]\tSearchPathFixup: for folder=%s fileName=%s ext=%s", g_FrfModuleName, SearchPathInstance, lpPath, lpFileName, lpExtension);
+                Log(LogLevel_DebugBasic, L"[%s%d]\tSearchPathFixup: for folder=%s fileName=%s ext=%s", g_FrfModuleName, SearchPathInstance, lpPath, lpFileName, lpExtension);
             }
             else
             {
-                Log(L"[%s%d]\tSearchPathFixup: for folder=%s fileName=%s", g_FrfModuleName, SearchPathInstance, lpPath, lpFileName);
+                Log(LogLevel_DebugBasic, L"[%s%d]\tSearchPathFixup: for folder=%s fileName=%s", g_FrfModuleName, SearchPathInstance, lpPath, lpFileName);
             }
         }
         else
         {
             if (lpExtension != NULL)
             {
-                Log(L"[%s%d]\tSearchPathFixup: for  fileName=%s ext=%s", g_FrfModuleName, SearchPathInstance, lpFileName, lpExtension);
+                Log(LogLevel_DebugBasic, L"[%s%d]\tSearchPathFixup: for  fileName=%s ext=%s", g_FrfModuleName, SearchPathInstance, lpFileName, lpExtension);
             }
             else
             {
-                Log(L"[%s%d]\tSearchPathFixup: for  fileName=%s", g_FrfModuleName, SearchPathInstance, lpFileName);
+                Log(LogLevel_DebugBasic, L"[%s%d]\tSearchPathFixup: for  fileName=%s", g_FrfModuleName, SearchPathInstance, lpFileName);
             }
         }
-#endif
         //TODO
         DWORD dRet = impl::SearchPath(lpPath, lpFileName, lpExtension, nBufferLength, lpBuffer, lpFilePart);
-#if _DEBUG
         if (dRet == 0)
         {
-            Log("[%s%d]\t\tSearchPathFixup: native not found.", g_FrfModuleName, SearchPathInstance);
+            Log(LogLevel_DebugBasic, "[%s%d]\t\tSearchPathFixup: native not found.", g_FrfModuleName, SearchPathInstance);
         }
         else
         {
-            Log("[%s%d]\t\tSearchPathFixup: native found.", g_FrfModuleName, SearchPathInstance);
+            Log(LogLevel_DebugBasic, "[%s%d]\t\tSearchPathFixup: native found.", g_FrfModuleName, SearchPathInstance);
         }
-#endif
 
         std::wstring wPathRequested;
         normalized_pathV2 wPathNormalized;   // Cleaned up version of original path reference.
@@ -125,12 +120,12 @@ DWORD __stdcall SearchPathFixup(
         wPathNormalized = NormalizePathV2(wPathRequested.c_str(), SearchPathInstance);
         if constexpr (psf::is_ansi<CharT>)
         {
-            Log("[%s%d]\t\tSearchPathFixup: ansi.", g_FrfModuleName, SearchPathInstance);
+            Log(LogLevel_DebugBasic, "[%s%d]\t\tSearchPathFixup: ansi.", g_FrfModuleName, SearchPathInstance);
             dRet = impl::SearchPath(narrow(wPathNormalized.full_path).c_str(), lpFileName, lpExtension, nBufferLength, lpBuffer, lpFilePart);
         }
         else
         {
-            Log("[%s%d]\t\tSearchPathFixup: wide.", g_FrfModuleName, SearchPathInstance);
+            Log(LogLevel_DebugBasic, "[%s%d]\t\tSearchPathFixup: wide.", g_FrfModuleName, SearchPathInstance);
             dRet = impl::SearchPath(wPathNormalized.full_path.c_str(), lpFileName, lpExtension, nBufferLength, lpBuffer, lpFilePart);
         }
         if (dRet == 0)
@@ -179,47 +174,40 @@ DWORD __stdcall SearchPathFixup(
                         }
                         if (dRet == 0)
                         {
-                            Log(L"[%s%d]\tSearchPathFixup: Not found under any path.", g_FrfModuleName, SearchPathInstance);
+                            Log(LogLevel_DebugBasic, L"[%s%d]\tSearchPathFixup: Not found under any path.", g_FrfModuleName, SearchPathInstance);
                             SetLastError(ERROR_FILE_NOT_FOUND);
                         }
                         else
                         {
-                            LogString(g_FrfModuleName, SearchPathInstance, L"\tSearchPathFixup: Found under path", wPathDeRedirected.c_str());
+                            LogString(LogLevel_DebugBasic, g_FrfModuleName, SearchPathInstance, L"\tSearchPathFixup: Found under path", wPathDeRedirected.c_str());
                         }
                     }
                     else
                     {
-                        LogString(g_FrfModuleName, SearchPathInstance, L"\tSearchPathFixup: Found under path", wPathRedirected.c_str());
+                        LogString(LogLevel_DebugBasic, g_FrfModuleName, SearchPathInstance, L"\tSearchPathFixup: Found under path", wPathRedirected.c_str());
                     }
                 }
                 else
                 {
-                    LogString(g_FrfModuleName, SearchPathInstance, L"\tSearchPathFixup: Found under path", wPathDeVirtualized.c_str());
+                    LogString(LogLevel_DebugBasic, g_FrfModuleName, SearchPathInstance, L"\tSearchPathFixup: Found under path", wPathDeVirtualized.c_str());
                 }
             }
             else
             {
-                LogString(g_FrfModuleName, SearchPathInstance, L"\tSearchPathFixup: Found under path", wPathVirtualized.c_str());
+                LogString(LogLevel_DebugBasic, g_FrfModuleName, SearchPathInstance, L"\tSearchPathFixup: Found under path", wPathVirtualized.c_str());
             }
         }
         else
         {
-            LogString(g_FrfModuleName, SearchPathInstance, L"\tSearchPathFixup: Found under path", wPathNormalized.full_path.c_str());
+            LogString(LogLevel_DebugBasic, g_FrfModuleName, SearchPathInstance, L"\tSearchPathFixup: Found under path", wPathNormalized.full_path.c_str());
         }
         
 
-        Log(L"[%s%d]\tSearchPathFixup: return value=0x%x GetLastError=0x%x", g_FrfModuleName, SearchPathInstance, dRet, GetLastError());
+        Log(LogLevel_DebugBasic, L"[%s%d]\tSearchPathFixup: return value=0x%x GetLastError=0x%x", g_FrfModuleName, SearchPathInstance, dRet, GetLastError());
         return dRet;
     }
-#if _DEBUG
     // Fall back to assuming no redirection is necessary if exception
-    LOGGED_CATCHHANDLER_MIN(g_FrfModuleName, SearchPathInstance, L"SearchPath")
-#else
-    catch (...)
-    {
-        Log(L"[%s%d] SearchPath Exception=0x%x", g_FrfModuleName, SearchPathInstance, GetLastError());
-    }
-#endif 
+    LOGGED_CATCHHANDLER_MIN(LogLevel_Exception, g_FrfModuleName, SearchPathInstance, L"SearchPath")
     return 0;
     
 }

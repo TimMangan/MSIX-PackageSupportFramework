@@ -21,9 +21,7 @@ extern "C" {
     {
         if (reason == DLL_PROCESS_ATTACH)
         {
-#if _DEBUG
-            Log(L"Attaching DynamicLibraryFixup");
-#endif
+            Log(LogLevel_DebugBasic, L"Attaching DynamicLibraryFixup");
 
             InitializeFixups();
             InitializeConfiguration();
@@ -33,7 +31,7 @@ extern "C" {
     }
     catch (...)
     {
-        Log(L"[%s%d] DynamicLibraryFixup attach ERROR", g_LoadLibraryName, 0);
+        Log(LogLevel_Exception, L"[%s%d] DynamicLibraryFixup attach ERROR", g_LoadLibraryName, 0);
         ::SetLastError(win32_from_caught_exception());
         return FALSE;
     }

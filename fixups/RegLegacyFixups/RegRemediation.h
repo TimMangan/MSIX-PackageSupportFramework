@@ -10,13 +10,13 @@
 
 std::string ReplaceAppRegistrySyntax(std::string regPath);
 
-REGSAM RegFixupSam(std::string keypath, REGSAM samDesired, DWORD RegLocalInstance);
+REGSAM RegFixupSam(Json_Debug_Levels debugRequestLevel, std::string keypath, REGSAM samDesired, DWORD RegLocalInstance);
 
-bool RegFixupFakeDelete(std::string keypath, [[maybe_unused]] DWORD RegLocalInstance);
+bool RegFixupFakeDelete(Json_Debug_Levels debugRequestLevel, std::string keypath, [[maybe_unused]] DWORD RegLocalInstance);
 
-LSTATUS RegFixupDeletionMarker(std::string keyPath,std::string Value, [[maybe_unused]] DWORD RegLocalInstance);
+LSTATUS RegFixupDeletionMarker(Json_Debug_Levels debugRequestLevel, std::string keyPath,std::string Value, [[maybe_unused]] DWORD RegLocalInstance);
 
-bool RegFixupJavaBlocker(std::string keypath, [[maybe_unused]] DWORD RegLocalInstance);
+bool RegFixupJavaBlocker(Json_Debug_Levels debugRequestLevel, std::string keypath, [[maybe_unused]] DWORD RegLocalInstance);
 
 #if TRYHKLM2HKCU
 bool HasHKLM2HKCUSpecified();

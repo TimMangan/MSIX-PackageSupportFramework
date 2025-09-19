@@ -45,47 +45,51 @@ struct SIH_PROC_THREAD_ATTRIBUTE_LIST
     SIH_PROC_THREAD_ATTRIBUTE_ENTRY Entry[ANYSIZE_ARRAY];
 };
 
-inline void DumpStartupAttributes(SIH_PROC_THREAD_ATTRIBUTE_LIST* attlist, const wchar_t* moduleName, DWORD instance)
+inline void DumpStartupAttributes(Json_Debug_Levels debugRequestLevel, SIH_PROC_THREAD_ATTRIBUTE_LIST* attlist, const wchar_t* moduleName, DWORD instance)
 {
-    if (attlist != NULL)
+    if (debugRequestLevel <= g_JsonDebugLevel)
     {
-        Log("\t[%d] Attribute List Dump:", instance);
-        Log("\t\t[%d]\tdwflags=0x%x Size=0x%x Count=0x%x", instance, attlist->dwflags, attlist->Size, attlist->Count);
-
-        if ((attlist->dwflags & SIH_PROC_THREAD_ATTRIBUTE_DESKTOP_APP_POLICY) != 0)
+        if (attlist != NULL)
         {
-            Log("\t\t[%d]\tHas Desktop_App_Policy.", instance);
-            for (ULONG inx = 0; inx < attlist->Count; inx++)
+            Log(LogLevel_Launching, "\t[%s%d] Attribute List Dump:", moduleName, instance);
+            Log(LogLevel_Launching, "\t\t[%s%d]\tdwflags=0x%x Size=0x%x Count=0x%x", moduleName, instance, attlist->dwflags, attlist->Size, attlist->Count);
+
+            if ((attlist->dwflags & SIH_PROC_THREAD_ATTRIBUTE_DESKTOP_APP_POLICY) != 0)
             {
-                SIH_PROC_THREAD_ATTRIBUTE_ENTRY Entry = attlist->Entry[inx];
-                Log("\t\t[%d]\t\tIndex %d Attribute 0x%x Size=0x%x", instance, inx, Entry.Attribute, Entry.cbSize);
-                Loghexdump(Entry.lpvalue, (long)Entry.cbSize, moduleName, instance);
-                if (Entry.Attribute == PROC_THREAD_ATTRIBUTE_DESKTOP_APP_POLICY)
+                Log(LogLevel_Launching, "\t\t[%s%d]\tHas Desktop_App_Policy.", moduleName, instance);
+                for (ULONG inx = 0; inx < attlist->Count; inx++)
                 {
-                    Log("\t\t[%d]\t\tIs Attribute_Desktop_App_Policy", instance);
-                    if (Entry.cbSize == 4)
+                    SIH_PROC_THREAD_ATTRIBUTE_ENTRY Entry = attlist->Entry[inx];
+                    Log(LogLevel_Launching, "\t\t[%s%d]\t\tIndex %d Attribute 0x%x Size=0x%x", moduleName, instance, inx, Entry.Attribute, Entry.cbSize);
+                    Loghexdump(LogLevel_Launching, Entry.lpvalue, (long)Entry.cbSize, moduleName, instance);
+                    if (Entry.Attribute == PROC_THREAD_ATTRIBUTE_DESKTOP_APP_POLICY)
                     {
-                        DWORD attval = *((DWORD*)(Entry.lpvalue));
-                        if ((attval & PROCESS_CREATION_DESKTOP_APP_BREAKAWAY_ENABLE_PROCESS_TREE) != 0)
+                        Log(LogLevel_Launching, "\t\t[%s%d]\t\tIs Attribute_Desktop_App_Policy", moduleName, instance);
+                        if (Entry.cbSize == 4)
                         {
-                            Log("\t\t[%d]\t\t\tPROCESS_CREATION_DESKTOP_APP_BREAKAWAY_ENABLE_PROCESS_TREE present.", instance);
-                        }
-                        if ((attval & PROCESS_CREATION_DESKTOP_APP_BREAKAWAY_DISABLE_PROCESS_TREE) != 0)
-                        {
-                            Log("\t\t[%d]\t\t\tPROCESS_CREATION_DESKTOP_APP_BREAKAWAY_DISABLE_PROCESS_TREE present.", instance);
-                        }
-                        if ((attval & PROCESS_CREATION_DESKTOP_APP_BREAKAWAY_OVERRIDE) != 0)
-                        {
-                            Log("\t\t[%d]\t\t\tPROCESS_CREATION_DESKTOP_APP_BREAKAWAY_OVERRIDE present.", instance);
+                            DWORD attval = *((DWORD*)(Entry.lpvalue));
+                            if ((attval & PROCESS_CREATION_DESKTOP_APP_BREAKAWAY_ENABLE_PROCESS_TREE) != 0)
+                            {
+                                Log(LogLevel_Launching, "\t\t[%s%d]\t\t\tPROCESS_CREATION_DESKTOP_APP_BREAKAWAY_ENABLE_PROCESS_TREE present.", moduleName, instance);
+                            }
+                            if ((attval & PROCESS_CREATION_DESKTOP_APP_BREAKAWAY_DISABLE_PROCESS_TREE) != 0)
+                            {
+                                Log(LogLevel_Launching, "\t\t[%s%d]\t\t\tPROCESS_CREATION_DESKTOP_APP_BREAKAWAY_DISABLE_PROCESS_TREE present.", moduleName, instance);
+                            }
+                            if ((attval & PROCESS_CREATION_DESKTOP_APP_BREAKAWAY_OVERRIDE) != 0)
+                            {
+                                Log(LogLevel_Launching, "\t\t[%s%d]\t\t\tPROCESS_CREATION_DESKTOP_APP_BREAKAWAY_OVERRIDE present.", moduleName, instance);
+                            }
                         }
                     }
                 }
             }
+            else
+            {
+                Loghexdump(LogLevel_Launching, attlist, 48, moduleName, instance);
+            }
         }
-        else
-        {
-            Loghexdump(attlist, 48, moduleName, instance);
-        }
+
     }
 }
 inline bool DoesAttributeSpecifyInside(SIH_PROC_THREAD_ATTRIBUTE_LIST* attlist)

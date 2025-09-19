@@ -6,9 +6,6 @@
 
 // Microsoft documentation: https://docs.microsoft.com/en-us/windows/win32/api/winbase/nf-winbase-copyfile
 
-#if _DEBUG
-//#define MOREDEBUG 1 
-#endif
 
 #include <errno.h>
 #include "FunctionImplementations.h"
@@ -19,16 +16,16 @@
 #include "DetermineCohorts.h"
 #include "DetermineIlvPaths.h"
 
-BOOL WRAPPER_WORKAROUND(std::wstring existingFileWs, std::wstring newFileWs, BOOL failIfExists, [[maybe_unused]] bool debug, bool moredebug, DWORD dllInstance)
+#if TRIED_DIDNOT_HELP
+BOOL WRAPPER_WORKAROUND(Json_Debug_Levels debugRequestLevel, std::wstring existingFileWs, std::wstring newFileWs, BOOL failIfExists,  DWORD dllInstance)
 {
     BOOL retfinal = FALSE;
     std::wstring LongExistingFileWs = MakeLongPath(existingFileWs);
     std::wstring LongNewFileWs = MakeLongPath(newFileWs);
-    if (moredebug)
-    {
-        LogString(g_MfrModuleName, dllInstance, L"CopyFileFixup: WrapperWorkaround: Actual From", LongExistingFileWs.c_str());
-        LogString(g_MfrModuleName, dllInstance, L"CopyFileFixup: WrapperWorkaround Actual To", LongNewFileWs.c_str());
-    }
+    
+    LogString(debugRequestLevel, g_MfrModuleName, dllInstance, L"CopyFileFixup: WrapperWorkaround: Actual From", LongExistingFileWs.c_str());
+    LogString(debugRequestLevel, g_MfrModuleName, dllInstance, L"CopyFileFixup: WrapperWorkaround Actual To", LongNewFileWs.c_str());
+    
     HANDLE hIn = ::CreateFileW(LongExistingFileWs.c_str(), GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, NULL, OPEN_EXISTING, 0, NULL);
     if (hIn != INVALID_HANDLE_VALUE)
     {
@@ -53,75 +50,60 @@ BOOL WRAPPER_WORKAROUND(std::wstring existingFileWs, std::wstring newFileWs, BOO
                 }
                 free(buff);
                 retfinal = TRUE;
-                if (moredebug)
-                {
-                    Log(L"[%s%d] CopyFileFixup: WrapperWorkaround: Success", g_MfrModuleName, dllInstance);
-                }
+                Log(debugRequestLevel, L"[%s%d] CopyFileFixup: WrapperWorkaround: Success", g_MfrModuleName, dllInstance);
             }
             CloseHandle(hOut);
         }
         else
         {
-            if (moredebug)
-            {
-                Log(L"[%s%d] CopyFileFixup: WrapperWorkaround: Open output file error 0x%x", g_MfrModuleName, dllInstance, GetLastError());
-            }
+            Log(debugRequestLevel, L"[%s%d] CopyFileFixup: WrapperWorkaround: Open output file error 0x%x", g_MfrModuleName, dllInstance, GetLastError());
         }
         CloseHandle(hIn);
     }
     else
     {
-        if (moredebug)
-        {
-            Log(L"[%s%d] CopyFileFixup: WrapperWorkaround Open input file error 0x%x", g_MfrModuleName, dllInstance, GetLastError());
-        }
+        Log(debugRequestLevel, L"[%s%d] CopyFileFixup: WrapperWorkaround Open input file error 0x%x", g_MfrModuleName, dllInstance, GetLastError());
     }
     return retfinal;
 }
+#endif
 
-BOOL  WRAPPER_COPYFILE(std::wstring existingFileWs, std::wstring newFileWs, BOOL failIfExists, bool debug, bool moredebug, DWORD dllInstance)
+BOOL  WRAPPER_COPYFILE(std::wstring existingFileWs, std::wstring newFileWs, BOOL failIfExists, DWORD dllInstance)
 {
     BOOL retfinal;
     std::wstring LongExistingFileWs = MakeLongPath(existingFileWs);
     std::wstring LongNewFileWs = MakeLongPath(newFileWs);
 
-    if (moredebug)
-    {
-        LogString(g_MfrModuleName, dllInstance, L"CopyFileFixup: WrapperCopyFile: Actual From", LongExistingFileWs.c_str());
-        LogString(g_MfrModuleName, dllInstance, L"CopyFileFixup: WrapperCopyFile: Actual To", LongNewFileWs.c_str());
-    }
+    LogString(LogLevel_DebugIntermediate, g_MfrModuleName, dllInstance, L"CopyFileFixup: WrapperCopyFile: Actual From", LongExistingFileWs.c_str());
+    LogString(LogLevel_DebugIntermediate, g_MfrModuleName, dllInstance, L"CopyFileFixup: WrapperCopyFile: Actual To", LongNewFileWs.c_str());
 
     retfinal = impl::CopyFile(LongExistingFileWs.c_str(), LongNewFileWs.c_str(), failIfExists);
     if (retfinal == 0)
     {
         // Issue
         DWORD initialError = GetLastError();
-        if (moredebug)
-        {
-            Log(L"[%s%d] CopyFileFixup: Wrapper initial FAILURE err=0x%x", g_MfrModuleName, dllInstance, initialError);
-        }
+        Log(LogLevel_DebugIntermediate, L"[%s%d] CopyFileFixup: Wrapper initial FAILURE err=0x%x", g_MfrModuleName, dllInstance, initialError);
         if (MFRConfiguration.Ilv_Aware)
         {
             // ILV can cause this error code when things should have worked, attempt to process it ourselves.
             if (initialError == ERROR_CANT_ACCESS_FILE)
             {
 #if TRIED_DIDNOT_HELP
-                retfinal = WRAPPER_WORKAROUND(LongExistingFileWs, LongNewFileWs, failIfExists, debug, moredebug, dllInstance);
+                retfinal = WRAPPER_WORKAROUND(LogLevel_DebugIntermediate, LongExistingFileWs, LongNewFileWs, failIfExists, debug, moredebug, dllInstance);
 #endif
             }
         }
     }
-    if (debug)
+
+    if (retfinal)
     {
-        if (retfinal)
-        {
-            Log(L"[%s%d] CopyFileFixup: return SUCCESS", g_MfrModuleName, dllInstance);
-        }
-        else
-        {
-            Log(L"[%s%d] CopyFileFixup: return FAILURE err=0x%x", g_MfrModuleName, dllInstance, GetLastError());
-        }
+        Log(LogLevel_DebugBasic, L"[%s%d] CopyFileFixup: return SUCCESS", g_MfrModuleName, dllInstance);
     }
+    else
+    {
+        Log(LogLevel_DebugBasic, L"[%s%d] CopyFileFixup: return FAILURE err=0x%x", g_MfrModuleName, dllInstance, GetLastError());
+    }
+
     return retfinal;
 }
 
@@ -130,14 +112,6 @@ template <typename CharT>
 BOOL __stdcall CopyFileFixup(_In_ const CharT* existingFileName, _In_ const CharT* newFileName, _In_ BOOL failIfExists) noexcept
 {
     DWORD dllInstance = ++g_InterceptInstance;
-    bool debug = false;
-    bool moredebug = false;
-#if _DEBUG
-    debug = true;
-#if MOREDEBUG
-    moredebug = true;
-#endif
-#endif
     BOOL retfinal;
     
     auto guard = g_reentrancyGuard.enter();
@@ -145,11 +119,10 @@ BOOL __stdcall CopyFileFixup(_In_ const CharT* existingFileName, _In_ const Char
     {
         if (guard)
         {
-#if _DEBUG
-            LogString(g_MfrModuleName, dllInstance, L"CopyFileFixup from", existingFileName);
-            LogString(g_MfrModuleName, dllInstance, L"CopyFileFixup   to", newFileName);
-            Log(L"[%s%d] CopyFileFixup FailIfExists %d", g_MfrModuleName, dllInstance, failIfExists);
-#endif
+            LogString(LogLevel_DebugBasic, g_MfrModuleName, dllInstance, L"CopyFileFixup from", existingFileName);
+            LogString(LogLevel_DebugBasic, g_MfrModuleName, dllInstance, L"CopyFileFixup   to", newFileName);
+            Log(LogLevel_DebugBasic, L"[%s%d] CopyFileFixup FailIfExists %d", g_MfrModuleName, dllInstance, failIfExists);
+
             std::wstring wExistingFileName = widen(existingFileName);
             std::wstring wNewFileName = widen(newFileName);
             wExistingFileName = AdjustSlashes(wExistingFileName, dllInstance);
@@ -159,13 +132,13 @@ BOOL __stdcall CopyFileFixup(_In_ const CharT* existingFileName, _In_ const Char
             wNewFileName = AdjustBadUNC(wNewFileName, dllInstance, L"CopyFileFixup (new)");
             
 
-            // This get is inheirently a write operation in all cases.
+            // This get is inherently a write operation in all cases.
             // We will always want the redirected location for the new file name.
             Cohorts cohortsExisting;
-            DetermineCohorts(wExistingFileName, &cohortsExisting, moredebug, dllInstance, L"CopyFileFixup (existing)");
+            DetermineCohorts(LogLevel_DebugIntermediate, wExistingFileName, &cohortsExisting, dllInstance, L"CopyFileFixup (existing)");
 
             Cohorts cohortsNew;
-            DetermineCohorts(wNewFileName, &cohortsNew, moredebug, dllInstance, L"CopyFileFixup (new)");
+            DetermineCohorts(LogLevel_DebugIntermediate, wNewFileName, &cohortsNew, dllInstance, L"CopyFileFixup (new)");
             
             if (!MFRConfiguration.Ilv_Aware)
             {
@@ -232,9 +205,7 @@ BOOL __stdcall CopyFileFixup(_In_ const CharT* existingFileName, _In_ const Char
                     newFileWsRedirected = cohortsNew.WsRequested;
                     break;
                 }
-#if MOREDEBUG
-                Log(L"[%s%d] CopyFileFixup: redirected destination=%s", g_MfrModuleName, dllInstance, newFileWsRedirected.c_str());
-#endif
+                Log(LogLevel_DebugIntermediate, L"[%s%d] CopyFileFixup: redirected destination=%s", g_MfrModuleName, dllInstance, newFileWsRedirected.c_str());
 
 #if MOREDEBUG
 #if TRIED_DIDNOT_HELP
@@ -252,19 +223,19 @@ BOOL __stdcall CopyFileFixup(_In_ const CharT* existingFileName, _In_ const Char
                             PathExists(cohortsExisting.WsRedirected.c_str()))
                         {
                             PreCreateFolders(newFileWsRedirected.c_str(), dllInstance, L"CopyFileFixup");
-                            retfinal = WRAPPER_COPYFILE(cohortsExisting.WsRedirected, newFileWsRedirected, failIfExists, debug, moredebug, dllInstance);
+                            retfinal = WRAPPER_COPYFILE(cohortsExisting.WsRedirected, newFileWsRedirected, failIfExists, dllInstance);
                             return retfinal;
                         }
                         else if (PathExists(cohortsExisting.WsPackage.c_str()))
                         {
                             PreCreateFolders(newFileWsRedirected.c_str(), dllInstance, L"CopyFileFixup");
-                            retfinal = WRAPPER_COPYFILE(cohortsExisting.WsPackage, newFileWsRedirected, failIfExists, debug, moredebug, dllInstance);
+                            retfinal = WRAPPER_COPYFILE(cohortsExisting.WsPackage, newFileWsRedirected, failIfExists, dllInstance);
                             return retfinal;
                         }
                         else
                         {
                             // There isn't such a file anywhere.  So the call will fail.
-                            retfinal = WRAPPER_COPYFILE(cohortsExisting.WsRequested, newFileWsRedirected, failIfExists, debug, moredebug, dllInstance);
+                            retfinal = WRAPPER_COPYFILE(cohortsExisting.WsRequested, newFileWsRedirected, failIfExists, dllInstance);
                             return retfinal;
                         }
                     }
@@ -277,26 +248,26 @@ BOOL __stdcall CopyFileFixup(_In_ const CharT* existingFileName, _In_ const Char
                             PathExists(cohortsExisting.WsRedirected.c_str()))
                         {
                             PreCreateFolders(newFileWsRedirected.c_str(), dllInstance, L"CopyFileFixup");
-                            retfinal = WRAPPER_COPYFILE(cohortsExisting.WsRedirected, newFileWsRedirected, failIfExists, debug, moredebug, dllInstance);
+                            retfinal = WRAPPER_COPYFILE(cohortsExisting.WsRedirected, newFileWsRedirected, failIfExists, dllInstance);
                             return retfinal;
                         }
                         else if (PathExists(cohortsExisting.WsPackage.c_str()))
                         {
                             PreCreateFolders(newFileWsRedirected.c_str(), dllInstance, L"CopyFileFixup");
-                            retfinal = WRAPPER_COPYFILE(cohortsExisting.WsPackage, newFileWsRedirected, failIfExists, debug, moredebug, dllInstance);
+                            retfinal = WRAPPER_COPYFILE(cohortsExisting.WsPackage, newFileWsRedirected, failIfExists, dllInstance);
                             return retfinal;
                         }
                         else if (cohortsExisting.NativeIsValidOptionInScenario &&
                             PathExists(cohortsExisting.WsNative.c_str()))
                         {
                             PreCreateFolders(newFileWsRedirected.c_str(), dllInstance, L"CopyFileFixup");
-                            retfinal = WRAPPER_COPYFILE(cohortsExisting.WsNative, newFileWsRedirected, failIfExists, debug, moredebug, dllInstance);
+                            retfinal = WRAPPER_COPYFILE(cohortsExisting.WsNative, newFileWsRedirected, failIfExists, dllInstance);
                             return retfinal;
                         }
                         else
                         {
                             // There isn't such a file anywhere.  Let the call fails as requested.
-                            retfinal = WRAPPER_COPYFILE(cohortsExisting.WsRequested, newFileWsRedirected, failIfExists, debug, moredebug, dllInstance);
+                            retfinal = WRAPPER_COPYFILE(cohortsExisting.WsRequested, newFileWsRedirected, failIfExists, dllInstance);
                             return retfinal;
                         }
                     }
@@ -309,19 +280,19 @@ BOOL __stdcall CopyFileFixup(_In_ const CharT* existingFileName, _In_ const Char
                             PathExists(cohortsExisting.WsRedirected.c_str()))
                         {
                             PreCreateFolders(newFileWsRedirected.c_str(), dllInstance, L"CopyFileFixup");
-                            retfinal = WRAPPER_COPYFILE(cohortsExisting.WsRedirected, newFileWsRedirected, failIfExists, debug, moredebug, dllInstance);
+                            retfinal = WRAPPER_COPYFILE(cohortsExisting.WsRedirected, newFileWsRedirected, failIfExists, dllInstance);
                             return retfinal;
                         }
                         else if (PathExists(cohortsExisting.WsPackage.c_str()))
                         {
                             PreCreateFolders(newFileWsRedirected.c_str(), dllInstance, L"CopyFileFixup");
-                            retfinal = WRAPPER_COPYFILE(cohortsExisting.WsPackage, newFileWsRedirected, failIfExists, debug, moredebug, dllInstance);
+                            retfinal = WRAPPER_COPYFILE(cohortsExisting.WsPackage, newFileWsRedirected, failIfExists, dllInstance);
                             return retfinal;
                         }
                         else
                         {
                             // There isn't such a file anywhere.  Let the call fails as requested.
-                            retfinal = WRAPPER_COPYFILE(cohortsExisting.WsRequested, newFileWsRedirected, failIfExists, debug, moredebug, dllInstance);
+                            retfinal = WRAPPER_COPYFILE(cohortsExisting.WsRequested, newFileWsRedirected, failIfExists, dllInstance);
                             return retfinal;
                         }
                     }
@@ -338,13 +309,13 @@ BOOL __stdcall CopyFileFixup(_In_ const CharT* existingFileName, _In_ const Char
                         if (PathExists(cohortsExisting.WsRedirected.c_str()))
                         {
                             PreCreateFolders(newFileWsRedirected.c_str(), dllInstance, L"CopyFileFixup");
-                            retfinal = WRAPPER_COPYFILE(cohortsExisting.WsRedirected, newFileWsRedirected, failIfExists, debug, moredebug, dllInstance);
+                            retfinal = WRAPPER_COPYFILE(cohortsExisting.WsRedirected, newFileWsRedirected, failIfExists, dllInstance);
                             return retfinal;
                         }
                         else if (PathExists(cohortsExisting.WsPackage.c_str()))
                         {
                             PreCreateFolders(newFileWsRedirected.c_str(), dllInstance, L"CopyFileFixup");
-                            retfinal = WRAPPER_COPYFILE(cohortsExisting.WsPackage, newFileWsRedirected, failIfExists, debug, moredebug, dllInstance);
+                            retfinal = WRAPPER_COPYFILE(cohortsExisting.WsPackage, newFileWsRedirected, failIfExists, dllInstance);
                             return retfinal;
                         }
                         else
@@ -353,47 +324,43 @@ BOOL __stdcall CopyFileFixup(_In_ const CharT* existingFileName, _In_ const Char
                             {
 #if TRIED_DIDNOT_HELP
                                 // Under IlV, we sometimes can't see the file (like Personal folder).  But let's try.
-                                retfinal = WRAPPER_COPYFILE(cohortsExisting.WsRequested, newFileWsRedirected, failIfExists, debug, moredebug, dllInstance);
+                                retfinal = WRAPPER_COPYFILE(cohortsExisting.WsRequested, newFileWsRedirected, failIfExists, dllInstance);
                                 if (!retfinal && GetLastError() == ERROR_CANT_ACCESS_FILE)
                                 {
                                     std::wstring ilvpath = g_writablePackageRootPath.c_str();
                                     ilvpath.append(cohortsExisting.WsRequested.substr(cohortsExisting.WsRequested.find(L"\\VFS", 0)));
-#if MOREDEBUG
+
                                     dAtt = ::GetFileAttributes(cohortsExisting.WsRequested.c_str());
-                                    Log(L"[%s%d] CopyFileFixup: Test GetFileAttributes Source Requested yields 0x%x on %s", g_MfrModuleName, dllInstance, dAtt, cohortsExisting.WsRequested.c_str());
+                                    Log(LogLevel_DebugIntermediate, L"[%s%d] CopyFileFixup: Test GetFileAttributes Source Requested yields 0x%x on %s", g_MfrModuleName, dllInstance, dAtt, cohortsExisting.WsRequested.c_str());
                                     dAtt = ::GetFileAttributes(cohortsExisting.WsRedirected.c_str());
-                                    Log(L"[%s%d] CopyFileFixup: Test GetFileAttributes Source Redirected yields 0x%x on %s", g_MfrModuleName, dllInstance, dAtt, cohortsExisting.WsRedirected.c_str());
+                                    Log(LogLevel_DebugIntermediate, L"[%s%d] CopyFileFixup: Test GetFileAttributes Source Redirected yields 0x%x on %s", g_MfrModuleName, dllInstance, dAtt, cohortsExisting.WsRedirected.c_str());
                                     dAtt = ::GetFileAttributes(cohortsExisting.WsNative.c_str());
-                                    Log(L"[%s%d] CopyFileFixup: Test GetFileAttributes Source Native yields 0x%x on %s", g_MfrModuleName, dllInstance, dAtt, cohortsExisting.WsNative.c_str());
+                                    Log(LogLevel_DebugIntermediate, L"[%s%d] CopyFileFixup: Test GetFileAttributes Source Native yields 0x%x on %s", g_MfrModuleName, dllInstance, dAtt, cohortsExisting.WsNative.c_str());
                                     dAtt = ::GetFileAttributes(ilvpath.c_str());
-                                    Log(L"[%s%d] CopyFileFixup: Test GetFileAttributes Source Munged yields 0x%x on %s", g_MfrModuleName, dllInstance, dAtt, ilvpath.c_str());
-#endif
-#if MOREDEBUG
-                                    Log(L"[%s%d] CopyFileFixup: try this as source %s", g_MfrModuleName, dllInstance, ilvpath.c_str());
-#endif
-                                    retfinal = WRAPPER_COPYFILE(ilvpath, newFileWsRedirected, failIfExists, debug, moredebug, dllInstance);
+                                    Log(LogLevel_DebugIntermediate, L"[%s%d] CopyFileFixup: Test GetFileAttributes Source Munged yields 0x%x on %s", g_MfrModuleName, dllInstance, dAtt, ilvpath.c_str());
+
+                                    Log(LogLevel_DebugIntermediate, L"[%s%d] CopyFileFixup: try this as source %s", g_MfrModuleName, dllInstance, ilvpath.c_str());
+                                    retfinal = WRAPPER_COPYFILE(ilvpath, newFileWsRedirected, failIfExists, dllInstance);
                                     if (!retfinal)
                                     {
                                         std::wstring ilvpathDest = g_writablePackageRootPath.c_str();
                                         ilvpathDest.append(cohortsExisting.WsRequested.substr(cohortsNew.WsPackage.find(L"\\VFS", 0)));
-#if MOREDEBUG
                                         dAtt = ::GetFileAttributes(ilvpathDest.c_str());
-                                        Log(L"[%s%d] CopyFileFixup: Test GetFileAttributes Dest Munged yields 0x%x on %s", g_MfrModuleName, dllInstance, dAtt, ilvpathDest.c_str());
-#endif
-                                        retfinal = WRAPPER_COPYFILE(ilvpath, ilvpathDest, failIfExists, debug, moredebug, dllInstance);
+                                        Log(LogLevel_DebugIntermediate, L"[%s%d] CopyFileFixup: Test GetFileAttributes Dest Munged yields 0x%x on %s", g_MfrModuleName, dllInstance, dAtt, ilvpathDest.c_str());
+                                        retfinal = WRAPPER_COPYFILE(ilvpath, ilvpathDest, failIfExists, dllInstance);
                                     }
                                     return retfinal;
                                 }
 #else
                                 // There isn't such a file anywhere.  Let the call fails as requested.
-                                retfinal = WRAPPER_COPYFILE(cohortsExisting.WsRequested, newFileWsRedirected, failIfExists, debug, moredebug, dllInstance);
+                                retfinal = WRAPPER_COPYFILE(cohortsExisting.WsRequested, newFileWsRedirected, failIfExists, dllInstance);
                                 return retfinal;
 #endif
                             }
                             else
                             {
                                 // There isn't such a file anywhere.  Let the call fails as requested.
-                                retfinal = WRAPPER_COPYFILE(cohortsExisting.WsRequested, newFileWsRedirected, failIfExists, debug, moredebug, dllInstance);
+                                retfinal = WRAPPER_COPYFILE(cohortsExisting.WsRequested, newFileWsRedirected, failIfExists, dllInstance);
                                 return retfinal;
                             }
                         }
@@ -402,34 +369,32 @@ BOOL __stdcall CopyFileFixup(_In_ const CharT* existingFileName, _In_ const Char
                         cohortsExisting.map.RedirectionFlags == mfr::mfr_redirect_flags::prefer_redirection_if_package_vfs) &&
                         cohortsExisting.map.Valid_mapping == mfr::mfr_enabled_types::enabled)
                     {
-#if MOREDEBUG
-                        Log(L"[%s%d] CopyFileFixup: from VFS with prefer traditional redirection on source", g_MfrModuleName, dllInstance);
-#endif
+                        Log(LogLevel_DebugIntermediate, L"[%s%d] CopyFileFixup: from VFS with prefer traditional redirection on source", g_MfrModuleName, dllInstance);
                         // try the redirection path, then the package (COW), then native (possibly COW)
                         if (cohortsExisting.map.IsAnExclusionToRedirect == mfr::mfr_exclusion_types::not_excluded && 
                             PathExists(cohortsExisting.WsRedirected.c_str()))
                         {
                             PreCreateFolders(newFileWsRedirected.c_str(), dllInstance, L"CopyFileFixup");
-                            retfinal = WRAPPER_COPYFILE(cohortsExisting.WsRedirected, newFileWsRedirected, failIfExists, debug, moredebug, dllInstance);
+                            retfinal = WRAPPER_COPYFILE(cohortsExisting.WsRedirected, newFileWsRedirected, failIfExists, dllInstance);
                             return retfinal;
                         }
                         else if (PathExists(cohortsExisting.WsPackage.c_str()))
                         {
                             PreCreateFolders(newFileWsRedirected.c_str(), dllInstance, L"CopyFileFixup");
-                            retfinal = WRAPPER_COPYFILE(cohortsExisting.WsPackage, newFileWsRedirected, failIfExists, debug, moredebug, dllInstance);
+                            retfinal = WRAPPER_COPYFILE(cohortsExisting.WsPackage, newFileWsRedirected, failIfExists, dllInstance);
                             return retfinal;
                         }
                         else if (cohortsExisting.NativeIsValidOptionInScenario &&
                             PathExists(cohortsExisting.WsNative.c_str()))
                         {
                             PreCreateFolders(newFileWsRedirected.c_str(), dllInstance, L"CopyFileFixup");
-                            retfinal = WRAPPER_COPYFILE(cohortsExisting.WsNative, newFileWsRedirected, failIfExists, debug, moredebug, dllInstance);
+                            retfinal = WRAPPER_COPYFILE(cohortsExisting.WsNative, newFileWsRedirected, failIfExists, dllInstance);
                             return retfinal;
                         }
                         else
                         {
                             // There isn't such a file anywhere.  Let the call fails as requested.
-                            retfinal = WRAPPER_COPYFILE(cohortsExisting.WsRequested, newFileWsRedirected, failIfExists, debug, moredebug, dllInstance);
+                            retfinal = WRAPPER_COPYFILE(cohortsExisting.WsRequested, newFileWsRedirected, failIfExists, dllInstance);
                             return retfinal;
                         }
                     }
@@ -442,26 +407,26 @@ BOOL __stdcall CopyFileFixup(_In_ const CharT* existingFileName, _In_ const Char
                             PathExists(cohortsExisting.WsRedirected.c_str()))
                         {
                             PreCreateFolders(newFileWsRedirected.c_str(), dllInstance, L"CopyFileFixup");
-                            retfinal = WRAPPER_COPYFILE(cohortsExisting.WsRedirected, newFileWsRedirected, failIfExists, debug, moredebug, dllInstance);
+                            retfinal = WRAPPER_COPYFILE(cohortsExisting.WsRedirected, newFileWsRedirected, failIfExists, dllInstance);
                             return retfinal;
                         }
                         else if (PathExists(cohortsExisting.WsPackage.c_str()))
                         {
                             PreCreateFolders(newFileWsRedirected.c_str(), dllInstance, L"CopyFileFixup");
-                            retfinal = WRAPPER_COPYFILE(cohortsExisting.WsPackage, newFileWsRedirected, failIfExists, debug, moredebug, dllInstance);
+                            retfinal = WRAPPER_COPYFILE(cohortsExisting.WsPackage, newFileWsRedirected, failIfExists, dllInstance);
                             return retfinal;
                         }
                         else if (cohortsExisting.NativeIsValidOptionInScenario &&
                             PathExists(cohortsExisting.WsNative.c_str()))
                         {
                             PreCreateFolders(newFileWsRedirected.c_str(), dllInstance, L"CopyFileFixup");
-                            retfinal = WRAPPER_COPYFILE(cohortsExisting.WsNative, newFileWsRedirected, failIfExists, debug, moredebug, dllInstance);
+                            retfinal = WRAPPER_COPYFILE(cohortsExisting.WsNative, newFileWsRedirected, failIfExists, dllInstance);
                             return retfinal;
                         }
                         else
                         {
                             // There isn't such a file anywhere.  Let the call fails as requested.
-                            retfinal = WRAPPER_COPYFILE(cohortsExisting.WsRequested, newFileWsRedirected, failIfExists, debug, moredebug, dllInstance);
+                            retfinal = WRAPPER_COPYFILE(cohortsExisting.WsRequested, newFileWsRedirected, failIfExists, dllInstance);
                             return retfinal;
                         }
                     }
@@ -482,39 +447,32 @@ BOOL __stdcall CopyFileFixup(_In_ const CharT* existingFileName, _In_ const Char
             else
             {
                 // ILV
-                std::wstring usePathNew = DetermineIlvPathForWriteOperations(cohortsNew, dllInstance, moredebug);
-#if MOREDEBUG
-                LogString(g_MfrModuleName, dllInstance, L"CopyFileFixup ILV UseTo", usePathNew.c_str());
-#endif                
+                std::wstring usePathNew = DetermineIlvPathForWriteOperations(LogLevel_DebugIntermediate, cohortsNew, dllInstance);
+                LogString(LogLevel_DebugIntermediate, g_MfrModuleName, dllInstance, L"CopyFileFixup ILV UseTo", usePathNew.c_str());
+
                 // In a redirect to local scenario, we are responsible for pre-creating the local parent folders
                 // if-and-only-if they are present in the package.
-                PreCreateLocalFoldersIfNeededForWrite(usePathNew, cohortsNew.WsPackage, dllInstance, debug, L"CopyFileFixup");
+                PreCreateLocalFoldersIfNeededForWrite(LogLevel_DebugBasic, usePathNew, cohortsNew.WsPackage, dllInstance, L"CopyFileFixup");
                 // In a redirect to local scenario, if the file is not present locally, but is in the package, we are responsible to copy it there first.
-                CowLocalFoldersIfNeededForWrite(usePathNew, cohortsNew.WsPackage, dllInstance, debug, L"CopyFileFixup");
+                CowLocalFoldersIfNeededForWrite(LogLevel_DebugBasic, usePathNew, cohortsNew.WsPackage, dllInstance, L"CopyFileFixup");
                 // In a write to package scenario, folders may be needed.
-                PreCreatePackageFoldersIfIlvNeededForWrite(usePathNew, dllInstance, debug, L"CopyFileFixup");
+                PreCreatePackageFoldersIfIlvNeededForWrite(LogLevel_DebugBasic, usePathNew, dllInstance, L"CopyFileFixup");
 
-                std::wstring usePathExisting = DetermineIlvPathForReadOperations(cohortsExisting, dllInstance, moredebug);
-#if MOREDEBUG
-                LogString(g_MfrModuleName, dllInstance, L"CopyFileFixup ILV UseFrom", usePathExisting.c_str());
-#endif
-                // In a redirect to local scenario, we are responsible for determing if source is local or in package
+                std::wstring usePathExisting = DetermineIlvPathForReadOperations(LogLevel_DebugIntermediate, cohortsExisting, dllInstance);
+                LogString(LogLevel_DebugIntermediate, g_MfrModuleName, dllInstance, L"CopyFileFixup ILV UseFrom", usePathExisting.c_str());
+
+                // In a redirect to local scenario, we are responsible for determining if source is local or in package
                 usePathExisting = SelectLocalOrPackageForRead(usePathExisting, cohortsExisting.WsPackage);
                 
-                retfinal = WRAPPER_COPYFILE(usePathExisting, usePathNew, failIfExists, debug, debug, dllInstance);
+                retfinal = WRAPPER_COPYFILE(usePathExisting, usePathNew, failIfExists, dllInstance);
                 return retfinal;
             }
         }
     }
-#if _DEBUG
     // Fall back to assuming no redirection is necessary if exception
-    LOGGED_CATCHHANDLER_MIN(g_MfrModuleName, dllInstance, L"CopyFileFixup")
-#else
-    catch (...)
-    {
-        Log(L"[%s%d] CopyFileFixup Exception=0x%x", g_MfrModuleName, dllInstance, GetLastError());
-    }
-#endif
+    LOGGED_CATCHHANDLER_MIN(LogLevel_DebugBasic, g_MfrModuleName, dllInstance, L"CopyFileFixup")
+
+
     if (existingFileName != nullptr && newFileName != nullptr)
     {
         std::wstring LongFileName1 = MakeLongPath(widen(existingFileName));
@@ -526,9 +484,7 @@ BOOL __stdcall CopyFileFixup(_In_ const CharT* existingFileName, _In_ const Char
         SetLastError(ERROR_INVALID_PARAMETER);
         retfinal = 0; // impl::CopyFile(existingFileName, newFileName, failIfExists);
     }
-#if _DEBUG
-    Log(L"[%s%d] CopyFile returns 0x%x", g_MfrModuleName, dllInstance, retfinal);
-#endif
+    Log(LogLevel_DebugBasic, L"[%s%d] CopyFile returns 0x%x", g_MfrModuleName, dllInstance, retfinal);
     return retfinal;
 }
 DECLARE_STRING_FIXUP(impl::CopyFile, CopyFileFixup);

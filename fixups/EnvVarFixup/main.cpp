@@ -19,9 +19,7 @@ extern "C" {
     {
         if (reason == DLL_PROCESS_ATTACH)
         {
-#if _DEBUG
-            Log(L"[%s%d] Attaching EnvVarFixup", g_EnvVarName, 0);
-#endif
+            Log(LogLevel_DebugBasic, L"[%s%d] Attaching EnvVarFixup", g_EnvVarName, 0);
 
             InitializeFixups();
             InitializeConfiguration();
@@ -31,7 +29,7 @@ extern "C" {
     }
     catch (...)
     {
-        Log(L"[%s%d] EnvVarFixup attach ERROR", g_EnvVarName, 0);
+        Log(LogLevel_Exception, L"[%s%d] EnvVarFixup attach ERROR", g_EnvVarName, 0);
         ::SetLastError(win32_from_caught_exception());
         return FALSE;
     }

@@ -11,7 +11,6 @@
 namespace mfr
 {
 
-#if _DEBUG
     const wchar_t* MfrPathTypeName(mfr_path_types mfr)
     {
         switch (mfr)
@@ -43,7 +42,6 @@ namespace mfr
             return L"unknown";
         }
     } // MfrPathTypeName()
-#endif
 
     mfr_path_types Get_ManagedPathTypeForDriveAbsolute(std::filesystem::path path)
     {

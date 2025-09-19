@@ -85,7 +85,7 @@ HANDLE __stdcall CreateFileFixup(
                 LogFunctionResult(functionResult);
                 if (function_failed(functionResult))
                 {
-                    LogLastError();
+                    LogLastError(LogLevel_DebugBasic);
                 }
                 LogCallingModule();
             }
@@ -174,7 +174,7 @@ HANDLE __stdcall CreateFile2Fixup(
                 LogFunctionResult(functionResult);
                 if (function_failed(functionResult))
                 {
-                    LogLastError();
+                    LogLastError(LogLevel_DebugBasic);
                 }
                 LogCallingModule();
             }
@@ -245,7 +245,7 @@ BOOL __stdcall CopyFileFixup(_In_ const CharT* existingFileName, _In_ const Char
                 LogFunctionResult(functionResult);
                 if (function_failed(functionResult))
                 {
-                    LogLastError();
+                    LogLastError(LogLevel_DebugBasic);
                 }
                 LogCallingModule();
             }
@@ -393,7 +393,7 @@ BOOL __stdcall CopyFileExFixup(
                 LogFunctionResult(functionResult);
                 if (function_failed(functionResult))
                 {
-                    LogLastError();
+                    LogLastError(LogLevel_DebugBasic) ;
                 }
                 LogCallingModule();
             }
@@ -464,7 +464,7 @@ BOOL __stdcall CreateHardLinkFixup(
                 LogFunctionResult(functionResult);
                 if (function_failed(functionResult))
                 {
-                    LogLastError();
+                    LogLastError(LogLevel_DebugBasic) ;
                 }
                 LogCallingModule();
             }
@@ -537,7 +537,7 @@ BOOLEAN __stdcall CreateSymbolicLinkFixup(
                 LogFunctionResult(functionResult);
                 if (function_failed(functionResult))
                 {
-                    LogLastError();
+                    LogLastError(LogLevel_DebugBasic) ;
                 }
                 LogCallingModule();
             }
@@ -603,7 +603,7 @@ BOOL __stdcall DeleteFileFixup(_In_ const CharT* fileName)
                 LogFunctionResult(functionResult);
                 if (function_failed(functionResult))
                 {
-                    LogLastError();
+                    LogLastError(LogLevel_DebugBasic) ;
                 }
                 LogCallingModule();
             }
@@ -671,7 +671,7 @@ BOOL __stdcall MoveFileFixup(_In_ const CharT* existingFileName, _In_ const Char
                 LogFunctionResult(functionResult);
                 if (function_failed(functionResult))
                 {
-                    LogLastError();
+                    LogLastError(LogLevel_DebugBasic) ;
                 }
                 LogCallingModule();
             }
@@ -741,7 +741,7 @@ BOOL __stdcall MoveFileExFixup(_In_ const CharT* existingFileName, _In_opt_ cons
                 LogFunctionResult(functionResult);
                 if (function_failed(functionResult))
                 {
-                    LogLastError();
+                    LogLastError(LogLevel_DebugBasic) ;
                 }
                 LogCallingModule();
             }
@@ -820,7 +820,7 @@ BOOL __stdcall ReplaceFileFixup(
                 LogFunctionResult(functionResult);
                 if (function_failed(functionResult))
                 {
-                    LogLastError();
+                    LogLastError(LogLevel_DebugBasic) ;
                 }
                 LogCallingModule();
             }
@@ -899,7 +899,7 @@ HANDLE __stdcall FindFirstFileFixup(
                 LogFunctionResult(functionResult);
                 if (function_failed(functionResult))
                 {
-                    LogLastError();
+                    LogLastError(LogLevel_DebugBasic) ;
                 }
                 else
                 {
@@ -994,7 +994,7 @@ HANDLE __stdcall FindFirstFileExFixup(
                 LogFunctionResult(functionResult);
                 if (function_failed(functionResult))
                 {
-                    LogLastError();
+                    LogLastError(LogLevel_DebugBasic) ;
                 }
                 else
                 {
@@ -1077,7 +1077,7 @@ BOOL __stdcall FindNextFileFixup(_In_ HANDLE findFile, _Out_ win32_find_data_t<C
                 LogFunctionResult(functionResult);
                 if (function_failed(functionResult))
                 {
-                    LogLastError();
+                    LogLastError(LogLevel_DebugBasic) ;
                 }
                 else if (result) // I.e. not ERROR_NO_MORE_FILES
                 {
@@ -1146,7 +1146,7 @@ BOOL __stdcall FindCloseFixup(_Inout_ HANDLE findFile)
                 LogFunctionResult(functionResult);
                 if (function_failed(functionResult))
                 {
-                    LogLastError();
+                    LogLastError(LogLevel_DebugBasic) ;
                 }
                 LogCallingModule();
             }
@@ -1214,7 +1214,7 @@ BOOL __stdcall CreateDirectoryFixup(_In_ const CharT* pathName, _In_opt_ LPSECUR
                 LogFunctionResult(functionResult);
                 if (function_failed(functionResult))
                 {
-                    LogLastError();
+                    LogLastError(LogLevel_DebugBasic) ;
                 }
                 LogCallingModule();
             }
@@ -1287,7 +1287,7 @@ BOOL __stdcall CreateDirectoryExFixup(
                 LogFunctionResult(functionResult);
                 if (function_failed(functionResult))
                 {
-                    LogLastError();
+                    LogLastError(LogLevel_DebugBasic) ;
                 }
                 LogCallingModule();
             }
@@ -1353,7 +1353,7 @@ BOOL __stdcall RemoveDirectoryFixup(_In_ const CharT* pathName)
                 LogFunctionResult(functionResult);
                 if (function_failed(functionResult))
                 {
-                    LogLastError();
+                    LogLastError(LogLevel_DebugBasic) ;
                 }
                 LogCallingModule();
             }
@@ -1419,7 +1419,7 @@ BOOL __stdcall SetCurrentDirectoryFixup(_In_ const CharT* pathName)
                 LogFunctionResult(functionResult);
                 if (function_failed(functionResult))
                 {
-                    LogLastError();
+                    LogLastError(LogLevel_DebugBasic) ;
                 }
                 LogCallingModule();
             }
@@ -1488,7 +1488,7 @@ DWORD __stdcall GetCurrentDirectoryFixup(
                 LogFunctionResult(functionResult);
                 if (function_failed(functionResult))
                 {
-                    LogLastError();
+                    LogLastError(LogLevel_DebugBasic) ;
                 }
                 else if (buffer)
                 {
@@ -1562,7 +1562,7 @@ DWORD __stdcall GetFileAttributesFixup(_In_ const CharT* fileName)
                 LogFunctionResult(functionResult);
                 if (function_failed(functionResult))
                 {
-                    LogLastError();
+                    LogLastError(LogLevel_DebugBasic) ;
                 }
                 else
                 {
@@ -1634,7 +1634,7 @@ BOOL __stdcall SetFileAttributesFixup(_In_ const CharT* fileName, _In_ DWORD fil
                 LogFunctionResult(functionResult);
                 if (function_failed(functionResult))
                 {
-                    LogLastError();
+                    LogLastError(LogLevel_DebugBasic) ;
                 }
                 LogCallingModule();
             }
@@ -1711,7 +1711,7 @@ BOOL __stdcall GetFileAttributesExFixup(
                 LogFunctionResult(functionResult);
                 if (function_failed(functionResult))
                 {
-                    LogLastError();
+                    LogLastError(LogLevel_DebugBasic) ;
                 }
                 else
                 {
