@@ -9,6 +9,9 @@
 // For example, CreateFileFixup could call kernelbase!CopyFileW, which could in turn call (the fixed) CreateFile again
 #pragma once
 
+#define INTERCEPT_KERNELBASE_PlusRegGetValue
+#define TRYHKLM2HKCU 1
+
 #include <reentrancy_guard.h>
 #include <psf_framework.h>
 
@@ -301,7 +304,7 @@ namespace winternl
         _Out_opt_ LPDWORD lpType,
         _Out_opt_ LPBYTE lpData,
         _In_opt_ _Out_opt_ LPDWORD lpcbData);
-#if INTERCEPT_KERNELBASE_PlusRegGetValue
+#ifdef INTERCEPT_KERNELBASE_PlusRegGetValue
     LSTATUS __stdcall RegGetValueA(
         _In_ HKEY key,
         _In_opt_ LPCSTR lpSubKey,
@@ -421,7 +424,7 @@ namespace impl
     inline auto KernelBaseRegEnumValueA = KERNELBASEINTERNL_FUNCTION(winternl::RegEnumValueA);
     inline auto KernelBaseRegEnumValueW = KERNELBASEINTERNL_FUNCTION(winternl::RegEnumValueW);
 
-#if INTERCEPT_KERNELBASE_PlusRegGetValue
+#ifdef INTERCEPT_KERNELBASE_PlusRegGetValue
     inline auto KernelBaseRegGetValueA = KERNELBASEINTERNL_FUNCTION(winternl::RegGetValueA);
     inline auto KernelBaseRegGetValueW = KERNELBASEINTERNL_FUNCTION(winternl::RegGetValueW);
 #endif

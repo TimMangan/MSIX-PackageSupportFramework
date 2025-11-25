@@ -20,6 +20,7 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\..\..\CommonSrc\psf_logging.cpp" />
     <ClCompile Include="CopyFileTest.cpp" />
     <ClCompile Include="CreateDirectoryTest.cpp" />
     <ClCompile Include="CreateHardLinkTest.cpp" />

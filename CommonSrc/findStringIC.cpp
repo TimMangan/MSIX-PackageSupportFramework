@@ -41,6 +41,12 @@ std::wstring wStringToLower(const std::wstring& str) {
     return lowerStr;
 }
 
+std::wstring wStringToUpper(const std::wstring& str) {
+    std::wstring upperStr = str;
+    std::transform(upperStr.begin(), upperStr.end(), upperStr.begin(), ::towupper);
+    return upperStr;
+}
+
 std::wstring caseInsensitiveReplace(const std::wstring& str, const std::wstring& from, const std::wstring& to) {
     std::wstring lowerStr = wStringToLower(str);
     std::wstring lowerFrom = wStringToLower(from);

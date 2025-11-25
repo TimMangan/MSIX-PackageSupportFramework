@@ -7,6 +7,9 @@
     <Filter Include="pkg">
       <UniqueIdentifier>{203525a1-992e-49e4-918d-f089d01e7888}</UniqueIdentifier>
     </Filter>
+    <Filter Include="CommonSrc">
+      <UniqueIdentifier>{2a7f5070-66fd-4e5a-aac1-c185ff62a7c1}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -65,6 +68,9 @@
     </ClCompile>
     <ClCompile Include="PackageDriveTests.cpp">
       <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\CommonSrc\psf_logging.cpp">
+      <Filter>CommonSrc</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

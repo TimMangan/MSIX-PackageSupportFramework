@@ -36,55 +36,62 @@ LSTATUS __stdcall RegDeleteKeyTransactedFixup(
     HANDLE hTransaction,
     PVOID  pExtendedParameter)
 {
-
-    DWORD RegLocalInstance = ++g_RegInterceptInstance;
-
-
-    auto result = RegDeleteKeyTransactedImpl(key, subKey, viewDesired, Reserved, hTransaction, pExtendedParameter);
-    auto functionResult = from_win32(result);
- 
-    if (functionResult != from_win32(0))
+    LSTATUS result;
+    auto guard = g_reentrancyGuard.enter();
+    if (guard)
     {
-        if (auto lock = acquire_output_lock(function_type::registry, functionResult))
+        DWORD RegLocalInstance = ++g_RegInterceptInstance;
+        Log(LogLevel_DebugBasic, L"[%s%d] RegDeleteKeyTransacted key=0x%xn", g_RegModuleName, RegLocalInstance, key);
+
+        result = RegDeleteKeyTransactedImpl(key, subKey, viewDesired, Reserved, hTransaction, pExtendedParameter);
+        auto functionResult = from_win32(result);
+
+        if (functionResult != from_win32(0))
         {
-            try
+            if (auto lock = acquire_output_lock(function_type::registry, functionResult))
             {
-                Log(LogLevel_DebugBasic, L"[%s%d] RegDeleteKeyTransacted key=0x%xn", g_RegModuleName, RegLocalInstance,key);
-                std::string keyOnlyPath = InterpretStringA(subKey);
-                std::string keypath = ReplaceAppRegistrySyntax(InterpretKeyPath(key) + "\\" + keyOnlyPath);
-                if (keypath.find("InterpretKeyPath failure") != std::string::npos)
+                try
                 {
-                    if constexpr (psf::is_ansi<CharT>)
+                    std::string keyOnlyPath = InterpretStringA(subKey);
+                    std::string keypath = ReplaceAppRegistrySyntaxA(InterpretKeyPath(key) + "\\" + keyOnlyPath);
+                    if (keypath.find("InterpretKeyPath failure") != std::string::npos)
                     {
-                        Log(LogLevel_DebugIntermediate, L"[%s%d] RegDeleteKeyTransacted (A): Path=%S", g_RegModuleName, RegLocalInstance, keypath.c_str());
+                        if constexpr (psf::is_ansi<CharT>)
+                        {
+                            Log(LogLevel_DebugIntermediate, L"[%s%d] RegDeleteKeyTransacted (A): Path=%S", g_RegModuleName, RegLocalInstance, keypath.c_str());
+                        }
+                        else
+                        {
+                            Log(LogLevel_DebugIntermediate, L"[%s%d] RegDeleteKeyTransacted (W): Path=%S", g_RegModuleName, RegLocalInstance, keypath.c_str());
+                        }
+                        result = 0;
                     }
                     else
                     {
-                        Log(LogLevel_DebugIntermediate, L"[%s%d] RegDeleteKeyTransacted (W): Path=%S", g_RegModuleName, RegLocalInstance, keypath.c_str());
+                        Log(LogLevel_DebugIntermediate, L"[%s%d] RegDeleteKeyTransacted: Path=%S", g_RegModuleName, RegLocalInstance, keypath.c_str());
+                        if (RegFixupFakeDelete(LogLevel_DebugIntermediate, keypath, RegLocalInstance) == true)
+                        {
+                            LogCallingModuleInstanceCommon(LogLevel_DebugIntermediate, g_RegModuleName, RegLocalInstance);
+                            Log(LogLevel_DebugIntermediate, L"[%s%d] RegDeleteKeyTransacted:Fake Success\n", g_RegModuleName, RegLocalInstance);
+                            result = 0;
+                        }
                     }
-                    result = 0;
                 }
-                else
+                catch (...)
                 {
-                    Log(LogLevel_DebugIntermediate, L"[%s%d] RegDeleteKeyTransacted: Path=%S", g_RegModuleName, RegLocalInstance, keypath.c_str());
-                    if (RegFixupFakeDelete(LogLevel_DebugIntermediate, keypath, RegLocalInstance) == true)
-                    {
-                        LogCallingModuleInstanceCommon(LogLevel_DebugIntermediate, g_RegModuleName, RegLocalInstance);
-                        Log(LogLevel_DebugIntermediate, L"[%s%d] RegDeleteKeyTransacted:Fake Success\n", g_RegModuleName, RegLocalInstance);
-                        result = 0;
-                    }
+                    Log(LogLevel_Exception, L"[%s%d] RegDeleteKeyTransacted logging failure.\n", g_RegModuleName, RegLocalInstance);
                 }
             }
-            catch (...)
-            {
-                Log(LogLevel_Exception, L"[%s%d] RegDeleteKeyTransacted logging failure.\n", g_RegModuleName, RegLocalInstance);
-            }
+            Log(LogLevel_DebugBasic, L"[%s%d] RegDeleteKeyTransacted:Fake returns %d\n", g_RegModuleName, RegLocalInstance, result);
         }
-        Log(LogLevel_DebugBasic, L"[%s%d] RegDeleteKeyTransacted:Fake returns %d\n", g_RegModuleName, RegLocalInstance, result);
+        else
+        {
+            Log(LogLevel_DebugBasic, L"[%s%d] RegDeleteKeyTransacted:Real returns %d\n", g_RegModuleName, RegLocalInstance, result);
+        }
     }
     else
     {
-        Log(LogLevel_DebugBasic, L"[%s%d] RegDeleteKeyTransacted:Real returns %d\n", g_RegModuleName, RegLocalInstance, result);
+        return RegDeleteKeyTransactedImpl(key, subKey, viewDesired, Reserved, hTransaction, pExtendedParameter);
     }
     return result;
 }

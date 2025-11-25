@@ -441,7 +441,7 @@ BOOL WINAPI CreateProcessFixup(
 
     STARTUPINFOEX *MyReplacementStartupInfo = reinterpret_cast<STARTUPINFOEX*>(startupInfo);
 
-    LogString(LogLevel_Launching, g_PsfRunTimeName, CreateProcessInstance, L"CreateProcessFixup: commandline", commandLine);
+    LogString(LogLevel_Launching, g_PsfRunTimeName, CreateProcessInstance, L"CreateProcessFixup: commandLine", commandLine);
 
     LogCreationFlags(LogLevel_DebugIntermediate, g_PsfRunTimeName, CreateProcessInstance, PossiblyModifiedCreationFlags, L"CreateProcessFixup");
 

@@ -112,13 +112,21 @@ BOOL __stdcall SetCurrentDirectoryFixup(_In_ const CharT* pathName) noexcept
     {
         std::wstring LongDeletingFile = MakeLongPath(widen(pathName));
         retfinal = impl::SetCurrentDirectory(LongDeletingFile.c_str());
+        if (retfinal == 0)
+        {
+            Log(LogLevel_DebugBasic, L"[%s%d] SetCurrentDirectoryFixup returns FAILURE 0x%x GetLastError=0x%x", g_MfrModuleName, dllInstance, retfinal,GetLastError());
+        }
+        else
+        {
+            Log(LogLevel_DebugBasic, L"[%s%d] SetCurrentDirectoryFixup returns SUCCESS 0x%x", g_MfrModuleName, dllInstance, retfinal);
+        }
     }
     else
     {
         SetLastError(ERROR_INVALID_PARAMETER);
         retfinal = 0; 
+        Log(LogLevel_DebugBasic, L"[%s%d] SetCurrentDirectoryFixup returns invalid parameter 0x%x", g_MfrModuleName, dllInstance, retfinal);
     }
-    Log(LogLevel_DebugBasic, L"[%s%d] SetCurrentDirectoryFixup returns 0x%x", g_MfrModuleName, dllInstance, retfinal);
     return retfinal;
 }
 DECLARE_STRING_FIXUP(impl::SetCurrentDirectory, SetCurrentDirectoryFixup);

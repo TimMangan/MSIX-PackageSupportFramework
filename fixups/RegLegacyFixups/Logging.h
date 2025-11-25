@@ -243,6 +243,7 @@ std::string InterpretKeyPath(HKEY key, const char* msg);
 
 
 std::string InterpretKeyPath(HKEY key);
+std::wstring InterpretKeyPathW(HKEY key);
 
 void LogRegKeyFlags(Json_Debug_Levels debugRequestLevel, DWORD dllInstance, DWORD flags, const wchar_t* msg = L"Options");
 

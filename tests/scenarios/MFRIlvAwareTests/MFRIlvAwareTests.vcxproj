@@ -175,6 +175,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="..\..\..\CommonSrc\psf_logging.cpp" />
     <ClCompile Include="MfrAttributeTests.cpp" />
     <ClCompile Include="MfrIlvAwareCleanup.cpp" />
     <ClCompile Include="MfrCopyFileTests.cpp" />

@@ -39,7 +39,7 @@ namespace details
 // The RegLegacyFixup supports only a few intercepts.
 // The tests here make routine registry calls that might have once worked but do not when running under MSIX without remediation.
 
-// THe folllowing strings must match with registry keus present in the appropriate section of the package Registry.dat file.
+// THe following strings must match with registry keys present in the appropriate section of the package Registry.dat file.
 #define TestKeyName_HKCU_Covered         L"Software\\Vendor_Covered"
 #define TestKeyName_HKCU_NotCovered      L"Software\\Vendor_NotCovered"
 
@@ -134,7 +134,7 @@ std::wstring FormatHelperMsg(LPCWSTR testFunction, LPCWSTR path, LSTATUS Expecte
     else
         msg += L": Test FAILS.";
     return msg;
-} // FormatHelperMsg()
+} // FormatHelperMsg() // FormatHelperMsg()
 #pragma endregion Helper_Functions
 
 
@@ -277,11 +277,10 @@ void NotCoveredTests()
         retval = 2;
     }
     test_end(retval);
-}
+} // NotCoveredTests()
 
 
-
-DWORD DeletionMarkerTestHelper(HKEY hKey, LPCWSTR path, LSTATUS ExpectedResult)
+DWORD DeletionMarkerTestHelper(HKEY hKey, LPCWSTR path, LSTATUS ExpectedBasePathResult, LSTATUS StupidExpectedResult, LSTATUS HideExpectedResult)
 {
     HKEY HK_Attempt;
     DWORD retval = 0;  // number of unexpected results.
@@ -290,8 +289,8 @@ DWORD DeletionMarkerTestHelper(HKEY hKey, LPCWSTR path, LSTATUS ExpectedResult)
     std::wstring msg;
 
     result = RegOpenKey(hKey, path, &HK_Attempt);
-    msg = FormatHelperMsg(L"RegOpenKey", path, ExpectedResult, result);
-    if (result == ExpectedResult)
+    msg = FormatHelperMsg(L"RegOpenKey", path, ExpectedBasePathResult, result);
+    if (result == ExpectedBasePathResult)
     {
         trace_message(msg, console::color::blue, true);
     }
@@ -307,8 +306,8 @@ DWORD DeletionMarkerTestHelper(HKEY hKey, LPCWSTR path, LSTATUS ExpectedResult)
 
 
     result = RegOpenKeyEx(hKey, path, 0, samR, &HK_Attempt);
-    msg = FormatHelperMsg(L"RegOpenKeyEx", path, ExpectedResult, result);
-    if (result == ExpectedResult)
+    msg = FormatHelperMsg(L"RegOpenKeyEx", path, ExpectedBasePathResult, result);
+    if (result == ExpectedBasePathResult)
     {
         trace_message(msg, console::color::blue, true);
     }
@@ -326,8 +325,8 @@ DWORD DeletionMarkerTestHelper(HKEY hKey, LPCWSTR path, LSTATUS ExpectedResult)
     longerpathEx += L"\\StupidNewNameEx";
     DWORD options = 0;
     result = RegCreateKeyEx(hKey, longerpathEx.c_str(), 0, NULL, options, samR, NULL, &HK_Attempt, NULL);
-    msg = FormatHelperMsg(L"RegCreateKeyEx", path, ExpectedResult, result);
-    if (result == ExpectedResult)
+    msg = FormatHelperMsg(L"RegCreateKeyEx", longerpathEx.c_str(), StupidExpectedResult, result);
+    if (result == StupidExpectedResult)
     {
         trace_message(msg, console::color::blue, true);
     }
@@ -341,28 +340,37 @@ DWORD DeletionMarkerTestHelper(HKEY hKey, LPCWSTR path, LSTATUS ExpectedResult)
         RegCloseKey(HK_Attempt);
     }
 
-
     std::wstring blockedKeyNameOnly = L"HideThis";
     std::wstring blockedKeyFullPath = path;
-    if (blockedKeyFullPath.back() != L'\\')
-        blockedKeyFullPath += L"\\";
-    blockedKeyFullPath += blockedKeyNameOnly;
+    blockedKeyFullPath += L"\\" + blockedKeyNameOnly;
+
     DWORD index = 0;
     DWORD nLen = 256;
     wchar_t subName[256];
     //DWORD Reserved = 0;
 
+    //trace_message(L"Debug about to test: " + blockedKeyNameOnly + L" ", console::color::white, true);
+
     bool found = false;
     result = RegOpenKeyEx(hKey, path, 0, samR, &HK_Attempt);
     if (result == ERROR_SUCCESS)
     {
+        //trace_message(L"parent key did open...", console::color::white, true);
+        DWORD n = 0;
+        result = RegQueryInfoKey(HK_Attempt, NULL, NULL, NULL, &n, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
+        //WCHAR bufferN[128];
+        //_itow_s(n, bufferN, 128, 16);
+        //if (result == ERROR_SUCCESS)
+        //    trace_message(L"subkeys under parent: " + std::wstring(bufferN), console::color::white, true);
+        //else
+        //    trace_message(L"RegQueryInfoKey failed to get subkey count", console::color::dark_red, true);
 
         while ((result = RegEnumKeyEx(HK_Attempt, index, subName, &nLen, NULL, NULL, NULL, NULL)) == ERROR_SUCCESS)
         {
             //trace_message(L"Debug found subName: " + std::wstring(subName), console::color::white, true);
             if (wcscmp(subName, blockedKeyNameOnly.c_str()) == 0)
             {
-                if (result == ExpectedResult)
+                if (result == HideExpectedResult)
                 {
                     trace_message(L"Deleted subkey name " + std::wstring(blockedKeyFullPath) + L" found.", console::color::blue, true);
                 }
@@ -377,28 +385,32 @@ DWORD DeletionMarkerTestHelper(HKEY hKey, LPCWSTR path, LSTATUS ExpectedResult)
             index++;
             nLen = 256;  // reset for next time.
         }
+        //WCHAR buffer[128];
+        //_itow_s(result, buffer, 128, 16);
+        //trace_message(L" final enum result =0x" + std::wstring(buffer) + L"  (note 0=Success, 0xea=NO_MORE_DATA 0x103=NO_MORE_ITEMS)", console::color::white, true);
+
         switch (found)
         {
         case true:
-            if (ExpectedResult == ERROR_SUCCESS)
+            if (HideExpectedResult == ERROR_SUCCESS)
             {
-                trace_message(L"Deleted subkey name " + std::wstring(blockedKeyFullPath) + L" found.", console::color::blue, true);
+                trace_message(L"Potentially hidden subkey name " + std::wstring(blockedKeyFullPath) + L" found.", console::color::blue, true);
             }
             else
             {
-                trace_message(L"Deleted subkey name " + std::wstring(blockedKeyFullPath) + L" found.", console::color::dark_red, true);
+                trace_message(L"Potentially hidden subkey name " + std::wstring(blockedKeyFullPath) + L" found.", console::color::dark_red, true);
                 retval++;
             }
             break;
         case false:
-            if (ExpectedResult == ERROR_SUCCESS)
+            if (HideExpectedResult == ERROR_SUCCESS)
             {
-                trace_message(L"Deleted subkey name " + std::wstring(blockedKeyFullPath) + L" not found.", console::color::dark_red, true);
+                trace_message(L"Potentially hidden subkey name " + std::wstring(blockedKeyFullPath) + L" not found.", console::color::dark_red, true);
                 retval++;
             }
             else
             {
-                trace_message(L"Deleted subkey name " + std::wstring(blockedKeyFullPath) + L" not found.", console::color::blue, true);
+                trace_message(L"Potentially hidden subkey name " + std::wstring(blockedKeyFullPath) + L" not found.", console::color::blue, true);
             }
             break;
         }
@@ -406,7 +418,7 @@ DWORD DeletionMarkerTestHelper(HKEY hKey, LPCWSTR path, LSTATUS ExpectedResult)
     }
     else
     {
-        if (ExpectedResult != ERROR_SUCCESS)
+        if (ExpectedBasePathResult != ERROR_SUCCESS)
         {
             trace_message(L"Deleted subkey name " + std::wstring(blockedKeyFullPath) + L" not not testable because parent key could not be opened.", console::color::blue, true);
         }
@@ -418,9 +430,7 @@ DWORD DeletionMarkerTestHelper(HKEY hKey, LPCWSTR path, LSTATUS ExpectedResult)
     }
 
     return retval;
-}
-
-
+} // DeletionMarkerTestHelper()
 
 void DeletionMarkerTests()
 {
@@ -431,7 +441,7 @@ void DeletionMarkerTests()
     test_begin("RegLegacy Test Deletion HKCU Allowed1");
     retval = 0;
     trace_message(L"The following tests avoid using the fixup and should succeed.", console::color::blue, true);
-    result = DeletionMarkerTestHelper(HKEY_CURRENT_USER, TestKeyName_Deletion_Allowed1, ERROR_SUCCESS);
+    result = DeletionMarkerTestHelper(HKEY_CURRENT_USER, TestKeyName_Deletion_Allowed1, ERROR_SUCCESS, ERROR_SUCCESS, ERROR_SUCCESS);
     if (result == 0)
     {
         retval = ERROR_SUCCESS;
@@ -446,7 +456,7 @@ void DeletionMarkerTests()
     test_begin("RegLegacy Test Deletion HKCU NotAllowed1");
     retval = 0;
     trace_message(L"The following tests require using the fixup and should fail.", console::color::blue, true);
-    result = DeletionMarkerTestHelper(HKEY_CURRENT_USER, TestKeyName_Deletion_NotAllowed1, ERROR_PATH_NOT_FOUND);
+    result = DeletionMarkerTestHelper(HKEY_CURRENT_USER, TestKeyName_Deletion_NotAllowed1, ERROR_SUCCESS, ERROR_SUCCESS, ERROR_PATH_NOT_FOUND);
     if (result == 0)
     {
         retval = ERROR_SUCCESS;
@@ -461,7 +471,7 @@ void DeletionMarkerTests()
     test_begin("RegLegacy Test Deletion HKCU NotAllowed2");
     retval = 0;
     trace_message(L"The following tests require using the fixup and should fail.", console::color::blue, true);
-    result = DeletionMarkerTestHelper(HKEY_CURRENT_USER, TestKeyName_Deletion_NotAllowed2, ERROR_PATH_NOT_FOUND);
+    result = DeletionMarkerTestHelper(HKEY_CURRENT_USER, TestKeyName_Deletion_NotAllowed2, ERROR_FILE_NOT_FOUND, ERROR_SUCCESS,ERROR_PATH_NOT_FOUND);
     if (result == 0)
     {
         retval = ERROR_SUCCESS;
@@ -472,7 +482,8 @@ void DeletionMarkerTests()
     }
     test_end(retval);
 
-}
+} // DeletionMarkerTests()
+
 
 DWORD JavaMarkerTestHelper(HKEY hKey, LPCWSTR path, LSTATUS ExpectedResult)
 {
@@ -516,14 +527,14 @@ DWORD JavaMarkerTestHelper(HKEY hKey, LPCWSTR path, LSTATUS ExpectedResult)
 
    
     return retval;
-} // JavaMarkerTestHelper()
+} // JavaMarkerTestHelper() // JavaMarkerTestHelper()
 void JavaMarkerTests()
 {
     LSTATUS retval = 0;
     LSTATUS result = 0;
 
 
-    test_begin("RegLegacy Test Java HKCU Allowed1");
+    test_begin("RegLegacy Test Java HKCU Allowed1 (HKCU)");
     retval = 0;
     trace_message(L"The following tests avoid using the fixup and should succeed.", console::color::blue, true);
     result = JavaMarkerTestHelper(HKEY_CURRENT_USER,TestKeyName_Java_Allowed1, ERROR_SUCCESS);
@@ -539,7 +550,7 @@ void JavaMarkerTests()
 
 
 
-    test_begin("RegLegacy Test Java HKCU Allowed2");
+    test_begin("RegLegacy Test Java HKCU Allowed2 (HKCU)");
     retval = 0;
     trace_message(L"The following tests avoid using the fixup and should succeed.", console::color::blue, true);
     result = JavaMarkerTestHelper(HKEY_CURRENT_USER, TestKeyName_Java_Allowed2, ERROR_SUCCESS);
@@ -555,7 +566,7 @@ void JavaMarkerTests()
 
 
 
-    test_begin("RegLegacy Test Java HKCU NOT Allowed");
+    test_begin("RegLegacy Test Java HKCU NOT Allowed (HKCU)");
     retval = 0; 
     trace_message(L"The following tests require using the fixup and might fail.", console::color::blue, true);
 
@@ -574,7 +585,7 @@ void JavaMarkerTests()
 
 
 
-    test_begin("RegLegacy Test Java HKLM Allowed1");
+    test_begin("RegLegacy Test Java HKLM Allowed1 (HKLM)");
     retval = 0; 
     trace_message(L"The following tests avoid using the fixup and should succeed.", console::color::blue, true);
     result = JavaMarkerTestHelper(HKEY_LOCAL_MACHINE, TestKeyName_Java_Allowed1, ERROR_SUCCESS);
@@ -589,7 +600,7 @@ void JavaMarkerTests()
     test_end(retval);
     
 
-    test_begin("RegLegacy Test Java HKLM Allowed2");
+    test_begin("RegLegacy Test Java HKLM Allowed2 (HKLM)");
     retval = 0; 
     trace_message(L"The following tests avoid using the fixup and should succeed.", console::color::blue, true);
     result = JavaMarkerTestHelper(HKEY_LOCAL_MACHINE, TestKeyName_Java_Allowed2, ERROR_SUCCESS);
@@ -604,7 +615,7 @@ void JavaMarkerTests()
     test_end(retval);
 
 
-    test_begin("RegLegacy Test Java HKLM NOT Allowed");
+    test_begin("RegLegacy Test Java HKLM NOT Allowed (HKLM)");
     retval = 0; 
     trace_message(L"The following tests require using the fixup and might fail.", console::color::blue, true);
 
@@ -621,7 +632,7 @@ void JavaMarkerTests()
 
 
 
-    test_begin("RegLegacy Test Java WOW HKLM Allowed1");
+    test_begin("RegLegacy Test Java WOW HKLM Allowed1 (HKLM)");
     retval = 0; 
     trace_message(L"The following tests avoid using the fixup and should succeed.", console::color::blue, true);
     result = JavaMarkerTestHelper(HKEY_LOCAL_MACHINE, TestKeyName_WOW_Java_Allowed1, ERROR_SUCCESS);
@@ -636,7 +647,7 @@ void JavaMarkerTests()
     test_end(retval);
 
 
-    test_begin("RegLegacy Test Java WOW HKLM Allowed2");
+    test_begin("RegLegacy Test Java WOW HKLM Allowed2 (HKLM)");
     retval = 0;
     trace_message(L"The following tests avoid using the fixup and should succeed.", console::color::blue, true);
     result = JavaMarkerTestHelper(HKEY_LOCAL_MACHINE, TestKeyName_WOW_Java_Allowed2, ERROR_SUCCESS);
@@ -651,7 +662,7 @@ void JavaMarkerTests()
     test_end(retval);
 
 
-    test_begin("RegLegacy Test Java WOW HKLM NOT Allowed");
+    test_begin("RegLegacy Test Java WOW HKLM NOT Allowed (HKLM)");
     retval = 0; 
     trace_message(L"The following tests require using the fixup and might fail.", console::color::blue, true);
 
@@ -666,33 +677,12 @@ void JavaMarkerTests()
     }
     test_end(retval);
 
+} // JavaMarkerTests()
 
- 
 
-}
-
-int wmain(int argc, const wchar_t** argv)
+void StandardKeyAccessTests()
 {
-    // Display UTF-16 correctly...
- // NOTE: The CRT will assert if we try and use 'cout' with this set
-    _setmode(_fileno(stdout), _O_U16TEXT);
-    
-    auto result = parse_args(argc, argv);
-    //std::wstring aumid = details::appmodel_string(&::GetCurrentApplicationUserModelId);
-#if _M_IX86
-    test_initialize("RegLegacy Tests", 6);
-#else
-    test_initialize("RegLegacy Tests", 15);
-#endif
-    NotCoveredTests();   // 1 test
-
-    DeletionMarkerTests(); // 3 Tests
-
-#if _M_IX86
-#else
-    JavaMarkerTests();  //9 Tests
-#endif
-
+    LSTATUS result = 0;
     test_begin("RegLegacy Test ModifyKeyAccess HKCU");
     Log("<<<<<RegLegacyTest ModifyKeyAccess HKCU");
     try
@@ -706,7 +696,7 @@ int wmain(int argc, const wchar_t** argv)
             {
                 DWORD size = 256;  // must be big enough for the test registry item string in the registry file.
                 wchar_t* data = new wchar_t[size];
-                for (DWORD index= 0; index < size; index++)
+                for (DWORD index = 0; index < size; index++)
                     data[index] = 0;
                 DWORD type;
                 if (RegGetValue(HKCU_Attempt, L"", TestSubItem, RRF_RT_REG_SZ, &type, data, &size) == ERROR_SUCCESS)
@@ -777,9 +767,9 @@ int wmain(int argc, const wchar_t** argv)
                 else
                 {
                     trace_message("Failed to find read subItem.", console::color::red, true);
-                    result =  GetLastError();
+                    result = GetLastError();
                     if (result == 0)
-                        result = ERROR_FILE_NOT_FOUND; 
+                        result = ERROR_FILE_NOT_FOUND;
                     print_last_error("Failed to find read subItem");
                 }
                 RegCloseKey(HKLM_Attempt);
@@ -812,7 +802,482 @@ int wmain(int argc, const wchar_t** argv)
     test_end(result);
     Log("RegLegacyTest ModifyKeyAccess HKLM>>>>>");
 
+} // StandardKeyAccessTests()
 
+void HKLMWriteTests()
+{
+    //LSTATUS retval = 0;
+    LSTATUS result = 0;
+
+
+    //REGSAM samFull = FULL_RIGHTS_ACCESS_REQUEST;
+    //REGSAM sam2R = samFull & ~(DELETE | WRITE_DAC | WRITE_OWNER | KEY_CREATE_SUB_KEY | KEY_CREATE_LINK | KEY_SET_VALUE);
+    //REGSAM samRW = READ_CONTROL | KEY_ENUMERATE_SUB_KEYS | KEY_QUERY_VALUE | KEY_SET_VALUE | KEY_CREATE_SUB_KEY;
+    //REGSAM samR = READ_CONTROL | KEY_ENUMERATE_SUB_KEYS | KEY_QUERY_VALUE;
+    //DWORD Dispo;
+
+
+
+    test_begin("RegLegacy Test Enumerate HKLM subkeys (pre-writes)");
+    Log("<<<<<RegLegacyTest Enumerate HKLM subkeys (pre-writes)");
+    try
+    {
+        int count = 0;
+        int index = 0;
+        HKEY baseKey;
+        result = RegOpenKey(HKEY_LOCAL_MACHINE, L"SOFTWARE\\Vendor_Covered", &baseKey);
+        if (result == ERROR_SUCCESS)
+        {
+            bool done = false;
+            wchar_t* lpName = (wchar_t*)malloc(256 * sizeof(wchar_t));
+            DWORD  cchNameLen;
+            while (!done)
+            {
+                cchNameLen = 255;
+                result = RegEnumKey(baseKey, index, lpName, cchNameLen);
+                if (result == ERROR_SUCCESS)
+                {
+                    count++;
+                    index++;
+                    trace_message("   KeyName=", console::color::white, false);
+                    trace_message(lpName, console::color::white, true);
+                }
+                else if (result == ERROR_NO_MORE_ITEMS)
+                {
+                    done = true;
+                }
+                else
+                {
+                    trace_message("Fail to enumerate key. May be error in testing code.", console::color::red, true);
+                    done = true;
+                }
+            }
+            if (count == 1)
+            {
+                trace_message("Correct count of subKeys achieved.", console::color::blue, true);
+                result = ERROR_SUCCESS;
+            }
+            else
+            {
+                trace_message("Fail to get correct count. Counted=", console::color::red, false);
+                char sNum[16];
+                _itoa_s((int)count, sNum, 16, 10);
+                trace_message(sNum, console::color::red, true);
+                result = -1;
+            }
+            free(lpName);
+        }
+        else
+        {
+            trace_message("Fail to open key. May be error in testing code.", console::color::red, true);
+            result = GetLastError();
+            if (result == 0)
+                result = ERROR_ACCESS_DENIED;
+            print_last_error("Failed to open key");
+        }
+    }
+    catch (...)
+    {
+        trace_message("Unexpected error.", console::color::red, true);
+        result = GetLastError();
+        print_last_error("Failed to Enumerate HKLM subkeys (pre-writes)");
+    }
+    test_end(result);
+    Log("RegLegacyTest Enumerate HKLM subkeys (pre writes)>>>>>");
+
+
+
+    test_begin("RegLegacy Test Enumerate HKLM subitems (pre-writes)");
+    Log("<<<<<RegLegacyTest Enumerate HKLM subitems (pre-writes)");
+    try
+    {
+        int count = 0;
+        int index = 0;
+        HKEY baseKey;
+        result = RegOpenKey(HKEY_LOCAL_MACHINE, L"SOFTWARE\\Vendor_Covered", &baseKey);
+        if (result == ERROR_SUCCESS)
+        {
+            bool done = false;
+            wchar_t* lpName = (wchar_t*)malloc(256 * sizeof(wchar_t));
+            DWORD  cchNameLen;
+            DWORD type;
+            BYTE* data = (BYTE*)malloc(1024);
+            DWORD dataLen = 1024;
+            while (!done)
+            {
+                cchNameLen = 255;
+                dataLen = 1024;
+                result = RegEnumValue(baseKey, index, lpName, &cchNameLen, NULL, &type, data, &dataLen);
+                if (result == ERROR_SUCCESS)
+                {
+                    count++;
+                    index++;
+                    trace_message("   ValueName=", console::color::white, false);
+                    trace_message(lpName, console::color::white, true);
+                }
+                else if (result == ERROR_NO_MORE_ITEMS)
+                {
+                    done = true;
+                }
+                else
+                {
+                    trace_message("Fail to enumerate key. May be error in testing code.", console::color::red, true);
+                    done = true;
+                }
+            }
+            if (count == 2)
+            {
+                trace_message("Correct count of subItems achieved.", console::color::blue, true);
+                result = ERROR_SUCCESS;
+            }
+            else
+            {
+                trace_message("Fail to get correct count. Counted=", console::color::red, false);
+                char sNum[16];
+                _itoa_s((int)count, sNum, 16, 10);
+                trace_message( sNum, console::color::red, true);
+                result = -1;
+            }
+        }
+        else
+        {
+            trace_message("Fail to open key. May be error in testing code.", console::color::red, true);
+            result = GetLastError();
+            if (result == 0)
+                result = ERROR_ACCESS_DENIED;
+            print_last_error("Failed to open key");
+        }
+    }
+    catch (...)
+    {
+        trace_message("Unexpected error.", console::color::red, true);
+        result = GetLastError();
+        print_last_error("Failed to Enumerate HKLM subitems (pre-writes)");
+    }
+    test_end(result);
+    Log("RegLegacyTest Enumerate HKLM subitems (pre writes)>>>>>");
+
+
+
+
+    test_begin("RegLegacy Test ModifyKeyAccess HKLM");
+    Log("<<<<<RegLegacyTest ModifyKeyAccess HKLM");
+    try
+    {
+        HKEY HKLM_Verify;
+        if (RegOpenKey(HKEY_LOCAL_MACHINE, TestKeyName_HKCU_Covered, &HKLM_Verify) == ERROR_SUCCESS)
+        {
+            RegCloseKey(HKLM_Verify);
+            HKEY HKLM_Attempt;
+            if (RegOpenKeyEx(HKEY_LOCAL_MACHINE, TestKeyName_HKCU_Covered, 0, FULL_RIGHTS_ACCESS_REQUEST, &HKLM_Attempt) == ERROR_SUCCESS)
+            {
+                DWORD size = 256;  // must be big enough for the test registry item string in the registry file.
+                wchar_t* data = new wchar_t[size];
+                for (DWORD index = 0; index < size; index++)
+                    data[index] = 0;
+                DWORD type;
+                if (RegGetValue(HKLM_Attempt, L"", TestSubItem, RRF_RT_REG_SZ, &type, data, &size) == ERROR_SUCCESS)
+                {
+                    trace_message(data, console::color::gray, true);
+                    trace_message("HKLM Full Access Rights Request: NO ERROR OCCURED", console::color::blue, true);
+                    //print_last_error("NO ERROR OCCURED");
+                    result = 0;
+                }
+                else
+                {
+                    trace_message("Failed to find read subItem.", console::color::red, true);
+                    result = GetLastError();
+                    if (result == 0)
+                        result = ERROR_FILE_NOT_FOUND;
+                    print_last_error("Failed to find read subItem");
+                }
+                RegCloseKey(HKLM_Attempt);
+            }
+            else
+            {
+                trace_message("Fail to open key. Remediation did not work.", console::color::red, true);
+                result = GetLastError();
+                if (result == 0)
+                    result = ERROR_ACCESS_DENIED;
+                print_last_error("Failed to open key");
+            }
+        }
+        else
+        {
+            trace_message("Failed to find key. Most likely a bug in the testing tool.", console::color::red, true);
+            result = GetLastError();
+            if (result == 0)
+                result = ERROR_PATH_NOT_FOUND;
+            print_last_error("Failed to find key");
+        }
+    }
+    catch (...)
+    {
+        trace_message("Unexpected error.", console::color::red, true);
+        result = GetLastError();
+        print_last_error("Failed to Modify HKLM Full Access case");
+    }
+    test_end(result);
+    Log("RegLegacyTest ModifyKeyAccess HKLM>>>>>");
+
+
+
+    test_begin("RegLegacy Test Add Key HKLM");
+    Log("<<<<<RegLegacyTest Add Key HKLM");
+    try
+    {
+        HKEY HKLM_Verify;
+        if (RegOpenKey(HKEY_LOCAL_MACHINE, TestKeyName_HKCU_Covered, &HKLM_Verify) == ERROR_SUCCESS)
+        {
+            HKEY HKLM_AddedKey;
+            DWORD dispo;
+            result = RegCreateKeyEx(HKLM_Verify, L"AddedKey", 0, NULL, 0, FULL_RIGHTS_ACCESS_REQUEST, NULL, &HKLM_AddedKey, &dispo);
+            if (result == ERROR_SUCCESS)
+            {
+                trace_message("Success in creating subkey under HKLM.", console::color::blue, true);
+                RegCloseKey(HKLM_AddedKey);
+            }
+            else
+            {
+                trace_message("Fail to create key. Remediation did not work.", console::color::red, true);
+                print_last_error("Failed to create key");
+            }
+            RegCloseKey(HKLM_Verify);
+        }
+        else
+        {
+            trace_message("Failed to open base key. Most likely a bug in the testing tool.", console::color::red, true);
+            result = GetLastError();
+            if (result == 0)
+                result = ERROR_PATH_NOT_FOUND;
+            print_last_error("Failed to open base key");
+        }
+    }
+    catch (...)
+    {
+        trace_message("Unexpected error.", console::color::red, true);
+        result = GetLastError();
+        print_last_error("Failed to create key due to exception");
+    }
+    test_end(result);
+    Log("RegLegacyTest  Add Key HKLM>>>>>");
+
+
+    test_begin("RegLegacy Test Add Item HKLM");
+    Log("<<<<<RegLegacyTest Add Item HKLM");
+    try
+    {
+        HKEY HKLM_Verify;
+        if (RegOpenKey(HKEY_LOCAL_MACHINE, TestKeyName_HKCU_Covered, &HKLM_Verify) == ERROR_SUCCESS)
+        {
+            LPCTSTR data =  L"This is some added item value";
+            //result = RegSetValue(HKLM_Verify, L"AddedExtraItem", REG_SZ, data, (DWORD)(wcslen(data)));
+            result = RegSetValueEx(HKLM_Verify, L"AddedExtraItem", 0, REG_SZ, (BYTE*)data, (DWORD)(wcslen(data)));
+            if (result == ERROR_SUCCESS)
+            {
+                trace_message("Success in creating item under HKLM.", console::color::blue, true);
+            }
+            else
+            {
+                trace_message("Fail to create item. Remediation did not work.", console::color::red, true);
+                print_last_error("Failed to create item");
+            }
+            RegCloseKey(HKLM_Verify);
+        }
+        else
+        {
+            trace_message("Failed to open base key. Most likely a bug in the testing tool.", console::color::red, true);
+            result = GetLastError();
+            if (result == 0)
+                result = ERROR_PATH_NOT_FOUND;
+            print_last_error("Failed to open base key");
+        }
+    }
+    catch (...)
+    {
+        trace_message("Unexpected error.", console::color::red, true);
+        result = GetLastError();
+        print_last_error("Failed to create item due to exception");
+    }
+    test_end(result);
+    Log("RegLegacyTest  Add  Item HKLM>>>>>");
+
+
+
+
+    test_begin("RegLegacy Test Enumerate HKLM subkeys (post-writes)");
+    Log("<<<<<RegLegacyTest Enumerate HKLM subkeys (post-writes)");
+    try
+    {
+        int count = 0;
+        int index = 0;
+        HKEY baseKey;
+        result = RegOpenKey(HKEY_LOCAL_MACHINE, L"SOFTWARE\\Vendor_Covered", &baseKey);
+        if (result == ERROR_SUCCESS)
+        {
+            bool done = false;
+            wchar_t* lpName = (wchar_t*)malloc(256 * sizeof(wchar_t));
+            DWORD  cchNameLen;
+            while (!done)
+            {
+                cchNameLen = 255;
+                result = RegEnumKey(baseKey, index, lpName, cchNameLen);
+                if (result == ERROR_SUCCESS)
+                {
+                    count++;
+                    index++;
+                    trace_message("   KeyName=", console::color::white, false);
+                    trace_message(lpName, console::color::white, true);
+                }
+                else if (result == ERROR_NO_MORE_ITEMS)
+                {
+                    done = true;
+                }
+                else
+                {
+                    trace_message("Fail to enumerate key. May be error in testing code.", console::color::red, true);
+                    done = true;
+                }
+            }
+            if (count == 2)
+            {
+                trace_message("Correct count of subKeys achieved.", console::color::blue, true);
+                result = ERROR_SUCCESS;
+            }
+            else
+            {
+                trace_message("Fail to get correct count. Counted=", console::color::red, false);
+                char sNum[16];
+                _itoa_s((int)count, sNum, 16, 10);
+                trace_message(sNum, console::color::red, true);
+                result = -1;
+            }
+            free(lpName);
+        }
+        else
+        {
+            trace_message("Fail to open key. May be error in testing code.", console::color::red, true);
+            result = GetLastError();
+            if (result == 0)
+                result = ERROR_ACCESS_DENIED;
+            print_last_error("Failed to open key");
+        }
+    }
+    catch (...)
+    {
+        trace_message("Unexpected error.", console::color::red, true);
+        result = GetLastError();
+        print_last_error("Failed to Enumerate HKLM subkeys (post-writes)");
+    }
+    test_end(result);
+    Log("RegLegacyTest Enumerate HKLM subkeys (post writes)>>>>>");
+
+
+
+
+
+    test_begin("RegLegacy Test Enumerate HKLM subitems (post-write)");
+    trace_message("test 1.", console::color::cyan, true);
+    Log("<<<<<RegLegacyTest Enumerate HKLM subitems (post-writes)");
+    try
+    {
+        int count = 0;
+        int index = 0;
+        HKEY baseKey;
+        trace_message("test 2.", console::color::cyan, true);
+        result = RegOpenKey(HKEY_LOCAL_MACHINE, L"SOFTWARE\\Vendor_Covered", &baseKey);
+        trace_message("test 3.", console::color::cyan, true);
+        if (result == ERROR_SUCCESS)
+        {
+            bool done = false;
+            wchar_t* lpName = (wchar_t*)malloc(256 * sizeof(wchar_t));
+            DWORD  cchNameLen;
+            DWORD type;
+            BYTE* data = (BYTE*)malloc(1024);
+            DWORD dataLen = 1024;
+            while (!done)
+            {
+                cchNameLen = 255;
+                dataLen = 1024;
+                result = RegEnumValue(baseKey, index, lpName, &cchNameLen, NULL, &type, data, &dataLen);
+                if (result == ERROR_SUCCESS)
+                {
+                    count++;
+                    index++;
+                    trace_message("   ValueName=", console::color::white, false);
+                    trace_message(lpName, console::color::white, true);
+                }
+                else if (result == ERROR_NO_MORE_ITEMS)
+                {
+                    done = true;
+                }
+                else
+                {
+                    trace_message("Fail to enumerate key. May be error in testing code.", console::color::red, true);
+                    done = true;
+                }
+            }
+            if (count == 3)
+            {
+                trace_message("Correct count of subItems achieved.", console::color::blue, true);
+                result = ERROR_SUCCESS;
+            }
+            else
+            {
+                trace_message("Fail to get correct count. Counted=", console::color::red, false);
+                char sNum[16];
+                _itoa_s((int)count, sNum, 16, 10);
+                trace_message(sNum, console::color::red, true);
+                result = -1;
+            }
+        }
+        else
+        {
+            trace_message("Fail to open key. May be error in testing code.", console::color::red, true);
+            result = GetLastError();
+            if (result == 0)
+                result = ERROR_ACCESS_DENIED;
+            print_last_error("Failed to open key");
+        }
+    }
+    catch (...)
+    {
+        trace_message("Unexpected error.", console::color::red, true);
+        result = GetLastError();
+        print_last_error("Failed to Enumerate HKLM subitems (post-writes)");
+    }
+    test_end(result);
+    Log("RegLegacyTest Enumerate HKLM subitems (post writes)>>>>>");
+
+
+
+} // HKLMWriteTests()
+
+int wmain(int argc, const wchar_t** argv)
+{
+    // Display UTF-16 correctly...
+ // NOTE: The CRT will assert if we try and use 'cout' with this set
+    _setmode(_fileno(stdout), _O_U16TEXT);
+    
+    auto result = parse_args(argc, argv);
+    //std::wstring aumid = details::appmodel_string(&::GetCurrentApplicationUserModelId);
+#if _M_IX86
+    test_initialize("RegLegacy Tests", 13);
+#else
+    test_initialize("RegLegacy Tests", 22);
+#endif
+    NotCoveredTests();   // 1 test
+
+    DeletionMarkerTests(); // 3 Tests
+
+#if _M_IX86
+#else
+    JavaMarkerTests();  //9 Tests
+#endif
+
+    StandardKeyAccessTests(); // 2 Tests
+
+    HKLMWriteTests(); // 7 Tests
 
     test_cleanup();
     Sleep(500);

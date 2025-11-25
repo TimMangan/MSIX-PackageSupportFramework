@@ -1,4 +1,5 @@
 {
+  "debugLevel": 9,
   "applications": [
     {
       "id": "Fixed",
@@ -57,11 +58,15 @@
                 {
                   "type": "DeletionMarker",
                   "hive": "HKCU",
-                  "key": "Software\\\\Vendor_Deletion\\\\.*",
+                  "key": "[Ss][Oo][Ff][Tt][Ww][Aa][Rr][Ee]\\\\Vendor_Deletion\\\\SubKey.*",
                   "patterns": [
                     "SubKey.*",
                     "HideThis.*"
                   ]
+                },
+                {
+                  "type": "HKLM2HKCU",
+                  "hive": "HKLM"
                 }
               ]
             }

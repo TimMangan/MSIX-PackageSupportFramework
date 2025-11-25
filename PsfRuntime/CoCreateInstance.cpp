@@ -34,15 +34,40 @@ using namespace std::literals;
 extern const wchar_t* g_PsfRunTimeName;
 inline thread_local psf::reentrancy_guard g_reentrancyGuard;
 
+
+#ifdef _M_IX86
+#pragma comment(linker, "/EXPORT:CLSIDFromProgIDFixup_Fixup=_CLSIDFromProgIDFixup_Fixup_v")  // Exporting these names helps ProcessMonitor stack traces.
+#pragma comment(linker, "/EXPORT:CLSIDFromProgIDExFixup_Fixup=_CLSIDFromProgIDExFixup_Fixup_v")  // Exporting these names helps ProcessMonitor stack traces.
+#pragma comment(linker, "/EXPORT:CoCreateInstanceFixup_Fixup=_CoCreateInstanceFixup_Fixup_v")  // Exporting these names helps ProcessMonitor stack traces.
+#pragma comment(linker, "/EXPORT:CoCreateInstanceExFixup_Fixup=_CoCreateInstanceExFixup_Fixup_v")  // Exporting these names helps ProcessMonitor stack traces.
+#pragma comment(linker, "/EXPORT:CoCreateInstanceFromAppFixup_Fixup=_CoCreateInstanceFromAppFixup_Fixup_v")  // Exporting these names helps ProcessMonitor stack traces.
+#pragma comment(linker, "/EXPORT:CoGetClassObjectFixup_Fixup=_CoGetClassObjectFixup_Fixup_v")  // Exporting these names helps ProcessMonitor stack traces.
+#pragma comment(linker, "/EXPORT:CoGetObjectFixup_Fixup=_CoGetObjectFixup_Fixup_v")  // Exporting these names helps ProcessMonitor stack traces.
+#pragma comment(linker, "/EXPORT:CoLoadLibraryFixup_Fixup=_CoLoadLibraryFixup_Fixup_v")  // Exporting these names helps ProcessMonitor stack traces.
+#pragma comment(linker, "/EXPORT:ProgIDFromCLSIDFixup_Fixup=_ProgIDFromCLSIDFixup_Fixup_v")  // Exporting these names helps ProcessMonitor stack traces.
+#else
+#pragma comment(linker, "/EXPORT:CLSIDFromProgIDFixup_Fixup=CLSIDFromProgIDFixup_Fixup_v")  // Exporting these names helps ProcessMonitor stack traces.
+#pragma comment(linker, "/EXPORT:CLSIDFromProgIDExFixup_Fixup=CLSIDFromProgIDExFixup_Fixup_v")  // Exporting these names helps ProcessMonitor stack traces.
+#pragma comment(linker, "/EXPORT:CoCreateInstanceFixup_Fixup=CoCreateInstanceFixup_Fixup_v")  // Exporting these names helps ProcessMonitor stack traces.
+#pragma comment(linker, "/EXPORT:CoCreateInstanceExFixup_Fixup=CoCreateInstanceExFixup_Fixup_v")  // Exporting these names helps ProcessMonitor stack traces.
+#pragma comment(linker, "/EXPORT:CoCreateInstanceFromAppFixup_Fixup=CoCreateInstanceFromAppFixup_Fixup_v")  // Exporting these names helps ProcessMonitor stack traces.
+#pragma comment(linker, "/EXPORT:CoGetClassObjectFixup_Fixup=CoGetClassObjectFixup_Fixup_v")  // Exporting these names helps ProcessMonitor stack traces.
+#pragma comment(linker, "/EXPORT:CoGetObjectFixup_Fixup=CoGetObjectFixup_Fixup_v")  // Exporting these names helps ProcessMonitor stack traces.
+#pragma comment(linker, "/EXPORT:CoLoadLibraryFixup_Fixup=CoLoadLibraryFixup_Fixup_v")  // Exporting these names helps ProcessMonitor stack traces.
+#pragma comment(linker, "/EXPORT:ProgIDFromCLSIDFixup_Fixup=ProgIDFromCLSIDFixup_Fixup_v")  // Exporting these names helps ProcessMonitor stack traces.
+#endif
+
 namespace impl
 {
     inline auto CLSIDFromProgID = &::CLSIDFromProgID;
     inline auto CLSIDFromProgIDEx = &::CLSIDFromProgIDEx;
-    // ProgIdFromCLSID is not intercepted here, but could be if needed.
     inline auto CoCreateInstance = &::CoCreateInstance;
     inline auto CoCreateInstanceEx = &::CoCreateInstanceEx;
     inline auto CoCreateInstanceFromApp = &::CoCreateInstanceFromApp;
     inline auto CoGetClassObject = &::CoGetClassObject;
+    inline auto CoGetObject = &::CoGetObject;
+    inline auto ProgIDFromCLSID = &::ProgIDFromCLSID;
+    inline auto CoLoadLibrary = &::CoLoadLibrary;
 }
 
 // Helper function to convert GUID to wstring
@@ -75,7 +100,18 @@ inline std::wstring GuidToString(const GUID& guid)
         return L"{BAD}";
     }
 }
-
+inline LPCLSID LpClsidToUpper(LPCLSID lpclsid)
+{
+    if (lpclsid != NULL)
+    {
+        std::wstring theGuid = GuidToString(*lpclsid);
+        
+        LPCLSID retClsid = new GUID();
+        CLSIDFromString(wStringToUpper(theGuid).c_str(), retClsid);        
+        *lpclsid = *retClsid;
+    }
+    return lpclsid;
+}
 std::wstring ContextToString(DWORD     dwClsContext)
 {
     std::wstring result = L"";
@@ -124,7 +160,7 @@ HRESULT WINAPI CLSIDFromProgIDFixup(
     auto guard = g_reentrancyGuard.enter();
     if (guard)
     {
-        // We want to be able to evaluate if COM instance creation is funtional for all of the COM interface calls being made by the application,
+        // We want to be able to evaluate if COM instance creation is functional for all of the COM interface calls being made by the application,
         // but only in extreme debugging scenarios for now.
         // So we will log the call parameters and the result, but not modify any of the parameters or the result.
         if (LogLevel_DebugMaximum <= g_JsonDebugLevel)
@@ -135,6 +171,9 @@ HRESULT WINAPI CLSIDFromProgIDFixup(
             HRESULT hr = impl::CLSIDFromProgID(lpszProgID, lpclsid);
             if (SUCCEEDED(hr))
             {
+                // ALWAYS return the CLSID in upper case as vendor code may expect that.
+                // This is not a documented requirement, but it is a common practice.
+                lpclsid = LpClsidToUpper(lpclsid);
                 Log(LogLevel_DebugMaximum, L" [%s%d] CLSIDFromProgIDFixup:     CLSID=%s", g_PsfRunTimeName, CoCreateInstanceInterceptInstance, GuidToString(*lpclsid).c_str());
                 Log(LogLevel_DebugMaximum, L" [%s%d] CLSIDFromProgIDFixup: Succeeded", g_PsfRunTimeName, CoCreateInstanceInterceptInstance);
             }
@@ -145,7 +184,14 @@ HRESULT WINAPI CLSIDFromProgIDFixup(
             return hr;
         }
     }
-    return impl::CLSIDFromProgID(lpszProgID, lpclsid);
+    HRESULT implHr = impl::CLSIDFromProgID(lpszProgID, lpclsid);
+    if (SUCCEEDED(implHr))
+    {
+        // ALWAYS return the CLSID in upper case as vendor code may expect that.
+        // This is not a documented requirement, but it is a common practice.
+        lpclsid = LpClsidToUpper(lpclsid);
+    }
+    return implHr;
 }
 DECLARE_FIXUP(impl::CLSIDFromProgID, CLSIDFromProgIDFixup);
 
@@ -160,7 +206,7 @@ HRESULT WINAPI CLSIDFromProgIDExFixup(
     auto guard = g_reentrancyGuard.enter();
     if (guard)
     {
-        // We want to be able to evaluate if COM instance creation is funtional for all of the COM interface calls being made by the application,
+        // We want to be able to evaluate if COM instance creation is functional for all of the COM interface calls being made by the application,
         // but only in extreme debugging scenarios for now.
         // So we will log the call parameters and the result, but not modify any of the parameters or the result.
         if (LogLevel_DebugMaximum <= g_JsonDebugLevel)
@@ -171,6 +217,9 @@ HRESULT WINAPI CLSIDFromProgIDExFixup(
             HRESULT hr = impl::CLSIDFromProgIDEx(lpszProgID, lpclsid);
             if (SUCCEEDED(hr))
             {
+                // ALWAYS return the CLSID in upper case as vendor code may expect that.
+                // This is not a documented requirement, but it is a common practice.
+                lpclsid = LpClsidToUpper(lpclsid);
                 Log(LogLevel_DebugMaximum, L" [%s%d] CLSIDFromProgIDExFixup:     CLSID=%s", g_PsfRunTimeName, CoCreateInstanceInterceptInstance, GuidToString(*lpclsid).c_str());
                 Log(LogLevel_DebugMaximum, L" [%s%d] CLSIDFromProgIDExFixup: Succeeded", g_PsfRunTimeName, CoCreateInstanceInterceptInstance);
             }
@@ -181,7 +230,14 @@ HRESULT WINAPI CLSIDFromProgIDExFixup(
             return hr;
         }
     }
-    return impl::CLSIDFromProgIDEx(lpszProgID, lpclsid);
+    HRESULT implHr = impl::CLSIDFromProgIDEx(lpszProgID, lpclsid);
+    if (SUCCEEDED(implHr))
+    {
+        // ALWAYS return the CLSID in upper case as vendor code may expect that.
+        // This is not a documented requirement, but it is a common practice.
+        lpclsid = LpClsidToUpper(lpclsid);
+    }
+    return implHr;
 }
 DECLARE_FIXUP(impl::CLSIDFromProgIDEx, CLSIDFromProgIDExFixup);
 
@@ -200,7 +256,7 @@ HRESULT WINAPI CoCreateInstanceFixup(
     auto guard = g_reentrancyGuard.enter();
     if (guard)
     {
-        // We want to be able to evaluate if COM instance creation is funtional for all of the COM interface calls being made by the application,
+        // We want to be able to evaluate if COM instance creation is functional for all of the COM interface calls being made by the application,
         // but only in extreme debugging scenarios for now.
         // So we will log the call parameters and the result, but not modify any of the parameters or the result.
         if (LogLevel_DebugMaximum <= g_JsonDebugLevel)
@@ -244,7 +300,7 @@ HRESULT WINAPI CoCreateInstanceExFixup(
     auto guard = g_reentrancyGuard.enter();
     if (guard)
     {
-        // We want to be able to evaluate if COM instance creation is funtional for all of the COM interface calls being made by the application,
+        // We want to be able to evaluate if COM instance creation is functional for all of the COM interface calls being made by the application,
         // but only in extreme debugging scenarios for now.
         // So we will log the call parameters and the result, but not modify any of the parameters or the result.
         if (LogLevel_DebugMaximum <= g_JsonDebugLevel)
@@ -352,6 +408,10 @@ HRESULT WINAPI CoGetClassObjectFixup(
             Log(LogLevel_DebugMaximum, L" [%s%d] CoGetClassObjectFixup: (Informational) CLSID=%s", g_PsfRunTimeName, CoGetClassObjectInstance, GuidToString(rclsid).c_str());
             Log(LogLevel_DebugMaximum, L" [%s%d] CoGetClassObjectFixup: (Informational) This is an experimental intercept for logging purposes only; to evaluate if there is a need for an intercept of this API.", g_PsfRunTimeName, g_CoCreateInstanceInterceptInstance);
             Log(LogLevel_DebugMaximum, L" [%s%d] CoGetClassObjectFixup:     Context=0x%x %s", g_PsfRunTimeName, CoGetClassObjectInstance, dwClsContext, ContextToString(dwClsContext).c_str());
+            if (pvReserved == NULL)
+                Log(LogLevel_DebugMaximum, L" [%s%d] CoGetClassObjectFixup:     pvReserved=NULL", g_PsfRunTimeName, CoGetClassObjectInstance);
+            else
+                Log(LogLevel_DebugMaximum, L" [%s%d] CoGetClassObjectFixup:     pvReserved is not null", g_PsfRunTimeName, CoGetClassObjectInstance);
             Log(LogLevel_DebugMaximum, L" [%s%d] CoGetClassObjectFixup:     riid=%s", g_PsfRunTimeName, CoGetClassObjectInstance, GuidToString(riid).c_str());
 
             HRESULT hr = impl::CoGetClassObject(rclsid, dwClsContext, pvReserved, riid, ppv);
@@ -370,6 +430,133 @@ HRESULT WINAPI CoGetClassObjectFixup(
     return impl::CoGetClassObject(rclsid, dwClsContext, pvReserved, riid, ppv);
 }
 DECLARE_FIXUP(impl::CoGetClassObject, CoGetClassObjectFixup);
+
+
+//Looks up a "Moniker" (a display name of a COM object) in the registry, then binds to the object identified.
+HRESULT WINAPI CoGetObjectFixup(
+    _In_  LPCWSTR pszName,
+    _In_opt_  BIND_OPTS* pBindOptions,
+    _In_  REFIID   riid,
+    _Out_  void** ppv)
+{
+
+    auto guard = g_reentrancyGuard.enter();
+    if (guard)
+    {
+        // We want to be able to evaluate if COM instance creation is functional for all of the COM interface calls being made by the application,
+        // but only in extreme debugging scenarios for now.
+        // So we will log the call parameters and the result, but not modify any of the parameters or the result.
+        if (LogLevel_DebugMaximum <= g_JsonDebugLevel)
+        {
+            DWORD CoCreateInstanceInterceptInstance = ++g_CoCreateInstanceInterceptInstance;
+            Log(LogLevel_DebugMaximum, L" [%s%d] CoGetObjectFixup: (Informational) Moniker=%s", g_PsfRunTimeName, CoCreateInstanceInterceptInstance, pszName);
+            Log(LogLevel_DebugMaximum, L" [%s%d] CoGetObjectFixup: (Informational) This is an experimental intercept for logging purposes only; to evaluate if there is a need for an intercept of this API.", g_PsfRunTimeName, g_CoCreateInstanceInterceptInstance);
+            if (pBindOptions != NULL)
+            {
+                Log(LogLevel_DebugMaximum, L" [%s%d] CoGetObjectFixup:     BIND_OPTS.cbStruct=%d", g_PsfRunTimeName, CoCreateInstanceInterceptInstance, pBindOptions->cbStruct);
+                Log(LogLevel_DebugMaximum, L" [%s%d] CoGetObjectFixup:     BIND_OPTS.grfFlags=%d", g_PsfRunTimeName, CoCreateInstanceInterceptInstance, pBindOptions->grfFlags);
+                Log(LogLevel_DebugMaximum, L" [%s%d] CoGetObjectFixup:     BIND_OPTS.grfMode=%d", g_PsfRunTimeName, CoCreateInstanceInterceptInstance, pBindOptions->grfMode);
+                Log(LogLevel_DebugMaximum, L" [%s%d] CoGetObjectFixup:     BIND_OPTS.dwTickCountDeadline=%d", g_PsfRunTimeName, CoCreateInstanceInterceptInstance, pBindOptions->dwTickCountDeadline);
+            }
+            else
+            {
+                Log(LogLevel_DebugMaximum, L" [%s%d] CoGetObjectFixup:     BIND_OPTS=NULL", g_PsfRunTimeName, CoCreateInstanceInterceptInstance);
+            }
+            Log(LogLevel_DebugMaximum, L" [%s%d] CoGetObjectFixup:     riid=%s", g_PsfRunTimeName, CoCreateInstanceInterceptInstance, GuidToString(riid).c_str());
+            HRESULT hr = impl::CoGetObject(pszName, pBindOptions, riid, ppv);
+            if (SUCCEEDED(hr))
+            {
+                // We don't need to see a memory address in the log.
+                //Log(LogLevel_DebugMaximum, L" [%s%d] CoGetObjectFixup:     *ppv=%p", g_PsfRunTimeName, CoCreateInstanceInterceptInstance, *ppv);
+                Log(LogLevel_DebugMaximum, L" [%s%d] CoGetObjectFixup: Succeeded", g_PsfRunTimeName, CoCreateInstanceInterceptInstance);
+            }
+            else
+            {
+                Log(LogLevel_DebugMaximum, L" [%s%d] CoGetObjectFixup: FAILED with HResult=0x%x", g_PsfRunTimeName, CoCreateInstanceInterceptInstance, hr);
+            }
+            return hr;
+        }
+    }
+    HRESULT implHr = impl::CoGetObject(pszName, pBindOptions, riid, ppv);
+    return implHr;
+}
+DECLARE_FIXUP(impl::CoGetObject, CoGetObjectFixup);
+
+
+
+//Looks up a ProgID in the registry, given a CLSID, if it exists.
+HINSTANCE WINAPI CoLoadLibraryFixup(
+    _In_  LPOLESTR pszLibFileName,
+    _In_  BOOL    bAutoFree)
+{
+
+    auto guard = g_reentrancyGuard.enter();
+    if (guard)
+    {
+        // We want to be able to evaluate if COM instance creation is functional for all of the COM interface calls being made by the application,
+        // but only in extreme debugging scenarios for now.
+        // So we will log the call parameters and the result, but not modify any of the parameters or the result.
+        if (LogLevel_DebugMaximum <= g_JsonDebugLevel)
+        {
+            DWORD CoCreateInstanceInterceptInstance = ++g_CoCreateInstanceInterceptInstance;
+            Log(LogLevel_DebugMaximum, L" [%s%d] CoLoadLibraryFixup: (Informational) This is an experimental intercept for logging purposes only; to evaluate if there is a need for an intercept of this API.", g_PsfRunTimeName, g_CoCreateInstanceInterceptInstance);
+            Log(LogLevel_DebugMaximum, L" [%s%d] CoLoadLibraryFixup:      bAutoFree=%d (but ignored)", g_PsfRunTimeName, CoCreateInstanceInterceptInstance, bAutoFree);
+            HINSTANCE hr = impl::CoLoadLibrary(pszLibFileName, bAutoFree);
+            if (SUCCEEDED(hr))
+            {
+                Log(LogLevel_DebugMaximum, L" [%s%d] CoLoadLibraryFixup:     Handle=0x%x", g_PsfRunTimeName, CoCreateInstanceInterceptInstance, hr);
+                Log(LogLevel_DebugMaximum, L" [%s%d] CoLoadLibraryFixup: Succeeded", g_PsfRunTimeName, CoCreateInstanceInterceptInstance);
+            }
+            else
+            {
+                Log(LogLevel_DebugMaximum, L" [%s%d] CoLoadLibraryFixup: FAILED with HInstance=NULL", g_PsfRunTimeName, CoCreateInstanceInterceptInstance);
+            }
+            return hr;
+        }
+    }
+    HINSTANCE implHr = impl::CoLoadLibrary(pszLibFileName, bAutoFree);
+    return implHr;
+}
+DECLARE_FIXUP(impl::CoLoadLibrary, CoLoadLibraryFixup);
+
+
+
+
+//Looks up a ProgID in the registry, given a CLSID, if it exists.
+HRESULT WINAPI ProgIDFromCLSIDFixup(
+    _In_  REFCLSID clsid,
+    _Out_ LPOLESTR* lpszProgID)
+{
+
+    auto guard = g_reentrancyGuard.enter();
+    if (guard)
+    {
+        // We want to be able to evaluate if COM instance creation is functional for all of the COM interface calls being made by the application,
+        // but only in extreme debugging scenarios for now.
+        // So we will log the call parameters and the result, but not modify any of the parameters or the result.
+        if (LogLevel_DebugMaximum <= g_JsonDebugLevel)
+        {
+            DWORD CoCreateInstanceInterceptInstance = ++g_CoCreateInstanceInterceptInstance;
+            Log(LogLevel_DebugMaximum, L" [%s%d] ProgIDFromCLSIDFixup: (Informational) CLSID=%s", g_PsfRunTimeName, CoCreateInstanceInterceptInstance, GuidToString(clsid).c_str());
+            Log(LogLevel_DebugMaximum, L" [%s%d] ProgIDFromCLSIDFixup: (Informational) This is an experimental intercept for logging purposes only; to evaluate if there is a need for an intercept of this API.", g_PsfRunTimeName, g_CoCreateInstanceInterceptInstance);
+            HRESULT hr = impl::ProgIDFromCLSID(clsid, lpszProgID);
+            if (SUCCEEDED(hr))
+            {
+                Log(LogLevel_DebugMaximum, L" [%s%d] ProgIDFromCLSIDFixup:     ProgID=%s", g_PsfRunTimeName, CoCreateInstanceInterceptInstance, lpszProgID);
+                Log(LogLevel_DebugMaximum, L" [%s%d] ProgIDFromCLSIDFixup: Succeeded", g_PsfRunTimeName, CoCreateInstanceInterceptInstance);
+            }
+            else
+            {
+                Log(LogLevel_DebugMaximum, L" [%s%d] CLSIDFromProgIDFixup: FAILED with HResult=0x%x", g_PsfRunTimeName, CoCreateInstanceInterceptInstance, hr);
+            }
+            return hr;
+        }
+    }
+    HRESULT implHr = impl::ProgIDFromCLSID(clsid, lpszProgID);
+    return implHr;
+}
+DECLARE_FIXUP(impl::ProgIDFromCLSID, ProgIDFromCLSIDFixup);
+
 
 
 

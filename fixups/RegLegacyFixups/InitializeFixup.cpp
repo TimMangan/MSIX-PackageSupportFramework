@@ -66,11 +66,11 @@ void InitializeConfiguration()
             Log(LogLevel_DebugBasic, L"[R0] RegLegacyFixups process config\n");
 
             const psf::json_array& rootConfigArray = rootConfig->as_array();
+            Reg_Remediation_Spec specItem;
             for (auto& spec : rootConfigArray)
             {
                 Log(LogLevel_DebugIntermediate, L"[R0] RegLegacyFixups: process spec\n");
 
-                Reg_Remediation_Spec specItem;
                 auto& specObject = spec.as_object();
                 if (auto regItems = specObject.try_get("remediation"))
                 {
@@ -91,7 +91,7 @@ void InitializeConfiguration()
                         {
                             Log(LogLevel_DebugBasic, L"[R0] RegLegacyFixups:      is ModifyKeyAccess\n");
 
-                            recordItem.remeditaionType = Reg_Remediation_Type_ModifyKeyAccess;
+                            recordItem.remediationType = Reg_Remediation_Type_ModifyKeyAccess;
                             
                             try
                             {
@@ -174,7 +174,7 @@ void InitializeConfiguration()
                         {
                             Log(LogLevel_DebugBasic, L"[R0] RegLegacyFixups:      is FakeDelete\n");
 
-                            recordItem.remeditaionType = Reg_Remediation_Type_FakeDelete;
+                            recordItem.remediationType = Reg_Remediation_Type_FakeDelete;
                             try
                             {
                                 std::wstring hiveType = regItemObject.try_get("hive")->as_string().wstring().data();
@@ -223,7 +223,8 @@ void InitializeConfiguration()
                         {
                             Log(LogLevel_DebugBasic, L"[R0] RegLegacyFixups:      is HKLM2HKCU\n");
 
-                            recordItem.remeditaionType = Reg_Remediation_Type_HKLM_to_HKCU;
+                            recordItem.remediationType = Reg_Remediation_Type_HKLM_to_HKCU;
+                            recordItem.HKLM2HKCU.isSpecified = true;
                             specItem.remediationRecords.push_back(recordItem);
                         }
 #endif
@@ -231,7 +232,7 @@ void InitializeConfiguration()
                         {
                             Log(LogLevel_DebugBasic, L"[R0] RegLegacyFixups:      is DeletionMarker\n");
 
-                            recordItem.remeditaionType = Reg_Remediation_Type_DeletionMarker;
+                            recordItem.remediationType = Reg_Remediation_Type_DeletionMarker;
                             try
                             {
                                 std::wstring hiveType = regItemObject.try_get("hive")->as_string().wstring().data();
@@ -287,7 +288,7 @@ void InitializeConfiguration()
                         {
                             Log(LogLevel_DebugBasic, L"[R0] RegLegacyFixups:      is JavaBlocker\n");
 
-                            recordItem.remeditaionType = Reg_Remediation_Type_JavaBlocker;
+                            recordItem.remediationType = Reg_Remediation_Type_JavaBlocker;
                             try
                             {
                                 std::wstring s_majorVersion = (std::wstring)regItemObject.try_get("majorVersion")->as_string().wstring();
@@ -322,8 +323,9 @@ void InitializeConfiguration()
                         {
                             LogString(LogLevel_DebugBasic, L"R",0, L"RegLegacyFixups:      Have unknown type from config.json", type.data());
                         }
-                        g_regRemediationSpecs.push_back(specItem);
                     }
+                    g_regRemediationSpecs.push_back(specItem);
+
                 }
             }
         }

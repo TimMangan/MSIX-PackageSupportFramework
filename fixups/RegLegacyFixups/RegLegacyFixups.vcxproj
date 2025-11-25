@@ -235,6 +235,7 @@
     <ClInclude Include="RegRemediation.h" />
     <ClInclude Include="Reg_Remediation_Spec.h" />
     <ClInclude Include="resource.h" />
+    <ClInclude Include="_ReadmeInternal.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\CommonSrc\psf_logging.cpp" />
@@ -260,8 +261,11 @@
     <ClCompile Include="RegOpenKey.cpp" />
     <ClCompile Include="RegOpenKeyEx.cpp" />
     <ClCompile Include="RegOpenKeyTransacted.cpp" />
+    <ClCompile Include="RegQueryInfoKey.cpp" />
     <ClCompile Include="RegQueryValueEx.cpp" />
     <ClCompile Include="RegRemediation.cpp" />
+    <ClCompile Include="RegSetValue.cpp" />
+    <ClCompile Include="RegSetValueEx.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\PsfRuntime\PsfRuntime.vcxproj">

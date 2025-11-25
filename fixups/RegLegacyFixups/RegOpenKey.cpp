@@ -32,119 +32,164 @@ LSTATUS __stdcall RegOpenKeyFixup(
     _In_ const CharT* subKey,
     _Out_ PHKEY resultKey)
 {
-    DWORD RegLocalInstance = ++g_RegInterceptInstance;
     LSTATUS result = -1;
-    bool isBlocked = false;
-
-
-    if constexpr (psf::is_ansi<CharT>)
+    auto guard = g_reentrancyGuard.enter();
+    if (guard)
     {
-        Log(LogLevel_DebugBasic, L"[%s%d] RegOpenKey:  key=0x%x subkey=%S", g_RegModuleName, RegLocalInstance, (ULONG)(ULONG_PTR)key, subKey);
-    }
-    else
-    {
-        Log(LogLevel_DebugBasic, L"[%s%d] RegOpenKey: key=0x%x subKey=%ls", g_RegModuleName, RegLocalInstance, (ULONG)(ULONG_PTR)key, subKey);
-    }
+        DWORD RegLocalInstance = ++g_RegInterceptInstance;
 
-    std::string keyonlypath = InterpretKeyPath(key);
-    std::string keypath = keyonlypath + "\\" + InterpretStringA(subKey);
+        std::string keyOnlyPath = InterpretKeyPath(key);
+        std::string keypath = keyOnlyPath + "\\" + InterpretStringA(subKey);
+        std::wstring wKeyOnlyPath = InterpretKeyPathW(key);
 
-    bool hasRedirection = false;
-#if TRYHKLM2HKCU
-    if (HasHKLM2HKCUSpecified())
-    {
-        std::string altkeyonlypath = NULL;
-        if (key == HKEY_LOCAL_MACHINE)
+
+        if constexpr (psf::is_ansi<CharT>)
         {
-            altkeyonlypath = HKLM2HKCU_Replacement("");
+            Log(LogLevel_DebugBasic, L"[%s%d] RegOpenKeyA:  key=0x%x subkey=%S", g_RegModuleName, RegLocalInstance, (ULONG)(ULONG_PTR)key, subKey);
         }
-        else if (keyonlypath._Starts_with("HKEY_LOCAL_MACHINE"))
+        else
         {
-            if (keyonlypath.length == 18)
-                altkeyonlypath = HKLM2HKCU_Replacement("");
-            else
-                altkeyonlypath = HKLM2HKCU_Replacement(keyonlypath.substr(19)));
+            Log(LogLevel_DebugBasic, L"[%s%d] RegOpenKeyW: key=0x%x subKey=%s", g_RegModuleName, RegLocalInstance, (ULONG)(ULONG_PTR)key, subKey);
         }
 
-        if (altkeyonlypath != NULL)
+        bool testDeletionMaker = HasDeletionMarkerSpecified();
+        bool testJavaBlocker = HasJavaBlockerSpecified();
+        if (testDeletionMaker)
         {
-            HKEY  altkey;
-            LSTATUS altresult = ::RegOpenKeyA(HKEY_CURRENT_USER, altkeyonlypath, &altkey);
-            if (altresult == ERROR_FILE_NOT_FOUND)
+            result = RegFixupDeletionMarker(LogLevel_DebugMaximum, wKeyOnlyPath, widen(subKey).c_str(), RegLocalInstance);
+            if (result != ERROR_SUCCESS)
             {
-                alrresult = ::RegCreateKeyA(HKEY_CURRENT_USER, altkeyonlypath, &altkey);
-            }
-            if (altresult == ERROR_SUCCESS)
-            {
-                result = RegOpenKeyImpl(altkey, subKey, resultKey);
-                RegCloseKey(altkey);
-                hasRedirection = true;
-                LogString(LogLevel_DebugBasic, g_RegModuleName, RegLocalInstance, L"\tRegOpenKey Redirecting to HKCU", subKey);
-            }
-        }
-    }
-#endif
 
-    if (!hasRedirection)
-    {
-        std::string sskey = narrow(subKey);
-        result = RegFixupDeletionMarker(LogLevel_DebugMaximum, keyonlypath, sskey, RegLocalInstance);
-        if (result == ERROR_SUCCESS)
-        {
-            Log(LogLevel_DebugIntermediate, L"[%s%d] RegOpenKey:  JavaBlocker checking path=%S", g_RegModuleName, RegLocalInstance, keypath.c_str());
-
-            if (!RegFixupJavaBlocker(LogLevel_DebugMaximum, keypath, RegLocalInstance))
-            {
-                result = RegOpenKeyImpl(key, subKey, resultKey);
-            }
-            else
-            {
-                Log(LogLevel_DebugIntermediate, L"[%s%d] RegOpenKey:  JavaBlocker Blocking path=%S", g_RegModuleName, RegLocalInstance, keypath.c_str());
+                Log(LogLevel_DebugBasic, L"[%s%d] RegOpenKey blocked by deletion marker: key=%s subkey=%s", g_RegModuleName, RegLocalInstance, wKeyOnlyPath.c_str(), InterpretStringW(subKey).c_str());
                 result = ERROR_PATH_NOT_FOUND;
                 resultKey = NULL;
-                isBlocked = true;
+                return result;
+            }
+        }
+
+        if (testJavaBlocker)
+        {
+            std::wstring wFullPath = wKeyOnlyPath;
+            if (subKey != NULL)
+            {
+                wFullPath += L"\\";
+                wFullPath += widen(subKey).c_str();
+            }
+            if (RegFixupJavaBlocker(LogLevel_DebugMaximum, wFullPath, RegLocalInstance))
+            {
+                Log(LogLevel_DebugBasic, L"[%s%d] RegOpenKey blocked by JavaBlocker: key=%s subkey=%s", g_RegModuleName, RegLocalInstance, wKeyOnlyPath.c_str(), InterpretStringW(subKey).c_str());
+                result = ERROR_PATH_NOT_FOUND;
+                resultKey = NULL;
+                return result;
+            }
+        }
+
+
+
+
+        RegCohorts regCohorts;
+#if TRYHKLM2HKCU
+        if (HasHKLM2HKCUSpecified())
+        {
+            try
+            {
+                Log(LogLevel_DebugIntermediate, L"[%s%d] RegOpenKey:  HKLM2HKCU specified", g_RegModuleName, RegLocalInstance);
+                regCohorts = GenerateRegCohorts(key, InterpretStringW(subKey), RegLocalInstance);
+
+                if (regCohorts.RedirectionNotPossible == false)
+                {
+                    // If redirection is possible, this is what we must do when creating the key.
+                    Log(LogLevel_DebugIntermediate, L"[%s%d] RegOpenKey is candidate for HKCU replacement.", g_RegModuleName, RegLocalInstance);
+                    HKEY  altKey;
+                    std::wstring prefixCU = HKCU_RedirNameW;
+                    Log(LogLevel_DebugMaximum, L"[%s%d] RegOpenKey PrefixCU %s with length %d", g_RegModuleName, RegLocalInstance, prefixCU.c_str(), prefixCU.length());
+                    if (regCohorts.RedirectedPath.length() == prefixCU.length())
+                    {
+                        result = ::RegOpenKey(HKEY_CURRENT_USER, HKLM2HKCU_RedirNameW.c_str(), resultKey);
+                        Log(LogLevel_DebugIntermediate, L"[%s%d] RegOpenKey Open of base key %s Key=0x%d result=%s", g_RegModuleName, RegLocalInstance, HKLM2HKCU_RedirNameW.c_str(), *resultKey, LStatusToWstring(result).c_str());
+                    }
+                    else
+                    {
+                        LSTATUS altResult = ::RegCreateKey(HKEY_CURRENT_USER, HKLM2HKCU_RedirNameW.c_str(), &altKey);
+                        Log(LogLevel_DebugIntermediate, L"[%s%d] RegOpenKey Created the base key of %s Key0x%x result=%s", g_RegModuleName, RegLocalInstance, HKLM2HKCU_RedirNameW.c_str(), *resultKey, LStatusToWstring(altResult).c_str());
+                        if (altResult == ERROR_ALREADY_EXISTS ||
+                            altResult == ERROR_SUCCESS)
+                        {
+                            result = RegOpenKeyImpl(altKey, regCohorts.RedirectedPath.substr(prefixCU.length() + 1).c_str(), resultKey);  // +1 is for following '\\'
+                            RegCloseKey(altKey);
+                            if (result == ERROR_SUCCESS)
+                            {
+                                Log(LogLevel_DebugBasic, L"[%s%d] RegOpenKey redirected success key=0x%x result=%s, path=%s", g_RegModuleName, RegLocalInstance, *resultKey, LStatusToWstring(result).c_str(), regCohorts.RedirectedPath.substr(prefixCU.length() + 1).c_str());
+                                return result;
+                            }
+                            else
+                            {
+                                Log(LogLevel_DebugIntermediate, L"[%s%d] RegOpenKey redirected fail result=%s, path=%s", g_RegModuleName, RegLocalInstance, LStatusToWstring(result).c_str(), regCohorts.RedirectedPath.substr(prefixCU.length() + 1).c_str());
+                            }
+                        }
+                        else
+                        {
+                            Log(LogLevel_DebugIntermediate, L"[%s%d] RegOpenKey Unable to create parent redirection base key?  err=%s", g_RegModuleName, RegLocalInstance, LStatusToWstring(altResult).c_str());
+                        }
+                    }
+                }
+            }
+            catch (...)
+            {
+                // If anything goes wrong, just do the normal call
+                Log(LogLevel_Exception, L"[%s%d] RegOpenKey redirection exception, try original request.\n", g_RegModuleName, RegLocalInstance);
+            }
+        }
+#endif
+
+
+        result = RegOpenKeyImpl(key, subKey, resultKey);
+        
+        if (result != ERROR_SUCCESS)
+        {
+            Log(LogLevel_DebugIntermediate, L"[%s%d] RegOpenKey requested result=%s", g_RegModuleName, RegLocalInstance, LStatusToWstring(result).c_str());
+#if TRYHKLM2HKCU
+            if (HasHKLM2HKCUSpecified())
+            {
+                if (regCohorts .ReverseRedirectionNotPossible== false)
+                {
+                    Log(LogLevel_DebugIntermediate, L"[%s%d] RegOpenKey is candidate for reverse HKCU replacement.", g_RegModuleName, RegLocalInstance);
+                    DWORD RememberLastError = GetLastError();
+                    LSTATUS altResult = RegOpenKeyImpl(HKEY_LOCAL_MACHINE, regCohorts.StandardPath.substr(19).c_str(), resultKey);
+                    if (altResult != ERROR_SUCCESS)
+                    {
+                        SetLastError(RememberLastError);
+                    }
+                    else
+                    {
+                        result = altResult;
+                        Log(LogLevel_DebugIntermediate, L"[%s%d] RegOpenKey using reverse HKCU replacement.", g_RegModuleName, RegLocalInstance);
+                    }
+                }
+            }
+#endif
+        }
+
+        if (result != ERROR_SUCCESS)
+        {
+            std::wstring sskey = widen(subKey);
+            if (sskey.find(L"PSF_READY_MARKER_") != std::wstring::npos)
+            {
+                Log(LogLevel_DebugBasic, L"[%s%d] RegOpenKey Result=%s here indicates that PSF injections are complete and the process is ready to run.", g_RegModuleName, RegLocalInstance, LStatusToWstring(result).c_str());
+            }
+            else
+            {
+                Log(LogLevel_DebugBasic, L"[%s%d] RegOpenKey result=%s", g_RegModuleName, RegLocalInstance, LStatusToWstring(result).c_str());
             }
         }
         else
         {
-            Log(LogLevel_DebugIntermediate, L"[%s%d] RegOpenKey:  DeletionMarker Blocking path=%S", g_RegModuleName, RegLocalInstance, keypath.c_str());
-            result = ERROR_PATH_NOT_FOUND;
-            resultKey = NULL;
-            isBlocked = true;
+            Log(LogLevel_DebugBasic, L"[%s%d] RegOpenKey result=SUCCESS %s key=0x%x", g_RegModuleName, RegLocalInstance, LStatusToWstring(result).c_str(), *resultKey);
         }
-    }
-
-    if (result != ERROR_SUCCESS)
-    {
-        Log(LogLevel_DebugBasic, L"[%s%d] RegOpenKey result=%d", g_RegModuleName, RegLocalInstance, result);
     }
     else
     {
-        Log(LogLevel_DebugBasic, L"[%s%d] RegOpenKey result=SUCCESS key=0x%x", g_RegModuleName, RegLocalInstance, *resultKey);
-    }
-
-    if (true) //resultKey == ERROR_ACCESS_DENIED)
-    {
-        auto functionResult = from_win32(result);
-        if (auto lock = acquire_output_lock(function_type::registry, functionResult))
-        {
-            try
-            {
-                LogKeyPath(LogLevel_DebugIntermediate, g_RegModuleName, RegLocalInstance, key);
-                LogString(LogLevel_DebugIntermediate, g_RegModuleName, RegLocalInstance, L" Sub Key", subKey);
-                LogFunctionResultInstance(LogLevel_DebugIntermediate, RegLocalInstance, functionResult);
-                if (function_failed(functionResult))
-                {
-                    LogWin32ErrorInstance(LogLevel_DebugIntermediate, RegLocalInstance, (DWORD)result);
-                }
-                LogCallingModuleInstanceCommon(LogLevel_DebugIntermediate, g_RegModuleName,RegLocalInstance);
-                Log(LogLevel_DebugIntermediate, L"[%s%d] This error often indicates that the key must be added to the original package.", g_RegModuleName, RegLocalInstance);
-            }
-            catch (...)
-            {
-                Log(LogLevel_Exception, L"[%s%d] RegOpenKey logging failure.\n", g_RegModuleName, RegLocalInstance);
-            }
-        }
+        result = RegOpenKeyImpl(key, subKey, resultKey);
     }
     return result;
 }

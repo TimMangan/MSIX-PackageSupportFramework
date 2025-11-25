@@ -16,6 +16,9 @@
     <Filter Include="pkg">
       <UniqueIdentifier>{c3d4d5e8-3e3b-4682-a09b-d448ccb77cef}</UniqueIdentifier>
     </Filter>
+    <Filter Include="CommonSource">
+      <UniqueIdentifier>{dac7b2d0-ae70-4188-a009-1232723a2424}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="MFRIlvAwareTests.cpp">
@@ -62,6 +65,9 @@
     </ClCompile>
     <ClCompile Include="PlaceholderTest.cpp">
       <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\CommonSrc\psf_logging.cpp">
+      <Filter>CommonSource</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

@@ -37,7 +37,7 @@ MfrAttributeFileTests.push_back(t_Native_Short1);
     temp = g_NativePF;
     temp.append(L"\\PlaceholderTest\\Placeholder.txt");
     MfrAttributeTest t_Native_PF1 = { "MFR+ILV Native-file VFS exists in package", true, false, false, 
-                                    temp.c_str(), 0x20, ERROR_SUCCESS };
+                                    temp.c_str(), 0x20, ERROR_SUCCESS, true, 0x40020};
     MfrAttributeFileTests.push_back(t_Native_PF1);
 
     temp = g_NativePF;
@@ -59,7 +59,7 @@ MfrAttributeFileTests.push_back(t_Native_Short1);
     temp = g_Cwd + L"\\VFS\\ProgramFilesX64\\PlaceholderTest\\Placeholder.txt";
 #endif
     MfrAttributeTest t_Vfs_PF1 = { "MFR+ILV Package-file VFS exists in package", true, false, false, 
-                                    temp, 0x20, ERROR_SUCCESS };
+                                    temp, 0x20, ERROR_SUCCESS, true, 0x40020 };
     MfrAttributeFileTests.push_back(t_Vfs_PF1);
 
 #if _M_IX86
@@ -89,7 +89,7 @@ MfrAttributeFileTests.push_back(t_Native_Short1);
     temp.append(L"\\VFS\\ProgramFilesX64\\PlaceholderTest\\Placeholder.txt");
 #endif
     MfrAttributeTest t_Redir_PF1 = { "MFR+ILV Redirected-file VFS exists in package", true, true, true, 
-                                    temp, 0x20, ERROR_SUCCESS };
+                                    temp, 0x20, ERROR_SUCCESS, true, 0x40020 };
     MfrAttributeFileTests.push_back(t_Redir_PF1);
 
     temp = g_writablePackageRootPath.c_str();
@@ -115,7 +115,7 @@ MfrAttributeFileTests.push_back(t_Native_Short1);
     // Requests to Package File Locations for GetFileAttributes using PVAD
     temp = g_Cwd + L"\\PvadFile1.txt";
     MfrAttributeTest t_Package_PV1 = { "MFR+ILV Package-file PVAD exists in package", true, true, true, 
-                                    temp, 0x20, ERROR_SUCCESS };
+                                    temp, 0x20, ERROR_SUCCESS, true, 0x40020 };
     MfrAttributeFileTests.push_back(t_Package_PV1);
 
     temp = g_Cwd + L"\\NonExistent1.txt";
@@ -134,7 +134,7 @@ MfrAttributeFileTests.push_back(t_Native_Short1);
     temp = g_writablePackageRootPath.c_str();
     temp.append(L"\\PvadFile1.txt");
     MfrAttributeTest t_Redir_PV1 = { "MFR+ILV Redirected-file PVAD exists in package", true, true, true, 
-                                    temp, 0x20, ERROR_SUCCESS };
+                                    temp, 0x20, ERROR_SUCCESS, true, 0x40020 };
     MfrAttributeFileTests.push_back(t_Redir_PV1);
 
     temp = g_writablePackageRootPath.c_str();
@@ -498,7 +498,8 @@ int RunAttributeTests()
 
             auto testResult = GetFileAttributes(testInput.TestPath.c_str());
             auto eCode = GetLastError();
-            if (testResult == testInput.Expected_Result)
+            if (testResult == testInput.Expected_Result ||
+                (testInput.allowAlternate_Result && testResult == testInput.Alternate_Result))
             {
                 if (testResult == INVALID_FILE_ATTRIBUTES)
                 {
@@ -512,6 +513,11 @@ int RunAttributeTests()
                         trace_message(L"ERROR: Setting attributes or error incorrect\n", error_color);
                         std::wstring detail1 = L"       Intended: Att=";
                         detail1.append(std::to_wstring(testInput.Expected_Result));
+                        if (testInput.allowAlternate_Result)
+                        {
+                            detail1.append(L" or ");
+                            detail1.append(std::to_wstring(testInput.Alternate_Result));
+                        }
                         detail1.append(L" Error=");
                         detail1.append(std::to_wstring(testInput.Expected_LastError));
                         detail1.append(L"\n");

@@ -25,6 +25,16 @@
 #endif
 #endif
 
+
+#ifdef _M_IX86
+#pragma comment(linker, "/EXPORT:RegQueryValueExAFixupAnsi_Fixup=_RegQueryValueFixupA.ansi")  // A test to see if exporting these names helps ProcessMonitor stack traces.
+#pragma comment(linker, "/EXPORT:RegQueryValueExWFixupWide_Fixup=_RegQueryValueFixupW.wide")  // A test to see if exporting these names helps ProcessMonitor stack traces.
+#else
+#pragma comment(linker, "/EXPORT:RegQueryValueExAFixupAnsi_Fixup=RegQueryValueFixupA.ansi")  // A test to see if exporting these names helps ProcessMonitor stack traces.
+#pragma comment(linker, "/EXPORT:RegQueryValueExWFixupWide_Fixup=RegQueryValueFixupW.wide")  // A test to see if exporting these names helps ProcessMonitor stack traces.
+#endif
+
+
 #if INTERCEPT_KERNELBASE
 LSTATUS __stdcall RegQueryValueExAFixup(
     _In_ HKEY key,
@@ -34,129 +44,197 @@ LSTATUS __stdcall RegQueryValueExAFixup(
     _Out_opt_ PVOID lpData,
     _In_opt_ _Out_opt_ LPDWORD lpcbData)
 {
-    // Copilot suggested this, but it breaks stuff.
-    //if (lpDwType) *lpDwType = 0;
-    //if (lpcbData) *lpcbData = 0;
-    //if (lpData && lpcbData) memset(lpData, 0, *lpcbData);
 
-    DWORD RegLocalInstance = ++g_RegInterceptInstance;
     LSTATUS result = -1;
-
-    try
+    auto guard = g_reentrancyGuard.enter();
+    if (guard)
     {
-        std::string keyonlypath = InterpretKeyPath(key);
+        DWORD RegLocalInstance = ++g_RegInterceptInstance;
 
-
-        std::string sValueName = "NULL";
-        if (lpValueName != NULL)
-            sValueName = lpValueName;
-        Log(LogLevel_DebugBasic, L"[%s%d] RegQueryValueExA:  key=0x%x keyname=%S ValueName=%S", g_RegModuleName, RegLocalInstance, (ULONG)(ULONG_PTR)key, keyonlypath.c_str(), sValueName.c_str());
-
-        DWORD dwType;
-        result = impl::KernelBaseRegQueryValueExA(key, lpValueName, lpReservered, &dwType, lpData, lpcbData);
-        if (lpDwType != NULL)
+        try
         {
-            *lpDwType = dwType;
-        }
-        if (result == ERROR_SUCCESS)
-        {
-            std::string sskey = "";
-            result = RegFixupDeletionMarker(LogLevel_DebugMaximum, keyonlypath, sskey, RegLocalInstance);
-            if (result == ERROR_SUCCESS)
+            std::string keyOnlyPath = InterpretKeyPath(key);
+
+
+            std::string sValueName = "NULL";
+            if (lpValueName != NULL)
+                sValueName = lpValueName;
+            Log(LogLevel_DebugBasic, L"[%s%d] RegQueryValueExA:  key=0x%x keyname=%S ValueName=%S", g_RegModuleName, RegLocalInstance, (ULONG)(ULONG_PTR)key, keyOnlyPath.c_str(), sValueName.c_str());
+
+
+
+            bool testDeletionMaker = HasDeletionMarkerSpecified();
+            if (testDeletionMaker)
+            {
+                result = RegFixupDeletionMarker(LogLevel_DebugMaximum, keyOnlyPath, sValueName.c_str(), RegLocalInstance);
+                if (result != ERROR_SUCCESS)
+                {
+
+                    Log(LogLevel_DebugBasic, L"[%s%d] RegQueryValueExA blocked by deletion marker: key=%S subkey=%S", g_RegModuleName, RegLocalInstance, keyOnlyPath.c_str(), sValueName.c_str());
+                    result = ERROR_FILE_NOT_FOUND;
+                    return result;
+                }
+            }
+
+            // JavaBlocker not needed on this intercept.
+
+
+            RegCohorts regCohorts;
+#if TRYHKLM2HKCU
+            if (HasHKLM2HKCUSpecified())
             {
                 try
                 {
-                    switch (dwType)
+                    Log(LogLevel_DebugIntermediate, L"[%s%d] RegQueryValueExA:  HKLM2HKCU specified", g_RegModuleName, RegLocalInstance);
+                    regCohorts = GenerateRegCohorts(key, L"", RegLocalInstance);
+
+                    if (regCohorts.RedirectionNotPossible == false)
                     {
-                    case REG_SZ:
-                    case REG_EXPAND_SZ:
-                    case REG_MULTI_SZ:
-                        if (lpData != NULL)
+                        // If redirection is possible, this is what we must do when creating the key.
+                        Log(LogLevel_DebugIntermediate, L"[%s%d] RegQueryValueExA is candidate for HKCU replacement.", g_RegModuleName, RegLocalInstance);
+                        HKEY  altKey;
+                        std::wstring prefix = L"HKEY_CURRENT_USER\\" + HKLM2HKCU_RedirNameW;
+                        if (regCohorts.RedirectedPath.length() != prefix.length())
                         {
-                            if (lpcbData != NULL)
+                            LSTATUS altResult = ::RegOpenKey(HKEY_CURRENT_USER, regCohorts.RedirectedPath.substr(18).c_str(), &altKey);
+                            if (altResult == ERROR_ALREADY_EXISTS ||
+                                altResult == ERROR_SUCCESS)
                             {
-                                char* rstring = new char[(*lpcbData) + 1];
-                                FillMemory(rstring, (*lpcbData) + 1, 0);
-                                memcpy(rstring, lpData, *lpcbData);
-                                LogString(LogLevel_DebugIntermediate, g_RegModuleName, RegLocalInstance, L"RegQueryValueExA: Returning success with value", rstring);
-                            }
-                        }
-                        else
-                        {
-                            if (lpcbData != NULL)
-                            {
-                                Log(LogLevel_DebugIntermediate, L"[%s%d] RegQueryValueExA:  Returning success with string no data, len needed=0x%x", g_RegModuleName, RegLocalInstance, *lpcbData);
-                            }
-                            else
-                            {
-                                Log(LogLevel_DebugIntermediate, L"[%s%d] RegQueryValueExA:  Returning success with string no data", g_RegModuleName, RegLocalInstance);
-                            }
-                        }
-                        break;
-                    case REG_DWORD:
-                        if (lpData != NULL)
-                        {
-                            Log(LogLevel_DebugIntermediate, L"[%s%d] RegQueryValueExA:  Returning success with DWORD 0x%x", g_RegModuleName, RegLocalInstance, *((DWORD*)lpData));
-                        }
-                        else
-                        {
-                            if (lpcbData != NULL)
-                            {
-                                Log(LogLevel_DebugIntermediate, L"[%s%d] RegQueryValueExA:  Returning success with DWORD, len needed=0x%x", g_RegModuleName, RegLocalInstance, *lpcbData);
-                            }
-                            else
-                                Log(LogLevel_DebugIntermediate, L"[%s%d] RegQueryValueExA:  Returning success with DWORD no data", g_RegModuleName, RegLocalInstance);
-                        }
-                        break;
-                    default:
-                        if (lpData != NULL)
-                        {
-                            Log(LogLevel_DebugIntermediate, L"[%s%d] RegQueryValueExA:  Returning success of type 0x%x", g_RegModuleName, RegLocalInstance, dwType);
-                        }
-                        else
-                        {
-                            if (lpcbData != NULL)
-                            {
-                                Log(LogLevel_DebugIntermediate, L"[%s%d] RegQueryValueExA:  Returning success of type 0x%x no data, len needed=0x%x", g_RegModuleName, RegLocalInstance, dwType, *lpcbData);
+                                DWORD dwType;
+                                result = impl::KernelBaseRegQueryValueExA(altKey, lpValueName, lpReservered, &dwType, lpData, lpcbData);
+                                RegCloseKey(altKey);
+                                if (result == ERROR_SUCCESS)
+                                {
+                                    if (lpDwType != NULL)
+                                    {
+                                        *lpDwType = dwType;
+                                    }
+                                    try
+                                    {
+                                        StoreAndLogRegistryValueA(LogLevel_DebugIntermediate, dwType, lpData, lpcbData, L"RegQueryValueExA", RegLocalInstance);
+                                    }
+                                    catch (...)
+                                    {
+                                        Log(LogLevel_Exception, L"[%s%d] RegGetQueryValueExA exception logging captured value.  May be ignored", g_RegModuleName, RegLocalInstance);
+                                    }
+                                    Log(LogLevel_DebugBasic, L"[%s%d] RegQueryValueExA redirected result=0x%x, path=%s", g_RegModuleName, RegLocalInstance, result, regCohorts.RedirectedPath.c_str());
+                                    return result;
+                                }
+                                else
+                                {
+                                    Log(LogLevel_DebugIntermediate, L"[%s%d] RegQueryValueExA redirected result=%s, path=%s", g_RegModuleName, RegLocalInstance, LStatusToWstring(result).c_str(), regCohorts.RedirectedPath.c_str());
+                                }
                             }
                             else
                             {
-                                Log(LogLevel_DebugIntermediate, "[%s%d] RegQueryValueExA:  Returning success of type 0x%x no data", g_RegModuleName, RegLocalInstance, dwType);
+                                Log(LogLevel_DebugIntermediate, L"[%s%d] RegQueryValueExA redirected parent key result=%s, path=%s", g_RegModuleName, RegLocalInstance, LStatusToWstring(altResult).c_str(), regCohorts.RedirectedPath.c_str());
                             }
                         }
-                        break;
                     }
                 }
                 catch (...)
                 {
-                    Log(LogLevel_Exception, L"[%s%d] RegQueryValueExA:  Exception thrown reading data.", g_RegModuleName, RegLocalInstance);
+                    // If anything goes wrong, just do the normal call
+                    Log(LogLevel_Exception, L"[%s%d] RegQueryValueExA redirection exception, try original request.\n", g_RegModuleName, RegLocalInstance);
                 }
+            }
+#endif
+
+
+            DWORD dwType;
+            result = impl::KernelBaseRegQueryValueExA(key, lpValueName, lpReservered, &dwType, lpData, lpcbData);
+            if (lpDwType != NULL)
+            {
+                *lpDwType = dwType;
+            }
+            if (result == ERROR_SUCCESS)
+            {
+                try
+                {
+                    StoreAndLogRegistryValueA(LogLevel_DebugIntermediate, dwType, lpData, lpcbData, L"RegQueryValueExA", RegLocalInstance);
+                }
+                catch (...)
+                {
+                    Log(LogLevel_Exception, L"[%s%d] RegGetQueryValueExW exception logging captured value.  May be ignored", g_RegModuleName, RegLocalInstance);
+                }
+                Log(LogLevel_DebugBasic, L"[%s%d] RegQueryValueExA requested result=%s, path=%s", g_RegModuleName, RegLocalInstance, LStatusToWstring(result).c_str(), regCohorts.RedirectedPath.c_str());
+                return result;
             }
             else
             {
-                // We have a deletion marker on this particular item, so we need to skip it.
-                // When we return this value, a subsequent call by the app might ask for this new index, but we can probably assume it's OK to return it twice
-                // because we do not have a way to remember this, like done in FindFirstFile.
-                Log(LogLevel_DebugIntermediate, L"[%s%d] RegQueryValueExA:  DeletionMarker Blocking this call.", g_RegModuleName, RegLocalInstance);
+                Log(LogLevel_DebugIntermediate, L"[%s%d] RegQueryValueExA requested result=%s, path=%s", g_RegModuleName, RegLocalInstance, LStatusToWstring(result).c_str(), regCohorts.RedirectedPath.c_str());
             }
+
+#if TRYHKLM2HKCU
+            // reverse redirection attempt if not found
+            if (HasHKLM2HKCUSpecified())
+            {
+                try
+                {
+                    if (regCohorts.ReverseRedirectionNotPossible == false)
+                    {
+                        Log(LogLevel_DebugIntermediate, L"[%s%d] RegQueryValueExA is candidate for reverse HKCU replacement.", g_RegModuleName, RegLocalInstance);
+                        HKEY  altKey;
+                        std::wstring prefix = L"HKEY_LOCAL_MACHINE\\" + HKLM2HKCU_RedirNameW;
+                        if (regCohorts.RedirectedPath.length() != prefix.length())
+                        {
+                            LSTATUS altResult = ::RegOpenKey(HKEY_LOCAL_MACHINE, regCohorts.StandardPath.substr(19).c_str(), &altKey);
+                            if (altResult == ERROR_ALREADY_EXISTS ||
+                                altResult == ERROR_SUCCESS)
+                            {
+                                result = impl::KernelBaseRegQueryValueExA(altKey, lpValueName, lpReservered, &dwType, lpData, lpcbData);
+                                RegCloseKey(altKey);
+                                if (result == ERROR_SUCCESS)
+                                {
+                                    if (lpDwType != NULL)
+                                    {
+                                        *lpDwType = dwType;
+                                    }
+                                    try
+                                    {
+                                        StoreAndLogRegistryValueA(LogLevel_DebugIntermediate, dwType, lpData, lpcbData, L"RegQueryValueExA", RegLocalInstance);
+                                    }
+                                    catch (...)
+                                    {
+                                        Log(LogLevel_Exception, L"[%s%d] RegQueryValueExA exception logging captured value.  May be ignored", g_RegModuleName, RegLocalInstance);
+                                    }
+                                    Log(LogLevel_DebugBasic, L"[%s%d] RegQueryValueExA reverse redirected result=%s, path=%s", g_RegModuleName, RegLocalInstance, LStatusToWstring(result).c_str(), regCohorts.RedirectedPath.c_str());
+                                    return result;
+                                }
+                                else
+                                {
+                                    Log(LogLevel_DebugIntermediate, L"[%s%d] RegQueryValueExA reverse redirected result=%s, path=%s", g_RegModuleName, RegLocalInstance, LStatusToWstring(result).c_str(), regCohorts.RedirectedPath.c_str());
+                                }
+                            }
+                            else
+                            {
+                                Log(LogLevel_DebugIntermediate, L"[%s%d] RegQueryValueExA reverse redirected parent key result=%s, path=%s", g_RegModuleName, RegLocalInstance, LStatusToWstring(altResult).c_str(), regCohorts.RedirectedPath.c_str());
+                            }
+                        }
+                    }
+                }
+                catch (...)
+                { 
+                    Log(LogLevel_Exception, L"[%s%d] RegQueryValueExA:  Exception thrown.", g_RegModuleName, RegLocalInstance);
+                }
+            }
+#endif
+
+            Log(LogLevel_DebugBasic, L"[%s%d] RegQueryValueExA:  Returning failure %s.", g_RegModuleName, RegLocalInstance, LStatusToWstring(result).c_str());
         }
-        else
+        catch (...)
         {
-            Log(LogLevel_DebugBasic, L"[%s%d] RegQueryValueExA:  Returning normal failure 0x%x.", g_RegModuleName, RegLocalInstance, result);
+            Log(LogLevel_Exception, L"[%s%d] RegQueryValueExA:  Exception thrown.", g_RegModuleName, RegLocalInstance);
         }
     }
-    catch (...)
+    else
     {
-        // Copilot suggested this, but it breaks stuff.
-        //if (lpDwType) *lpDwType = 0;
-        //if (lpcbData) *lpcbData = 0;
-        //if (lpData && lpcbData) memset(lpData, 0, *lpcbData);
-
-        Log(LogLevel_Exception, L"[%s%d] RegQueryValueExA:  Exception thrown.", g_RegModuleName, RegLocalInstance);
+        result = impl::KernelBaseRegQueryValueExA(key, lpValueName, lpReservered, lpDwType, lpData, lpcbData);
     }
     return result;
 }
 DECLARE_FIXUP(impl::KernelBaseRegQueryValueExA, RegQueryValueExAFixup);
+
 
 LSTATUS __stdcall RegQueryValueExWFixup(
     _In_      HKEY key,
@@ -166,118 +244,171 @@ LSTATUS __stdcall RegQueryValueExWFixup(
     _Out_opt_ PVOID lpData,
     _In_opt_ _Out_opt_ LPDWORD lpcbData)
 {
-    DWORD RegLocalInstance = ++g_RegInterceptInstance;
     LSTATUS result = -1;
-
-    try
+    auto guard = g_reentrancyGuard.enter();
+    if (guard)
     {
-        std::string keyonlypath = InterpretKeyPath(key);
+        DWORD RegLocalInstance = ++g_RegInterceptInstance;
 
-
-        std::string sValueName = "NULL";
-        if (lpValueName != NULL)
-            sValueName = narrow(lpValueName);
-        Log(LogLevel_DebugBasic, L"[%s%d] RegQueryValueExW:  key=0x%x keyname=%S ValueName=%S", g_RegModuleName, RegLocalInstance, (ULONG)(ULONG_PTR)key, keyonlypath.c_str(), sValueName.c_str());
-
-        DWORD dwType;
-        result = impl::KernelBaseRegQueryValueExW(key, lpValueName, lpReservered, &dwType, lpData, lpcbData);
-        if (lpDwType != NULL)
+        try
         {
-            *lpDwType = dwType;
-        }
-        if (result == ERROR_SUCCESS)
-        {
-            std::string sskey = "";
-            result = RegFixupDeletionMarker(LogLevel_DebugMaximum, keyonlypath, sskey, RegLocalInstance);
-            if (result == ERROR_SUCCESS)
+            std::string keyOnlyPath = InterpretKeyPath(key);
+
+
+            std::string sValueName = "NULL";
+            if (lpValueName != NULL)
+                sValueName = narrow(lpValueName);
+            Log(LogLevel_DebugBasic, L"[%s%d] RegQueryValueExW:  key=0x%x keyname=%S ValueName=%S", g_RegModuleName, RegLocalInstance, (ULONG)(ULONG_PTR)key, keyOnlyPath.c_str(), sValueName.c_str());
+
+
+
+            bool testDeletionMaker = HasDeletionMarkerSpecified();
+            if (testDeletionMaker)
+            {
+                result = RegFixupDeletionMarker(LogLevel_DebugMaximum, keyOnlyPath, sValueName.c_str(), RegLocalInstance);
+                if (result != ERROR_SUCCESS)
+                {
+
+                    Log(LogLevel_DebugBasic, L"[%s%d] RegQueryValueExW blocked by deletion marker: key=%S subkey=%S", g_RegModuleName, RegLocalInstance, keyOnlyPath.c_str(), sValueName.c_str());
+                    result = ERROR_FILE_NOT_FOUND;
+                    return result;
+                }
+            }
+
+            // JavaBlocker not needed on this intercept.
+
+
+            RegCohorts regCohorts;
+#if TRYHKLM2HKCU
+            if (HasHKLM2HKCUSpecified())
             {
                 try
                 {
-                    switch (dwType)
+                    Log(LogLevel_DebugIntermediate, L"[%s%d] RegQueryValueExW:  HKLM2HKCU specified", g_RegModuleName, RegLocalInstance);
+                    regCohorts = GenerateRegCohorts(key, L"", RegLocalInstance);
+
+                    if (regCohorts.RedirectionNotPossible == false)
                     {
-                    case REG_SZ:
-                    case REG_EXPAND_SZ:
-                    case REG_MULTI_SZ:
-                        if (lpData != NULL)
+                        // If redirection is possible, this is what we must do when creating the key.
+                        Log(LogLevel_DebugIntermediate, L"[%s%d] RegQueryValueExW is candidate for HKCU replacement.", g_RegModuleName, RegLocalInstance);
+                        HKEY  altKey;
+                        std::wstring prefix = L"HKEY_CURRENT_USER\\" + HKLM2HKCU_RedirNameW;
+                        if (regCohorts.RedirectedPath.length() != prefix.length())
                         {
-                            if (lpcbData != NULL)
+                            LSTATUS altResult = ::RegOpenKey(HKEY_CURRENT_USER, regCohorts.RedirectedPath.substr(18).c_str(), &altKey);
+                            if (altResult == ERROR_ALREADY_EXISTS ||
+                                altResult == ERROR_SUCCESS)
                             {
-                                wchar_t* rstring = new wchar_t[(*lpcbData) + 2];
-                                FillMemory(rstring, (*lpcbData) + 2, 0);
-                                memcpy(rstring, lpData, *lpcbData);
-                                LogString(LogLevel_DebugIntermediate, g_RegModuleName, RegLocalInstance, L"RegQueryValueExW: Returning success with value", rstring);
-                            }
-                        }
-                        else
-                        {
-                            if (lpcbData != NULL)
-                            {
-                                Log(LogLevel_DebugIntermediate, L"[%s%d] RegQueryValueExW:  Returning success with string no data, len needed=0x%x", g_RegModuleName, RegLocalInstance, *lpcbData);
+                                DWORD dwType;
+                                result = impl::KernelBaseRegQueryValueExW(altKey, lpValueName, lpReservered, &dwType, lpData, lpcbData);
+                                RegCloseKey(altKey);
+                                if (result == ERROR_SUCCESS)
+                                {
+                                    if (lpDwType != NULL)
+                                    {
+                                        *lpDwType = dwType;
+                                    }
+                                    StoreAndLogRegistryValueW(LogLevel_DebugIntermediate, dwType, lpData, lpcbData, L"RegQueryValueExW", RegLocalInstance);
+                                    Log(LogLevel_DebugBasic, L"[%s%d] RegQueryValueExW redirected result=%s, path=%s", g_RegModuleName, RegLocalInstance, LStatusToWstring(result).c_str(), regCohorts.RedirectedPath.c_str());
+                                    return result;
+                                }
+                                else
+                                {
+                                    Log(LogLevel_DebugIntermediate, L"[%s%d] RegQueryValueExW redirected result=%s, path=%s", g_RegModuleName, RegLocalInstance, LStatusToWstring(result).c_str(), regCohorts.RedirectedPath.c_str());
+                                }
                             }
                             else
                             {
-                                Log(LogLevel_DebugIntermediate, L"[%s%d] RegQueryValueExW:  Returning success with string no data", g_RegModuleName, RegLocalInstance);
+                                Log(LogLevel_DebugIntermediate, L"[%s%d] RegQueryValueExW redirected parent key result=%s, path=%s", g_RegModuleName, RegLocalInstance, LStatusToWstring(altResult).c_str(), regCohorts.RedirectedPath.c_str());
                             }
                         }
-                        break;
-                    case REG_DWORD:
-                        if (lpData != NULL)
-                        {
-                            Log(LogLevel_DebugIntermediate, L"[%s%d] RegQueryValueExW:  Returning success with DWORD 0x%x", g_RegModuleName, RegLocalInstance, *((DWORD*)lpData));
-                        }
-                        else
-                        {
-                            if (lpcbData != NULL)
-                            {
-                                Log(LogLevel_DebugIntermediate, L"[%s%d] RegQueryValueExW:  Returning success with DWORD no data, len needed=0x%x", g_RegModuleName, RegLocalInstance, *lpcbData);
-                            }
-                            else
-                            {
-                                Log(LogLevel_DebugIntermediate, L"[%s%d] RegQueryValueExW:  Returning success with DWORD no data", g_RegModuleName, RegLocalInstance);
-                            }
-                        }
-                        break;
-                    default:
-                        if (lpData != NULL)
-                        {
-                            Log(LogLevel_DebugIntermediate, L"[%s%d] RegQueryValueExW:  Returning success of type 0x%x", g_RegModuleName, RegLocalInstance, dwType);
-                        }
-                        else
-                        {
-                            if (lpcbData != NULL)
-                            {
-                                Log(LogLevel_DebugIntermediate, L"[%s%d] RegQueryValueExW:  Returning success of type 0x%x no data, len needed=0x%x", g_RegModuleName, RegLocalInstance, dwType, *lpcbData);
-                            }
-                            else
-                            {
-                                Log(LogLevel_DebugIntermediate, L"[%s%d] RegQueryValueExW:  Returning success of type 0x%x no data", g_RegModuleName, RegLocalInstance, dwType);
-                            }
-                        }
-                        break;
                     }
                 }
                 catch (...)
                 {
-                    Log(LogLevel_Exception, L"[%s%d] RegQueryValueExW:  Exception thrown during debug logging.", g_RegModuleName, RegLocalInstance);
-                }  
+                    // If anything goes wrong, just do the normal call
+                    Log(LogLevel_Exception, L"[%s%d] RegQueryValueExW redirection exception, try original request.\n", g_RegModuleName, RegLocalInstance);
+                }
+            }
+#endif
+
+            DWORD dwType;
+            result = impl::KernelBaseRegQueryValueExW(key, lpValueName, lpReservered, &dwType, lpData, lpcbData);
+            if (lpDwType != NULL)
+            {
+                *lpDwType = dwType;
+            }
+            if (result == ERROR_SUCCESS)
+            {
+                StoreAndLogRegistryValueW(LogLevel_DebugIntermediate, dwType, lpData, lpcbData, L"RegQueryValueExW", RegLocalInstance);
+                Log(LogLevel_DebugBasic, L"[%s%d] RegQueryValueExW requested result=%s, path=%s", g_RegModuleName, RegLocalInstance, LStatusToWstring(result).c_str(), regCohorts.RequestedPath.c_str());
+                return result;
             }
             else
             {
-                // We have a deletion marker on this particular item, so we need to skip it.
-                // When we return this value, a subsequent call by the app might ask for this new index, but we can probably assume it's OK to return it twice
-                // because we do not have a way to remember this, like done in FindFirstFile.
-                Log(LogLevel_DebugIntermediate, L"[%s%d] RegQueryValueExW:  DeletionMarker Blocking this call.", g_RegModuleName, RegLocalInstance);
-
+                Log(LogLevel_DebugIntermediate, L"[%s%d] RegQueryValueExW requested result=%s, path=%s", g_RegModuleName, RegLocalInstance, LStatusToWstring(result).c_str(), regCohorts.RedirectedPath.c_str());
             }
+
+
+#if TRYHKLM2HKCU
+            // reverse redirection attempt if not found
+            if (HasHKLM2HKCUSpecified())
+            {
+                try
+                {
+                    if (regCohorts.ReverseRedirectionNotPossible == false)
+                    {
+                        Log(LogLevel_DebugIntermediate, L"[%s%d] RegQueryValueExW is candidate for reverse HKCU replacement.", g_RegModuleName, RegLocalInstance);
+                        HKEY  altKey;
+                        std::wstring prefix = L"HKEY_LOCAL_MACHINE\\" + HKLM2HKCU_RedirNameW;
+                        if (regCohorts.RedirectedPath.length() != prefix.length())
+                        {
+                            LSTATUS altResult = ::RegOpenKey(HKEY_LOCAL_MACHINE, regCohorts.StandardPath.substr(19).c_str(), &altKey);
+                            if (altResult == ERROR_ALREADY_EXISTS ||
+                                altResult == ERROR_SUCCESS)
+                            {
+                                result = impl::KernelBaseRegQueryValueExW(altKey, lpValueName, lpReservered, &dwType, lpData, lpcbData);
+                                RegCloseKey(altKey);
+                                if (result == ERROR_SUCCESS)
+                                {
+                                    if (lpDwType != NULL)
+                                    {
+                                        *lpDwType = dwType;
+                                    }
+                                    StoreAndLogRegistryValueW(LogLevel_DebugIntermediate, dwType, lpData, lpcbData, L"RegQueryValueExW", RegLocalInstance);
+                                    Log(LogLevel_DebugBasic, L"[%s%d] RegQueryValueExW reverse redirected result=0x%x, path=%s", g_RegModuleName, RegLocalInstance, result, regCohorts.RedirectedPath.c_str());
+                                    return result;
+                                }
+                                else
+                                {
+                                    Log(LogLevel_DebugIntermediate, L"[%s%d] RegQueryValueExW reverse redirected result=0x%x, path=%s", g_RegModuleName, RegLocalInstance, result, regCohorts.RedirectedPath.c_str());
+                                }
+                            }
+                            else
+                            {
+                                Log(LogLevel_DebugIntermediate, L"[%s%d] RegQueryValueExW reverse redirected parent key result=0x%x, path=%s", g_RegModuleName, RegLocalInstance, altResult, regCohorts.RedirectedPath.c_str());
+                            }
+                        }
+                    }
+                }
+                catch (...)
+                {
+                    Log(LogLevel_Exception, L"[%s%d] RegQueryValueEx:  Exception thrown.", g_RegModuleName, RegLocalInstance);
+                }
+            }
+#endif
+
+            Log(LogLevel_DebugBasic, L"[%s%d] RegQueryValueExW:  Returning failure %s.", g_RegModuleName, RegLocalInstance, LStatusToWstring(result).c_str());
+            
         }
-        else
+        catch (...)
         {
-            Log(LogLevel_DebugBasic, L"[%s%d] RegQueryValueExW:  Returning normal failure 0x%x.", g_RegModuleName, RegLocalInstance, result);
+            Log(LogLevel_Exception, L"[%s%d] RegQueryValueEx:  Exception thrown.", g_RegModuleName, RegLocalInstance);
         }
     }
-    catch (...)
+    else
     {
-        Log(LogLevel_Exception, L"[%s%d] RegQueryValueEx:  Exception thrown.", g_RegModuleName, RegLocalInstance);
+        result = impl::KernelBaseRegQueryValueExW(key, lpValueName, lpReservered, lpDwType,  lpData, lpcbData);
     }
     return result;
 }

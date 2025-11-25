@@ -53,18 +53,15 @@ Each remediation array object starts with a type field:
 | Remediation Type | Purpose |
 | --------------- | ------- |
 | `ModifyKeyAccess` | Allows for modification of access parameters in calls to open registry keys.  This remediation targets the `samDesired` parameter that specifies the permissions granted to the application when opening the key. This remediation type does not target calls for registry values.|
-| `FakeDelete`      | Returns success to the application if it attempts to delete a key or registry item and "ACCESS_DENIED" occurs.  The app may or may not depend upon the delete occuring at some later point of running the application, so significant testing of the app is suggested when attempting this fixup.|
+| `FakeDelete`      | Returns success to the application if it attempts to delete a key or registry item and "ACCESS_DENIED" occurs.  The app may or may not depend upon the delete occurring at some later point of running the application, so significant testing of the app is suggested when attempting this fixup.|
 | `DeletionMarker`  | Returns PATH_NOT_FOUND to the application if it attempts to access a key or registry item at or below where a deletion marker is present in this configuration, even if the key/value is present in either the virtual or real registry.|
-| `JavaBlocker`     | Returns PATH_NOT_FOUND to calls to locate a Java version higher than the specified value. This is a simply configured support for apps that require a specific version of Java and we need to keep the app from seeing a newer vesion if locally deployed.|
+| `JavaBlocker`     | Returns PATH_NOT_FOUND to calls to locate a Java version higher than the specified value. This is a simply configured support for apps that require a specific version of Java and we need to keep the app from seeing a newer version if locally deployed.|
+| `HKLM2HKCU`       | Redirects writes to HKLM keys and values to a special key under HKCU, and adjust open/get/enum calls to check alternate locations that contain prior redirections.|
 
 ## ModifyKeyAccess Remediation Type
 The following Windows API calls are supported for this fixup type. 
 
 > * RegCreateKeyEx
-> * RegDeleteKey
-> * RegDeleteKeyEx
-> * RegDeleteKeyTransacted
-> * RegDeleteValue
 > * RegOpenKeyEx
 > * RegOpenKeyTransacted
 
@@ -164,9 +161,13 @@ Note that when the call by the application specifies a regkey, subkey, and a val
 ## JavaBlocker Remediation Type
 The following Windows API calls are supported for this fixup type. 
 
+> * RegEnumKeyEx
+> * RegEnumKeyEx
+> * RegGetValue
 > * RegOpenKey
 > * RegOpenKeyEx
 > * RegOpenKeyTransacted
+> * RegQueryValueEx
 
 ### Configuration for JavaBlocker
 When the `type` is specified as `JavaBlocker`, the `remediation` element is an array of remediations with a structure shown here:
@@ -174,6 +175,27 @@ When the `type` is specified as `JavaBlocker`, the `remediation` element is an a
 | `majorVersion` | Specifies the major version number of the java version to be supported.  For example, for Java 1.8U133 this is `1`.|
 | `minorVersion` | Specifies the minor version number of the java version to be supported.  For example, for Java 1.8U133 this is `8`. |
 | `updateVersion` | Specifies the update version number of the java version to be supported.  For example, for Java 1.8U133 this is `133`. Specify `999` for any. |
+
+## HKLM2HKCU Remediation Type
+The following Windows API calls are supported for this fixup type.
+
+> * RegCreateKeyEx
+> * RegDeleteKey				(not implemented)
+> * RegDeleteKeyEx				(not implemented)
+> * RegDeleteKeyTransacted		(not implemented)
+> * RegDeleteValue				(not implemented)
+> * RegEnumKeyEx
+> * RegEnumValue
+> * RegGetValue
+> * RegOpeKey
+> * RegOpenKeyEx
+> * RegOpenKeyTransacted
+> * RegQueryInfoKey
+> * RegQueryValueEx
+
+### Configuration for HKLM2HCKU
+When the `type` is specified as `HKLM2HKCU`, the `remediation` element consists of:
+| `hive` | Specifies the registry hive targeted.  The only supported value is HKLM |
 
 
 # General Notes

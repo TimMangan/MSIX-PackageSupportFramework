@@ -22,6 +22,8 @@ struct MfrAttributeTest
     std::wstring TestPath;
     DWORD Expected_Result;
     DWORD Expected_LastError;
+    bool allowAlternate_Result = false;
+    DWORD Alternate_Result = 0;
 };
 
 

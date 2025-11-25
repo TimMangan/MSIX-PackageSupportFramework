@@ -28,78 +28,81 @@
 
 #if INTERCEPT_KERNELBASE
 
-template <typename CharT>
-LSTATUS __stdcall RegDeleteKeyValueGeneric(
+LSTATUS __stdcall RegDeleteKeyValueGenericFixup(
     _In_ HKEY key,
-    _In_ const CharT* subKey,
-    _In_ const CharT* subValueName)
+    _In_ const wchar_t* subKey,
+    _In_ const wchar_t* subValueName)
 {
-
-    DWORD RegLocalInstance = ++g_RegInterceptInstance;
-
     LSTATUS result;
-    if constexpr (psf::is_ansi<CharT>)
+    auto guard = g_reentrancyGuard.enter();
+    if (guard)
     {
-        result = impl::KernelBaseRegDeleteKeyValueA(key, subKey, subValueName);
+
+        DWORD RegLocalInstance = ++g_RegInterceptInstance;
+        Log(LogLevel_DebugBasic, L"[%s%d] RegDeleteKeyValue: Key=0x%x subKey=%s subValueName=%s\n", g_RegModuleName, RegLocalInstance, key, subKey, subValueName);
+
+        result = impl::KernelBaseRegDeleteKeyValueW(key, subKey, subValueName);
+        auto functionResult = from_win32(result);
+
+        if (functionResult != from_win32(0))
+        {
+            if (auto lock = acquire_output_lock(function_type::registry, functionResult))
+            {
+                try
+                {
+                    std::wstring keypath = ReplaceAppRegistrySyntaxW(InterpretKeyPathW(key) + L"\\" + InterpretStringW(subKey) + L"\\" + InterpretStringW(subValueName));
+                    if (keypath.find(L"InterpretKeyPath failure") != std::string::npos)
+                    {
+                        Log(LogLevel_DebugIntermediate, L"[%s%d] RegDeleteKeyValue: Path=%s", g_RegModuleName, RegLocalInstance, widen(keypath).c_str());
+                        result = 0;
+                    }
+                    else
+                    {
+                        Log(LogLevel_DebugIntermediate, L"[%s%d] RegDeleteKeyValue: Path=%s", g_RegModuleName, RegLocalInstance, widen(keypath).c_str());
+                        if (RegFixupFakeDelete(LogLevel_DebugIntermediate, keypath, RegLocalInstance) == true)
+                        {
+                            LogCallingModuleInstanceCommon(LogLevel_DebugIntermediate, g_RegModuleName, RegLocalInstance);
+                            Log(LogLevel_DebugBasic, L"[%s%d] RegDeleteKeyValue:Fake Success\n", g_RegModuleName, RegLocalInstance);
+                            result = 0;
+                        }
+                    }
+                }
+                catch (...)
+                {
+                    Log(LogLevel_Exception, L"[%s%d] RegDeleteKeyValue logging failure.\n", g_RegModuleName, RegLocalInstance);
+                }
+            }
+            Log(LogLevel_DebugBasic, L"[%s%d] RegDeleteKeyValue:Fake returns %d\n", g_RegModuleName, RegLocalInstance, result);
+        }
+        else
+        {
+            Log(LogLevel_DebugBasic, L"[%s%d] RegDeleteKeyValue:Real returns %d\n", g_RegModuleName, RegLocalInstance, result);
+        }
     }
     else
     {
         result = impl::KernelBaseRegDeleteKeyValueW(key, subKey, subValueName);
     }
-    auto functionResult = from_win32(result);
-
-    if (functionResult != from_win32(0))
-    {
-        if (auto lock = acquire_output_lock(function_type::registry, functionResult))
-        {
-            try
-            {
-                Log(LogLevel_DebugBasic, L"[%s%d] RegDeleteKeyValue: Key=0x%x\n", g_RegModuleName, RegLocalInstance, key);
-                std::string keypath = ReplaceAppRegistrySyntax(InterpretKeyPath(key) + "\\" + InterpretStringA(subKey) + "\\" + InterpretStringA(subValueName));
-                if (keypath.find("InterpretKeyPath failure") != std::string::npos)
-                {
-                    Log(LogLevel_DebugIntermediate, L"[%s%d] RegDeleteKeyValue (A): Path=%s", g_RegModuleName, RegLocalInstance, widen(keypath).c_str());
-                    result = 0;
-                }
-                else
-                {
-                    Log(LogLevel_DebugIntermediate, L"[%s%d] RegDeleteKeyValue (A): Path=%s", g_RegModuleName, RegLocalInstance, widen(keypath).c_str());
-                    if (RegFixupFakeDelete(LogLevel_DebugIntermediate, keypath, RegLocalInstance) == true)
-                    {
-                        LogCallingModuleInstanceCommon(LogLevel_DebugIntermediate, g_RegModuleName, RegLocalInstance);
-                        Log(LogLevel_DebugBasic, L"[%s%d] RegDeleteKeyValue:Fake Success\n", g_RegModuleName, RegLocalInstance);
-                        result = 0;
-                    }
-                }
-            }
-            catch (...)
-            {
-                Log(LogLevel_Exception, L"[%s%d] RegDeleteKeyValue logging failure.\n", g_RegModuleName, RegLocalInstance);
-            }
-        }
-        Log(LogLevel_DebugBasic, L"[%s%d] RegDeleteKeyValue:Fake returns %d\n", g_RegModuleName, RegLocalInstance, result);
-    }
-    else
-    {
-        if constexpr (psf::is_ansi<CharT>)
-        {
-            Log(LogLevel_DebugIntermediate, L"[%s%d] RegDeleteKeyValue (A): Key=0x%x, subkey=%s Name=%s", g_RegModuleName, RegLocalInstance, key, widen(subKey).c_str(), widen(subValueName).c_str());
-        }
-        else
-        {
-            Log(LogLevel_DebugIntermediate, L"[%s%d] RegDeleteKeyValue (W): Key=0x%x, subkey=%s Name=%s", g_RegModuleName, RegLocalInstance, key, subKey, subValueName);
-        }
-        Log(LogLevel_DebugBasic, L"[%s%d] RegDeleteKeyValue:Real returns %d\n", g_RegModuleName, RegLocalInstance, result);
-    }
     return result;
-}
+} // RegDeleteKeyValueGenericFixup()
 
 LSTATUS __stdcall RegDeleteKeyValueAFixup(
     _In_ HKEY key,
     _In_ const char* subKey,
     _In_ const char* subValueName)
 {
-    return RegDeleteKeyValueGeneric(key, subKey, subValueName);
+
+    auto guard = g_reentrancyGuard.enter();
+    if (guard)
+    {
+        return RegDeleteKeyValueGenericFixup(key, widen(subKey).c_str(), widen(subValueName).c_str());
+    }
+    else
+
+    {
+        LSTATUS retVal = impl::KernelBaseRegDeleteKeyValueA(key, subKey, subValueName);
+        return retVal;
+    }
 }
 DECLARE_FIXUP(impl::KernelBaseRegDeleteKeyValueA, RegDeleteKeyValueAFixup);
 
@@ -109,7 +112,17 @@ LSTATUS __stdcall RegDeleteKeyValueWFixup(
     _In_ const wchar_t* subKey,
     _In_ const wchar_t* subValueName)
 {
-    return RegDeleteKeyValueGeneric(key, subKey, subValueName);
+
+    auto guard = g_reentrancyGuard.enter();
+    if (guard)
+    {
+        LSTATUS retVal = RegDeleteKeyValueGenericFixup(key, subKey, subValueName);
+        return retVal;
+    }
+    else
+    {
+         return impl::KernelBaseRegDeleteKeyValueW(key, subKey, subValueName);
+    }
 }
 DECLARE_FIXUP(impl::KernelBaseRegDeleteKeyValueW, RegDeleteKeyValueWFixup);
 
@@ -136,7 +149,7 @@ LSTATUS __stdcall RegDeleteValueFixup(
             try
             {
                 Log(LogLevel_DebugBasic, L"[%s%d] RegDeleteValue:\n", g_RegModuleName, RegLocalInstance);
-                std::string keypath = ReplaceAppRegistrySyntax(InterpretKeyPath(key) + "\\" + InterpretStringA(subValueName));
+                std::string keypath = ReplaceAppRegistrySyntaxA(InterpretKeyPath(key) + "\\" + InterpretStringA(subValueName));
                 Log(LogLevel_DebugIntermediate, L"[$s%d] RegDeleteValue: Path=%s", g_RegModuleName, RegLocalInstance, keypath.c_str());
                 if (RegFixupFakeDelete(LogLevel_DebugIntermediate, keypath, RegLocalInstance) == true)
                 {

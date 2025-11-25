@@ -67,7 +67,7 @@ extern "C" {
     int __stdcall PSFInitialize() noexcept try
     {
         int count = psf::attach_count_all_debug();
-        Log(LogLevel_DebugMaximum, L"[0] RegLegacyFixup debug attaches %d fixups.", 0, count);
+        Log(LogLevel_DebugMaximum, L"[0] RegLegacyFixup attaches %d fixups.", count);
 #if _ManualDebug
         manual_wait_for_debugger();
 #endif

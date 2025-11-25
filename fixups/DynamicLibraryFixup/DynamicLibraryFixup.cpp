@@ -58,6 +58,22 @@ int compare_dllname(std::wstring Requested, std::wstring Locationspec)
 }
 
 auto LoadLibraryImpl = psf::detoured_string_function(&::LoadLibraryA, &::LoadLibraryW);
+auto LoadLibraryExImpl = psf::detoured_string_function(&::LoadLibraryExA, &::LoadLibraryExW);
+
+#ifdef _M_IX86
+#pragma comment(linker, "/EXPORT:LoadLibraryFixupAnsi_Fixup=impl::_LoadLibraryA.ansi")  // Exporting these names helps ProcessMonitor stack traces.
+#pragma comment(linker, "/EXPORT:LoadLibraryFixupWide_Fixup=impl::_LoadLibraryW.wide")  // Exporting these names helps ProcessMonitor stack traces.
+#pragma comment(linker, "/EXPORT:LoadLibraryExFixupAnsi_Fixup=impl::_LoadLibraryExA.ansi")  // Exporting these names helps ProcessMonitor stack traces.
+#pragma comment(linker, "/EXPORT:LoadLibraryExFixupWide_Fixup=impl::_LoadLibraryExW.wide")  // Exporting these names helps ProcessMonitor stack traces.
+#else
+#pragma comment(linker, "/EXPORT:LoadLibraryFixupAnsi_Fixup=impl::LoadLibraryW.ansi")  // Exporting these names helps ProcessMonitor stack traces.
+#pragma comment(linker, "/EXPORT:LoadLibraryFixupWide_Fixup=impl::LoadLibraryW.wide")  // Exporting these names helps ProcessMonitor stack traces.
+#pragma comment(linker, "/EXPORT:LoadLibraryExFixupAnsi_Fixup=impl::LoadLibraryExW.ansi")  // Exporting these names helps ProcessMonitor stack traces.
+#pragma comment(linker, "/EXPORT:LoadLibraryExFixupWide_Fixup=impl::LoadLibraryExW.wide")  // Exporting these names helps ProcessMonitor stack traces.
+#endif
+
+
+
 template <typename CharT>
 HMODULE __stdcall LoadLibraryFixup(_In_ const CharT* libFileName)
 {
@@ -207,7 +223,6 @@ HMODULE __stdcall LoadLibraryFixup(_In_ const CharT* libFileName)
 }
 DECLARE_STRING_FIXUP(LoadLibraryImpl, LoadLibraryFixup);
 
-auto LoadLibraryExImpl = psf::detoured_string_function(&::LoadLibraryExA, &::LoadLibraryExW);
 template <typename CharT>
 HMODULE __stdcall LoadLibraryExFixup(_In_ const CharT* libFileName, _Reserved_ HANDLE file, _In_ DWORD flags)
 {

@@ -25,7 +25,7 @@
 #endif
 #endif
 
-#if INTERCEPT_KERNELBASE_PlusRegGetValue
+#ifdef INTERCEPT_KERNELBASE_PlusRegGetValue
 LSTATUS __stdcall RegGetValueAFixup(
     _In_ HKEY key,
     _In_opt_ LPCSTR lpSubKey,
@@ -33,46 +33,174 @@ LSTATUS __stdcall RegGetValueAFixup(
     _In_opt_ DWORD dwFlags,
     _Out_opt_ LPDWORD lpDwType,
     _Out_opt_ PVOID lpData,
-    _In_opt_ _Out_opt_  LPDWORD lpcchClass,
     _In_opt_ _Out_opt_ LPDWORD lpcbData)
 {
-    DWORD RegLocalInstance = ++g_RegInterceptInstance;
     LSTATUS result = -1;
-
-
-    std::string keyonlypath = InterpretKeyPath(key);
-
-
-    std::string sSubKey = "NULL";
-    std::string sValue = "NULL";
-    if (lpSubKey != NULL)
-        sSubKey = lpSubKey;
-    if (lpValue != NULL)
-        sValue = lpValue;
-    Log(LogLevel_DebugBasic, L"[%s%d] RegGetValueA:  key=0x%x keyname=%S SubKey=%S SubName=%S", g_RegModuleName, RegLocalInstance, (ULONG)(ULONG_PTR)key, keyonlypath.c_str(), sSubKey.c_str(), sValue.c_str());
-
-    result = impl::KernelBaseRegGetValueA(key, lpSubKey, lpValue, dwFlags, lpDwType, lpData, lpcchClass, lpcbData);
-    if (result == ERROR_SUCCESS)
+    auto guard = g_reentrancyGuard.enter();
+    if (guard)
     {
-        std::string sskey = "";
+        DWORD RegLocalInstance = ++g_RegInterceptInstance;
+        DWORD dwType;
+
+
+        std::string keyOnlyPath = InterpretKeyPath(key);
+
+
+        std::string sSubKey = "NULL";
+        std::string sValue = "NULL";
         if (lpSubKey != NULL)
-            sskey = lpSubKey;
-        result = RegFixupDeletionMarker(LogLevel_DebugMaximumkeyonlypath, sskey, RegLocalInstance);
+            sSubKey = lpSubKey;
+        if (lpValue != NULL)
+            sValue = lpValue;
+        Log(LogLevel_DebugBasic, L"[%s%d] RegGetValueA:  key=0x%x keyname=%S SubKey=%S SubName=%S", g_RegModuleName, RegLocalInstance, (ULONG)(ULONG_PTR)key, keyOnlyPath.c_str(), sSubKey.c_str(), sValue.c_str());
+
+
+
+        bool testDeletionMaker = HasDeletionMarkerSpecified();
+        if (testDeletionMaker)
+        {
+            result = RegFixupDeletionMarker(LogLevel_DebugMaximum, keyOnlyPath, sSubKey.c_str(), RegLocalInstance);
+            if (result != ERROR_SUCCESS)
+            {
+
+                Log(LogLevel_DebugBasic, L"[%s%d] RegGetValueA blocked by deletion marker: key=%S subkey=%S", g_RegModuleName, RegLocalInstance, keyOnlyPath.c_str(), sSubKey.c_str());
+                result = ERROR_FILE_NOT_FOUND;
+                return result;
+            }
+        }
+
+        // JavaBlocker not needed on this intercept.
+
+        RegCohorts regCohorts;
+#if TRYHKLM2HKCU
+        if (HasHKLM2HKCUSpecified())
+        {
+            try
+            {
+                Log(LogLevel_DebugIntermediate, L"[%s%d] RegGetValueA:  HKLM2HKCU specified", g_RegModuleName, RegLocalInstance);
+                regCohorts = GenerateRegCohorts(key, widen(sSubKey), RegLocalInstance);
+
+                if (regCohorts.RedirectionNotPossible == false)
+                {
+                    // If redirection is possible, this is what we must do when creating the key.
+                    Log(LogLevel_DebugIntermediate, L"[%s%d] RegGetValueA is candidate for HKCU replacement.", g_RegModuleName, RegLocalInstance);
+                    HKEY  altKey;
+                    std::wstring prefix = L"HKEY_CURRENT_USER\\" + HKLM2HKCU_RedirNameW;
+                    if (regCohorts.RedirectedPath.length() != prefix.length())
+                    {
+                        LSTATUS altResult = ::RegOpenKey(HKEY_CURRENT_USER, regCohorts.RedirectedPath.substr(18).c_str(), &altKey);
+                        if (altResult == ERROR_ALREADY_EXISTS ||
+                            altResult == ERROR_SUCCESS)
+                        {
+                            result = impl::KernelBaseRegGetValueA(altKey, "", lpValue, dwFlags, &dwType, lpData, lpcbData);
+                            RegCloseKey(altKey);
+                            if (result == ERROR_SUCCESS)
+                            {    
+                                if (lpDwType != NULL)
+                                {
+                                    *lpDwType = dwType;
+                                }
+                                try
+                                {
+                                    StoreAndLogRegistryValueA(LogLevel_DebugIntermediate, dwType, lpData, lpcbData, L"RegGetValueA", RegLocalInstance);
+                                }
+                                catch (...)
+                                {
+                                    Log(LogLevel_Exception, L"[%s%d] RegGetValueA exception logging captured value.  May be ignored", g_RegModuleName, RegLocalInstance);
+                                }
+                                Log(LogLevel_DebugBasic, L"[%s%d] RegQueryValueA redirected result=0x%x, path=%s", g_RegModuleName, RegLocalInstance, result, regCohorts.RedirectedPath.c_str());
+                                return result;
+                            }
+                        }
+                    }
+                }
+            }
+            catch (...)
+            {
+                // If anything goes wrong, just do the normal call
+                Log(LogLevel_Exception, L"[%s%d] RegGetValueA redirection exception, try original request.\n", g_RegModuleName, RegLocalInstance);
+            }
+        }
+#endif
+
+
+
+        // Try as requested
+        result = impl::KernelBaseRegGetValueA(key, lpSubKey, lpValue, dwFlags, &dwType, lpData, lpcbData);
         if (result == ERROR_SUCCESS)
         {
-            Log(LogLevel_DebugIntermediate[%s%d] RegGetValue:  Returning success", g_RegModuleName, RegLocalInstance);
+            if (lpDwType != NULL)
+            {
+                *lpDwType = dwType;
+            }
+            try
+            {
+                StoreAndLogRegistryValueA(LogLevel_DebugIntermediate, dwType, lpData, lpcbData, L"RegGetValueA", RegLocalInstance);
+            }
+            catch (...)
+            {
+                Log(LogLevel_Exception, L"[%s%d] RegGetValueA exception logging captured value.  May be ignored", g_RegModuleName, RegLocalInstance);
+            }
+            Log(LogLevel_DebugBasic, L"[%s%d] RegGetValueA requested result=%s, path=%s", g_RegModuleName, RegLocalInstance, LStatusToWstring(result).c_str(), regCohorts.RequestedPath.c_str());
+            return result;
         }
         else
         {
-            // We have a deletion marker on this particular item, so we need to skip it.
-            // When we return this value, a subsequent call by the app might ask for this new index, but we can probably assume it's OK to return it twice
-            // because we do not have a way to remember this, like done in FindFirstFile.
-            Log(LogLevel_DebugBasic, L"[%s%d] RegGetValue:  DeletionMarker Blocking this call.", g_RegModuleName, RegLocalInstance);
+            Log(LogLevel_DebugBasic, L"[%s%d] RegGetValueA:  non-redirected failure %s.", g_RegModuleName, RegLocalInstance, LStatusToWstring(result).c_str());
         }
+
+#if TRYHKLM2HKCU
+        // reverse redirection attempt if not found
+        if (HasHKLM2HKCUSpecified())
+        {
+            try
+            {
+                if (regCohorts.ReverseRedirectionNotPossible == false)
+                {
+                    Log(LogLevel_DebugIntermediate, L"[%s%d] RegGetValueA is candidate for reverse HKCU replacement.", g_RegModuleName, RegLocalInstance);
+                    HKEY  altKey;
+                    std::wstring prefix = L"HKEY_LOCAL_MACHINE\\" + HKLM2HKCU_RedirNameW;
+                    if (regCohorts.RedirectedPath.length() != prefix.length())
+                    {
+                        LSTATUS altResult = ::RegOpenKey(HKEY_LOCAL_MACHINE, regCohorts.StandardPath.substr(19).c_str(), &altKey);
+                        if (altResult == ERROR_ALREADY_EXISTS ||
+                            altResult == ERROR_SUCCESS)
+                        {
+                            result = impl::KernelBaseRegGetValueA(altKey, lpSubKey, lpValue, dwFlags, &dwType, lpData, lpcbData);
+                            RegCloseKey(altKey);
+                            if (result == ERROR_SUCCESS)
+                            {
+                                if (lpDwType != NULL)
+                                {
+                                    *lpDwType = dwType;
+                                }
+                                try
+                                {
+                                    StoreAndLogRegistryValueA(LogLevel_DebugIntermediate, dwType, lpData, lpcbData, L"RegGetValueA", RegLocalInstance);
+                                }
+                                catch (...)
+                                {
+                                    Log(LogLevel_Exception, L"[%s%d] RegGetValueA exception logging captured value.  May be ignored", g_RegModuleName, RegLocalInstance);
+                                }
+                                Log(LogLevel_DebugBasic, L"[%s%d] RegGetValueA reverse redirected result=%s, path=%s", g_RegModuleName, RegLocalInstance, LStatusToWstring(result).c_str(), regCohorts.RedirectedPath.c_str());
+                                return result;
+                            }
+                        }
+                    }
+                }
+            }
+            catch (...)
+            {
+                Log(LogLevel_Exception, L"[%s%d] RegGetValueA:  Exception thrown.", g_RegModuleName, RegLocalInstance);
+            }
+        }
+#endif
+
+        Log(LogLevel_DebugBasic, L"[%s%d] tRegGetValueA: return=%s", g_RegModuleName, RegLocalInstance, LStatusToWstring(result).c_str());
     }
     else
-    {
-        Log(LogLevel_DebugBasic, L"[%s%d] RegGetValue:  Returning normal failure 0x%x.", g_RegModuleName, RegLocalInstance, result);
+    { 
+        result = impl::KernelBaseRegGetValueA(key, lpSubKey, lpValue, dwFlags, lpDwType, lpData, lpcbData);
     }
     return result;
 }
@@ -85,46 +213,159 @@ LSTATUS __stdcall RegGetValueWFixup(
     _In_opt_ DWORD dwFlags,
     _Out_opt_ LPDWORD lpDwType,
     _Out_opt_ PVOID lpData,
-    _In_opt_ _Out_opt_  LPDWORD lpcchClass,
     _In_opt_ _Out_opt_ LPDWORD lpcbData)
 {
-    DWORD RegLocalInstance = ++g_RegInterceptInstance;
     LSTATUS result = -1;
-
-
-    std::string keyonlypath = InterpretKeyPath(key);
-
-
-    std::string sSubKey = "NULL";
-    std::string sValue = "NULL";
-    if (lpSubKey != NULL)
-        sSubKey = narrow(lpSubKey);
-    if (lpValue != NULL)
-        sValue = narrow(lpValue);
-    Log(LogLevel_DebugBasic, L"[%s%d] RegGetValueW:  key=0x%x keyname=%S SubKey=%S SubName=%S", g_RegModuleName, RegLocalInstance, (ULONG)(ULONG_PTR)key, keyonlypath.c_str(), sSubKey.c_str(), sValue.c_str());
-
-    result = impl::KernelBaseRegGetValueW(key, lpSubKey, lpValue, dwFlags, lpDwType, lpData, lpcchClass, lpcbData);
-    if (result == ERROR_SUCCESS)
+    DWORD dwType;
+    auto guard = g_reentrancyGuard.enter();
+    if (guard)
     {
-        std::string sskey = "";
+        DWORD RegLocalInstance = ++g_RegInterceptInstance;
+
+
+        std::string keyOnlyPath = InterpretKeyPath(key);
+
+
+        std::string sSubKey = "NULL";
+        std::string sValue = "NULL";
         if (lpSubKey != NULL)
-            sskey = narrow(lpSubKey);
-        result = RegFixupDeletionMarker(LogLevel_DebugMaximumkeyonlypath, sskey, RegLocalInstance);
+            sSubKey = narrow(lpSubKey);
+        if (lpValue != NULL)
+            sValue = narrow(lpValue);
+        Log(LogLevel_DebugBasic, L"[%s%d] RegGetValueW:  key=0x%x keyname=%S SubKey=%S SubName=%S", g_RegModuleName, RegLocalInstance, (ULONG)(ULONG_PTR)key, keyOnlyPath.c_str(), sSubKey.c_str(), sValue.c_str());
+
+
+
+        bool testDeletionMaker = HasDeletionMarkerSpecified();
+        if (testDeletionMaker)
+        {
+            result = RegFixupDeletionMarker(LogLevel_DebugMaximum, keyOnlyPath, sSubKey.c_str(), RegLocalInstance);
+            if (result != ERROR_SUCCESS)
+            {
+
+                Log(LogLevel_DebugBasic, L"[%s%d] RegGetValueW blocked by deletion marker: key=%S subkey=%S", g_RegModuleName, RegLocalInstance, keyOnlyPath.c_str(), sSubKey.c_str());
+                result = ERROR_FILE_NOT_FOUND;
+                return result;
+            }
+        }
+
+        // JavaBlocker not needed on this intercept.
+
+        RegCohorts regCohorts;
+#if TRYHKLM2HKCU
+        if (HasHKLM2HKCUSpecified())
+        {
+            try
+            {
+                Log(LogLevel_DebugIntermediate, L"[%s%d] RegGetValueW:  HKLM2HKCU specified", g_RegModuleName, RegLocalInstance);
+                regCohorts = GenerateRegCohorts(key, widen(sSubKey), RegLocalInstance);
+
+                if (regCohorts.RedirectionNotPossible == false)
+                {
+                    // If redirection is possible, this is what we must do when creating the key.
+                    Log(LogLevel_DebugIntermediate, L"[%s%d] RegGetValueW is candidate for HKCU replacement.", g_RegModuleName, RegLocalInstance);
+                    HKEY  altKey;
+                    std::wstring prefix = L"HKEY_CURRENT_USER\\" + HKLM2HKCU_RedirNameW;
+                    if (regCohorts.RedirectedPath.length() != prefix.length())
+                    {
+                        LSTATUS altResult = ::RegOpenKey(HKEY_CURRENT_USER, regCohorts.RedirectedPath.substr(18).c_str(), &altKey);
+                        if (altResult == ERROR_ALREADY_EXISTS ||
+                            altResult == ERROR_SUCCESS)
+                        {
+                            result = impl::KernelBaseRegGetValueW(altKey, L"", lpValue, dwFlags, &dwType, lpData, lpcbData);
+                            RegCloseKey(altKey);
+                            if (result == ERROR_SUCCESS)
+                            {
+                                if (lpDwType != NULL)
+                                {
+                                    *lpDwType = dwType;
+                                }
+                                StoreAndLogRegistryValueW(LogLevel_DebugIntermediate, dwType, lpData, lpcbData, L"RegGetValueExW", RegLocalInstance);
+                                Log(LogLevel_DebugBasic, L"[%s%d] RegQueryValueW redirected result=%s, path=%s", g_RegModuleName, RegLocalInstance, LStatusToWstring(result).c_str(), regCohorts.RedirectedPath.c_str());
+                                return result;
+                            }
+                        }
+                    }
+                }
+            }
+            catch (...)
+            {
+                // If anything goes wrong, just do the normal call
+                Log(LogLevel_Exception, L"[%s%d] RegGetValueW redirection exception, try original request.\n", g_RegModuleName, RegLocalInstance);
+            }
+        }
+#endif
+
+
+        result = impl::KernelBaseRegGetValueW(key, lpSubKey, lpValue, dwFlags, &dwType, lpData, lpcbData);
         if (result == ERROR_SUCCESS)
         {
-            Log(LogLevel_DebugIntermediate, L"[%s%d] RegGetValue:  Returning success", g_RegModuleName, RegLocalInstance);
+            if (lpDwType != NULL)
+            {
+                *lpDwType = dwType;
+            }
+            try
+            {
+                StoreAndLogRegistryValueW(LogLevel_DebugIntermediate, dwType, lpData, lpcbData, L"RegGetValueW", RegLocalInstance);
+            }
+            catch (...)
+            {
+                Log(LogLevel_Exception, L"[%s%d] RegGetValueW exception logging captured value.  May be ignored", g_RegModuleName, RegLocalInstance);
+            }
+            Log(LogLevel_DebugBasic, L"[%s%d] RegGetValueW requested result=%s, path=%s", g_RegModuleName, RegLocalInstance, LStatusToWstring(result).c_str(), regCohorts.RequestedPath.c_str());
+            return result;
         }
         else
         {
-            // We have a deletion marker on this particular item, so we need to skip it.
-            // When we return this value, a subsequent call by the app might ask for this new index, but we can probably assume it's OK to return it twice
-            // because we do not have a way to remember this, like done in FindFirstFile.
-            Log(LogLevel_DebugBasic, L"[%s%d] RegGetValue:  DeletionMarker Blocking this call.", g_RegModuleName, RegLocalInstance);
+            Log(LogLevel_DebugBasic, L"[%s%d] RegGetValueW:  non-redirected failure %s", g_RegModuleName, RegLocalInstance, LStatusToWstring(result).c_str());
         }
+
+#if TRYHKLM2HKCU
+        // reverse redirection attempt if not found
+        if (HasHKLM2HKCUSpecified())
+        {
+            try
+            {
+                if (regCohorts.ReverseRedirectionNotPossible == false)
+                {
+                    Log(LogLevel_DebugIntermediate, L"[%s%d] RegGetValueW is candidate for reverse HKCU replacement.", g_RegModuleName, RegLocalInstance);
+                    HKEY  altKey;
+                    std::wstring prefix = L"HKEY_LOCAL_MACHINE\\" + HKLM2HKCU_RedirNameW;
+                    if (regCohorts.RedirectedPath.length() != prefix.length())
+                    {
+                        LSTATUS altResult = ::RegOpenKey(HKEY_LOCAL_MACHINE, regCohorts.StandardPath.substr(19).c_str(), &altKey);
+                        if (altResult == ERROR_ALREADY_EXISTS ||
+                            altResult == ERROR_SUCCESS)
+                        {
+                            result = impl::KernelBaseRegGetValueW(altKey, lpSubKey, lpValue, dwFlags, &dwType, lpData, lpcbData);
+                            RegCloseKey(altKey);
+                            if (result == ERROR_SUCCESS)
+                            {
+                                if (lpDwType != NULL)
+                                {
+                                    *lpDwType = dwType;
+                                }
+                                StoreAndLogRegistryValueW(LogLevel_DebugIntermediate, dwType, lpData, lpcbData, L"RegGetValueExW", RegLocalInstance);
+                                Log(LogLevel_DebugBasic, L"[%s%d] RegGetValueW reverse redirected result=%s, path=%s", g_RegModuleName, RegLocalInstance, LStatusToWstring(result).c_str(), regCohorts.RedirectedPath.c_str());
+                                return result;
+                            }
+                        }
+                    }
+                }
+            }
+            catch (...)
+            {
+                Log(LogLevel_Exception, L"[%s%d] RegGetValueW:  Exception thrown.", g_RegModuleName, RegLocalInstance);
+            }
+        }
+#endif
+
+
+        Log(LogLevel_DebugBasic, L"[%s%d] tRegGetValueW return=%s", g_RegModuleName, RegLocalInstance, LStatusToWstring(result).c_str());
     }
     else
     {
-        Log(LogLevel_DebugBasic, L"[%s%d] RegGetValue:  Returning normal failure 0x%x.", g_RegModuleName, RegLocalInstance, result);
+        result = impl::KernelBaseRegGetValueW(key, lpSubKey, lpValue, dwFlags, lpDwType, lpData, lpcbData);
     }
     return result;
 }

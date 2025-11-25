@@ -7,7 +7,6 @@
 #include <string_view>
 #include <vector>
 
-
 using namespace std::literals;
 
 enum  Reg_Remediation_Types
@@ -67,13 +66,20 @@ struct Java_Blocker
     INT32 updateVersion;    // 121
 };
 
+struct Reg_HKLM2HKCURule
+{
+    bool isSpecified = false;
+};
+
 struct Reg_Remediation_Record
 {
-    Reg_Remediation_Types remeditaionType;
+    Reg_Remediation_Types remediationType;
     Modify_Key_Access modifyKeyAccess;
     Fake_Delete_Key fakeDeleteKey;
     Deletion_Marker deletionMarker;
     Java_Blocker javaBlocker;
+    Reg_HKLM2HKCURule  HKLM2HKCU ;
+
 };
 
 struct Reg_Remediation_Spec
@@ -82,3 +88,15 @@ struct Reg_Remediation_Spec
 };
 
 extern std::vector<Reg_Remediation_Spec>  g_regRemediationSpecs;
+
+
+// Used whenever we need to worry about redirecting HKLM to HKCU
+struct RegCohorts
+{
+    bool RequestedIsStandard = true;
+    bool RedirectionNotPossible = true;
+    bool ReverseRedirectionNotPossible = true;
+    std::wstring RequestedPath;
+    std::wstring StandardPath;
+    std::wstring RedirectedPath;
+};

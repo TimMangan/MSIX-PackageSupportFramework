@@ -346,7 +346,7 @@ DWORD __stdcall GetPrivateProfileStringFixup(
     LOGGED_CATCHHANDLER_MIN(LogLevel_DebugBasic, g_MfrModuleName, dllInstance, L"GetPrivateProfileString")
 
     retfinal = impl::GetPrivateProfileString(appName, keyName, defaultString, string, stringLength, fileName);
-    LogString(LogLevel_DebugBasic, g_MfrModuleName, dllInstance, L" Returning from unfixed call.", string);
+    LogString(LogLevel_DebugBasic, g_MfrModuleName, dllInstance, L"GetPrivateProfileString: Returning from unfixed call.", string);
     return retfinal;
 }
 DECLARE_STRING_FIXUP(impl::GetPrivateProfileString, GetPrivateProfileStringFixup);

@@ -56,8 +56,7 @@ LSTATUS __stdcall RegDeleteKeyExGeneric(
         {
             try
             {
-                Log(LogLevel_DebugBasic, L"[%s%d] RegDeleteKeyEx: key=0x%x\n", g_RegModuleName, RegLocalInstance,key);
-                std::string keypath = ReplaceAppRegistrySyntax(InterpretKeyPath(key) + "\\" + InterpretStringA(subKey));
+                std::string keypath = ReplaceAppRegistrySyntaxA(InterpretKeyPath(key) + "\\" + InterpretStringA(subKey));
                 if (keypath.find("InterpretKeyPath failure") != std::string::npos)
                 {
                     if constexpr (psf::is_ansi<CharT>)
@@ -101,7 +100,20 @@ LSTATUS __stdcall RegDeleteKeyExAFixup(
     DWORD viewDesired, // 32/64
     DWORD Reserved)
 {
-    return RegDeleteKeyExGeneric(key, subKey, viewDesired, Reserved);
+    auto guard = g_reentrancyGuard.enter();
+    if (guard)
+    {
+        DWORD RegLocalInstance = ++g_RegInterceptInstance;
+        Log(LogLevel_DebugBasic, L"[%s%d] RegDeleteKeyExA: key=0x%x subKey=%s\n", g_RegModuleName, RegLocalInstance, key, subKey);
+
+        LSTATUS retVal = RegDeleteKeyExGeneric(key, subKey, viewDesired, Reserved);
+
+        return retVal;
+    }
+    else
+    {
+        return impl::KernelBaseRegDeleteKeyExA(key, subKey, viewDesired, Reserved);
+    }
 }
 DECLARE_FIXUP(impl::KernelBaseRegDeleteKeyExA, RegDeleteKeyExAFixup);
 
@@ -112,7 +124,20 @@ LSTATUS __stdcall RegDeleteKeyExWFixup(
     DWORD viewDesired, // 32/64
     DWORD Reserved)
 {
-    return RegDeleteKeyExGeneric(key, subKey, viewDesired, Reserved);
+    auto guard = g_reentrancyGuard.enter();
+    if (guard)
+    {
+        DWORD RegLocalInstance = ++g_RegInterceptInstance;
+        Log(LogLevel_DebugBasic, L"[%s%d] RegDeleteKeyExW: key=0x%x subKey=%s\n", g_RegModuleName, RegLocalInstance, key, subKey);
+
+        LSTATUS retVal = RegDeleteKeyExGeneric(key, subKey, viewDesired, Reserved);
+
+        return retVal;
+    }
+    else
+    {
+        return impl::KernelBaseRegDeleteKeyExW(key, subKey, viewDesired, Reserved);
+    }
 }
 DECLARE_FIXUP(impl::KernelBaseRegDeleteKeyExW, RegDeleteKeyExWFixup);
 
@@ -140,7 +165,7 @@ LSTATUS __stdcall RegDeleteKeyExFixup(
             try
             {
                 Log(LogLevel_DebugBasic, L"[%s%d] RegDeleteKeyEx:\n", g_RegModuleName, RegLocalInstance);
-                std::string keypath = ReplaceAppRegistrySyntax(InterpretKeyPath(key) + "\\" + InterpretStringA(subKey));
+                std::string keypath = ReplaceAppRegistrySyntaxA(InterpretKeyPath(key) + "\\" + InterpretStringA(subKey));
                 Log(LogLevel_DebugIntermediate, L"[%s%d] RegDeleteKeyEx: Path=%s", g_RegModuleName, RegLocalInstance, keypath.c_str());
                 if (RegFixupFakeDelete(LogLevel_DebugIntermediate, keypath, RegLocalInstance) == true)
                 {

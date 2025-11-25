@@ -47,7 +47,14 @@
             Log(LogLevel_DebugBasic, L"[%s%d] GetPrivateProfileSectionFixup returns %x characters from %s.", g_MfrModuleName, dllInstance, retfinal, LongDestinationFilename.c_str()); \
             if (retfinal != 0) \
             { \
-                Log(LogLevel_DebugBasic, L"[%s%d] GetPrivateProfileSectionFixup data %s.", g_MfrModuleName, dllInstance, string); \
+                if constexpr (psf::is_ansi<CharT>) \
+                { \
+                    Log(LogLevel_DebugBasic, L"[%s%d] GetPrivateProfileSectionFixup data %S.", g_MfrModuleName, dllInstance, string); \
+                } \
+                else \
+                { \
+                    Log(LogLevel_DebugBasic, L"[%s%d] GetPrivateProfileSectionFixup data %s.", g_MfrModuleName, dllInstance, string); \
+                } \
             } \
             return retfinal; \
         } \

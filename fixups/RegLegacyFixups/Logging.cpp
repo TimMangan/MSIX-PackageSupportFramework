@@ -648,6 +648,11 @@ std::string InterpretKeyPath(HKEY key)
 
     return sret;
 }
+std::wstring InterpretKeyPathW(HKEY key)
+{
+    std::string sret = InterpretKeyPath(key);
+    return widen(sret);
+}
 
 
 void LogRegKeyFlags(Json_Debug_Levels debugRequestLevel, DWORD dllInstance, DWORD flags, const wchar_t* msg )

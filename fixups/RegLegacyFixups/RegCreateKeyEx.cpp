@@ -28,150 +28,141 @@
 
 #if INTERCEPT_KERNELBASE
 
-template <typename CharT>
-LSTATUS __stdcall RegCreateKeyExGeneric(
+#ifdef _M_IX86
+#pragma comment(linker, "/EXPORT:RegCreateKeyExAFixupAnsi_Fixup=_RegCreateKeyExAFixupA.ansi")  // A test to see if exporting these names helps ProcessMonitor stack traces.
+#pragma comment(linker, "/EXPORT:RegCreateKeyExWFixupWide_Fixup=_RegCreateKeyExWFixupW.wide")  // A test to see if exporting these names helps ProcessMonitor stack traces.
+#else
+#pragma comment(linker, "/EXPORT:RegCreateKeyExAFixupAnsi_Fixup=RegCreateKeyExAFixupA.ansi")  // A test to see if exporting these names helps ProcessMonitor stack traces.
+#pragma comment(linker, "/EXPORT:RegCreateKeyExWFixupWide_Fixup=RegCreateKeyExWFixupW.wide")  // A test to see if exporting these names helps ProcessMonitor stack traces.
+#endif
+
+
+LSTATUS __stdcall RegCreateKeyExHelper(
     _In_ HKEY key,
-    _In_ const CharT* subKey,
+    _In_ const wchar_t* subKey,
     _Reserved_ DWORD reserved,
-    _In_opt_ CharT* classType,
+    _In_opt_ wchar_t* classType,
     _In_ DWORD options,
     _In_ REGSAM samDesired,
     _In_opt_ CONST LPSECURITY_ATTRIBUTES securityAttributes,
     _Out_ PHKEY resultKey,
     _Out_opt_ LPDWORD disposition)
 {
-    DWORD RegLocalInstance = ++g_RegInterceptInstance;
+    DWORD RegLocalInstance = g_RegInterceptInstance;
     LSTATUS result = -1;
-    bool isBlocked = false;
 
-    if constexpr (psf::is_ansi<CharT>)
+
+    std::wstring wKeyOnlyPath = InterpretKeyPathW(key);
+    std::wstring wKeyPath = wKeyOnlyPath + L"\\" + InterpretStringW(subKey);
+    REGSAM samModifiedRequested = RegFixupSam(LogLevel_DebugMaximum, wKeyPath, samDesired, RegLocalInstance);
+    REGSAM samModifiedRedirected;
+
+    bool testDeletionMaker = false; // Not needed on this intercept: HasDeletionMarkerSpecified();
+    bool testJavaBlocker = false;   // Not needed on this intercept: HasJavaBlockerSpecified();
+
+    if (testDeletionMaker)
     {
-        Log(LogLevel_DebugBasic, L"[%s%d] RegCreateKeyEx: key=0x%x subkey=%S Options=0x%x SamDesired=0x%x", g_RegModuleName, RegLocalInstance, (ULONG)(ULONG_PTR)key, subKey, options, samDesired);
+        result = RegFixupDeletionMarker(LogLevel_DebugMaximum, wKeyOnlyPath, subKey, RegLocalInstance);
+        if (result != ERROR_SUCCESS)
+        {
+            Log(LogLevel_DebugBasic, L"[%s%d] RegCreateKeyExHelper blocked by deletion marker: key=%s subkey=%s", g_RegModuleName, RegLocalInstance, wKeyOnlyPath.c_str(), InterpretStringW(subKey).c_str());
+            result = ERROR_PATH_NOT_FOUND;
+            resultKey = NULL;
+            return result;
+        }
     }
-    else
+
+    if (testJavaBlocker)
     {
-        Log(LogLevel_DebugBasic, L"[%s%d] RegCreateKeyEx: key=0x%x subKey=%ls Options=0x%x SamDesired=0x%x", g_RegModuleName, RegLocalInstance, (ULONG)(ULONG_PTR)key, subKey, options, samDesired);
+        std::wstring wFullPath = wKeyPath;
+        if (subKey != NULL)
+        {
+            wFullPath += L"\\";
+            wFullPath += subKey;
+        }
+        if (RegFixupJavaBlocker(LogLevel_DebugMaximum, wFullPath, RegLocalInstance))
+        {
+            Log(LogLevel_DebugBasic, L"[%s%d] RegCreateKeyExHelper blocked by JavaBlocker: key=%s subkey=%s", g_RegModuleName, RegLocalInstance, wKeyOnlyPath.c_str(), InterpretStringW(subKey).c_str());
+            result = ERROR_PATH_NOT_FOUND;
+            resultKey = NULL;
+            return result;
+        }
     }
 
-    std::string keyonlypath = InterpretKeyPath(key);
-    std::string keypath = keyonlypath + "\\" + InterpretStringA(subKey);
-    REGSAM samModified = RegFixupSam(LogLevel_DebugMaximum, keypath, samDesired, RegLocalInstance);
 
-    bool hasRedirection = false;
 #if TRYHKLM2HKCU
+    RegCohorts regCohorts;
     if (HasHKLM2HKCUSpecified())
     {
-        std::string altkeyonlypath = NULL;
-        if (key == HKEY_LOCAL_MACHINE)
+        try
         {
-            altkeyonlypath = HKLM2HKCU_Replacement("");
-        }
-        else if (keyonlypath._Starts_with("HKEY_LOCAL_MACHINE"))
-        {
-            if (keyonlypath.length == 18)
-                altkeyonlypath = HKLM2HKCU_Replacement("");
-            else
-                altkeyonlypath = HKLM2HKCU_Replacement(keyonlypath.substr(19)));
-        }
-
-        if (altkeyonlypath != NULL)
-        {
-            HKEY  altkey;
-            LSTATUS altresult = ::RegOpenKeyA(HKEY_CURRENT_USER, altkeyonlypath, &altkey);
-            if (altresult == ERROR_FILE_NOT_FOUND)
+            regCohorts = GenerateRegCohorts(key, InterpretStringW(subKey), RegLocalInstance);
+            if (regCohorts.RedirectionNotPossible == false)
             {
-                alrresult = ::RegCreateKeyA(HKEY_CURRENT_USER, altkeyonlypath, &altkey);
-            }
-            if (altresult == ERROR_SUCCESS)
-            {
-                if constexpr (psf::is_ansi<CharT>)
+                // If redirection is possible, this is what we must do when creating the key.
+                Log(LogLevel_DebugIntermediate, L"[%s%d] RegCreateKeyExHelper is candidate for HKCU replacement.", g_RegModuleName, RegLocalInstance);
+                samModifiedRedirected = RegFixupSam(LogLevel_DebugMaximum, regCohorts.RedirectedPath, samDesired, RegLocalInstance);
+                HKEY  altKey;
+                std::wstring prefix = L"HKEY_CURRENT_USER\\" + HKLM2HKCU_RedirNameW;
+                if (regCohorts.RedirectedPath.length() == prefix.length())
                 {
-                    result = impl::KernelBaseRegCreateKeyExA(altkey, subKey, reserved, classType, options, samModified, securityAttributes, resultKey, disposition);
+                    result = impl::KernelBaseRegCreateKeyExW(HKEY_CURRENT_USER, HKLM2HKCU_RedirNameW.c_str(), reserved, classType, options, samModifiedRedirected, securityAttributes, resultKey, disposition);
                 }
                 else
-                { 
-                    result = impl::KernelBaseRegCreateKeyExW(altkey, subKey, reserved, classType, options, samModified, securityAttributes, resultKey, disposition);
+                {
+                    LSTATUS altResult = ::RegOpenKeyExW(HKEY_CURRENT_USER, HKLM2HKCU_RedirNameW.c_str(), options, samModifiedRedirected, &altKey);
+                    if (altResult == ERROR_ALREADY_EXISTS ||
+                        altResult == ERROR_SUCCESS)
+                    {
+                        result = impl::KernelBaseRegCreateKeyExW(altKey, regCohorts.RedirectedPath.substr(prefix.length() + 1).c_str(), reserved, classType, options, samModifiedRedirected, securityAttributes, resultKey, disposition);
+                        RegCloseKey(altKey);
+                    }
                 }
-                RegCloseKey(altkey);
-                hasRedirection = true;
-                LogString(LogLevel_DebugBasic, g_RegModuleName, RegLocalInstance, L"\tRegCreateKeyEx Redirecting to HKCU", subKey);
-                Log(LogLevel_DebugBasic, L"[%s%d] RegCreateKeyEx result=%d", g_RegModuleName, RegLocalInstance, result);
+                Log(LogLevel_DebugBasic, L"[%s%d] RegCreateKeyExHelper redirected result=%s,key=0x%x path=%s", g_RegModuleName, RegLocalInstance, LStatusToWstring(result).c_str(), *resultKey, regCohorts.RedirectedPath.c_str());
+                return result;
             }
+        }
+        catch (...)
+        {
+            // If anything goes wrong, just do the normal call
+            Log(LogLevel_Exception, L"[%s%d] RegCreateKeyExHelper redirection exception, try original request.\n", g_RegModuleName, RegLocalInstance);
         }
     }
 #endif
 
-    if (!hasRedirection)
+    // This is the normal processing path.
+    
+    result = impl::KernelBaseRegCreateKeyExW(key, subKey, reserved, classType, options, samModifiedRequested, securityAttributes, resultKey, disposition);
+
+    if (result == ERROR_ACCESS_DENIED)
     {
-        std::string sskey = narrow(subKey);
-        result = RegFixupDeletionMarker(LogLevel_DebugMaximum, keyonlypath, sskey, RegLocalInstance);
-        if (result == ERROR_SUCCESS)
+        // Help awareness of the issue.
+        bool savedLogging = g_psf_NoLogging;
+        g_psf_NoLogging = true;
+        std::wstring wSubKeyString = InterpretStringW(subKey);
+        Log(LogLevel_DebugBasic, L"[%s%d] RegCreateKeyExHelper result=%s, key=%s, name=%s; may need to pre-create key in package?", g_RegModuleName, RegLocalInstance, LStatusToWstring(result).c_str(), wKeyOnlyPath.c_str(), wSubKeyString.c_str());
+        g_psf_NoLogging = savedLogging;
+
+        if (wKeyPath._Starts_with(L"HKEY_CURRENT_USER"))
         {
-            std::string fullpath = keypath;
-            if (subKey != NULL)
+            ;
+            // Known issue: Cannot create subkey of a package virtual key created by the app at runtime and not in the original package.
+            // Workaround: Try creating from the root of the hive.
+        }
+        if (wKeyPath._Starts_with(L"=\\Registry\\Users\\"))
+        {
+            ;
+            // Known issue: Cannot create subkey of a package virtual key created by the app at runtime and not in the original package.
+            // Workaround: Try creating from the root of the hive.
+            size_t offset = regCohorts.RequestedPath.find(HKLM2HKCU_RedirNameW.c_str());
+            if (offset != std::wstring::npos)
             {
-                fullpath += "\\" + sskey;
-            }
-            //if (!RegFixupJavaBlocker(LogLevel_DebugMaximum, fullpath, RegLocalInstance))
-            //{
-            if constexpr (psf::is_ansi<CharT>)
-            {
-                result = impl::KernelBaseRegCreateKeyExA(key, subKey, reserved, classType, options, samModified, securityAttributes, resultKey, disposition);
-            }
-            else
-            {
-                result = impl::KernelBaseRegCreateKeyExW(key, subKey, reserved, classType, options, samModified, securityAttributes, resultKey, disposition);
-            }
-
-            //}
-            //else
-            //{
-            //    result = ERROR_PATH_NOT_FOUND;
-            //    resultKey = NULL;
-            //    isBlocked = true;
-            //}
-            if (result == ERROR_ACCESS_DENIED)
-            {
-                // Help awareness of the issue.
-                bool savedLogging = g_psf_NoLogging;
-                g_psf_NoLogging = true;
-                std::string subkeystring = InterpretStringA(subKey);
-                Log(LogLevel_DebugBasic, "[%S%d] RegCreateKeyEx result=0x%x, key=%s, name=%s; may need to precreate key in package", g_RegModuleName, RegLocalInstance, result, keyonlypath.c_str(), subkeystring.c_str());
-                g_psf_NoLogging = savedLogging;
-
-                if (keypath._Starts_with("HKEY_CURRENT_USER"))
-                {
-                    ;
-                    // Known issue: Cannot create subkey of a package virtual key created by the app at runtime and not in the original package.
-                    // Workaround: Try creating from the root of the hive.
-                }
-                if (keypath._Starts_with("\\REGISTRY\\WC\\Silo"))
-                {
-                    ;
-                    // Known issue: Cannot create subkey of a package virtual key created by the app at runtime and not in the original package.
-                    // Workaround: Try creating from the root of the hive.
-                }
+                Log(LogLevel_DebugIntermediate, L"[%s%d]  RegCreateKeyExHelper retry using HKCU and %s", g_RegModuleName, RegLocalInstance, regCohorts.RequestedPath.substr(offset).c_str());
+                result = impl::KernelBaseRegCreateKeyExW(HKEY_CURRENT_USER, regCohorts.RequestedPath.substr(offset).c_str(), reserved, classType, options, samModifiedRequested, securityAttributes, resultKey, disposition);
+                Log(LogLevel_DebugIntermediate, L"[%s%d]  RegCreateKeyExHelper retry result=0%s key=0x%x", g_RegModuleName, RegLocalInstance, LStatusToWstring(result).c_str(), regCohorts.RequestedPath.substr(offset).c_str());
             }
         }
-        else
-        {
-            result = ERROR_PATH_NOT_FOUND;
-            resultKey = NULL;
-            isBlocked = true;
-        }
-
-        if (result != ERROR_SUCCESS)
-        {
-            Log(LogLevel_DebugBasic, L"[%s%d] RegCreateKeyEx result=0x%x", g_RegModuleName, RegLocalInstance, result);
-        }
-        else
-        {
-            Log(LogLevel_DebugBasic, L"[%s%d] RegCreateKeyEx result=SUCCESS key=0x%x", g_RegModuleName, RegLocalInstance, *resultKey);
-        }
-
     }
-
-
 
     if (result == ERROR_ACCESS_DENIED)
     {
@@ -190,9 +181,9 @@ LSTATUS __stdcall RegCreateKeyExGeneric(
                 }
                 LogRegKeyFlags(LogLevel_DebugIntermediate, RegLocalInstance, options);
                 Log(LogLevel_DebugIntermediate, L"[%s%d] samDesired=%s\n", g_RegModuleName, RegLocalInstance, widen(InterpretRegKeyAccess(samDesired)).c_str());
-                if (samDesired != samModified)
+                if (samDesired != samModifiedRequested)
                 {
-                    Log(LogLevel_DebugBasic, L"[%s%d] ModifiedSam=%s\n", g_RegModuleName, RegLocalInstance, widen(InterpretRegKeyAccess(samModified)).c_str());
+                    Log(LogLevel_DebugBasic, L"[%s%d] ModifiedSam=%s\n", g_RegModuleName, RegLocalInstance, widen(InterpretRegKeyAccess(samModifiedRequested)).c_str());
                 }
                 LogSecurityAttributes(LogLevel_DebugIntermediate, securityAttributes, RegLocalInstance);
 
@@ -209,77 +200,10 @@ LSTATUS __stdcall RegCreateKeyExGeneric(
             }
             catch (...)
             {
-                Log(LogLevel_Exception, L"[%s%d] RegCreateKeyEx logging failure.\n", g_RegModuleName, RegLocalInstance);
+                Log(LogLevel_Exception, L"[%s%d] RegCreateKeyExHelper logging failure.\n", g_RegModuleName, RegLocalInstance);
             }
         }
-
-#if THISCOULDHELPBUTDOESNT
-        // Creating a subkey of a created key in the virtual registry seems to faile with access denied.
-        // try again to workaround bug in vreg
-        ULONG size;
-        if (auto status = impl::NtQueryKey(key, winternl::KeyNameInformation, nullptr, 0, &size);
-            (status == STATUS_BUFFER_TOO_SMALL) || (status == STATUS_BUFFER_OVERFLOW))
-        {
-            try
-            {
-                auto buffer = std::make_unique<std::uint8_t[]>(size + 2);
-                if (NT_SUCCESS(impl::NtQueryKey(key, winternl::KeyNameInformation, buffer.get(), size, &size)))
-                {
-                    buffer[size] = 0x0;
-                    buffer[size + 1] = 0x0;  // Add string termination character
-                    auto info = reinterpret_cast<winternl::PKEY_NAME_INFORMATION>(buffer.get());
-                    std::wstring keyname = info->Name;
-                    std::wstring newsubkeyname;
-                    if (keyname._Starts_with(L"\\REGISTRY\\USER\\"))
-                    {
-                        size_t offset = keyname.find_first_of(L"\\", 15) + 1;
-                        newsubkeyname = keyname.substr(offset).append(L"\\").append(widen(subKey));
-                        LogString(LogLevel_DebugBasic, g_RegModuleName, RegLocalInstance, L"\tModified HKCU Sub Key", newsubkeyname.c_str());
-                        if constexpr (psf::is_ansi<CharT>)
-                        {
-                            std::string nsknarrow = narrow(newsubkeyname);
-
-                            result = ::RegCreateKeyExA(HKEY_CURRENT_USER, nsknarrow.c_str(), reserved, classType, options, samModified, securityAttributes, resultKey, disposition);
-                            //result = ::RegCreateKeyA(HKEY_CURRENT_USER, nsknarrow.c_str(), resultKey);
-                        }
-                        else
-                        {
-                            result = ::RegCreateKeyExW(HKEY_CURRENT_USER, newsubkeyname.c_str(), reserved, classType, options, samModified, securityAttributes, resultKey, disposition);
-                            //result = ::RegCreateKeyW(HKEY_CURRENT_USER, newsubkeyname.c_str(), resultKey);
-                        }
-                        Log(LogLevel_DebugBasic, "[%s%d]\tRegCreateKeyEx modified result=%d\n", g_RegModuleName, RegLocalInstance, result);
-                    }
-                    else if (keyname._Starts_with(L"\\REGISTRY\\MACHINE\\"))
-                    {
-                        size_t offset = keyname.find_first_of(L"\\", 18) + 1;
-                        newsubkeyname = keyname.substr(offset).append(L"\\").append(widen(subKey));
-                        LogString(LogLevel_DebugBasic, g_RegModuleName, RegLocalInstance, L"\tModified HKLM Sub Key", newsubkeyname.c_str());
-                        if constexpr (psf::is_ansi<CharT>)
-                        {
-                            std::string nsknarrow = narrow(newsubkeyname);
-
-                            result = ::RegCreateKeyExA(HKEY_LOCAL_MACHINE, nsknarrow.c_str(), reserved, classType, options, samModified, securityAttributes, resultKey, disposition);
-                            //result = ::RegCreateKeyA(HKEY_LOCAL_MACHINE, nsknarrow.c_str(), resultKey);
-                        }
-                        else
-                        {
-                            result = ::RegCreateKeyExW(HKEY_LOCAL_MACHINE, newsubkeyname.c_str(), reserved, classType, options, samModified, securityAttributes, resultKey, disposition);
-                            //result = ::RegCreateKeyW(HKEY_LOCAL_MACHINE, newsubkeyname.c_str(), resultKey);
-                        }
-                        Log(LogLevel_DebugBasic, L"[%s%d]\tRegCreateKeyEx modified result=%d\n", g_RegModuleName, RegLocalInstance, result);
-                    }
-                }
-            }
-            catch (...)
-            {
-                Log(LogLevel_Exception, L"[%s%d]\tUnable to fix up Key Path.\n", g_RegModuleName, RegLocalInstance);
-                SetLastError(ERROR_ACCESS_DENIED);
-            }
-        }
-#endif
-
     }
-
     return result;
 }
 
@@ -294,7 +218,32 @@ LSTATUS __stdcall RegCreateKeyExAFixup(
     _Out_ PHKEY resultKey,
     _Out_opt_ LPDWORD disposition)
 {
-    return RegCreateKeyExGeneric(key, subKey, reserved, classType, options, samDesired, securityAttributes, resultKey, disposition);
+    auto guard = g_reentrancyGuard.enter();
+    if (guard)
+    {
+        DWORD RegLocalInstance = ++g_RegInterceptInstance;
+        Log(LogLevel_DebugBasic, L"[%s%d] RegCreateKeyExA: key=0x%x subkey=%S Options=0x%x SamDesired=0x%x", g_RegModuleName, RegLocalInstance, (ULONG)(ULONG_PTR)key, subKey, options, samDesired);
+
+        std::wstring wSubKey = widen(subKey);
+        std::wstring wClassType = classType ? widen(classType) : L"";
+
+        LSTATUS result;
+        if (classType != NULL)
+        {
+            result = RegCreateKeyExHelper(key, wSubKey.c_str(), reserved, wClassType.data(), options, samDesired, securityAttributes, resultKey, disposition);
+        }
+        else
+        {
+            result = RegCreateKeyExHelper(key, wSubKey.c_str(), reserved, NULL, options, samDesired, securityAttributes, resultKey, disposition);
+        }
+
+        Log(LogLevel_DebugBasic, L"[%s%d]\tRegCreateKeyExA modified result=%s and key=0x%x\n", g_RegModuleName, RegLocalInstance, LStatusToWstring(result).c_str(), *resultKey);
+        return result;
+    }
+    else
+    {
+        return impl::KernelBaseRegCreateKeyExA(key, subKey, reserved, classType, options, samDesired, securityAttributes, resultKey, disposition);
+    }
 }
 DECLARE_FIXUP(impl::KernelBaseRegCreateKeyExA, RegCreateKeyExAFixup);
 
@@ -309,7 +258,21 @@ LSTATUS __stdcall RegCreateKeyExWFixup(
     _Out_ PHKEY resultKey,
     _Out_opt_ LPDWORD disposition)
 {
-    return RegCreateKeyExGeneric(key, subKey, reserved, classType, options, samDesired, securityAttributes, resultKey, disposition);
+    auto guard = g_reentrancyGuard.enter();
+    if (guard)
+    {
+        DWORD RegLocalInstance = ++g_RegInterceptInstance;
+        Log(LogLevel_DebugBasic, L"[%s%d] RegCreateKeyExW: key=0x%x subKey=%ls Options=0x%x SamDesired=0x%x", g_RegModuleName, RegLocalInstance, (ULONG)(ULONG_PTR)key, subKey, options, samDesired);
+
+        LSTATUS result = RegCreateKeyExHelper(key, subKey, reserved, classType, options, samDesired, securityAttributes, resultKey, disposition);
+     
+        Log(LogLevel_DebugBasic, L"[%s%d]\tRegCreateKeyExW modified result=%s key=0x%x\n", g_RegModuleName, RegLocalInstance, LStatusToWstring(result).c_str(), *resultKey);
+        return result;
+    }
+    else
+    {
+        return impl::KernelBaseRegCreateKeyExW(key, subKey, reserved, classType, options, samDesired, securityAttributes, resultKey, disposition);
+    }
 }
 DECLARE_FIXUP(impl::KernelBaseRegCreateKeyExW, RegCreateKeyExWFixup);
 
@@ -344,39 +307,39 @@ LSTATUS __stdcall RegCreateKeyExFixup(
         LogLogLevel_DebugBasic, (L"[%s%d] RegCreateKeyEx: key=0x%x subKey=%ls Options=0x%x SamDesired=0x%x", g_RegModuleName, RegLocalInstance, (ULONG)(ULONG_PTR)key, subKey, options, samDesired);
     }
 
-    std::string keyonlypath = InterpretKeyPath(key);
-    std::string keypath = keyonlypath + "\\" + InterpretStringA(subKey);
-    REGSAM samModified = RegFixupSam(LogLevel_DebugMaximum, keypath, samDesired, RegLocalInstance);
+    std::string keyOnlyPath = InterpretKeyPath(key);
+    std::string keyPath = keyOnlyPath + "\\" + InterpretStringA(subKey);
+    REGSAM samModified = RegFixupSam(LogLevel_DebugMaximum, keyPath, samDesired, RegLocalInstance);
 
     bool hasRedirection = false;
 #if TRYHKLM2HKCU
     if (HasHKLM2HKCUSpecified())
     {
-        std::string altkeyonlypath = NULL;
+        std::string altKeyOnlyPath;
         if (key == HKEY_LOCAL_MACHINE)
         {
-            altkeyonlypath = HKLM2HKCU_Replacement("");
+            altKeyOnlyPath = HKLM2HKCU_Replacement("");
         }
-        else if (keyonlypath._Starts_with("HKEY_LOCAL_MACHINE"))
+        else if (keyOnlyPath._Starts_with("HKEY_LOCAL_MACHINE"))
         {
-            if (keyonlypath.length == 18)
-                altkeyonlypath = HKLM2HKCU_Replacement("");
+            if (keyOnlyPath.length == 18)
+                altKeyOnlyPath = HKLM2HKCU_Replacement("");
             else
-                altkeyonlypath = HKLM2HKCU_Replacement(keyonlypath.substr(19)));
+                altKeyOnlyPath = HKLM2HKCU_Replacement(keyOnlyPath.substr(19)));
         }
 
-        if (altkeyonlypath != NULL)
+        if (altKeyOnlyPath.empty())
         {
-            HKEY  altkey;
-            LSTATUS altresult = ::RegOpenKeyA(HKEY_CURRENT_USER, altkeyonlypath, &altkey);
+            HKEY  altKey;
+            LSTATUS altresult = ::RegOpenKeyA(HKEY_CURRENT_USER, altKeyOnlyPath, &altKey);
             if (altresult == ERROR_FILE_NOT_FOUND)
             {
-                alrresult = ::RegCreateKeyA(HKEY_CURRENT_USER, altkeyonlypath, &altkey);
+                alrresult = ::RegCreateKeyA(HKEY_CURRENT_USER, altKeyOnlyPath, &altKey);
             }
             if (altresult == ERROR_SUCCESS)
             {
-                result = RegCreateKeyExImpl(altkey, subKey, reserved, classType, options, samModified, securityAttributes, resultKey, disposition);
-                RegCloseKey(altkey);
+                result = RegCreateKeyExImpl(altKey, subKey, reserved, classType, options, samModified, securityAttributes, resultKey, disposition);
+                RegCloseKey(altKey);
                 hasRedirection = true;
                 LogString(LogLevel_DebugBasic, g_RegModuleName, RegLocalInstance, L"\tRegCreateKeyEx Redirecting to HKCU", subKey);
                 Log(LogLevel_DebugBasic, L"[%s%d] RegCreateKeyEx result=%d", g_RegModuleName, RegLocalInstance, result);
@@ -388,10 +351,10 @@ LSTATUS __stdcall RegCreateKeyExFixup(
     if (!hasRedirection)
     {
         std::string sskey = narrow(subKey);
-        result = RegFixupDeletionMarker(LogLevel_DebugMaximum, keyonlypath, sskey, RegLocalInstance);
+        result = RegFixupDeletionMarker(LogLevel_DebugMaximum, keyOnlyPath, sskey, RegLocalInstance);
         if (result == ERROR_SUCCESS)
         {
-            std::string fullpath = keypath;
+            std::string fullpath = keyPath;
             if (subKey != NULL)
             {
                 fullpath += "\\" + sskey;
@@ -484,7 +447,7 @@ LSTATUS __stdcall RegCreateKeyExFixup(
                     auto info = reinterpret_cast<winternl::PKEY_NAME_INFORMATION>(buffer.get());
                     std::wstring keyname = info->Name;
                     std::wstring newsubkeyname;
-                    if (keyname._Starts_with(L"\\REGISTRY\\USER\\"))
+                    if (keyname._Starts_with(L"=\\REGISTRY\\USER\\"))
                     {
                         size_t offset = keyname.find_first_of(L"\\", 15) + 1;
                         newsubkeyname = keyname.substr(offset).append(L"\\").append(widen(subKey));
@@ -503,7 +466,7 @@ LSTATUS __stdcall RegCreateKeyExFixup(
                         }
                         Log(LogLevel_DebugIntermediate, L"[%s%d]\tRegCreateKeyEx modified result=%d\n", g_RegModuleName, RegLocalInstance, result);
                     }
-                    else if (keyname._Starts_with(L"\\REGISTRY\\MACHINE\\"))
+                    else if (keyname._Starts_with(L"=\\REGISTRY\\MACHINE\\"))
                     {
                         size_t offset = keyname.find_first_of(L"\\", 18) + 1;
                         newsubkeyname = keyname.substr(offset).append(L"\\").append(widen(subKey));
