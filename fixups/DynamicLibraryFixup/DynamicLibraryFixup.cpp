@@ -178,6 +178,7 @@ HMODULE __stdcall LoadLibraryFixup(_In_ const CharT* libFileName)
 
                         if (useThis)
                         {
+                            SetLastError(0); // Clear the last error before we try.
                             result = LoadLibraryImpl(spec.full_filepath.c_str());
 #if TRY_LDRLOADDLL
                             if (result == 0)
