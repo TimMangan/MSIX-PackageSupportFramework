@@ -21,11 +21,23 @@ ideas:
 
 
 v.Next:
-	* Experimental: Return CLSID in uppercase to the caller in the new GUID intercepts.
 	* Experimental: In MfrFixup, don't reject non absolutepath values for KnownFolders, but do log them.  We found some customers were using a form of folder redirection that was
 	                replacing the values of the KnownFolders with UNC share locations.
 	* Experimental: Added new optional rule for RegLegacyFixup, HKLM2HKCU to allow writes to HKLM keys and values to be redirected to a special key in the HKCU hive.
 	                Also added new intercepts: RegQueryInfoKey, RegSetValue, RegSetValueEx
+	* Experimental: Added advanced debug logging around Job information when PsfRuntime initializes, and also ProcessCreation Attribute lists and Job information when creating new processes.
+	* Fix: In PsfRuntime intercept for process launch, if the working directory does not exist pre-create it to allow the lauch.
+	* Fix: In PsfRuntime intercept for process launch, if the caller supplied an attribute list without Desktop App Policy, replace the list with a new list with both old content and new item.  
+	       This solves a longstanding issue with certain apps (especially ported linux apps) that communicate over handles passed to the child app.
+	* Fix: In PsfRuntime intercept for process launch, if the caller requested the process start suspended, don't resume it after we complete our injection of psfruntime.
+	* Fix: In MfrFixup, tweak to the logic in determining when to pre-create directories in the redirection area to ensure directories are created in certain situations.
+	* Fix: In PsfRuntime, do not forward CreateProcessAsUserA/W calls to CreateProcess directly. Added implementation of guards and have CreateProcessAsUser call the native function, which internally calls CreateProcess.
+	* Fix: In PsfLauncher, use the full calculated path to the target filename instead of the filename.  
+	       While ApplicationAlias finds the correct exe automatically, we found a vendor app with a bug in their logic of parsing the command line and cannot handle the
+		   command line not including a backslash, causing the app to fail.  Fortunately the app was open source so we found their bug, but this fix might help other apps
+		   and should not have a downside.
+	* Fix: Handle case of GetEnvironmentVariable with zero length buffer to return required size (or existence only) of variable and not the actual value.
+	* Fix: Return CLSID in uppercase to the caller in the new GUID intercepts.
 
 v.2025.09.17
 	* Added new psfJson configuration option, "debugLevel", to control logging rather than use debug/release build.  It supports a number of different debug levels (0-9),
