@@ -29,6 +29,7 @@
 #include "Config.h"
 #include "JsonConfig.h"
 #include "psf_logging.h"
+#include "JobInfo.h"
 
 using namespace std::literals;
 
@@ -397,8 +398,28 @@ bool LoadConfig()
         LogString(LogLevel_Launching, g_PsfRunTimeName, 0, L"g_PackageRootPath", g_PackageRootPath.c_str());
         LogString(LogLevel_Launching, g_PsfRunTimeName, 0, L"g_FinalPackageRootPath", g_FinalPackageRootPath.c_str());
         LogString(LogLevel_Launching, g_PsfRunTimeName, 0, L"g_CurrentExecutable", g_CurrentExecutable.c_str());
+        std::filesystem::path cwd = std::filesystem::current_path();
+        LogString(LogLevel_Launching, g_PsfRunTimeName, 0, L"Current Working Directory", cwd.c_str());
         load_json();
         Log(LogLevel_Launching, L"[%s%d] Json Debug Level now: %d", g_PsfRunTimeName, 0, g_JsonDebugLevel);
+
+        if (g_JsonDebugLevel >= LogLevel_DebugMaximum)
+        {
+            // Trying to investigate job usage here...
+            bool inJob = JobPrintBasicLimitInfo(LogLevel_DebugMaximum, g_PsfRunTimeName, 0);
+            if (inJob)
+            {
+                JobPrintBasicAccountingInfo(LogLevel_DebugMaximum, g_PsfRunTimeName, 0);
+                JobPrintExtendedLimits(LogLevel_DebugMaximum, g_PsfRunTimeName, 0);
+                JobPrintUIRestrictions(LogLevel_DebugMaximum, g_PsfRunTimeName, 0);
+                JobPrintCpuRate(LogLevel_DebugMaximum, g_PsfRunTimeName, 0);
+                JobPrintHierarchy(LogLevel_DebugMaximum, g_PsfRunTimeName, 0);
+                JobPrintSiloBasicInformation(LogLevel_DebugMaximum, g_PsfRunTimeName, 0);
+                JobPrintChain(LogLevel_DebugMaximum, g_PsfRunTimeName, 0);
+                JobPrintLimitViolationInformation2(LogLevel_DebugMaximum, g_PsfRunTimeName, 0);
+            }
+        }
+
         return true;
     }
     else

@@ -91,7 +91,6 @@ catch (...)
     ::SetLastError(win32_from_caught_exception());
     return FALSE;
 }
-
 DECLARE_FIXUP(impl::AddDllDirectory, AddDllDirectoryFixup);
 
 

@@ -38,6 +38,9 @@
     </ClCompile>
     <ClCompile Include="CreateNamedPipe.cpp" />
     <ClCompile Include="CoCreateInstance.cpp" />
+    <ClCompile Include="JobInfo.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="PsfRuntime.def" />
@@ -56,6 +59,9 @@
     <ClInclude Include="resource.h" />
     <ClInclude Include="..\include\psf_logging.h">
       <Filter>CommonSrc</Filter>
+    </ClInclude>
+    <ClInclude Include="JobInfo.h">
+      <Filter>inc</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

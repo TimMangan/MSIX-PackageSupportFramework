@@ -29,6 +29,7 @@
     <ClCompile Include="CreateNamedPipe.cpp" />
     <ClCompile Include="CreateProcessAsUser.cpp" />
     <ClCompile Include="CreateProcessHook.cpp" />
+    <ClCompile Include="JobInfo.cpp" />
     <ClCompile Include="main.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -39,6 +40,7 @@
     <ClInclude Include="..\CommonSrc\Config.h" />
     <ClInclude Include="..\CommonSrc\findStringIC.h" />
     <ClInclude Include="..\include\psf_logging.h" />
+    <ClInclude Include="JobInfo.h" />
     <ClInclude Include="JsonConfig.h" />
     <ClInclude Include="resource.h" />
   </ItemGroup>
