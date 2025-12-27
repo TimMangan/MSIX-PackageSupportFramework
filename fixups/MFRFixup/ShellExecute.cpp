@@ -6,9 +6,6 @@
 // Microsoft documentation on this api: https://learn.microsoft.com/en-us/windows/win32/api/shellapi/nf-shellapi-shellexecutea
 
 
-#if _DEBUG
-//#define MOREDEBUG 1
-#endif
 
 #include <errno.h>
 #include <psf_logging.h>
@@ -30,13 +27,7 @@ HINSTANCE __stdcall ShellExecuteAFixup(_In_opt_ HWND   hwnd,
 {
     DWORD dllInstance = g_InterceptInstance;
     [[maybe_unused]] bool debug = false;
-#if _DEBUG
-    debug = true;
-#endif
-    [[maybe_unused]] bool moredebug = false;
-#if MOREDEBUG
-    moredebug = true;
-#endif
+
 
     auto guard = g_reentrancyGuard.enter();
     HINSTANCE  retfinal;
@@ -45,18 +36,23 @@ HINSTANCE __stdcall ShellExecuteAFixup(_In_opt_ HWND   hwnd,
     {
         if (guard)
         {
-            if (lpOperation)
-            {
-                // Release level logging for detection
-                bool temp = g_psf_NoLogging;
-                g_psf_NoLogging = false;
-                Log(LogLevel_DebugBasic, L"[%s%d] ShellExecuteA unguarded. Known compatibility issues exist in certain usages!", g_MfrModuleName, dllInstance);
-                LogString(LogLevel_DebugBasic, g_MfrModuleName, dllInstance, L"ShellExecuteA: file", lpFile);
+            dllInstance = ++g_InterceptInstance;
+
+            // Release level logging for detection
+            bool temp = g_psf_NoLogging;
+            g_psf_NoLogging = false;
+            Log(LogLevel_DebugBasic, L"[%s%d] ShellExecuteA unguarded. Informational intercept only", g_MfrModuleName, dllInstance);
+            LogString(LogLevel_DebugBasic, g_MfrModuleName, dllInstance, L"ShellExecuteA: file", lpFile);
+            if (lpOperation != NULL)
                 LogString(LogLevel_DebugBasic, g_MfrModuleName, dllInstance, L"ShellExecuteA: verb", lpOperation);
+            if (lpParameters != NULL)
+                LogString(LogLevel_DebugBasic, g_MfrModuleName, dllInstance, L"ShellExecuteA: parameters", lpParameters);
+            if (lpDirectory != NULL)
                 LogString(LogLevel_DebugBasic, g_MfrModuleName, dllInstance, L"ShellExecuteA: directory", lpDirectory);
-                LogCallingModuleInstance(g_MfrModuleName, dllInstance);
-                g_psf_NoLogging = temp;
-            }
+            Log(LogLevel_DebugBasic, L"[%s%d] ShellExecuteA: ShowCommand=%d", nShowCmd);
+            LogCallingModuleInstance(g_MfrModuleName, dllInstance);
+            g_psf_NoLogging = temp;
+
             retfinal = impl::ShellExecuteA(hwnd, lpOperation, lpFile, lpParameters, lpDirectory, nShowCmd);
             return retfinal;
         }
@@ -81,33 +77,30 @@ HINSTANCE __stdcall ShellExecuteWFixup(_In_opt_ HWND   hwnd,
 {
     DWORD dllInstance = g_InterceptInstance;
     [[maybe_unused]] bool debug = false;
-#if _DEBUG
-    debug = true;
-#endif
-    [[maybe_unused]] bool moredebug = false;
-#if MOREDEBUG
-    moredebug = true;
-#endif
 
-    //auto guard = g_reentrancyGuard.enter();
+    auto guard = g_reentrancyGuard.enter();
     HINSTANCE  retfinal;
-
     try
     {
-        //if (guard)
+        if (guard)
         {
-            if (lpOperation)
-            {
-                // Release level logging for detection
-                bool temp = g_psf_NoLogging;
-                g_psf_NoLogging = false;
-                Log(LogLevel_DebugBasic, L"[%s%d] ShellExecuteW unguarded informational. Known compatibility issues exist in certain usages!", g_MfrModuleName, dllInstance);
-                LogString(LogLevel_DebugBasic, g_MfrModuleName, dllInstance, L"ShellExecuteW: file", lpFile);
+            dllInstance = ++g_InterceptInstance;
+
+            // Release level logging for detection
+            bool temp = g_psf_NoLogging;
+            g_psf_NoLogging = false;
+            Log(LogLevel_DebugBasic, L"[%s%d] ShellExecuteW unguarded informational. Known compatibility issues exist in certain usages!", g_MfrModuleName, dllInstance);
+            LogString(LogLevel_DebugBasic, g_MfrModuleName, dllInstance, L"ShellExecuteW: file", lpFile);
+            if (lpOperation != NULL)
                 LogString(LogLevel_DebugBasic, g_MfrModuleName, dllInstance, L"ShellExecuteW: verb", lpOperation);
+            if (lpParameters != NULL)
+                LogString(LogLevel_DebugBasic, g_MfrModuleName, dllInstance, L"ShellExecuteA: parameters", lpParameters);
+            if (lpDirectory != NULL)
                 LogString(LogLevel_DebugBasic, g_MfrModuleName, dllInstance, L"ShellExecuteW: directory", lpDirectory);
-                LogCallingModuleInstance(LogLevel_DebugBasic, g_MfrModuleName, dllInstance);
-                g_psf_NoLogging = temp;
-            }
+            Log(LogLevel_DebugBasic, L"[%s%d] ShellExecuteW: ShowCommand=%d", nShowCmd);
+            LogCallingModuleInstance(g_MfrModuleName, dllInstance);
+            g_psf_NoLogging = temp;
+
             retfinal = impl::ShellExecuteW(hwnd, lpOperation, lpFile, lpParameters, lpDirectory, nShowCmd);
             return retfinal;
         }

@@ -23,6 +23,14 @@
 #include "DetermineCohorts.h"
 
 
+#ifdef _M_IX86
+#pragma comment(linker, "/EXPORT:CopyHardLinkFixupAnsi_Fixup=impl::_CopyHardLinkFixup.ansi")  // A test to see if exporting these names helps ProcessMonitor stack traces.
+#pragma comment(linker, "/EXPORT:CopyHardLinkFixupWide_Fixup=impl::_CopyHardLinkFixup.wide")  // A test to see if exporting these names helps ProcessMonitor stack traces.
+#else
+#pragma comment(linker, "/EXPORT:CopyHardLinkFixupAnsi_Fixup=impl::CopyHardLinkFixup.ansi")  // A test to see if exporting these names helps ProcessMonitor stack traces.
+#pragma comment(linker, "/EXPORT:CopyHardLinkFixupWide_Fixup=impl::CopyHardLinkFixup.wide")  // A test to see if exporting these names helps ProcessMonitor stack traces.
+#endif
+
 
 template <typename CharT>
 BOOL __stdcall CreateHardLinkFixup(

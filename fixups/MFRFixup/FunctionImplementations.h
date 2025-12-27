@@ -17,10 +17,9 @@
 
 //#define FIXUP_UCRTMOVE 1
 
-// These are handled in PsfRuntime so Can't do here
+// These maybe should be handled in PsfRuntime?
 //#define FIXUP_ORIGINAL_SHELLEXECUTE 1
 //#define FIXUP_ORIGINAL_SHELLEXECUTEEX 1
-
 
 
 

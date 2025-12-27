@@ -55,8 +55,8 @@
 #ifdef _M_IX86
 #pragma comment(linker, "/EXPORT:FindFirstFileA_FixupHelper=_FindFirstFileAFixupHelper@8")
 #pragma comment(linker, "/EXPORT:FindFirstFileW_FixupHelper=_FindFirstFileWFixupHelper@8")
-#pragma comment(linker, "/EXPORT:FindFirstFileFixupAnsi_Fixup=impl:_FindFirstFileFixup.ansi@8")  // A test to see if exporting these names helps ProcessMonitor stack traces.
-#pragma comment(linker, "/EXPORT:FindFirstFileFixupWide_Fixup=impl:_FindFirstFileFixup.wide@8")  // A test to see if exporting these names helps ProcessMonitor stack traces.
+#pragma comment(linker, "/EXPORT:FindFirstFileFixupAnsi_Fixup=impl:_FindFirstFileFixup.ansi")  // A test to see if exporting these names helps ProcessMonitor stack traces.
+#pragma comment(linker, "/EXPORT:FindFirstFileFixupWide_Fixup=impl:_FindFirstFileFixup.wide")  // A test to see if exporting these names helps ProcessMonitor stack traces.
 #else
 #pragma comment(linker, "/EXPORT:FindFirstFileA_FixupHelper=FindFirstFileAFixupHelper")
 #pragma comment(linker, "/EXPORT:FindFirstFileW_FixupHelper=FindFirstFileWFixupHelper")
@@ -316,7 +316,7 @@ extern "C" HANDLE __stdcall FindFirstFileWFixupHelper(_In_ const wchar_t* fileNa
 
 
     // Adjust the file name to handle bad UNC paths
-    wfileName = AdjustBadUNC(fileName, dllInstance, L"FindFirstFileWFixup");
+    wfileName = AdjustBadUNC(wfileName, dllInstance, L"FindFirstFileWFixup");
 
     // Adjust for the bad Winzip issue of asking for C:\ProgramFilesX64\WindowsApps...
     wfileName = AdjustPFx64Path(wfileName, dllInstance, L"FindFirstFileWFixup");

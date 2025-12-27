@@ -24,7 +24,7 @@
 #define DEBUG_NEW_FIXUPS_MFR 1
 #endif
 #else
-//#define MOREDEBUG 1
+#define MOREDEBUG 1
 #define DEBUG_NEW_FIXUPS_MFR 1
 #endif
 
@@ -71,6 +71,7 @@ extern "C" {
 
             Log(LogLevel_DebugMaximum, "GetFileAttributes  Ansi=%p Wide=%p\n", &impl::GetFileAttributesW.ansi, &impl::GetFileAttributesW.wide);
             Log(LogLevel_DebugMaximum, "GetFileAttributesEx  Ansi=%p Wide=%p\n", &impl::GetFileAttributesExW.ansi, &impl::GetFileAttributesExW.wide);
+            Log(LogLevel_DebugMaximum, "SetFileAttributes  Ansi=%p Wide=%p\n", &impl::SetFileAttributesW.ansi, &impl::SetFileAttributesW.wide);
             Log(LogLevel_DebugMaximum, "GetPrivateProfileInt  Ansi=%p Wide=%p\n", &impl::GetPrivateProfileIntW.ansi, &impl::GetPrivateProfileIntW.wide);
             Log(LogLevel_DebugMaximum, "GetPrivateProfileSection  Ansi=%p Wide=%p\n", &impl::GetPrivateProfileSectionW.ansi, &impl::GetPrivateProfileSectionW.wide);
             Log(LogLevel_DebugMaximum, "GetPrivateProfileSectionNames  Ansi=%p Wide=%p\n", &impl::GetPrivateProfileSectionNamesW.ansi, &impl::GetPrivateProfileSectionNamesW.wide);
@@ -78,8 +79,8 @@ extern "C" {
             Log(LogLevel_DebugMaximum, "GetPrivateProfileStruct  Ansi=%p Wide=%p\n", &impl::GetPrivateProfileStructW.ansi, &impl::GetPrivateProfileStructW.wide);
 
             //Log(LogLevel_DebugMaximum, "GetCurrentDirectory  Ansi=%p Wide=%p\n", &::GetCurrentDirectoryA, &::GetCurrentDirectoryW);
-
             Log(LogLevel_DebugMaximum, "SetCurrentDirectory  Ansi=%p Wide=%p\n", &impl::SetCurrentDirectoryW.wide, &impl::SetCurrentDirectoryW.wide);
+
             Log(LogLevel_DebugMaximum, "WritePrivateProfileSection  Ansi=%p Wide=%p\n", &impl::WritePrivateProfileSectionW.wide, &impl::WritePrivateProfileSectionW.wide);
             Log(LogLevel_DebugMaximum, "WritePrivateProfileString  Ansi=%p Wide=%p\n", &impl::WritePrivateProfileStringW.ansi, &impl::WritePrivateProfileStringW.wide);
             Log(LogLevel_DebugMaximum, "WritePrivateProfileStruct  Ansi=%p Wide=%p\n", &impl::WritePrivateProfileStructW.ansi, &impl::WritePrivateProfileStructW.wide);
@@ -119,7 +120,7 @@ extern "C" {
                 Log(LogLevel_DebugMaximum, "(windows.storage)ShellExecuteExW  Wide=%p\n", &windowsstorageimpl::ShellExecuteExWImpl);
             Log(LogLevel_DebugMaximum, "WindowsStorage Fixups loaded.\n");
 #endif
-
+#endif
 
 #ifdef Intercept_NTDLL
 #ifdef DO_Intercept_NtCreateFile
@@ -144,7 +145,7 @@ extern "C" {
 #endif
 
 #endif
-#endif
+
         }
     }
 

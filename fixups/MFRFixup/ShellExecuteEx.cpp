@@ -32,22 +32,16 @@ BOOL __stdcall  ShellExecuteExAFixup(_Inout_ SHELLEXECUTEINFOA* pExecInfo)
 {
     DWORD dllInstance = g_InterceptInstance;
     [[maybe_unused]] bool debug = false;
-#if _DEBUG
-    debug = true;
-#endif
-    [[maybe_unused]] bool moredebug = false;
-#if MOREDEBUG
-    moredebug = true;
-#endif
 
     /// Don't guard if we aren't making changes
-    ///auto guard = g_reentrancyGuard.enter();
+    auto guard = g_reentrancyGuard.enter();
     BOOL retfinal;
 
     try
     {
-        ///if (guard)
+        if (guard)
         {
+            dllInstance = ++g_InterceptInstance;
             if (pExecInfo)
             {
                 if ((pExecInfo->fMask & SEE_MASK_WAITFORINPUTIDLE) == 0)  // used at the start of some apps to signal app is ready without any real filepickers
@@ -57,19 +51,25 @@ BOOL __stdcall  ShellExecuteExAFixup(_Inout_ SHELLEXECUTEINFOA* pExecInfo)
                     g_psf_NoLogging = false;
                     Log(LogLevel_DebugBasic, L"[%s%d] ShellExecuteExA unguarded informational. Known compatibility issues exist in certain usages!", g_MfrModuleName, dllInstance);
                     LogString(LogLevel_DebugBasic, g_MfrModuleName, dllInstance, L"ShellExecuteExA: file", pExecInfo->lpFile);
-                    LogString(LogLevel_DebugBasic, g_MfrModuleName, dllInstance, L"ShellExecuteExA: verb", pExecInfo->lpVerb);
-                    LogString(LogLevel_DebugBasic, g_MfrModuleName, dllInstance, L"ShellExecuteExA: directory", pExecInfo->lpDirectory);
-                    LogString(LogLevel_DebugBasic, g_MfrModuleName, dllInstance, L"ShellExecuteExA: parameters", pExecInfo->lpParameters);
-///#ifdef MOREDEBUG
+                    if (pExecInfo->lpVerb != NULL)
+                        LogString(LogLevel_DebugBasic, g_MfrModuleName, dllInstance, L"ShellExecuteExA: verb", pExecInfo->lpVerb);
+                    if (pExecInfo->lpDirectory != NULL)
+                        LogString(LogLevel_DebugBasic, g_MfrModuleName, dllInstance, L"ShellExecuteExA: directory", pExecInfo->lpDirectory);
+                    if (pExecInfo->lpParameters != NULL)
+                        LogString(LogLevel_DebugBasic, g_MfrModuleName, dllInstance, L"ShellExecuteExA: parameters", pExecInfo->lpParameters);
+                    Log(LogLevel_DebugBasic, L"[%s%d] ShellExecuteExA: ShowCommand=%d", pExecInfo->nShow);
                     Log(LogLevel_DebugBasic, L"[%s%d] ShellExecuteExA fMask=0x%x", g_MfrModuleName, dllInstance, pExecInfo->fMask);
                     if ((pExecInfo->fMask & SEE_MASK_CLASSNAME) != 0)
                     {
                         LogString(LogLevel_DebugBasic, g_MfrModuleName, dllInstance, L"ShellExecuteExA: class", pExecInfo->lpClass);
                     }
-///#endif
                     LogCallingModuleInstance(g_MfrModuleName, dllInstance);
                     g_psf_NoLogging = temp;
                 }
+            }
+            else
+            {
+                Log(LogLevel_DebugBasic, L"[%s%d] ShellExecuteExA unguarded informational. NULL pointer provided", g_MfrModuleName, dllInstance);
             }
             retfinal = impl::ShellExecuteExA(pExecInfo);
             return retfinal;
@@ -90,22 +90,17 @@ BOOL __stdcall  ShellExecuteExAFixup(_Inout_ SHELLEXECUTEINFOA* pExecInfo)
  {
      DWORD dllInstance = g_InterceptInstance;
      [[maybe_unused]] bool debug = false;
-#if _DEBUG
-      debug = true;
-#endif
-     [[maybe_unused]] bool moredebug = false;
-#if MOREDEBUG
-     moredebug = true;
-#endif
+
 
      ///Don't guard if we aren't making changes
-     ///auto guard = g_reentrancyGuard.enter();
+     auto guard = g_reentrancyGuard.enter();
      BOOL retfinal;
 
      try
      {
-         ///if (guard)
+         if (guard)
          {
+             dllInstance = ++g_InterceptInstance;
              if (pExecInfo)
              {
                  if ((pExecInfo->fMask & SEE_MASK_WAITFORINPUTIDLE) == 0)  // used at the start of some apps to signal app is ready without any real filepickers
@@ -114,20 +109,27 @@ BOOL __stdcall  ShellExecuteExAFixup(_Inout_ SHELLEXECUTEINFOA* pExecInfo)
                      bool temp = g_psf_NoLogging;
                      g_psf_NoLogging = false;
                      Log(LogLevel_DebugBasic, L"[%s%d] ShellExecuteExW unguarded. Known compatibility issues exist in certain usages!", g_MfrModuleName, dllInstance);
-                     LogString(LogLevel_DebugBasic, g_MfrModuleName, dllInstance, L"ShellExecuteExW: verb", pExecInfo->lpVerb);
-                     LogString(LogLevel_DebugBasic, g_MfrModuleName, dllInstance, L"ShellExecuteExW: file", pExecInfo->lpFile);
-                     LogString(LogLevel_DebugBasic, g_MfrModuleName, dllInstance, L"ShellExecuteExW: directory", pExecInfo->lpDirectory);
-                     LogString(LogLevel_DebugBasic, g_MfrModuleName, dllInstance, L"ShellExecuteExW: parameters", pExecInfo->lpParameters);
-///#if MOREDEBUG
+                     if (pExecInfo->lpVerb != NULL)
+                         LogString(LogLevel_DebugBasic, g_MfrModuleName, dllInstance, L"ShellExecuteExW: verb", pExecInfo->lpVerb);
+                     if (pExecInfo->lpFile != NULL)
+                         LogString(LogLevel_DebugBasic, g_MfrModuleName, dllInstance, L"ShellExecuteExW: file", pExecInfo->lpFile);
+                     if (pExecInfo->lpDirectory != NULL)
+                         LogString(LogLevel_DebugBasic, g_MfrModuleName, dllInstance, L"ShellExecuteExW: directory", pExecInfo->lpDirectory);
+                     if (pExecInfo->lpParameters != NULL)
+                        LogString(LogLevel_DebugBasic, g_MfrModuleName, dllInstance, L"ShellExecuteExW: parameters", pExecInfo->lpParameters);
+                     Log(LogLevel_DebugBasic, L"[%s%d] ShellExecuteExA: ShowCommand=%d", pExecInfo->nShow);
                      Log(LogLevel_DebugBasic, L"[%s%d] ShellExecuteExW fMask=0x%x", g_MfrModuleName, dllInstance, pExecInfo->fMask);
                      if ((pExecInfo->fMask & SEE_MASK_CLASSNAME) != 0)
                      {
                          LogString(LogLevel_DebugBasic, g_MfrModuleName, dllInstance, L"ShellExecuteExW: class", pExecInfo->lpClass);
                      }
-///#endif
                      LogCallingModuleInstance(g_MfrModuleName, dllInstance);
                      g_psf_NoLogging = temp;
                  }
+             }
+             else
+             {
+                 Log(LogLevel_DebugBasic, L"[%s%d] ShellExecuteExW unguarded informational. NULL pointer provided", g_MfrModuleName, dllInstance);
              }
              retfinal = impl::ShellExecuteExW(pExecInfo);
              return retfinal;

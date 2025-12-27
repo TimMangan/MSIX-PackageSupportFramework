@@ -17,6 +17,16 @@
 #include "DetermineIlvPaths.h"
 
 
+#ifdef _M_IX86
+#pragma comment(linker, "/EXPORT:DeleteFileFixupAnsi_Fixup=impl::_DeleteFileFixup.ansi")  // A test to see if exporting these names helps ProcessMonitor stack traces.
+#pragma comment(linker, "/EXPORT:DeleteFileFixupWide_Fixup=impl::_DeleteFileFixup.wide")  // A test to see if exporting these names helps ProcessMonitor stack traces.
+#pragma comment(linker, "/EXPORT:WRAPPER_DELETEFILE=_WRAPPER_DELETEFILE.wide")
+#else
+#pragma comment(linker, "/EXPORT:DeleteFileFixupAnsi_Fixup=impl::DeleteFileFixup.ansi")  // A test to see if exporting these names helps ProcessMonitor stack traces.
+#pragma comment(linker, "/EXPORT:DeleteFileFixupWide_Fixup=impl::DeleteFileFixup.wide")  // A test to see if exporting these names helps ProcessMonitor stack traces.
+#pragma comment(linker, "/EXPORT:WRAPPER_DELETEFILE=WRAPPER_DELETEFILE.wide")
+#endif
+
 BOOL  WRAPPER_DELETEFILE(Json_Debug_Levels debugRequestLevel, std::wstring theDeletingFile, DWORD dllInstance)
 {
     std::wstring LongDeletingFile = MakeLongPath(theDeletingFile);

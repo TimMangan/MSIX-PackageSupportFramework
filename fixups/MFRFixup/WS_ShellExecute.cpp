@@ -33,80 +33,64 @@ HINSTANCE __stdcall WS_ShellExecuteAFixup(
     _In_opt_ const char* lpDirectory,
     _In_     INT     nShowCmd) noexcept
 {
-    DWORD dllInstance = ++g_InterceptInstance;
+    DWORD dllInstance = g_InterceptInstance;
     [[maybe_unused]] bool debug = false;
-    [[maybe_unused]] bool moredebug = false;
-#if _DEBUG
-    debug = true;
-#if MOREDEBUG
-    moredebug = true;
-#endif
-#endif
     [[maybe_unused]] HINSTANCE retfinal;
-
-    wchar_t* wcOperation = NULL;
-    wchar_t* wcFile = NULL;
-    wchar_t* wcParameters = NULL;
-    wchar_t* wcDirectory = NULL;
-    std::wstring wsOperation = L"";
-    std::wstring wsFile = L"";
-    std::wstring wsParameters = L"";
-    std::wstring wsDirectory = L"";
-    if (lpOperation != NULL)
-    {
-        wsOperation = widen(lpOperation);
-        wcOperation = wsOperation.data();
-    }
-    if (lpFile != NULL)
-    {
-        wsFile = widen(lpFile);
-        wcFile = const_cast<wchar_t*>(widen(lpFile).c_str());
-    }
-    if (lpParameters != NULL)
-    {
-        wsParameters = widen(lpParameters);
-        wcParameters = const_cast<wchar_t*>(widen(lpParameters).c_str());
-    }
-    if (lpDirectory != NULL)
-    {
-        wsDirectory = widen(lpDirectory);
-        wcDirectory = const_cast<wchar_t*>(widen(lpDirectory).c_str());
-    }
 
     try
     {
-        auto guard = g_reentrancyGuard.enter();
+        //auto guard = g_reentrancyGuard.enter();
         
 
-        if (guard)
+        //if (guard)
         {
+            dllInstance = ++g_InterceptInstance;
 
-            // Release level logging for detection
-            bool temp = g_psf_NoLogging;
-            g_psf_NoLogging = false; 
-            Log(LogLevel_DebugBasic, L"[%s%d] (Windows.Storage)ShellExecute(%ls, %ls, %ls, %ls, %d)", g_MfrModuleName, dllInstance, wcOperation, wcFile, wcParameters, wcDirectory, nShowCmd);
-            LogCallingModuleInstance(g_MfrModuleName, dllInstance);
-            g_psf_NoLogging = temp;
-            
-            
-            if (lpOperation != nullptr)
+            Log(LogLevel_DebugBasic, L"[%s%d] (Windows.Storage)ShellExecuteA [Informational]", g_MfrModuleName, dllInstance);
+            if (lpOperation != NULL)
             {
+                Log(LogLevel_DebugBasic, L"[%s%d] (Windows.Storage)ShellExecuteA() operation=%S", g_MfrModuleName, dllInstance, lpOperation);
                 std::wstring pwszOperation = widen(lpOperation);
                 if (pwszOperation._Equal(L"find"))
                 {
-                    Log(LogLevel_DebugBasic, L"[%s%d] Debug here", g_MfrModuleName, dllInstance);
+                    Log(LogLevel_DebugBasic, L"[%s%d] may need to debug find operation further...", g_MfrModuleName, dllInstance);
                 }
             }
-            retfinal = ::ShellExecuteW(hwnd, wcOperation, wcFile, wcParameters, wcDirectory, nShowCmd);
+            if (lpFile != NULL)
+            {
+                Log(LogLevel_DebugBasic, L"[%s%d] (Windows.Storage)ShellExecuteA() file=%S", g_MfrModuleName, dllInstance, lpFile);
+            }
+            if (lpParameters != NULL)
+            {
+                Log(LogLevel_DebugBasic, L"[%s%d] (Windows.Storage)ShellExecuteA() parameters=%S", g_MfrModuleName, dllInstance, lpParameters);
+            }
+            if (lpDirectory != NULL)
+            {
+                Log(LogLevel_DebugBasic, L"[%s%d] (Windows.Storage)ShellExecuteA() directory=%S", g_MfrModuleName, dllInstance, lpDirectory);
+            }
+            Log(LogLevel_DebugBasic, L"[%s%d] (Windows.Storage)ShellExecuteA() nShowCmd=%d", g_MfrModuleName, dllInstance, nShowCmd);
+
+            LogCallingModuleInstance(g_MfrModuleName, dllInstance);
+            
+            
+            retfinal = ::ShellExecuteA(hwnd, lpOperation, lpFile, lpParameters, lpDirectory, nShowCmd);
+            if (retfinal)
+            {
+                Log(LogLevel_DebugBasic, L"[%s%d] (Windows.Storage)ShellExecuteA() [Informational] returns SUCCESS", g_MfrModuleName, dllInstance);
+            }
+            else
+            {
+                Log(LogLevel_DebugBasic, L"[%s%d] (Windows.Storage)ShellExecuteA() [Informational] returns ERROR=0x%x", g_MfrModuleName, dllInstance, GetLastError());
+            }
             return retfinal;
         }
     }
     catch (...)
     {
-        Log(LogLevel_Exception, L"[%s%d] (Windows.Storage)ShellExecute Exception=0x%x", g_MfrModuleName, , GetLastError());
+        Log(LogLevel_Exception, L"[%s%d] (Windows.Storage)ShellExecuteA Exception=0x%x", g_MfrModuleName, dllInstance, GetLastError());
     }
    
-    retfinal = ::ShellExecute(hwnd, wcOperation, wcFile, wcParameters, wcDirectory, nShowCmd);
+    retfinal = ::ShellExecuteA(hwnd, lpOperation, lpFile, lpParameters, lpDirectory, nShowCmd);
     return retfinal;
 }
 DECLARE_FIXUP(windowsstorageimpl::ShellExecuteAImpl, WS_ShellExecuteAFixup);
@@ -122,70 +106,58 @@ HINSTANCE __stdcall WS_ShellExecuteWFixup(
     _In_opt_ LPCWSTR lpDirectory,
     _In_     INT     nShowCmd) noexcept
 {
-    DWORD dllInstance = ++g_InterceptInstance;
+    DWORD dllInstance = g_InterceptInstance;
     [[maybe_unused]] bool debug = false;
-    [[maybe_unused]] bool moredebug = false;
-#if _DEBUG
-    debug = true;
-#if MOREDEBUG
-    moredebug = true;
-#endif
-#endif
     [[maybe_unused]] HINSTANCE retfinal;
 
-    wchar_t* wcOperation = NULL;
-    wchar_t* wcFile = NULL;
-    wchar_t* wcParameters = NULL;
-    wchar_t* wcDirectory = NULL;
-    std::wstring wsOperation = L"";
-    std::wstring wsFile = L"";
-    std::wstring wsParameters = L"";
-    std::wstring wsDirectory = L"";
-    if (lpOperation != NULL)
-    {
-        wsOperation = widen(lpOperation);
-        wcOperation = wsOperation.data();
-    }
-    if (lpFile != NULL)
-    {
-        wsFile = widen(lpFile);
-        wcFile = const_cast<wchar_t*>(widen(lpFile).c_str());
-    }
-    if (lpParameters != NULL)
-    {
-        wsParameters = widen(lpParameters);
-        wcParameters = const_cast<wchar_t*>(widen(lpParameters).c_str());
-    }
-    if (lpDirectory != NULL)
-    {
-        wsDirectory = widen(lpDirectory);
-        wcDirectory = const_cast<wchar_t*>(widen(lpDirectory).c_str());
-    }
+   
 
     try
     {
-        auto guard = g_reentrancyGuard.enter();
+        //auto guard = g_reentrancyGuard.enter();
 
-
-        if (guard)
+        //if (guard)
         {
+            dllInstance = ++g_InterceptInstance;
 
             // Release level logging for detection
-            bool temp = g_psf_NoLogging;
-            g_psf_NoLogging = false;
-            Log(LogLevel_DebugBasic, L"[%s%d] (Windows.Storage)ShellExecute(%ls, %ls, %ls, %ls, %d) unfixed", g_MfrModuleName, dllInstance, wcOperation, wcFile, wcParameters, wcDirectory, nShowCmd);
-            LogCallingModuleInstance(g_MfrModuleName, dllInstance);
-            g_psf_NoLogging = temp;
-
-            if (lpOperation != nullptr)
+            Log(LogLevel_DebugBasic, L"[%s%d] (Windows.Storage)ShellExecuteW [Informational]", g_MfrModuleName, dllInstance);
+            if (lpOperation != NULL)
             {
+                Log(LogLevel_DebugBasic, L"[%s%d] (Windows.Storage)ShellExecuteW() operation=%s", g_MfrModuleName, dllInstance, lpOperation);
                 std::wstring pwszOperation = widen(lpOperation);
                 if (pwszOperation._Equal(L"find"))
                 {
-                    Log(LogLevel_DebugBasic, L"[%s%d] Debug here", g_MfrModuleName, dllInstance);
+                    Log(LogLevel_DebugBasic, L"[%s%d] may need to debug find operation further...", g_MfrModuleName, dllInstance);
                 }
             }
-            retfinal = ::ShellExecuteW(hwnd, wcOperation, wcFile, wcParameters, wcDirectory, nShowCmd);
+            if (lpFile != NULL)
+            {
+                Log(LogLevel_DebugBasic, L"[%s%d] (Windows.Storage)ShellExecuteW() file=%s", g_MfrModuleName, dllInstance, lpFile);
+            }
+            if (lpParameters != NULL)
+            {
+                Log(LogLevel_DebugBasic, L"[%s%d] (Windows.Storage)ShellExecuteW() parameters=%s", g_MfrModuleName, dllInstance, lpParameters);
+            }
+            if (lpDirectory != NULL)
+            {
+                Log(LogLevel_DebugBasic, L"[%s%d] (Windows.Storage)ShellExecuteW() directory=%s", g_MfrModuleName, dllInstance, lpDirectory);
+            }
+            Log(LogLevel_DebugBasic, L"[%s%d] (Windows.Storage)ShellExecuteW() nShowCmd=%d", g_MfrModuleName, dllInstance, nShowCmd);
+
+
+
+            LogCallingModuleInstance(g_MfrModuleName, dllInstance);
+
+            retfinal = ::ShellExecuteW(hwnd, lpOperation, lpFile, lpParameters, lpDirectory, nShowCmd);
+            if (retfinal)
+            {
+                Log(LogLevel_DebugBasic, L"[%s%d] (Windows.Storage)ShellExecuteW() [Informational] returns SUCCESS", g_MfrModuleName, dllInstance);
+            }
+            else
+            {
+                Log(LogLevel_DebugBasic, L"[%s%d] (Windows.Storage)ShellExecuteW() [Informational] returns ERROR=0x%x", g_MfrModuleName, dllInstance, GetLastError());
+            }
             return retfinal;
         }
     }
@@ -194,7 +166,7 @@ HINSTANCE __stdcall WS_ShellExecuteWFixup(
         Log(LogLevel_Exception, L"[%s%d] (Windows.Storage)ShellExecute Exception=0x%x", g_MfrModuleName, dllInstance, GetLastError());
     }
 
-    retfinal = ::ShellExecute(hwnd, wcOperation, wcFile, wcParameters, wcDirectory, nShowCmd);
+    retfinal = ::ShellExecuteW(hwnd, lpOperation, lpFile, lpParameters, lpDirectory, nShowCmd);
     return retfinal;
 }
 DECLARE_FIXUP(windowsstorageimpl::ShellExecuteWImpl, WS_ShellExecuteWFixup);

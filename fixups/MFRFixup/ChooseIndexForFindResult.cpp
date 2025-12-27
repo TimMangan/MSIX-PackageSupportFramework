@@ -18,6 +18,14 @@
 
 
 
+#ifdef _M_IX86
+#pragma comment(linker, "/EXPORT:ChooseIndexForFindResultA=_ChooseIndexForFindResult.ansi")
+#pragma comment(linker, "/EXPORT:ChooseIndexForFindResultW=_ChooseIndexForFindResult.wide")
+#else
+#pragma comment(linker, "/EXPORT:ChooseIndexForFindResultA=ChooseIndexForFindResult.ansi")
+#pragma comment(linker, "/EXPORT:ChooseIndexForFindResultW=ChooseIndexForFindResult.wide")
+#endif
+
 
 int ChooseIndexForFindResult(const Cohorts cohorts, FindData3A* result)
 {

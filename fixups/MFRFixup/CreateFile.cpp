@@ -92,7 +92,7 @@ HANDLE __stdcall CreateFileFixup(_In_ const CharT* pathName,
                 if (wPathName.compare(L"C:\\") ||
                     wPathName.compare(L"c:\\"))
                 {
-                    Log(LogLevel_DebugBasic, L"[%s%d] CreateFileFixup for native equivelent of AppVPackageDrive", g_MfrModuleName, dllInstance);
+                    Log(LogLevel_DebugBasic, L"[%s%d] CreateFileFixup for native equivalent of AppVPackageDrive", g_MfrModuleName, dllInstance);
                 }
             }
             LogString(LogLevel_DebugBasic, g_MfrModuleName, dllInstance, L"CreateFileFixup for path", pathName);

@@ -37,6 +37,15 @@
 #include "DetermineCohorts.h"
 
 
+#ifdef _M_IX86
+#pragma comment(linker, "/EXPORT:CopySymbolicLinkFixupAnsi_Fixup=impl::_CopySymbolicLinkFixup.ansi")  // A test to see if exporting these names helps ProcessMonitor stack traces.
+#pragma comment(linker, "/EXPORT:CopySymbolicLinkFixupWide_Fixup=impl::_CopySymbolicLinkFixup.wide")  // A test to see if exporting these names helps ProcessMonitor stack traces.
+#else
+#pragma comment(linker, "/EXPORT:CopySymbolicLinkFixupAnsi_Fixup=impl::CopySymbolicLinkFixup.ansi")  // A test to see if exporting these names helps ProcessMonitor stack traces.
+#pragma comment(linker, "/EXPORT:CopySymbolicLinkFixupWide_Fixup=impl::CopySymbolicLinkFixup.wide")  // A test to see if exporting these names helps ProcessMonitor stack traces.
+#endif
+
+
 template <typename CharT>
 BOOLEAN __stdcall CreateSymbolicLinkFixup(
     _In_ const CharT* symlinkFileName,

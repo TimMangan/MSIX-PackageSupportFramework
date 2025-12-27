@@ -63,7 +63,7 @@ NTSTATUS Test_TripplePlayAlternative(NTSTATUS retfinalIn, std::wstring wThisPath
         } 
         else
         {
-            Log(LogLevel_DebugBasic, L"%s%d] NtDll_NtQueryDirectoryFileFixup %s alternative %s failed to open handle.", g_MfrModuleName, dllInstance, casetype.c_str(), wThisPathName.c_str());
+            Log(LogLevel_DebugBasic, L"[%s%d] NtDll_NtQueryDirectoryFileFixup %s alternative %s failed to open handle.", g_MfrModuleName, dllInstance, casetype.c_str(), wThisPathName.c_str());
         }
     }
     catch (...)

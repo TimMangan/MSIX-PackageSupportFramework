@@ -49,6 +49,18 @@
 #include "DetermineIlvPaths.h"
 
 
+
+#ifdef _M_IX86
+#pragma comment(linker, "/EXPORT:CreateDirectoryFixupAnsi_Fixup=impl::_CreateDirectoryFixup.ansi")  // A test to see if exporting these names helps ProcessMonitor stack traces.
+#pragma comment(linker, "/EXPORT:CreateDirectoryFixupWide_Fixup=impl::_CreateDirectoryFixup.wide")  // A test to see if exporting these names helps ProcessMonitor stack traces.
+#pragma comment(linker, "/EXPORT:WRAPPER_CREATEDIRECTORY=_WRAPPER_CREATEDIRECTORY.wide")
+#else
+#pragma comment(linker, "/EXPORT:CreateDirectoryFixupAnsi_Fixup=impl::CreateDirectoryFixup.ansi")  // A test to see if exporting these names helps ProcessMonitor stack traces.
+#pragma comment(linker, "/EXPORT:CreateDirectoryFixupWide_Fixup=impl::CreateDirectoryFixup.wide")  // A test to see if exporting these names helps ProcessMonitor stack traces.
+#pragma comment(linker, "/EXPORT:WRAPPER_CREATEDIRECTORY=WRAPPER_CREATEDIRECTORY.wide")
+#endif
+
+
 BOOL  WRAPPER_CREATEDIRECTORY(Json_Debug_Levels debugRequestLevel, std::wstring theDestinationDirectory, LPSECURITY_ATTRIBUTES securityAttributes, DWORD dllInstance)
 {
     std::wstring LongDestinationDirectory = MakeLongPath(theDestinationDirectory);
@@ -113,7 +125,7 @@ BOOL __stdcall CreateDirectoryFixup(_In_ const CharT* pathName, _In_opt_ LPSECUR
             Cohorts cohorts;
             DetermineCohorts(LogLevel_DebugIntermediate, wPathName, &cohorts, dllInstance, L"CreateDirectoryFixup");
 
-            if (!MFRConfiguration.Ilv_Aware)
+            if (!MFRConfiguration.Ilv_Aware || !cohorts.IsPathIlvEligible)
             {
                 switch (cohorts.file_mfr.Request_MfrPathType)
                 {
@@ -441,12 +453,13 @@ BOOL __stdcall CreateDirectoryFixup(_In_ const CharT* pathName, _In_opt_ LPSECUR
                 //              Just do what was asked (which is probably going to be a failure because it already exists!).
                 //              The code below needs some improvement.  
                 //              Also CreateDirectoryEx.  
-                //              Then think about the file case (which might be OK but definately not the changes we need here).
+                //              Then think about the file case (which might be OK but definitely not the changes we need here).
                 
                 //ILV aware
                 std::wstring usePath = DetermineIlvPathForWriteOperations(LogLevel_DebugIntermediate, cohorts, dllInstance);
                 // In a redirect to local scenario, we are responsible for pre-creating the local parent folders
                 // if-and-only-if they are present in the package.
+                LogString(LogLevel_DebugBasic, g_MfrModuleName, dllInstance, L"CreateDirectoryFixup IlvAware mode using", usePath.c_str());
                 PreCreateLocalFoldersIfNeededForWrite(LogLevel_DebugBasic, usePath, cohorts.WsPackage, dllInstance, L"CreateDirectoryFixup");
                 if (!cohorts.NativeIsValidOptionInScenario)
                 {

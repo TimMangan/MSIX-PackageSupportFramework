@@ -22,6 +22,17 @@
 // exists inside the package.  
 
 
+#ifdef _M_IX86
+#pragma comment(linker, "/EXPORT:SetCurrentDirectoryFixupAnsi_Fixup=impl::_SetCurrentDirectoryFixup.ansi")  // A test to see if exporting these names helps ProcessMonitor stack traces.
+#pragma comment(linker, "/EXPORT:SetCurrentDirectoryFixupWide_Fixup=impl::_SetCurrentDirectoryFixup.wide")  // A test to see if exporting these names helps ProcessMonitor stack traces.
+#pragma comment(linker, "/EXPORT:WRAPPER_SETCURRENTDIRECTORY=_WRAPPER_SETCURRENTDIRECTORY.wide")
+#else
+#pragma comment(linker, "/EXPORT:SetCurrentDirectoryFixupAnsi_Fixup=impl::SetCurrentDirectoryFixup.ansi")  // A test to see if exporting these names helps ProcessMonitor stack traces.
+#pragma comment(linker, "/EXPORT:SetCurrentDirectoryFixupWide_Fixup=impl::SetCurrentDirectoryFixup.wide")  // A test to see if exporting these names helps ProcessMonitor stack traces.
+#pragma comment(linker, "/EXPORT:WRAPPER_SETCURRENTDIRECTORY=WRAPPER_SETCURRENTDIRECTORY.wide")
+#endif
+
+
 BOOL  WRAPPER_SETCURRENTDIRECTORY(std::wstring thePath, DWORD dllInstance)
 {
     std::wstring LongThePath = MakeLongPath(thePath);

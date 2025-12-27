@@ -22,8 +22,8 @@ template <typename CharT>
 using win32_find_data_t = std::conditional_t<psf::is_ansi<CharT>, WIN32_FIND_DATAA, WIN32_FIND_DATAW>;
 
 #ifdef _M_IX86
-#pragma comment(linker, "/EXPORT:FindNextFile_Ansi_Fixup=impl::_FindNextFileW.ansi@8")  // A test to see if exporting these names helps ProcessMonitor stack traces.
-#pragma comment(linker, "/EXPORT:FindNextFile_Wide_Fixup=impl::_FindNextFileW.wide@8")  // A test to see if exporting these names helps ProcessMonitor stack traces.
+#pragma comment(linker, "/EXPORT:FindNextFile_Ansi_Fixup=impl::_FindNextFileW.ansi")  // A test to see if exporting these names helps ProcessMonitor stack traces.
+#pragma comment(linker, "/EXPORT:FindNextFile_Wide_Fixup=impl::_FindNextFileW.wide")  // A test to see if exporting these names helps ProcessMonitor stack traces.
 #else
 #pragma comment(linker, "/EXPORT:FindNextFileFixupAnsi_Fixup=impl::FindNextFileW.ansi")  // A test to see if exporting these names helps ProcessMonitor stack traces.
 #pragma comment(linker, "/EXPORT:FindNextFileFixupWide_Fixup=impl::FindNextFileW.wide")  // A test to see if exporting these names helps ProcessMonitor stack traces.
@@ -103,7 +103,7 @@ BOOL __stdcall FindNextFileFixup(_In_ HANDLE findFile, _Out_ win32_find_data_t<C
                     // Skip the file if the name was previously used, unless it is a directory
                     if (!wasFileAlreadyProvided(data3A->requested_path, findFileData->cFileName))
                     {
-                        Log(LogLevel_DebugBasic, "[%s%d][%s%d] FindNextFileFixup[%d] returns TRUE with ERROR_SUCCESS and file %ls", g_MfrModuleName, data3A->RememberedInstance, g_MfrModuleName, dllInstance, Result_Redirected, widen(findFileData->cFileName).c_str());
+                        Log(LogLevel_DebugBasic, "[%s%d][%s%d] FindNextFileFixup[%d] returns TRUE with ERROR_SUCCESS and file '%ls'", g_MfrModuleName, data3A->RememberedInstance, g_MfrModuleName, dllInstance, Result_Redirected, widen(findFileData->cFileName).c_str());
 
                         data3A->sAlready_returned_list.push_back(narrow(findFileData->cFileName));
                         ::SetLastError(ERROR_SUCCESS);
@@ -112,7 +112,7 @@ BOOL __stdcall FindNextFileFixup(_In_ HANDLE findFile, _Out_ win32_find_data_t<C
                     else
                     {
                         // Otherwise, skip this file and check the next one
-                        Log(LogLevel_DebugMaximum, L"[%s%d][%s%d] FindNextFileFixup[%d] skips file %ls", g_MfrModuleName, data3A->RememberedInstance, g_MfrModuleName, dllInstance, Result_Redirected, widen(findFileData->cFileName).c_str());
+                        Log(LogLevel_DebugMaximum, L"[%s%d][%s%d] FindNextFileFixup[%d] skips file '%ls'", g_MfrModuleName, data3A->RememberedInstance, g_MfrModuleName, dllInstance, Result_Redirected, widen(findFileData->cFileName).c_str());
                     }
                 }
                 else if (::GetLastError() == ERROR_NO_MORE_FILES)
@@ -138,7 +138,7 @@ BOOL __stdcall FindNextFileFixup(_In_ HANDLE findFile, _Out_ win32_find_data_t<C
                     // Skip the file if the name was previously used, unless it is a directory
                     if (!wasFileAlreadyProvided(data3A->requested_path, findFileData->cFileName))
                     {
-                        Log(LogLevel_DebugBasic, L"[%s%d][%s%d] FindNextFileFixup[%d] returns TRUE with ERROR_SUCCESS and file %ls", g_MfrModuleName, data3A->RememberedInstance, g_MfrModuleName, dllInstance, Result_Package, widen(findFileData->cFileName).c_str());
+                        Log(LogLevel_DebugBasic, L"[%s%d][%s%d] FindNextFileFixup[%d] returns TRUE with ERROR_SUCCESS and file '%ls'", g_MfrModuleName, data3A->RememberedInstance, g_MfrModuleName, dllInstance, Result_Package, widen(findFileData->cFileName).c_str());
                         data3A->sAlready_returned_list.push_back(narrow(findFileData->cFileName));
                         ::SetLastError(ERROR_SUCCESS);
                         return TRUE;
@@ -146,7 +146,7 @@ BOOL __stdcall FindNextFileFixup(_In_ HANDLE findFile, _Out_ win32_find_data_t<C
                     else
                     {
                         // Otherwise, skip this file and check the next one
-                        Log(LogLevel_DebugMaximum, L"[%s%d][%s%d] FindNextFileFixup[%d] skips file %ls", g_MfrModuleName, data3A->RememberedInstance, g_MfrModuleName, dllInstance, Result_Package, widen(findFileData->cFileName).c_str());
+                        Log(LogLevel_DebugMaximum, L"[%s%d][%s%d] FindNextFileFixup[%d] skips file '%ls'", g_MfrModuleName, data3A->RememberedInstance, g_MfrModuleName, dllInstance, Result_Package, widen(findFileData->cFileName).c_str());
                     }
                 }
                 else if (::GetLastError() == ERROR_NO_MORE_FILES)
@@ -172,7 +172,7 @@ BOOL __stdcall FindNextFileFixup(_In_ HANDLE findFile, _Out_ win32_find_data_t<C
                     // Skip the file if the name was previously used, unless it is a directory
                     if (!wasFileAlreadyProvided(data3A->requested_path, findFileData->cFileName))
                     {
-                        Log(LogLevel_DebugBasic, L"[%s%d][%s%d] FindNextFileFixup[%d] returns TRUE with ERROR_SUCCESS and file %ls", g_MfrModuleName, data3A->RememberedInstance, g_MfrModuleName, dllInstance, Result_Native, widen(findFileData->cFileName).c_str());
+                        Log(LogLevel_DebugBasic, L"[%s%d][%s%d] FindNextFileFixup[%d] returns TRUE with ERROR_SUCCESS and file '%ls'", g_MfrModuleName, data3A->RememberedInstance, g_MfrModuleName, dllInstance, Result_Native, widen(findFileData->cFileName).c_str());
                         data3A->sAlready_returned_list.push_back(narrow(findFileData->cFileName));
                         ::SetLastError(ERROR_SUCCESS);
                         return TRUE;
@@ -180,7 +180,7 @@ BOOL __stdcall FindNextFileFixup(_In_ HANDLE findFile, _Out_ win32_find_data_t<C
                     else
                     {
                         // Otherwise, skip this file and check the next one
-                        Log(LogLevel_DebugMaximum, L"[%s%d][%s%d] FindNextFileFixup[%d] skips file %ls", g_MfrModuleName, data3A->RememberedInstance, g_MfrModuleName, dllInstance, Result_Native, widen(findFileData->cFileName).c_str());
+                        Log(LogLevel_DebugMaximum, L"[%s%d][%s%d] FindNextFileFixup[%d] skips file '%ls'", g_MfrModuleName, data3A->RememberedInstance, g_MfrModuleName, dllInstance, Result_Native, widen(findFileData->cFileName).c_str());
                     }
                 }
                 else if (::GetLastError() == ERROR_NO_MORE_FILES)
@@ -229,7 +229,7 @@ BOOL __stdcall FindNextFileFixup(_In_ HANDLE findFile, _Out_ win32_find_data_t<C
                         //            if (check.compare(wFilename.c_str()) == 0)
                         if (_wcsicmp_l(check.c_str(), wFilename.c_str(), locale) == 0)
                         {
-                            Log(LogLevel_DebugBasic, L"[%s%d][%s%d]\tFindNextFileFixup A wasFileAlreadyProvided returns true %ls", g_MfrModuleName, data3W->RememberedInstance, g_MfrModuleName, dllInstance, wFilename.c_str());
+                            Log(LogLevel_DebugBasic, L"[%s%d][%s%d]\tFindNextFileFixup A wasFileAlreadyProvided returns true '%ls'", g_MfrModuleName, data3W->RememberedInstance, g_MfrModuleName, dllInstance, wFilename.c_str());
                             _free_locale(locale);
                             return true;
                         }
@@ -248,7 +248,7 @@ BOOL __stdcall FindNextFileFixup(_In_ HANDLE findFile, _Out_ win32_find_data_t<C
                     // Skip the file if the name was previously used, unless it is a directory
                     if (!wasFileAlreadyProvided(data3W->requested_path, findFileData->cFileName))
                     {
-                        Log(LogLevel_DebugBasic, L"[%s%d][%s%d] FindNextFileFixup[%d] returns TRUE with ERROR_SUCCESS and file %ls", g_MfrModuleName, data3W->RememberedInstance, g_MfrModuleName, dllInstance, Result_Redirected, widen(findFileData->cFileName).c_str());
+                        Log(LogLevel_DebugBasic, L"[%s%d][%s%d] FindNextFileFixup[%d] returns TRUE with ERROR_SUCCESS and file '%ls'", g_MfrModuleName, data3W->RememberedInstance, g_MfrModuleName, dllInstance, Result_Redirected, widen(findFileData->cFileName).c_str());
 
                         data3W->wsAlready_returned_list.push_back(widen(findFileData->cFileName));
                         ::SetLastError(ERROR_SUCCESS);
@@ -257,7 +257,7 @@ BOOL __stdcall FindNextFileFixup(_In_ HANDLE findFile, _Out_ win32_find_data_t<C
                     else
                     {
                         // Otherwise, skip this file and check the next one
-                        Log(LogLevel_DebugMaximum, L"[%s%d][%s%d] FindNextFileFixup[%d] skips file %ls", g_MfrModuleName, data3W->RememberedInstance, g_MfrModuleName, dllInstance, Result_Redirected, widen(findFileData->cFileName).c_str());
+                        Log(LogLevel_DebugMaximum, L"[%s%d][%s%d] FindNextFileFixup[%d] skips file '%ls'", g_MfrModuleName, data3W->RememberedInstance, g_MfrModuleName, dllInstance, Result_Redirected, widen(findFileData->cFileName).c_str());
                     }
                 }
                 else if (::GetLastError() == ERROR_NO_MORE_FILES)
@@ -284,7 +284,7 @@ BOOL __stdcall FindNextFileFixup(_In_ HANDLE findFile, _Out_ win32_find_data_t<C
                     // Skip the file if the name was previously used, unless it is a directory
                     if (!wasFileAlreadyProvided(data3W->requested_path, findFileData->cFileName))
                     {
-                        Log(LogLevel_DebugBasic, L"[%s%d][%s%d] FindNextFileFixup[%d] returns TRUE with ERROR_SUCCESS and file %ls", g_MfrModuleName, data3W->RememberedInstance, g_MfrModuleName, dllInstance, Result_Package, widen(findFileData->cFileName).c_str());
+                        Log(LogLevel_DebugBasic, L"[%s%d][%s%d] FindNextFileFixup[%d] returns TRUE with ERROR_SUCCESS and file '%ls'", g_MfrModuleName, data3W->RememberedInstance, g_MfrModuleName, dllInstance, Result_Package, widen(findFileData->cFileName).c_str());
                         data3W->wsAlready_returned_list.push_back(widen(findFileData->cFileName));
                         ::SetLastError(ERROR_SUCCESS);
                         return TRUE;
@@ -292,7 +292,7 @@ BOOL __stdcall FindNextFileFixup(_In_ HANDLE findFile, _Out_ win32_find_data_t<C
                     else
                     {
                         // Otherwise, skip this file and check the next one
-                        Log(LogLevel_DebugMaximum, L"[%s%d][%s%d] FindNextFileFixup[%d] skips file %ls", g_MfrModuleName, data3W->RememberedInstance, g_MfrModuleName, dllInstance, Result_Package, widen(findFileData->cFileName).c_str());
+                        Log(LogLevel_DebugMaximum, L"[%s%d][%s%d] FindNextFileFixup[%d] skips file '%ls'", g_MfrModuleName, data3W->RememberedInstance, g_MfrModuleName, dllInstance, Result_Package, widen(findFileData->cFileName).c_str());
                     }
                 }
                 else if (::GetLastError() == ERROR_NO_MORE_FILES)
@@ -318,7 +318,7 @@ BOOL __stdcall FindNextFileFixup(_In_ HANDLE findFile, _Out_ win32_find_data_t<C
                     // Skip the file if the name was previously used, unless it is a directory
                     if (!wasFileAlreadyProvided(data3W->requested_path, findFileData->cFileName))
                     {
-                        Log(LogLevel_DebugBasic, L"[%s%d][%s%d] FindNextFileFixup[%d] returns TRUE with ERROR_SUCCESS and file %ls", g_MfrModuleName, data3W->RememberedInstance, g_MfrModuleName, dllInstance, Result_Native, widen(findFileData->cFileName).c_str());
+                        Log(LogLevel_DebugBasic, L"[%s%d][%s%d] FindNextFileFixup[%d] returns TRUE with ERROR_SUCCESS and file '%ls'", g_MfrModuleName, data3W->RememberedInstance, g_MfrModuleName, dllInstance, Result_Native, widen(findFileData->cFileName).c_str());
 
                         data3W->wsAlready_returned_list.push_back(widen(findFileData->cFileName));
                         ::SetLastError(ERROR_SUCCESS);
@@ -327,7 +327,7 @@ BOOL __stdcall FindNextFileFixup(_In_ HANDLE findFile, _Out_ win32_find_data_t<C
                     else
                     {
                         // Otherwise, skip this file and check the next one
-                        Log(LogLevel_DebugMaximum, L"[%s%d][%s%d] FindNextFileFixup[%d] skips file %ls", g_MfrModuleName, data3W->RememberedInstance, g_MfrModuleName, dllInstance, Result_Native, widen(findFileData->cFileName).c_str());
+                        Log(LogLevel_DebugMaximum, L"[%s%d][%s%d] FindNextFileFixup[%d] skips file '%ls'", g_MfrModuleName, data3W->RememberedInstance, g_MfrModuleName, dllInstance, Result_Native, widen(findFileData->cFileName).c_str());
                     }
                 }
                 else if (::GetLastError() == ERROR_NO_MORE_FILES)

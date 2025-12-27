@@ -21,6 +21,7 @@ struct Cohorts
     std::wstring WsPackage;
     std::wstring WsNative;
     bool NativeIsValidOptionInScenario = true;        // Indicates if WsNative is an option for this scenario (not is)
+    bool IsPathIlvEligible = false;            // Indicates if the path is eligible for ILV processing.
 };
 
 extern void DetermineCohorts(Json_Debug_Levels debugRequestLevel, std::wstring requestedPath, Cohorts *cohorts, DWORD dllInstance, const wchar_t* FixupName);

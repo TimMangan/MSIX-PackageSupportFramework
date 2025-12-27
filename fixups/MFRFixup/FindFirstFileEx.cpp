@@ -51,24 +51,6 @@
 #include "DetermineCohorts.h"
 #include "FID.h"
 
-//#ifdef _M_IX86
-//#pragma comment(linker, "/EXPORT:FindFirstFileEx_Ansi_Fixup=impl::FindFirstFileExW.ansi")  // A test to see if exporting these names helps ProcessMonitor stack traces.
-//#pragma comment(linker, "/EXPORT:FindFirstFileEx_Wide_Fixup=impl::FindFirstFileExW.wide")  // A test to see if exporting these names helps ProcessMonitor stack traces.
-//#else
-//#pragma comment(linker, "/EXPORT:FindFirstFileExFixupAnsi_Fixup=impl::FindFirstFileExW.ansi")  // A test to see if exporting these names helps ProcessMonitor stack traces.
-//#pragma comment(linker, "/EXPORT:FindFirstFileExFixupWide_Fixup=impl::FindFirstFileExW.wide")  // A test to see if exporting these names helps ProcessMonitor stack traces.
-//#endif
-#ifdef _M_IX86
-#pragma comment(linker, "/EXPORT:FindFirstFileExA_FixupHelper=_FindFirstFileExAFixupHelper@24")
-#pragma comment(linker, "/EXPORT:FindFirstFileExW_FixupHelper=_FindFirstFileExWFixupHelper@24")
-#pragma comment(linker, "/EXPORT:FindFirstFileEx_Ansi_Fixup=impl::_FindFirstFileExW.ansi@24")  // A test to see if exporting these names helps ProcessMonitor stack traces.
-#pragma comment(linker, "/EXPORT:FindFirstFileEx_Wide_Fixup=impl::_FindFirstFileExW.wide@24")  // A test to see if exporting these names helps ProcessMonitor stack traces.
-#else
-#pragma comment(linker, "/EXPORT:FindFirstFileExA_FixupHelper=FindFirstFileExAFixupHelper")
-#pragma comment(linker, "/EXPORT:FindFirstFileExW_FixupHelper=FindFirstFileExWFixupHelper")
-#pragma comment(linker, "/EXPORT:FindFirstFileExFixupAnsi_Fixup=impl::FindFirstFileExW.ansi")  // A test to see if exporting these names helps ProcessMonitor stack traces.
-#pragma comment(linker, "/EXPORT:FindFirstFileExFixupWide_Fixup=impl::FindFirstFileExW.wide")  // A test to see if exporting these names helps ProcessMonitor stack traces.
-#endif
 
 #if BRINGBACK
 bool FindFirstExHasSpecialCharacters(std::wstring wFileName)
@@ -83,6 +65,17 @@ bool FindFirstExHasSpecialCharacters(std::wstring wFileName)
 }
 #endif
 
+#ifdef _M_IX86
+#pragma comment(linker, "/EXPORT:FindFirstFileExA_FixupHelper=_FindFirstFileExAFixupHelper.ansi")
+#pragma comment(linker, "/EXPORT:FindFirstFileExW_FixupHelper=_FindFirstFileExWFixupHelper.wide")
+#pragma comment(linker, "/EXPORT:FindFirstFileExFixupAnsi_Fixup=impl:_FindFirstFileExFixup.ansi")  // A test to see if exporting these names helps ProcessMonitor stack traces.
+#pragma comment(linker, "/EXPORT:FindFirstFileExFixupWide_Fixup=impl:_FindFirstFileExFixup.wide")  // A test to see if exporting these names helps ProcessMonitor stack traces.
+#else
+#pragma comment(linker, "/EXPORT:FindFirstFileExA_FixupHelper=FindFirstFileExAFixupHelper")
+#pragma comment(linker, "/EXPORT:FindFirstFileExW_FixupHelper=FindFirstFileExWFixupHelper")
+#pragma comment(linker, "/EXPORT:FindFirstFileExFixupAnsi_Fixup=impl::FindFirstFileExFixup.ansi")  // A test to see if exporting these names helps ProcessMonitor stack traces.
+#pragma comment(linker, "/EXPORT:FindFirstFileExFixupWide_Fixup=impl::FindFirstFileExFixup.wide")  // A test to see if exporting these names helps ProcessMonitor stack traces.
+#endif
 
 extern "C" HANDLE __stdcall FindFirstFileExAFixupHelper(_In_ const char* fileName,
     _In_ FINDEX_INFO_LEVELS infoLevelId,
@@ -144,6 +137,10 @@ extern "C" HANDLE __stdcall FindFirstFileExAFixupHelper(_In_ const char* fileNam
         Log(LogLevel_DebugBasic, L"[%s%d]\t\tSearchOp Unknown=0x%x", g_MfrModuleName, dllInstance, searchOp);
         break;
     }
+    if (additionalFlags != 0)
+    {
+        Log(LogLevel_DebugBasic, L"[%s%d]\t\tAdditionalFlags=0x%x", g_MfrModuleName, dllInstance, additionalFlags);
+    }
 
     afileName = AdjustBadUNC(afileName, dllInstance, "FindFirstFileExAFixup");
 
@@ -167,50 +164,65 @@ extern "C" HANDLE __stdcall FindFirstFileExAFixupHelper(_In_ const char* fileNam
 
     //
 
-    DWORD initialFindError = ERROR_PATH_NOT_FOUND;
+    DWORD redirectedFindError = ERROR_PATH_NOT_FOUND;
+    DWORD packageFindError = ERROR_PATH_NOT_FOUND;
+    DWORD nativeFindError = ERROR_PATH_NOT_FOUND;
+    DWORD bestFindError = ERROR_PATH_NOT_FOUND;
 
     // First find the redirected area results
     std::string rldUseFile = narrow(MakeLongPath(cohorts.WsRedirected));
     result->find_handles[Result_Redirected].reset(impl::FindFirstFileEx(rldUseFile.c_str(), infoLevelId, &result->cached_data[Result_Redirected], searchOp, searchFilter, additionalFlags));
     // Some applications really care about the failure reason. Try and make this the best that we can, preferring
     // something like "file not found" over "path does not exist"
-    initialFindError = ::GetLastError();
+    redirectedFindError = ::GetLastError();
 
 
     if (result->find_handles[Result_Redirected])
     {
-
-        Log(LogLevel_DebugBasic, L"[%s%d] FindFirstFileExAFixup[%d] (from redirected): had results=%ls", g_MfrModuleName, dllInstance, Result_Redirected, result->cached_data[Result_Redirected].cFileName);
-        //AnyValidPath = true;
-        //AnyValidResult = true;
+        Log(LogLevel_DebugBasic, L"[%s%d] FindFirstFileExAFixup[%d] (from redirected): had results='%ls'", g_MfrModuleName, dllInstance, Result_Redirected, result->cached_data[Result_Redirected].cFileName);
     }
     else
     {
-        //if (initialFindError == ERROR_FILE_NOT_FOUND)
-        //    AnyValidPath = true;
-
         // Path doesn't exist or match any files. We can safely get away without the redirected file exists check
         //result->redirect_path.clear();
-        Log(LogLevel_DebugBasic, L"[%s%d] FindFirstFileExAFixup[%d] (from redirected): no results.", g_MfrModuleName, dllInstance, Result_Redirected);
-
+        Log(LogLevel_DebugBasic, L"[%s%d] FindFirstFileExAFixup[%d] (from redirected): no results 0x%x", g_MfrModuleName, dllInstance, Result_Redirected, redirectedFindError);
     }
 
     rldUseFile = narrow(MakeLongPath(cohorts.WsPackage));
     result->find_handles[Result_Package].reset(impl::FindFirstFileEx(rldUseFile.c_str(), infoLevelId, &result->cached_data[Result_Package], searchOp, searchFilter, additionalFlags));
+    packageFindError = ::GetLastError();
     if (result->find_handles[Result_Package])
     {
-        Log(LogLevel_DebugBasic, L"[%s%d] FindFirstFileExAFixup[%d] (from package):   had results=%ls", g_MfrModuleName, dllInstance, Result_Package, result->cached_data[Result_Package].cFileName);
-
-        initialFindError = ERROR_SUCCESS;
+        if (infoLevelId == FindExInfoStandard)
+        {
+            if (result->cached_data[Result_Package].cAlternateFileName != NULL)
+            {
+                Log(LogLevel_DebugBasic, L"[%s%d] FindFirstFileExAFixup[%d] (from package):   had results='%ls' shortname='%ls'", g_MfrModuleName, dllInstance, Result_Package, result->cached_data[Result_Package].cFileName, result->cached_data[Result_Package].cAlternateFileName);
+            }
+            else
+            {
+                Log(LogLevel_DebugBasic, L"[%s%d] FindFirstFileExAFixup[%d] (from package):   had results='%ls'", g_MfrModuleName, dllInstance, Result_Package, result->cached_data[Result_Package].cFileName);
+            }
+        }
+        else
+        {
+            Log(LogLevel_DebugBasic, L"[%s%d] FindFirstFileExAFixup[%d] (from package):   had results='%ls'", g_MfrModuleName, dllInstance, Result_Package, result->cached_data[Result_Package].cFileName);
+        }
+        packageFindError = ERROR_SUCCESS;
+        bestFindError = packageFindError;
     }
     else
     {
-        if (GetLastError() == ERROR_FILE_NOT_FOUND)
-            initialFindError = ERROR_FILE_NOT_FOUND;
+        if (packageFindError == ERROR_FILE_NOT_FOUND &&
+            bestFindError != ERROR_SUCCESS)
+        {
+            bestFindError = ERROR_FILE_NOT_FOUND;
+        }
         ///result->package_vfs_path.clear();
-        Log(LogLevel_DebugBasic, L"[%s%d] FindFirstFileExAFixup[%d] (from package):   no results.", g_MfrModuleName, dllInstance, Result_Package);
+        Log(LogLevel_DebugBasic, L"[%s%d] FindFirstFileExAFixup[%d] (from package):   no results 0x%x", g_MfrModuleName, dllInstance, Result_Package, packageFindError);
     }
 
+    /*  This just doesn't right 
     if (!result->find_handles[Result_Redirected])
     {
         if (result->cached_data[Result_Package].cAlternateFileName != NULL)
@@ -230,22 +242,27 @@ extern "C" HANDLE __stdcall FindFirstFileExAFixupHelper(_In_ const char* fileNam
         Log(LogLevel_DebugBasic, L"[%s%d] FindFirstFileExAFixup[%d] (from package):   no results.", g_MfrModuleName, dllInstance, Result_Package);
 
     }
-
+    **/
 
     if (cohorts.NativeIsValidOptionInScenario)
     {
         rldUseFile = narrow(MakeLongPath(cohorts.WsNative));
         result->find_handles[Result_Native].reset(impl::FindFirstFileEx(rldUseFile.c_str(), infoLevelId, &result->cached_data[Result_Native], searchOp, searchFilter, additionalFlags));
+        nativeFindError = ::GetLastError();
         if (result->find_handles[Result_Native])
         {
-            Log(LogLevel_DebugBasic, L"[%s%d] FindFirstFileExAFixup[%d] (from native)    had results=%ls", g_MfrModuleName, dllInstance, Result_Native, result->cached_data[Result_Native].cFileName);
-            initialFindError = ERROR_SUCCESS;
+            Log(LogLevel_DebugBasic, L"[%s%d] FindFirstFileExAFixup[%d] (from native)    had results='%ls'", g_MfrModuleName, dllInstance, Result_Native, result->cached_data[Result_Native].cFileName);
+            nativeFindError = ERROR_SUCCESS;
+            bestFindError = nativeFindError;
         }
         else
         {
-            if (GetLastError() == ERROR_FILE_NOT_FOUND)
-                initialFindError = ERROR_FILE_NOT_FOUND;
-            Log(LogLevel_DebugBasic, L"[%s%d] FindFirstFileExAFixup[%d] (from native):   no results.", g_MfrModuleName, dllInstance, Result_Native);
+            if (nativeFindError == ERROR_FILE_NOT_FOUND &&
+                bestFindError != ERROR_SUCCESS)
+            {
+                bestFindError = ERROR_FILE_NOT_FOUND;
+            }
+            Log(LogLevel_DebugBasic, L"[%s%d] FindFirstFileExAFixup[%d] (from native):   no results 0x%x", g_MfrModuleName, dllInstance, Result_Native, nativeFindError);
         }
     }
     else
@@ -328,9 +345,9 @@ extern "C" HANDLE __stdcall FindFirstFileExAFixupHelper(_In_ const char* fileNam
     }
     else
     {
-        Log(LogLevel_DebugBasic, L"[%s%d] FindFirstFileExAFixup returns 0x%x", g_MfrModuleName, dllInstance, initialFindError);
+        Log(LogLevel_DebugBasic, L"[%s%d] FindFirstFileExAFixup returns 0x%x", g_MfrModuleName, dllInstance, bestFindError);
 
-        ::SetLastError(initialFindError);
+        ::SetLastError(bestFindError);
         return INVALID_HANDLE_VALUE;
     }
 }
@@ -396,6 +413,10 @@ extern "C" HANDLE __stdcall FindFirstFileExWFixupHelper(_In_ const wchar_t* file
         Log(LogLevel_DebugBasic, "[%s%d]\t\tSearchOp Unknown=0x%x", g_MfrModuleName, dllInstance, searchOp);
         break;
     }
+    if (additionalFlags != 0)
+    {
+        Log(LogLevel_DebugBasic, L"[%s%d]\t\tAdditionalFlags=0x%x", g_MfrModuleName, dllInstance, additionalFlags);
+    }
 
     wfileName = AdjustBadUNC(wfileName, dllInstance, L"FindFirstFileExWFixup");
 
@@ -420,58 +441,75 @@ extern "C" HANDLE __stdcall FindFirstFileExWFixupHelper(_In_ const wchar_t* file
 
     //
 
-    DWORD initialFindError = ERROR_PATH_NOT_FOUND;
+    DWORD redirectedFindError = ERROR_PATH_NOT_FOUND;
+    DWORD packageFindError = ERROR_PATH_NOT_FOUND;
+    DWORD nativeFindError = ERROR_PATH_NOT_FOUND;
+    DWORD bestFindError = ERROR_PATH_NOT_FOUND;
 
     // First find the redirected area results
     std::wstring rldUseFile = MakeLongPath(cohorts.WsRedirected);
     result->find_handles[Result_Redirected].reset(impl::FindFirstFileEx(rldUseFile.c_str(), infoLevelId, &result->cached_data[Result_Redirected], searchOp, searchFilter, additionalFlags));
     // Some applications really care about the failure reason. Try and make this the best that we can, preferring
     // something like "file not found" over "path does not exist"
-    initialFindError = ::GetLastError();
+    redirectedFindError = ::GetLastError();
+    bestFindError = redirectedFindError;
 
 
     if (result->find_handles[Result_Redirected])
     {
-
-        Log(LogLevel_DebugBasic, L"[%s%d] FindFirstFileExWFixup[%d] (from redirected): had results=%s", g_MfrModuleName, dllInstance, Result_Redirected, result->cached_data[Result_Redirected].cFileName);
-
-        //AnyValidPath = true;
-        //AnyValidResult = true;
+        Log(LogLevel_DebugBasic, L"[%s%d] FindFirstFileExWFixup[%d] (from redirected): had results='%s'", g_MfrModuleName, dllInstance, Result_Redirected, result->cached_data[Result_Redirected].cFileName);
     }
     else
     {
-        //if (initialFindError == ERROR_FILE_NOT_FOUND)
-        //    AnyValidPath = true;
-
         // Path doesn't exist or match any files. We can safely get away without the redirected file exists check
         //result->redirect_path.clear();
-        Log(LogLevel_DebugBasic, L"[%s%d] FindFirstFileExWFixup[%d] (from redirected): no results.", g_MfrModuleName, dllInstance, Result_Redirected);
+        Log(LogLevel_DebugBasic, L"[%s%d] FindFirstFileExWFixup[%d] (from redirected): no results 0x%x.", g_MfrModuleName, dllInstance, Result_Redirected, redirectedFindError);
     }
 
     rldUseFile = MakeLongPath(cohorts.WsPackage);
     result->find_handles[Result_Package].reset(impl::FindFirstFileEx(rldUseFile.c_str(), infoLevelId, &result->cached_data[Result_Package], searchOp, searchFilter, additionalFlags));
+    packageFindError = ::GetLastError();
     if (result->find_handles[Result_Package])
     {
-        Log(LogLevel_DebugBasic, L"[%s%d] FindFirstFileExWFixup[%d] (from package):   had results=%s", g_MfrModuleName, dllInstance, Result_Package, result->cached_data[Result_Package].cFileName);
-        initialFindError = ERROR_SUCCESS;
+        if (infoLevelId == FindExInfoStandard)
+        {
+            if (result->cached_data[Result_Package].cAlternateFileName != NULL)
+            {
+                Log(LogLevel_DebugBasic, L"[%s%d] FindFirstFileExWFixup[%d] (from package):   had alt results='%s' shortname='%s'", g_MfrModuleName, dllInstance, Result_Package, result->cached_data[Result_Package].cFileName, result->cached_data[Result_Package].cAlternateFileName);
+            }
+            else
+            {
+                Log(LogLevel_DebugBasic, L"[%s%d] FindFirstFileExWFixup[%d] (from package):   had alt results='%s'", g_MfrModuleName, dllInstance, Result_Package, result->cached_data[Result_Package].cFileName);
+            }
+        }
+        else
+        {
+            Log(LogLevel_DebugBasic, L"[%s%d] FindFirstFileExWFixup[%d] (from package):   had results='%s'", g_MfrModuleName, dllInstance, Result_Package, result->cached_data[Result_Package].cFileName);
+        }
+        packageFindError = ERROR_SUCCESS;
+        bestFindError = packageFindError;
     }
     else
     {
-        if (GetLastError() == ERROR_FILE_NOT_FOUND)
-            initialFindError = ERROR_FILE_NOT_FOUND;
+        if (packageFindError == ERROR_FILE_NOT_FOUND &&
+            bestFindError != ERROR_SUCCESS)
+        {
+            bestFindError = ERROR_FILE_NOT_FOUND;
+        }
         ///result->package_vfs_path.clear();
-        Log(LogLevel_DebugBasic, L"[%s%d] FindFirstFileExWFixup[%d] (from package):   no results.", g_MfrModuleName, dllInstance, Result_Package);
+        Log(LogLevel_DebugBasic, L"[%s%d] FindFirstFileExWFixup[%d] (from package):   no results 0x%x.", g_MfrModuleName, dllInstance, Result_Package, packageFindError);
     }
 
+    /*  This just doesn't right
     if (!result->find_handles[Result_Redirected])
     {
         if (result->cached_data[Result_Package].cAlternateFileName != NULL)
         {
-            Log(LogLevel_DebugBasic, L"[%s%d] FindFirstFileExWFixup[%d] (from package):   had results=%s %s", g_MfrModuleName, dllInstance, Result_Package, result->cached_data[Result_Package].cFileName, result->cached_data[Result_Package].cAlternateFileName);
+            Log(LogLevel_DebugBasic, L"[%s%d] FindFirstFileExWFixup[%d] (from package):   had alt results=%s shortname=%s", g_MfrModuleName, dllInstance, Result_Package, result->cached_data[Result_Package].cFileName, result->cached_data[Result_Package].cAlternateFileName);
         }
         else
         {
-            Log(LogLevel_DebugBasic, L"[%s%d] FindFirstFileExWFixup[%d] (from package):   had results=%s", g_MfrModuleName, dllInstance, Result_Package, result->cached_data[Result_Package].cFileName);
+            Log(LogLevel_DebugBasic, L"[%s%d] FindFirstFileExWFixup[%d] (from package):   had alt results=%s", g_MfrModuleName, dllInstance, Result_Package, result->cached_data[Result_Package].cFileName);
         }
         initialFindError = ERROR_SUCCESS;
     }
@@ -482,22 +520,27 @@ extern "C" HANDLE __stdcall FindFirstFileExWFixupHelper(_In_ const wchar_t* file
         Log(LogLevel_DebugBasic, L"[%s%d] FindFirstFileExWFixup[%d] (from package):   no results.", g_MfrModuleName, dllInstance, Result_Package);
 
     }
-
+    **/
 
     if (cohorts.NativeIsValidOptionInScenario)
     {
         rldUseFile = MakeLongPath(cohorts.WsNative);
         result->find_handles[Result_Native].reset(impl::FindFirstFileEx(rldUseFile.c_str(), infoLevelId, &result->cached_data[Result_Native], searchOp, searchFilter, additionalFlags));
+        nativeFindError = ::GetLastError();
         if (result->find_handles[Result_Native])
         {
-            Log(LogLevel_DebugBasic, L"[%s%d] FindFirstFileExWFixup[%d] (from native)    had results=%s", g_MfrModuleName, dllInstance, Result_Native, result->cached_data[Result_Native].cFileName);
-            initialFindError = ERROR_SUCCESS;
+            Log(LogLevel_DebugBasic, L"[%s%d] FindFirstFileExWFixup[%d] (from native)    had results='%s'", g_MfrModuleName, dllInstance, Result_Native, result->cached_data[Result_Native].cFileName);
+            nativeFindError = ERROR_SUCCESS;
+            bestFindError = nativeFindError;
         }
         else
         {
-            if (GetLastError() == ERROR_FILE_NOT_FOUND)
-                initialFindError = ERROR_FILE_NOT_FOUND;
-            Log(LogLevel_DebugBasic, L"[%s%d] FindFirstFileExWFixup[%d] (from native):   no results.", g_MfrModuleName, dllInstance, Result_Native);
+            if (nativeFindError == ERROR_FILE_NOT_FOUND &&
+                bestFindError != ERROR_SUCCESS)
+            {
+                bestFindError = ERROR_FILE_NOT_FOUND;
+            }
+            Log(LogLevel_DebugBasic, L"[%s%d] FindFirstFileExWFixup[%d] (from native):   no results 0x%x.", g_MfrModuleName, dllInstance, Result_Native, nativeFindError);
         }
     }
     else
@@ -580,8 +623,8 @@ extern "C" HANDLE __stdcall FindFirstFileExWFixupHelper(_In_ const wchar_t* file
     }
     else
     {
-        Log(LogLevel_DebugBasic, L"[%s%d] FindFirstFileExWFixup returns 0x%x", g_MfrModuleName, dllInstance, initialFindError);
-        ::SetLastError(initialFindError);
+        Log(LogLevel_DebugBasic, L"[%s%d] FindFirstFileExWFixup returns 0x%x", g_MfrModuleName, dllInstance, bestFindError);
+        ::SetLastError(bestFindError);
         return INVALID_HANDLE_VALUE;
     }
 }

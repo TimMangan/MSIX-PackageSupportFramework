@@ -23,11 +23,11 @@
 
 
 #ifdef _M_IX86
-#pragma comment(linker, "/EXPORT:GetFileAttributesFixupAnsi_Fixup=impl::_GetFileAttributesFixupW.ansi")  // A test to see if exporting these names helps ProcessMonitor stack traces.
-#pragma comment(linker, "/EXPORT:GetFileAttributesFixupWide_Fixup=impl::_GetFileAttributesFixupW.wide")  // A test to see if exporting these names helps ProcessMonitor stack traces.
+#pragma comment(linker, "/EXPORT:GetFileAttributesFixupAnsi_Fixup=impl::_GetFileAttributesFixup.ansi")  // A test to see if exporting these names helps ProcessMonitor stack traces.
+#pragma comment(linker, "/EXPORT:GetFileAttributesFixupWide_Fixup=impl::_GetFileAttributesFixup.wide")  // A test to see if exporting these names helps ProcessMonitor stack traces.
 #else
-#pragma comment(linker, "/EXPORT:GetFileAttributesFixupAnsi_Fixup=impl::GetFileAttributesFixupW.ansi")  // A test to see if exporting these names helps ProcessMonitor stack traces.
-#pragma comment(linker, "/EXPORT:GetFileAttributesFixupWide_Fixup=impl::GetFileAttributesFixupW.wide")  // A test to see if exporting these names helps ProcessMonitor stack traces.
+#pragma comment(linker, "/EXPORT:GetFileAttributesFixupAnsi_Fixup=impl::GetFileAttributesFixup.ansi")  // A test to see if exporting these names helps ProcessMonitor stack traces.
+#pragma comment(linker, "/EXPORT:GetFileAttributesFixupWide_Fixup=impl::GetFileAttributesFixup.wide")  // A test to see if exporting these names helps ProcessMonitor stack traces.
 #endif
 
 

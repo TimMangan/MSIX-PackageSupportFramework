@@ -7,6 +7,7 @@
 // Microsoft documentation: https://docs.microsoft.com/en-us/windows/win32/api/winbase/nf-winbase-copyfile
 
 
+
 #include <errno.h>
 #include "FunctionImplementations.h"
 #include <psf_logging.h>
@@ -15,6 +16,17 @@
 #include "PathUtilities.h"
 #include "DetermineCohorts.h"
 #include "DetermineIlvPaths.h"
+
+
+#ifdef _M_IX86
+#pragma comment(linker, "/EXPORT:CopyFileFixupAnsi_Fixup=impl::_CopyFileFixup.ansi")  // A test to see if exporting these names helps ProcessMonitor stack traces.
+#pragma comment(linker, "/EXPORT:CopyFileFixupWide_Fixup=impl::_CopyFileFixup.wide")  // A test to see if exporting these names helps ProcessMonitor stack traces.
+#pragma comment(linker, "/EXPORT:WRAPPER_COPYFILE=_WRAPPER_COPYFILE.wide")
+#else
+#pragma comment(linker, "/EXPORT:CopyFileFixupAnsi_Fixup=impl::CopyFileFixup.ansi")  // A test to see if exporting these names helps ProcessMonitor stack traces.
+#pragma comment(linker, "/EXPORT:CopyFileFixupWide_Fixup=impl::CopyFileFixup.wide")  // A test to see if exporting these names helps ProcessMonitor stack traces.
+#pragma comment(linker, "/EXPORT:WRAPPER_COPYFILE=WRAPPER_COPYFILE.wide")
+#endif
 
 #if TRIED_DIDNOT_HELP
 BOOL WRAPPER_WORKAROUND(Json_Debug_Levels debugRequestLevel, std::wstring existingFileWs, std::wstring newFileWs, BOOL failIfExists,  DWORD dllInstance)

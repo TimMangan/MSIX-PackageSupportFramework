@@ -20,6 +20,14 @@
 #include "DetermineIlvPaths.h"
 
 
+#ifdef _M_IX86
+#pragma comment(linker, "/EXPORT:CopyFileExFixupAnsi_Fixup=impl::_CopyFileExFixup.ansi")  // A test to see if exporting these names helps ProcessMonitor stack traces.
+#pragma comment(linker, "/EXPORT:CopyFileExFixupWide_Fixup=impl::_CopyFileExFixup.wide")  // A test to see if exporting these names helps ProcessMonitor stack traces.
+#else
+#pragma comment(linker, "/EXPORT:CopyFileExFixupAnsi_Fixup=impl::CopyFileExFixup.ansi")  // A test to see if exporting these names helps ProcessMonitor stack traces.
+#pragma comment(linker, "/EXPORT:CopyFileExFixupWide_Fixup=impl::CopyFileExFixup.wide")  // A test to see if exporting these names helps ProcessMonitor stack traces.
+#endif
+
 #define  WRAPPER_COPYFILEEX(existingFileWs, newFileWs, dwCopyFlags) \
     { \
         std::wstring LongExistingFileWs = MakeLongPath(existingFileWs); \

@@ -363,7 +363,8 @@ std::wstring DetermineIlvPathForReadOperations(Json_Debug_Levels debugRequestLev
 std::wstring DetermineIlvPathForWriteOperations([[maybe_unused]] Json_Debug_Levels debugRequestLevel, Cohorts cohorts, [[maybe_unused]] DWORD dllInstance)
 {
     // Given the cohorts information for a file path, determine the correct path to use when attempting what would be a write/create operation under ILV.
-    // - For anything with a valid mapping for traditional redirection, this means we want the package path.
+    // - For anything with a valid mapping for traditional redirection supported by ILB, this means we want the package path.
+    // - For anything with a valid mapping for other traditional redirections, this means we want the redirected path.
     // - For anything with a valid mapping for local redirection, this means the local path. Note that in this case, the caller is responsible for creating 
     // - the local parent path if that parent path does not exist AND the parent path exists in the package.
 
@@ -390,7 +391,14 @@ std::wstring DetermineIlvPathForWriteOperations([[maybe_unused]] Json_Debug_Leve
                 (cohorts.map.RedirectionFlags == mfr::mfr_redirect_flags::prefer_redirection_containerized ||
                 cohorts.map.RedirectionFlags == mfr::mfr_redirect_flags::prefer_redirection_if_package_vfs))
         {
-            UseFile = cohorts.WsPackage;
+            if (cohorts.IsPathIlvEligible)
+            {
+                UseFile = cohorts.WsPackage;
+            }
+            else
+            {
+                UseFile = cohorts.WsRedirected;
+            }
             break;
         }
         else
@@ -422,7 +430,14 @@ std::wstring DetermineIlvPathForWriteOperations([[maybe_unused]] Json_Debug_Leve
                 (cohorts.map.RedirectionFlags == mfr::mfr_redirect_flags::prefer_redirection_containerized ||
                 cohorts.map.RedirectionFlags == mfr::mfr_redirect_flags::prefer_redirection_if_package_vfs))
         {
-            UseFile = cohorts.WsPackage;
+            if (cohorts.IsPathIlvEligible)
+            {
+                UseFile = cohorts.WsPackage;
+            }
+            else
+            {
+                UseFile = cohorts.WsRedirected;
+            }
             break;
         }
         else
@@ -434,7 +449,14 @@ std::wstring DetermineIlvPathForWriteOperations([[maybe_unused]] Json_Debug_Leve
         if (cohorts.map.Valid_mapping == mfr::mfr_enabled_types::enabled && 
             cohorts.map.IsAnExclusionToRedirect == mfr::mfr_exclusion_types::not_excluded)
         {
-            UseFile = cohorts.WsPackage;
+            if (cohorts.IsPathIlvEligible)
+            {
+                UseFile = cohorts.WsPackage;
+            }
+            else
+            {
+                UseFile = cohorts.WsRedirected;
+            }
         }
         else
         {
@@ -494,8 +516,24 @@ std::wstring SelectLocalOrPackageForRead(std::wstring localPath, std::wstring pa
 
 void PreCreateLocalFoldersIfNeededForWrite(Json_Debug_Levels debugRequestLevel, std::wstring localPath, std::wstring packagePath, DWORD dllInstance, std::wstring debugString)
 {
-    if (IsThisALocalPathNow(localPath))
+    if (localPath.find(L"WritablePackageRoot") != std::wstring::npos)
     {
+        Log(debugRequestLevel, L"[%s%d] %s Need to Pre-create a traditional redirected path if not present.", g_MfrModuleName, dllInstance, debugString.c_str() );
+        // Should pre-create folders under WPR
+        std::filesystem::path usePathAsPath = std::filesystem::path(localPath);
+        if (!PathExists(usePathAsPath.parent_path().c_str()))
+        {
+            Log(debugRequestLevel, L"[%s%d] %s: Pre-create redirected local parent path to match the package first %s", g_MfrModuleName, dllInstance, debugString.c_str(), usePathAsPath.parent_path().c_str());
+            PreCreateFolders(localPath, dllInstance, debugString.c_str());
+        }
+        else
+        {
+            Log(debugRequestLevel, L"[%s%d] %s Parent already exists.", g_MfrModuleName, dllInstance, debugString.c_str());
+        }
+    }
+    else if (IsThisALocalPathNow(localPath))
+    {
+        Log(debugRequestLevel, L"[%s%d] %s Need to Pre-create a local path if not present.", g_MfrModuleName, dllInstance, debugString.c_str());
         // In a redirect to local scenario, we are responsible for pre-creating the local parent folders
         // if-and-only-if they are present in the package.
         std::filesystem::path usePathAsPath = std::filesystem::path(localPath);

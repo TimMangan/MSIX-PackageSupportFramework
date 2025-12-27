@@ -337,6 +337,16 @@ void DetermineCohorts(Json_Debug_Levels debugRequestLevel, std::wstring requeste
         {
             cohorts->WsRedirected.pop_back();
         }
+    }            
+    
+    if (MFRConfiguration.Ilv_Aware)
+    {
+        if (cohorts->WsRedirected.find(L"WritablePackageRoot\\VFS\\ProgramFilesX") != std::wstring::npos ||
+            cohorts->WsRedirected.find(L"WritablePackageRoot\\VFS\\Windows") != std::wstring::npos ||
+            cohorts->WsRedirected.find(L"WritablePackageRoot\\VFS\\CommonFiles") != std::wstring::npos)
+        {
+            cohorts->IsPathIlvEligible = true;
+        }
     }
 
     Log(debugRequestLevel, L"[%s%d] %s: DetermineCohorts:   Cohort->WsRequested  %s", g_MfrModuleName, dllInstance, FixupName, cohorts->WsRequested.c_str());
@@ -344,7 +354,8 @@ void DetermineCohorts(Json_Debug_Levels debugRequestLevel, std::wstring requeste
     {
         Log(debugRequestLevel, L"[%s%d] %s: DetermineCohorts:   Cohort->WsRedirected %s", g_MfrModuleName, dllInstance, FixupName, cohorts->WsRedirected.c_str());
         Log(debugRequestLevel, L"[%s%d] %s: DetermineCohorts:   Cohort->WsPackage    %s", g_MfrModuleName, dllInstance, FixupName, cohorts->WsPackage.c_str());
-        Log(debugRequestLevel, L"[%s%d] %s: DetermineCohorts:   Cohort->WsNative MayUseNative=%d   %s", g_MfrModuleName, dllInstance, FixupName, cohorts->NativeIsValidOptionInScenario, cohorts->WsNative.c_str());
+        Log(debugRequestLevel, L"[%s%d] %s: DetermineCohorts:   Cohort->WsNative     %s", g_MfrModuleName, dllInstance, FixupName, cohorts->WsNative.c_str());
+        Log(debugRequestLevel, L"[%s%d] %s: DetermineCohorts:   MayUseNative=%d   IsIlvEligable=%d", g_MfrModuleName, dllInstance, FixupName, cohorts->NativeIsValidOptionInScenario, cohorts->IsPathIlvEligible);
     }
     else
     {

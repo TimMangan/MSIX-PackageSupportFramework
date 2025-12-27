@@ -22,6 +22,16 @@
 #include "DetermineCohorts.h"
 #include "DetermineIlvPaths.h"
 
+#ifdef _M_IX86
+#pragma comment(linker, "/EXPORT:RemoveFileFixupAnsi_Fixup=impl::_RemoveFileFixup.ansi")  // A test to see if exporting these names helps ProcessMonitor stack traces.
+#pragma comment(linker, "/EXPORT:RemoveFileFixupWide_Fixup=impl::_RemoveFileFixup.wide")  // A test to see if exporting these names helps ProcessMonitor stack traces.
+#pragma comment(linker, "/EXPORT:WRAPPER_REMOVEFILE=_WRAPPER_REMOVEFILE.wide")
+#else
+#pragma comment(linker, "/EXPORT:RemoveFileFixupAnsi_Fixup=impl::RemoveFileFixup.ansi")  // A test to see if exporting these names helps ProcessMonitor stack traces.
+#pragma comment(linker, "/EXPORT:RemoveFileFixupWide_Fixup=impl::RemoveFileFixup.wide")  // A test to see if exporting these names helps ProcessMonitor stack traces.
+#pragma comment(linker, "/EXPORT:WRAPPER_REMOVEFILE=WRAPPER_REMOVEFILE.wide")
+#endif
+
 BOOL  WRAPPER_REMOVEDIRECTORY(Json_Debug_Levels debugRequestLevel, std::wstring theRemovingDirectory, DWORD dllInstance)
 {
     std::wstring LongRemovingDirectory = MakeLongPath(theRemovingDirectory);

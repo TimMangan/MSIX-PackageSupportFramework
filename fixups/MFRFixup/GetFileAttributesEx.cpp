@@ -22,6 +22,15 @@
 #include "DebugPathTesting.h"
 
 
+#ifdef _M_IX86
+#pragma comment(linker, "/EXPORT:GetFileAttributesExFixupAnsi_Fixup=impl::_GetFileAttributesExFixup.ansi")  // A test to see if exporting these names helps ProcessMonitor stack traces.
+#pragma comment(linker, "/EXPORT:GetFileAttributesExFixupWide_Fixup=impl::_GetFileAttributesExFixup.wide")  // A test to see if exporting these names helps ProcessMonitor stack traces.
+#else
+#pragma comment(linker, "/EXPORT:GetFileAttributesExFixupAnsi_Fixup=impl::GetFileAttributesExFixup.ansi")  // A test to see if exporting these names helps ProcessMonitor stack traces.
+#pragma comment(linker, "/EXPORT:GetFileAttributesExFixupWide_Fixup=impl::GetFileAttributesExFixup.wide")  // A test to see if exporting these names helps ProcessMonitor stack traces.
+#endif
+
+
 void LogAttributesEx(Json_Debug_Levels debugRequestLevel, const wchar_t* MfrModuleName, DWORD dllInstance, LPVOID fileInformation)
 {
     if (fileInformation != NULL)

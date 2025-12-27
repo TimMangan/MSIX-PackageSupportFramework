@@ -20,6 +20,18 @@
 #include "DetermineCohorts.h"
 #include "DetermineIlvPaths.h"
 
+
+#ifdef _M_IX86
+#pragma comment(linker, "/EXPORT:CreateDirectoryExFixupAnsi_Fixup=impl::_CreateDirectoryExFixup.ansi")  // A test to see if exporting these names helps ProcessMonitor stack traces.
+#pragma comment(linker, "/EXPORT:CreateDirectoryExFixupWide_Fixup=impl::_CreateDirectoryExFixup.wide")  // A test to see if exporting these names helps ProcessMonitor stack traces.
+#pragma comment(linker, "/EXPORT:WRAPPER_CREATEDIRECTORYEX=_WRAPPER_CREATEDIRECTORYEX.wide")
+#else
+#pragma comment(linker, "/EXPORT:CreateDirectoryExFixupAnsi_Fixup=impl::CreateDirectoryExFixup.ansi")  // A test to see if exporting these names helps ProcessMonitor stack traces.
+#pragma comment(linker, "/EXPORT:CreateDirectoryExFixupWide_Fixup=impl::CreateDirectoryExFixup.wide")  // A test to see if exporting these names helps ProcessMonitor stack traces.
+#pragma comment(linker, "/EXPORT:WRAPPER_CREATEDIRECTORYEX=WRAPPER_CREATEDIRECTORYEX.wide")
+#endif
+
+
 BOOL WRAPPER_CREATEDIRECTORYEX(Json_Debug_Levels debugRequestLevel, std::wstring theTemplateDirectory, std::wstring theDestinationDirectory, LPSECURITY_ATTRIBUTES securityAttributes, DWORD dllInstance)
 {
     std::wstring LongTemplateDirectory = MakeLongPath(theTemplateDirectory);
@@ -92,7 +104,7 @@ BOOL __stdcall CreateDirectoryExFixup(
             DetermineCohorts(LogLevel_DebugIntermediate, WnewDirectory, &cohortsNew, dllInstance, L"CreateDirectoryExFixup (directory)");
             std::wstring newDirectoryWsRedirected;
 
-            if (!MFRConfiguration.Ilv_Aware)
+            if (!MFRConfiguration.Ilv_Aware || !cohortsNew.IsPathIlvEligible)
             {
                 switch (cohortsNew.file_mfr.Request_MfrPathType)
                 {
@@ -522,6 +534,7 @@ BOOL __stdcall CreateDirectoryExFixup(
                 std::wstring UseNewDir = DetermineIlvPathForWriteOperations(LogLevel_DebugIntermediate, cohortsNew, dllInstance);
                 // In a redirect to local scenario, we are responsible for pre-creating the local parent folders
                 // if-and-only-if they are present in the package.
+                LogString(LogLevel_DebugBasic, g_MfrModuleName, dllInstance, L"CreateDirectoryExFixup IlvAware mode using", UseNewDir.c_str());
                 PreCreateLocalFoldersIfNeededForWrite(LogLevel_DebugBasic, UseNewDir, cohortsNew.WsPackage, dllInstance, L"CreateDirectoryExFixup");
                 if (!cohortsNew.NativeIsValidOptionInScenario)
                 {
