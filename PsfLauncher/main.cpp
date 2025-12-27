@@ -258,7 +258,10 @@ int launcher_main(PCWSTR args, int cmdShow) noexcept try
         {
             fullargs = args;
         }
-        std::wstring fullCommandLine = L"\"" + exePath.filename().native() + L"\" " + fullargs;
+        //std::wstring fullCommandLine = L"\"" + exePath.filename().native() + L"\" " + fullargs;
+        // fix 2025-12 for FreeFem: must use full path for exe, not just filename
+        // Yeah, it is a bug in the vendor's software that requires this, but we have to deal with it.
+        std::wstring fullCommandLine = L"\"" + exePath.native() + L"\" " + fullargs;
 
         LogString(LogLevel_Launching, PsfLauncherName, 0, L"Process Launch: ", exePath.c_str());
         LogString(LogLevel_Launching, PsfLauncherName, 0, L"     Arguments: ", fullargs.data());
