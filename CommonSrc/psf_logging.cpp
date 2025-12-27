@@ -182,73 +182,88 @@ void Loghexdump(Json_Debug_Levels debugRequestLevel, void* pAddressIn, long  lSi
     {
         if (debugRequestLevel <= g_JsonDebugLevel)
         {
-            char szBuf[128];
-            long lIndent = 1;
-            long lOutLen, lIndex, lIndex2, lOutLen2;
-            long lRelPos;
-            struct { char* pData; unsigned long lSize; } buf;
-            unsigned char* pTmp, ucTmp;
-            unsigned char* rememberPtmp;
-            unsigned char* pAddress = (unsigned char*)pAddressIn;
-
-            buf.pData = (char*)pAddress;
-            buf.lSize = lSize;
-
-            while (buf.lSize > 0)
+            if (pAddressIn != NULL)
             {
-                pTmp = (unsigned char*)buf.pData;
-                lOutLen = (int)buf.lSize;
-                if (lOutLen > 16)
-                    lOutLen = 16;
-
-                // create a 64-character formatted output line:
-                sprintf_s(szBuf, 100, " >                            "
-                    "                      "
-                    "         ");
-                rememberPtmp = pTmp;
-                lOutLen2 = lOutLen;
-
-                for (lIndex = 1 + lIndent, lIndex2 = 53 - 15 + lIndent, lRelPos = 0;
-                    lOutLen2;
-                    lOutLen2--, lIndex += 2, lIndex2++
-                    )
+                try
                 {
-                    ucTmp = *pTmp++;
+                    char szBuf[128];
+                    szBuf[127] = 0x0;
+                    long lIndent = 1;
+                    long lOutLen, lIndex, lIndex2, lOutLen2;
+                    long lRelPos;
+                    struct { char* pData; unsigned long lSize; } buf;
+                    unsigned char* pTmp, ucTmp;
+                    unsigned char* rememberPtmp;
+                    unsigned char* pAddress = (unsigned char*)pAddressIn;
 
-                    sprintf_s(szBuf + lIndex, 100 - lIndex, "%02X ", (unsigned short)ucTmp);
-                    if (!isprint(ucTmp))  ucTmp = '.'; // nonprintable char
-                    szBuf[lIndex2] = ucTmp;
+                    buf.pData = (char*)pAddress;
+                    buf.lSize = lSize;
 
-                    if (!(++lRelPos & 3))     // extra blank after 4 bytes
+                    while (buf.lSize > 0)
                     {
-                        lIndex++; szBuf[lIndex + 2] = ' ';
+                        pTmp = (unsigned char*)buf.pData;
+                        lOutLen = (int)buf.lSize;
+                        if (lOutLen > 16)
+                            lOutLen = 16;
+
+                        // create a 64-character formatted output line:
+                        sprintf_s(szBuf, 100, " >                            "
+                            "                      "
+                            "         ");
+                        rememberPtmp = pTmp;
+                        lOutLen2 = lOutLen;
+
+                        for (lIndex = 1 + lIndent, lIndex2 = 53 - 15 + lIndent, lRelPos = 0;
+                            lOutLen2;
+                            lOutLen2--, lIndex += 2, lIndex2++
+                            )
+                        {
+                            ucTmp = *pTmp++;
+
+                            sprintf_s(szBuf + lIndex, 100 - lIndex, "%02X ", (unsigned short)ucTmp);
+                            if (!isprint(ucTmp))  ucTmp = '.'; // nonprintable char
+                            szBuf[lIndex2] = ucTmp;
+
+                            if (!(++lRelPos & 3))     // extra blank after 4 bytes
+                            {
+                                lIndex++; szBuf[lIndex + 2] = ' ';
+                            }
+                        }
+
+                        if (!(lRelPos & 3)) lIndex--;
+
+                        sprintf_s(szBuf + lIndex, 100 - lIndex, "|%08lx  ", (unsigned long)(rememberPtmp - pAddress));
+                        szBuf[lIndex + 14] = 0x0;
+
+                        if (ModuleName != nullptr)
+                        {
+                            std::wstring wBuf = widen(szBuf);
+                            Log(debugRequestLevel, L"  [%s%d]\t\t\t   %s", ModuleName, instance, wBuf.c_str());
+                        }
+                        else
+                        {
+
+                            if (instance == 0)
+                            {
+                                ::OutputDebugStringA(szBuf);
+                            }
+                            else
+                            {
+                                Log(debugRequestLevel, "    [%d]\t\t\t   %s", instance, szBuf);
+                            }
+                        }
+                        buf.pData += lOutLen;
+                        buf.lSize -= lOutLen;
                     }
                 }
-
-                if (!(lRelPos & 3)) lIndex--;
-
-                sprintf_s(szBuf + lIndex, 100 - lIndex, "<%08lx  ", (unsigned long)(rememberPtmp - pAddress));
-                szBuf[lIndex + 14] = 0x0;
-
-                if (ModuleName != nullptr)
+                catch (...)
                 {
-                    std::wstring wBuf = widen(szBuf);
-                    Log(debugRequestLevel, L"    [%s%d]\t\t%s", ModuleName, instance, wBuf.c_str());
+                    Log(debugRequestLevel, L"Loghexdump: Exception during hexdump");
                 }
-                else
-                {
-
-                    if (instance == 0)
-                    {
-                        ::OutputDebugStringA(szBuf);
-                    }
-                    else
-                    {
-                        Log(debugRequestLevel, "    [%d]\t\t%s", instance, szBuf);
-                    }
-                }
-                buf.pData += lOutLen;
-                buf.lSize -= lOutLen;
+            }
+            else
+            {
+                Log(debugRequestLevel, L"Loghexdump: NULL pointer for data");
             }
         }
     }
