@@ -31,7 +31,6 @@ function RunTest($Arch, $Config)
     try
     {
         Add-AppxPackage "$PSScriptRoot\scenarios\Appx\*.appx" | Out-Null
-        #Add-AppxPackage "$PSScriptRoot\scenarios\Appx2\*.appx" | Out-Null
          
         # Finally, execute the actual test. Note that the architecture of the runner doesn't actually matter, except for powershell which only builds x64
         #. x64\Release\TestRunner.exe /onlyPrintSummary
@@ -150,7 +149,7 @@ if(!(Test-Path "$PSScriptRoot\scenarios\Appx"))
 #RunTest "x64" "Debug"
 RunTest "x64" "Release"
 #RunTest "x86" "Debug"
-#RunTest "x86" "Release"
+RunTest "x86" "Release"
 
 
 if ($TestConfigFromXML)

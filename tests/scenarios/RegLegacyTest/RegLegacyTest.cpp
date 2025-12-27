@@ -898,22 +898,28 @@ void HKLMWriteTests()
         if (result == ERROR_SUCCESS)
         {
             bool done = false;
-            wchar_t* lpName = (wchar_t*)malloc(256 * sizeof(wchar_t));
+            DWORD MaxValueNameLen = 255;
+            DWORD MaxValueDataLen = 1024;
+            wchar_t* lpName = (wchar_t*)malloc((MaxValueNameLen+1) * sizeof(wchar_t));
             DWORD  cchNameLen;
             DWORD type;
-            BYTE* data = (BYTE*)malloc(1024);
-            DWORD dataLen = 1024;
+            BYTE* data = (BYTE*)malloc(MaxValueDataLen);
+            DWORD dataLen;
             while (!done)
             {
-                cchNameLen = 255;
-                dataLen = 1024;
+                cchNameLen = MaxValueNameLen;
+                dataLen = MaxValueDataLen;
                 result = RegEnumValue(baseKey, index, lpName, &cchNameLen, NULL, &type, data, &dataLen);
                 if (result == ERROR_SUCCESS)
                 {
                     count++;
                     index++;
                     trace_message("   ValueName=", console::color::white, false);
-                    trace_message(lpName, console::color::white, true);
+                    trace_message(lpName, console::color::white, false);
+                    char sNum[16];
+                    _itoa_s((int)type, sNum, 16, 10);
+                    trace_message(" type=0x", console::color::white, false);
+                    trace_message(sNum, console::color::white, true);
                 }
                 else if (result == ERROR_NO_MORE_ITEMS)
                 {
@@ -1115,12 +1121,13 @@ void HKLMWriteTests()
         result = RegOpenKey(HKEY_LOCAL_MACHINE, L"SOFTWARE\\Vendor_Covered", &baseKey);
         if (result == ERROR_SUCCESS)
         {
-            bool done = false;
-            wchar_t* lpName = (wchar_t*)malloc(256 * sizeof(wchar_t));
+            DWORD MaxValueNameLen = 255;
+            wchar_t* lpName = (wchar_t*)malloc((MaxValueNameLen+1) * sizeof(wchar_t));
             DWORD  cchNameLen;
+            bool done = false;
             while (!done)
             {
-                cchNameLen = 255;
+                cchNameLen = MaxValueNameLen;
                 result = RegEnumKey(baseKey, index, lpName, cchNameLen);
                 if (result == ERROR_SUCCESS)
                 {
@@ -1177,28 +1184,27 @@ void HKLMWriteTests()
 
 
     test_begin("RegLegacy Test Enumerate HKLM subitems (post-write)");
-    trace_message("test 1.", console::color::cyan, true);
     Log("<<<<<RegLegacyTest Enumerate HKLM subitems (post-writes)");
     try
     {
         int count = 0;
         int index = 0;
         HKEY baseKey;
-        trace_message("test 2.", console::color::cyan, true);
         result = RegOpenKey(HKEY_LOCAL_MACHINE, L"SOFTWARE\\Vendor_Covered", &baseKey);
-        trace_message("test 3.", console::color::cyan, true);
         if (result == ERROR_SUCCESS)
         {
             bool done = false;
-            wchar_t* lpName = (wchar_t*)malloc(256 * sizeof(wchar_t));
+            DWORD MaxValueNameLen = 255;
+            DWORD MaxValueDataLen = 2048;
+            wchar_t* lpName = (wchar_t*)malloc((MaxValueNameLen + 1) * sizeof(wchar_t));
             DWORD  cchNameLen;
             DWORD type;
-            BYTE* data = (BYTE*)malloc(1024);
-            DWORD dataLen = 1024;
+            BYTE* data = (BYTE*)malloc(MaxValueDataLen);
+            DWORD dataLen;
             while (!done)
             {
-                cchNameLen = 255;
-                dataLen = 1024;
+                cchNameLen = MaxValueNameLen;
+                dataLen = MaxValueDataLen;
                 result = RegEnumValue(baseKey, index, lpName, &cchNameLen, NULL, &type, data, &dataLen);
                 if (result == ERROR_SUCCESS)
                 {
@@ -1250,6 +1256,109 @@ void HKLMWriteTests()
     Log("RegLegacyTest Enumerate HKLM subitems (post writes)>>>>>");
 
 
+    test_begin("RegLegacy Test Enumerate HKLM subitems (system key)");
+    Log("<<<<<RegLegacyTest Enumerate HKLM subitems (system key)");
+    try
+    {
+        DWORD count = 0;
+        DWORD index = 0;
+        HKEY baseKey;
+        result = RegOpenKey(HKEY_LOCAL_MACHINE, L"SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\FontLink\\SystemLink", &baseKey);
+        if (result == ERROR_SUCCESS)
+        {
+            DWORD CountSubKeys = 0;
+            DWORD CountSubItems = 0;
+            DWORD MaxSubKeyNameLen = 0;
+            DWORD MaxSubItemNameLen = 0;
+            DWORD MaxSubItemValeDataLen = 0;
+            result = RegQueryInfoKeyW(baseKey, NULL, NULL, NULL,
+                                        &CountSubKeys, &MaxSubKeyNameLen, NULL,
+                                        &CountSubItems, &MaxSubItemNameLen, &MaxSubItemValeDataLen,
+                                        NULL, NULL);
+            if (result == ERROR_SUCCESS)
+            {
+                char sNum[16];
+                _itoa_s((int)CountSubItems, sNum, 16, 10);
+                trace_message("Expected SubItem count=", console::color::blue, false);
+                trace_message(sNum, console::color::blue, true);
+            }
+            else
+            {
+                trace_message("Failed to query key info.", console::color::red, true);
+                print_last_error("Failed to query key info");
+            }
+            bool done = false;
+            DWORD  MaximalNameLen = 0x20;
+            if (MaxSubItemNameLen+1 > MaximalNameLen)
+                MaximalNameLen = MaxSubItemNameLen + 1;
+            wchar_t* lpName = (wchar_t*)malloc(MaxSubItemNameLen * sizeof(wchar_t));
+            DWORD type;
+            DWORD MaximalDatalen = 0x200;
+            if (MaxSubItemValeDataLen > MaximalDatalen)
+                MaximalDatalen = MaxSubItemValeDataLen;
+            BYTE* data = (BYTE*)malloc(MaximalDatalen);
+            while (!done)
+            {
+                DWORD local_cchNameLen = MaximalNameLen;
+                DWORD local_dataLen = MaximalDatalen;
+                result = RegEnumValue(baseKey, index, lpName, &local_cchNameLen, NULL, &type, data, &local_dataLen);
+                if (result == ERROR_SUCCESS)
+                {
+                    count++;
+                    index++;
+                    trace_message("   SUCCESS ValueName=", console::color::white, false);
+                    trace_message(lpName, console::color::white, true);
+                }
+                else if (result == ERROR_MORE_DATA)
+                {
+                    count++;
+                    index++;
+                    trace_message("   ERROR_MORE_DATA: ValueName=", console::color::white, false);
+                    trace_message(lpName, console::color::white, true);
+                }
+                else if (result == ERROR_NO_MORE_ITEMS)
+                {
+                    trace_message("   NO_MORE_ITEMS.", console::color::white, true);
+                    done = true;
+                }
+                else
+                {
+                    trace_message("Fail to enumerate key. May be error in testing code.", console::color::red, true);
+                    done = true;
+                }
+            }
+            if (count == CountSubItems)
+            {
+                trace_message("Correct count of subItems achieved.", console::color::blue, true);
+                result = ERROR_SUCCESS;
+            }
+            else
+            {
+                trace_message("Fail to get correct count. Counted=", console::color::red, false);
+                char sNum[16];
+                _itoa_s((int)count, sNum, 16, 10);
+                trace_message(sNum, console::color::red, true);
+                result = -1;
+            }
+        }
+        else
+        {
+            trace_message("Fail to open key. May be error in testing code.", console::color::red, true);
+            result = GetLastError();
+            if (result == 0)
+                result = ERROR_ACCESS_DENIED;
+            print_last_error("Failed to open key");
+        }
+    }
+    catch (...)
+    {
+        trace_message("Unexpected error.", console::color::red, true);
+        result = GetLastError();
+        print_last_error("Failed to Enumerate HKLM subitems (system key)");
+    }
+    test_end(result);
+    Log("RegLegacyTest Enumerate HKLM subitems (system key)>>>>>");
+
 
 } // HKLMWriteTests()
 
@@ -1262,9 +1371,9 @@ int wmain(int argc, const wchar_t** argv)
     auto result = parse_args(argc, argv);
     //std::wstring aumid = details::appmodel_string(&::GetCurrentApplicationUserModelId);
 #if _M_IX86
-    test_initialize("RegLegacy Tests", 13);
+    test_initialize("RegLegacy Tests", 14);
 #else
-    test_initialize("RegLegacy Tests", 22);
+    test_initialize("RegLegacy Tests", 23);
 #endif
     NotCoveredTests();   // 1 test
 
@@ -1277,7 +1386,7 @@ int wmain(int argc, const wchar_t** argv)
 
     StandardKeyAccessTests(); // 2 Tests
 
-    HKLMWriteTests(); // 7 Tests
+    HKLMWriteTests(); // 8 Tests
 
     test_cleanup();
     Sleep(500);
