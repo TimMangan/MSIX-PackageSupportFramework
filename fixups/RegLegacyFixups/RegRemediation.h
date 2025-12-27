@@ -32,16 +32,22 @@ bool RegFixupJavaBlocker(Json_Debug_Levels debugRequestLevel, std::wstring keypa
 #if TRYHKLM2HKCU
 bool HasHKLM2HKCUSpecified();
 
-static std::string  HKLM2HKCU_RedirNameA =  "vHKLM_Redirection";
-static std::wstring HKLM2HKCU_RedirNameW = L"vHKLM_Redirection";
+static std::string  HKLM2HKCU_RedirNameOnlyA =  "vHKLM_Redirection";
+static std::wstring HKLM2HKCU_RedirNameOnlyW = L"vHKLM_Redirection";
 static std::string  HKCU_RedirNameA =  "HKEY_CURRENT_USER\\vHKLM_Redirection";
 static std::wstring HKCU_RedirNameW = L"HKEY_CURRENT_USER\\vHKLM_Redirection";
+static std::string  RegMachineA =  "=\\REGISTRY\\MACHINE";
+static std::wstring RegMachineW = L"=\\REGISTRY\\MACHINE";
+static std::string  RegHKCUA =  "HKEY_CURRENT_USER";
+static std::wstring RegHKCUW = L"HKEY_CURRENT_USER";
+static std::string  RegHKLMA =  "HKEY_LOCAL_MACHINE";
+static std::wstring RegHKLMW = L"HKEY_LOCAL_MACHINE";
 
 std::string HKLM2HKCU_Replacement(std::string path);
 std::wstring HKLM2HKCU_Replacement(std::wstring path);
 
-void StoreAndLogRegistryValueA(Json_Debug_Levels debugRequestLevel, DWORD dwType, PVOID lpData, LPDWORD lpcbData, std::wstring functionName, DWORD RegLocalInstance);
-void StoreAndLogRegistryValueW(Json_Debug_Levels debugRequestLevel, DWORD dwType, PVOID lpData, LPDWORD lpcbData, std::wstring functionName, DWORD RegLocalInstance);
+void LogRegistryValueA(Json_Debug_Levels debugRequestLevel, LPDWORD dwType, PVOID lpData, LPDWORD lpcbData, std::wstring functionName, DWORD RegLocalInstance);
+void LogRegistryValueW(Json_Debug_Levels debugRequestLevel, LPDWORD dwType, PVOID lpData, LPDWORD lpcbData, std::wstring functionName, DWORD RegLocalInstance);
 
 #endif
 
@@ -50,22 +56,26 @@ RegCohorts GenerateRegCohorts(HKEY key, std::wstring subKey, [[maybe_unused]] DW
 struct KeyChildEnumerationsA
 {
     bool ValidKey = false;
+    bool ValidCounts = false;
     HKEY Key = NULL;
     DWORD SubKeyCount = 0;
     DWORD ValueCount = 0;
     DWORD MaxSubKeyNameLen = 0;
     DWORD MaxValueNameLen = 0;
+    DWORD MaxValueLen = 0;
     std::vector<std::string> SubKeys;
     std::vector<std::string> ValueNames;
 };
 struct KeyChildEnumerationsW
 {
     bool ValidKey = false;
+    bool ValidCounts = false;
     HKEY Key = NULL;
     DWORD SubKeyCount = 0;
     DWORD ValueCount = 0;
     DWORD MaxSubKeyNameLen = 0;
     DWORD MaxValueNameLen = 0;
+    DWORD MaxValueLen = 0;
     std::vector<std::wstring> SubKeys;
     std::vector<std::wstring> ValueNames;
 };

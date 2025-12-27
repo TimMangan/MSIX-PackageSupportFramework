@@ -44,35 +44,35 @@ std::string ReplaceAppRegistrySyntaxA(std::string regPath)
             size_t offsetAfterSid = regPath.find('\\', 16);
             if (offsetAfterSid != std::string::npos)
             {
-                returnPath = InterpretStringA("HKEY_CURRENT_USER") + regPath.substr(offsetAfterSid);
+                returnPath = InterpretStringA(RegHKCUA.c_str()) + regPath.substr(offsetAfterSid);
             }
             else
             {
-                returnPath = InterpretStringA("HKEY_CURRENT_USER") + regPath.substr(15);
+                returnPath = InterpretStringA(RegHKCUA.c_str()) + regPath.substr(15);
             }
         }
         else
         {
-            returnPath = InterpretStringA("HKEY_CURRENT_USER");
+            returnPath = InterpretStringA(RegHKCUA.c_str());
         }
     }
-    else if (regPath._Starts_with("=\\REGISTRY\\MACHINE"))
+    else if (regPath._Starts_with(RegMachineA)) //"=\\REGISTRY\\MACHINE"))
     {
-        if (regPath.length() > 18)
+        if (regPath.length() > RegMachineA.length())
         {
-            size_t offsetAfterSid = regPath.find('\\', 19);
+            size_t offsetAfterSid = regPath.find('\\', RegMachineA.length()+1);
             if (offsetAfterSid != std::string::npos)
             {
-                returnPath = InterpretStringA("HKEY_CURRENT_USER") + regPath.substr(offsetAfterSid);
+                returnPath = InterpretStringA(RegHKCUA.c_str()) + regPath.substr(offsetAfterSid);
             }
             else
             {
-                returnPath = InterpretStringA("HKEY_LOCAL_MACHINE") + regPath.substr(18);
+                returnPath = InterpretStringA(RegHKLMA.c_str()) + regPath.substr(18);
             }
         }
         else
         {
-            returnPath = InterpretStringA("HKEY_LOCAL_MACHINE");
+            returnPath = InterpretStringA(RegHKLMA.c_str());
         }
     }
     return returnPath;
@@ -94,31 +94,31 @@ std::wstring ReplaceAppRegistrySyntaxW(std::wstring regPath)
             }
             else
             {
-                returnPath = InterpretStringW(L"HKEY_CURRENT_USER") + regPath.substr(15);
+                returnPath = InterpretStringW(RegHKCUW.c_str()) + regPath.substr(15);
             }
         }
         else
         {
-            returnPath = InterpretStringW(L"HKEY_CURRENT_USER");
+            returnPath = InterpretStringW(RegHKCUW.c_str());
         }
     }
-    else if (regPath._Starts_with(L"=\\REGISTRY\\MACHINE"))
+    else if (regPath._Starts_with(RegMachineW))
     {
-        if (regPath.length() > 18)
+        if (regPath.length() > RegMachineW.length())
         {
-            size_t offsetAfterSid = regPath.find(L'\\', 19);
+            size_t offsetAfterSid = regPath.find(L'\\', RegMachineW.length()+1);
             if (offsetAfterSid != std::string::npos)
             {
-                returnPath = InterpretStringW(L"HKEY_CURRENT_USER") + regPath.substr(offsetAfterSid);
+                returnPath = InterpretStringW(RegHKCUW.c_str()) + regPath.substr(offsetAfterSid);
             }
             else
             {
-                returnPath = InterpretStringW(L"HKEY_LOCAL_MACHINE") + regPath.substr(18);
+                returnPath = InterpretStringW(RegHKLMW.c_str()) + regPath.substr(18);
             }
         }
         else
         {
-            returnPath = InterpretStringW(L"HKEY_LOCAL_MACHINE");
+            returnPath = InterpretStringW(RegHKLMW.c_str());
         }
     }
     return returnPath;
@@ -252,12 +252,12 @@ REGSAM RegFixupSam(Json_Debug_Levels debugRequestLevel, std::string keypath, REG
                     }
                     break;
                 case Modify_Key_Hive_Type_HKLM:
-                    keystring = "HKEY_LOCAL_MACHINE\\";
-                    altkeystring = "=\\REGISTRY\\MACHINE\\";
+                    keystring = RegHKLMA + "\\"; //"HKEY_LOCAL_MACHINE\\";
+                    altkeystring = RegMachineA + "\\";  // "=\\REGISTRY\\MACHINE\\";
                     if (keypath._Starts_with(keystring) ||
                         keypath._Starts_with(altkeystring))
                     {
-                        size_t OffsetHklm = keystring.size();
+                        size_t OffsetHklm = keystring.length();
                         if (keypath._Starts_with(altkeystring))
                         {
                             // Must remove both the pattern and the S-1-5-...\ that follows.
@@ -493,7 +493,7 @@ REGSAM RegFixupSam(Json_Debug_Levels debugRequestLevel, std::wstring wKeyPath, R
                     break;
                 case Modify_Key_Hive_Type_HKLM:
                     wKeyString = L"HKEY_LOCAL_MACHINE\\";
-                    wAltKeyString = L"=\\REGISTRY\\MACHINE\\";
+                    wAltKeyString = RegMachineW + L"//"; // L"=\\REGISTRY\\MACHINE\\";
                     if (wKeyPath._Starts_with(wKeyString) ||
                         wKeyPath._Starts_with(wAltKeyString))
                     {
@@ -623,11 +623,11 @@ bool HasHKLM2HKCUSpecified()
 
 std::string HKLM2HKCU_Replacement(std::string path)
 {
-    return HKLM2HKCU_RedirNameA + "\\" + path;
+    return HKLM2HKCU_RedirNameOnlyA + "\\" + path;
 }
 std::wstring HKLM2HKCU_Replacement(std::wstring path)
 {
-    return HKLM2HKCU_RedirNameW + L"\\" + path;
+    return HKLM2HKCU_RedirNameOnlyW + L"\\" + path;
 }
 
 bool IsKey_HKCUPathRedirectedFromHKLM(HKEY hKey)
@@ -635,7 +635,7 @@ bool IsKey_HKCUPathRedirectedFromHKLM(HKEY hKey)
     if (hKey != NULL)
     {
         std::string keyOnlyPath = InterpretKeyPath(hKey);
-        if (keyOnlyPath.find("vHKLM_Redirection") != std::string::npos)
+        if (keyOnlyPath.find(HKLM2HKCU_RedirNameOnlyA) != std::string::npos)
         {
             return true;
         }
@@ -650,7 +650,7 @@ bool IsKeySubKey_HKCUPathRedirectedFromHKLM(HKEY hKey, std::string subKey)
         //{
         //    return true;
         //}
-        if (subKey.find("vHKLM_Redirection") != std::string::npos)
+        if (subKey.find(HKLM2HKCU_RedirNameOnlyA) != std::string::npos)
         {
             return true;
         }
@@ -665,7 +665,7 @@ bool IsKeySubKey_HKCUPathRedirectedFromHKLM(HKEY hKey, std::wstring subKey)
         //{
         //    return true;
         //}
-        if (subKey.find(L"vHKLM_Redirection") != std::string::npos)
+        if (subKey.find(HKLM2HKCU_RedirNameOnlyW) != std::string::npos)
         {
             return true;
         }
@@ -679,36 +679,67 @@ RegCohorts GenerateRegCohorts(HKEY key, std::wstring subKey, [[maybe_unused]] DW
     regCohorts.RequestedPath = InterpretKeyPathW(key);
     if (!subKey.empty())
         regCohorts.RequestedPath += L"\\" + subKey;
-    if (regCohorts.RequestedPath.find(HKLM2HKCU_RedirNameW.c_str()) == std::wstring::npos)
+    if (regCohorts.RequestedPath.find(HKLM2HKCU_RedirNameOnlyW.c_str()) == std::wstring::npos)
     {
-        Log(Json_Debug_Levels::LogLevel_DebugMaximum, L"[%s%d] GenerateRegCohorts: HKLM Reverse Redirection will not be needed.", g_RegModuleName, RegLocalInstance);
+        Log(Json_Debug_Levels::LogLevel_DebugMaximum, L"[%s%d] GenerateRegCohorts:%s not present; HKLM Reverse Redirection will not be needed.", g_RegModuleName, RegLocalInstance, HKLM2HKCU_RedirNameOnlyW.c_str());
         // Requested Path is not redirected, so it is standard
         regCohorts.StandardPath = regCohorts.RequestedPath;
         regCohorts.RequestedIsStandard = true;
         // TODO: derive RedirectedPath from StandardPath correctly
         std::wstring withoutHKLM;
-        if (regCohorts.StandardPath._Starts_with(L"HKEY_LOCAL_MACHINE\\"))
+        if (regCohorts.StandardPath._Starts_with(RegHKLMW + L"\\"))
         {
-            withoutHKLM = regCohorts.StandardPath.substr(19);
-            regCohorts.RedirectedPath = L"HKEY_CURRENT_USER\\" + HKLM2HKCU_RedirNameW + L"\\" + withoutHKLM;
+            Log(Json_Debug_Levels::LogLevel_DebugMaximum, L"[%s%d] GenerateRegCohorts: path starts with %s", g_RegModuleName, RegLocalInstance, (RegHKLMW + L"\\").c_str());
+            withoutHKLM = regCohorts.StandardPath.substr(RegHKLMW.length() + 1);
+#if defined(i386) || defined(__i386__) || defined(__i386) || defined(_M_IX86)
+            // 32-bit apps that access HKLM\Software are automatically redirected to HKLM\Software\WOW6432Node on 64-bit Windows
+            // So we need to do the same when redirecting to HKCU
+            if ((withoutHKLM._Starts_with(L"SOFTWARE") || withoutHKLM._Starts_with(L"Software")) &&
+                withoutHKLM.find(L"\\WOW6432Node") == std::wstring::npos)
+            {
+                withoutHKLM = withoutHKLM.substr(0, 8) + L"\\WOW6432Node" + withoutHKLM.substr(8);
+            }
+#endif
+            regCohorts.RedirectedPath = RegHKCUW + L"\\" + HKLM2HKCU_RedirNameOnlyW + L"\\" + withoutHKLM;
             regCohorts.RedirectionNotPossible = false;
         }
-        else if (regCohorts.StandardPath._Starts_with(L"HKEY_LOCAL_MACHINE"))
+        else if (regCohorts.StandardPath._Starts_with(RegHKLMW))
         {
+            Log(Json_Debug_Levels::LogLevel_DebugMaximum, L"[%s%d] GenerateRegCohorts: path starts with %s", g_RegModuleName, RegLocalInstance, RegHKLMW.c_str());
             Log(Json_Debug_Levels::LogLevel_DebugMaximum,L"[%s%d] GenerateRegCohorts: HKLM Redirection needed.", g_RegModuleName, RegLocalInstance);
             withoutHKLM = regCohorts.StandardPath.substr(18);
-            regCohorts.RedirectedPath = L"HKEY_CURRENT_USER\\" + HKLM2HKCU_RedirNameW + withoutHKLM;
+#if defined(i386) || defined(__i386__) || defined(__i386) || defined(_M_IX86)
+            // 32-bit apps that access HKLM\Software are automatically redirected to HKLM\Software\WOW6432Node on 64-bit Windows
+            // So we need to do the same when redirecting to HKCU
+            if ((withoutHKLM._Starts_with(L"SOFTWARE") ||withoutHKLM._Starts_with(L"Software")) &&
+                withoutHKLM.find(L"\\WOW6432Node") == std::wstring::npos) 
+            {
+                withoutHKLM = withoutHKLM.substr(0, 8) + L"\\WOW6432Node" + withoutHKLM.substr(8);
+            }
+#endif
+            regCohorts.RedirectedPath = L"HKEY_CURRENT_USER\\" + HKLM2HKCU_RedirNameOnlyW + withoutHKLM;
             regCohorts.RedirectionNotPossible = false;
         }
-        else if (regCohorts.StandardPath._Starts_with(L"=\\REGISTRY\\MACHINE\\"))
+        else if (regCohorts.StandardPath._Starts_with(RegMachineW + L"\\"))
         {
+            Log(Json_Debug_Levels::LogLevel_DebugMaximum, L"[%s%d] GenerateRegCohorts: path starts with %s", g_RegModuleName, RegLocalInstance, (RegMachineW + L"\\").c_str());
             Log(Json_Debug_Levels::LogLevel_DebugMaximum, L"[%s%d] GenerateRegCohorts: \\Reg\\Mach Redirection needed.", g_RegModuleName, RegLocalInstance);
             withoutHKLM = regCohorts.StandardPath.substr(19);
-            regCohorts.RedirectedPath = L"HKEY_CURRENT_USER\\" + HKLM2HKCU_RedirNameW + L"\\" + withoutHKLM;
+#if defined(i386) || defined(__i386__) || defined(__i386) || defined(_M_IX86)
+            // 32-bit apps that access HKLM\Software are automatically redirected to HKLM\Software\WOW6432Node on 64-bit Windows
+            // So we need to do the same when redirecting to HKCU
+            if ((withoutHKLM._Starts_with(L"SOFTWARE") || withoutHKLM._Starts_with(L"Software")) &&
+                withoutHKLM.find(L"\\WOW6432Node") == std::wstring::npos)
+            {
+                withoutHKLM = withoutHKLM.substr(0, 8) + L"\\WOW6432Node" + withoutHKLM.substr(8);
+            }
+#endif
+            regCohorts.RedirectedPath = RegHKCUW + L"\\" + HKLM2HKCU_RedirNameOnlyW + L"\\" + withoutHKLM;
             regCohorts.RedirectionNotPossible = false;
         }
         else
         {
+            Log(Json_Debug_Levels::LogLevel_DebugMaximum, L"[%s%d] GenerateRegCohorts: path starts with other", g_RegModuleName, RegLocalInstance);
             //regCohorts.RedirectedPath = NULL;
             regCohorts.RedirectionNotPossible = true;
         }
@@ -722,15 +753,15 @@ RegCohorts GenerateRegCohorts(HKEY key, std::wstring subKey, [[maybe_unused]] DW
         regCohorts.ReverseRedirectionNotPossible = false;
         regCohorts.RedirectionNotPossible = true;
         // TODO: derive StandardPath from RedirectedPath
-        std::wstring hkcuRename = L"HKEY_CURRENT_USER\\" + HKLM2HKCU_RedirNameW;
+        std::wstring hkcuRename = RegHKCUW + L"\\" + HKLM2HKCU_RedirNameOnlyW;
         if (regCohorts.RedirectedPath._Starts_with(hkcuRename))
         {
-            regCohorts.StandardPath = L"HKEY_LOCAL_MACHINE\\" + regCohorts.RedirectedPath.substr(hkcuRename.length());
+            regCohorts.StandardPath = RegHKLMW + L"\\" + regCohorts.RedirectedPath.substr(hkcuRename.length());
         }
         else 
         {
-            size_t strip = regCohorts.RequestedPath.find(HKLM2HKCU_RedirNameW) + HKLM2HKCU_RedirNameW.length();
-            regCohorts.StandardPath = L"HKEY_LOCAL_MACHINE" + regCohorts.RequestedPath.substr(strip);
+            size_t strip = regCohorts.RequestedPath.find(HKLM2HKCU_RedirNameOnlyW) + HKLM2HKCU_RedirNameOnlyW.length();
+            regCohorts.StandardPath = RegHKLMW + regCohorts.RequestedPath.substr(strip);
         }
     }
 
@@ -806,8 +837,8 @@ bool RegFixupFakeDelete(Json_Debug_Levels debugRequestLevel, std::string keypath
                     }
                     break;
                 case Modify_Key_Hive_Type_HKLM:
-                    keystring = "HKEY_LOCAL_MACHINE\\";
-                    altkeystring = "=\\REGISTRY\\MACHINE\\";
+                    keystring = RegHKLMA + "\\"; //"HKEY_LOCAL_MACHINE\\";
+                    altkeystring = RegMachineA + "\\";  // "=\\REGISTRY\\MACHINE\\";
                     if (keypath._Starts_with(keystring) ||
                         keypath._Starts_with(altkeystring))
                     {
@@ -889,8 +920,8 @@ bool RegFixupFakeDelete(Json_Debug_Levels debugRequestLevel, std::wstring keypat
                     }
                     break;
                 case Modify_Key_Hive_Type_HKLM:
-                    keystring = L"HKEY_LOCAL_MACHINE\\";
-                    altkeystring = L"=\\REGISTRY\\MACHINE\\";
+                    keystring = RegHKLMW + L"\\";   // L"HKEY_LOCAL_MACHINE\\";
+                    altkeystring = RegMachineW + L"\\"; // L" = \\REGISTRY\\MACHINE\\";
                     if (keypath._Starts_with(keystring) ||
                         keypath._Starts_with(altkeystring))
                     {
@@ -1033,8 +1064,8 @@ LSTATUS RegFixupDeletionMarker(Json_Debug_Levels debugRequestLevel, std::string 
                             }
                             break;
                         case Modify_Key_Hive_Type_HKLM:
-                            wKeyString = L"HKEY_LOCAL_MACHINE";
-                            wAltKeyString = L"=\\REGISTRY\\MACHINE";
+                            wKeyString = RegHKLMW; // L"HKEY_LOCAL_MACHINE";
+                            wAltKeyString = RegMachineW; // L"=\\REGISTRY\\MACHINE";
                             if (wKeyPathValue._Starts_with(wKeyString) ||
                                 wKeyPathValue._Starts_with(wAltKeyString))
                             {
@@ -1180,8 +1211,8 @@ LSTATUS RegFixupDeletionMarker(Json_Debug_Levels debugRequestLevel, std::wstring
                             }
                             break;
                         case Modify_Key_Hive_Type_HKLM:
-                            wKeyString = L"HKEY_LOCAL_MACHINE";
-                            wAltKeyString = L"=\\REGISTRY\\MACHINE";
+                            wKeyString = RegHKLMW; // L"HKEY_LOCAL_MACHINE";
+                            wAltKeyString = RegMachineW; // L"=\\REGISTRY\\MACHINE";
                             if (wKeyPathValue._Starts_with(wKeyString) ||
                                 wKeyPathValue._Starts_with(wAltKeyString))
                             {
@@ -1470,69 +1501,76 @@ bool RegFixupJavaBlocker(Json_Debug_Levels debugRequestLevel, std::wstring keyPa
     return false;
 }
 
-void StoreAndLogRegistryValueA(Json_Debug_Levels debugRequestLevel, DWORD dwType, PVOID lpData, LPDWORD lpcbData, std::wstring functionName, DWORD RegLocalInstance)
+void LogRegistryValueA(Json_Debug_Levels debugRequestLevel, LPDWORD lpDwType, PVOID lpData, LPDWORD lpcbData, std::wstring functionName, DWORD RegLocalInstance)
 {
     try
     {
-        switch (dwType)
+        if (lpDwType != NULL)
         {
-        case REG_SZ:
-        case REG_EXPAND_SZ:
-        case REG_MULTI_SZ:
-            if (lpData != NULL)
+            switch (*lpDwType)
             {
-                if (lpcbData != NULL)
+            case REG_SZ:
+            case REG_EXPAND_SZ:
+            case REG_MULTI_SZ:
+                if (lpData != NULL)
                 {
-                    char* rstring = new char[(*lpcbData) + 1];
-                    FillMemory(rstring, (*lpcbData) + 1, 0);
-                    memcpy(rstring, lpData, *lpcbData);
-                    Log(debugRequestLevel, L"[%s%d] %s:  Returning success with value=%S", g_RegModuleName, RegLocalInstance, functionName.c_str(), rstring);
-                }
-            }
-            else
-            {
-                if (lpcbData != NULL)
-                {
-                    Log(debugRequestLevel, L"[%s%d] %s:  Returning success with string no data, len needed=0x%x", g_RegModuleName, RegLocalInstance, functionName.c_str(), *lpcbData);
+                    if (lpcbData != NULL)
+                    {
+                        char* rstring = new char[(*lpcbData) + 1];
+                        FillMemory(rstring, (*lpcbData) + 1, 0);
+                        memcpy(rstring, lpData, *lpcbData);
+                        Log(debugRequestLevel, L"[%s%d] %s:  Returning success with value=%S", g_RegModuleName, RegLocalInstance, functionName.c_str(), rstring);
+                    }
                 }
                 else
                 {
-                    Log(debugRequestLevel, L"[%s%d] %s:  Returning success with string no data", g_RegModuleName, RegLocalInstance, functionName.c_str());
+                    if (lpcbData != NULL)
+                    {
+                        Log(debugRequestLevel, L"[%s%d] %s:  Returning success with string no data, len needed=0x%x", g_RegModuleName, RegLocalInstance, functionName.c_str(), *lpcbData);
+                    }
+                    else
+                    {
+                        Log(debugRequestLevel, L"[%s%d] %s:  Returning success with string no data", g_RegModuleName, RegLocalInstance, functionName.c_str());
+                    }
                 }
-            }
-            break;
-        case REG_DWORD:
-            if (lpData != NULL)
-            {
-                Log(debugRequestLevel, L"[%s%d] %s:  Returning success with DWORD 0x%x", g_RegModuleName, RegLocalInstance, functionName.c_str(),  *((DWORD*)lpData));
-            }
-            else
-            {
-                if (lpcbData != NULL)
+                break;
+            case REG_DWORD:
+                if (lpData != NULL)
                 {
-                    Log(debugRequestLevel, L"[%s%d] %s:  Returning success with DWORD, len needed=0x%x", g_RegModuleName, RegLocalInstance, functionName.c_str(), *lpcbData);
-                }
-                else
-                    Log(debugRequestLevel, L"[%s%d] %s:  Returning success with DWORD no data", g_RegModuleName, RegLocalInstance, functionName.c_str());
-            }
-            break;
-        default:
-            if (lpData != NULL)
-            {
-                Log(debugRequestLevel, L"[%s%d] %s:  Returning success of type 0x%x", g_RegModuleName, RegLocalInstance, functionName.c_str(), dwType);
-            }
-            else
-            {
-                if (lpcbData != NULL)
-                {
-                    Log(debugRequestLevel, L"[%s%d] %s:  Returning success of type 0x%x no data, len needed=0x%x", g_RegModuleName, RegLocalInstance, functionName.c_str(), dwType, *lpcbData);
+                    Log(debugRequestLevel, L"[%s%d] %s:  Returning success with DWORD 0x%x", g_RegModuleName, RegLocalInstance, functionName.c_str(), *((DWORD*)lpData));
                 }
                 else
                 {
-                    Log(debugRequestLevel, "[%s%d] %s:  Returning success of type 0x%x no data", g_RegModuleName, RegLocalInstance, functionName.c_str(), dwType);
+                    if (lpcbData != NULL)
+                    {
+                        Log(debugRequestLevel, L"[%s%d] %s:  Returning success with DWORD, len needed=0x%x", g_RegModuleName, RegLocalInstance, functionName.c_str(), *lpcbData);
+                    }
+                    else
+                        Log(debugRequestLevel, L"[%s%d] %s:  Returning success with DWORD no data", g_RegModuleName, RegLocalInstance, functionName.c_str());
                 }
+                break;
+            default:
+                if (lpData != NULL)
+                {
+                    Log(debugRequestLevel, L"[%s%d] %s:  Returning success of type 0x%x", g_RegModuleName, RegLocalInstance, functionName.c_str(), *lpDwType);
+                }
+                else
+                {
+                    if (lpcbData != NULL)
+                    {
+                        Log(debugRequestLevel, L"[%s%d] %s:  Returning success of type 0x%x no data, len needed=0x%x", g_RegModuleName, RegLocalInstance, functionName.c_str(), *lpDwType, *lpcbData);
+                    }
+                    else
+                    {
+                        Log(debugRequestLevel, "[%s%d] %s:  Returning success of type 0x%x no data", g_RegModuleName, RegLocalInstance, functionName.c_str(), *lpDwType);
+                    }
+                }
+                break;
             }
-            break;
+        }
+        else
+        {
+            Log(debugRequestLevel, L"[%s%d] %s:  Returning success with no type information.", g_RegModuleName, RegLocalInstance, functionName.c_str());
         }
     }
     catch (...)
@@ -1540,69 +1578,76 @@ void StoreAndLogRegistryValueA(Json_Debug_Levels debugRequestLevel, DWORD dwType
         Log(LogLevel_Exception, L"[%s%d] %s:  Exception thrown reading data.", g_RegModuleName, RegLocalInstance, functionName.c_str());
     }
 }
-void StoreAndLogRegistryValueW(Json_Debug_Levels debugRequestLevel, DWORD dwType, PVOID lpData, LPDWORD lpcbData, std::wstring functionName, DWORD RegLocalInstance)
+void LogRegistryValueW(Json_Debug_Levels debugRequestLevel, LPDWORD lpDwType, PVOID lpData, LPDWORD lpcbData, std::wstring functionName, DWORD RegLocalInstance)
 {
     try
     {
-        switch (dwType)
+        if (lpDwType != NULL)
         {
-        case REG_SZ:
-        case REG_EXPAND_SZ:
-        case REG_MULTI_SZ:
-            if (lpData != NULL)
+            switch (*lpDwType)
             {
-                if (lpcbData != NULL)
+            case REG_SZ:
+            case REG_EXPAND_SZ:
+            case REG_MULTI_SZ:
+                if (lpData != NULL)
                 {
-                    wchar_t* rstring = new wchar_t[(*lpcbData) + 2];
-                    FillMemory(rstring, (*lpcbData) + 1, 0);
-                    memcpy(rstring, lpData, *lpcbData);
-                    Log(debugRequestLevel, L"[%s%d] %s:  Returning success with value=%s", g_RegModuleName, RegLocalInstance, functionName.c_str(), rstring);
-                }
-            }
-            else
-            {
-                if (lpcbData != NULL)
-                {
-                    Log(debugRequestLevel, L"[%s%d] %s:  Returning success with string no data, len needed=0x%x", g_RegModuleName, RegLocalInstance, functionName.c_str(), *lpcbData);
+                    if (lpcbData != NULL)
+                    {
+                        wchar_t* rstring = new wchar_t[(*lpcbData) + 2];
+                        FillMemory(rstring, (*lpcbData) * 2 + 2, 0);
+                        memcpy(rstring, lpData, *lpcbData);
+                        Log(debugRequestLevel, L"[%s%d] %s:  Returning success with value=%s", g_RegModuleName, RegLocalInstance, functionName.c_str(), rstring);
+                    }
                 }
                 else
                 {
-                    Log(debugRequestLevel, L"[%s%d] %s:  Returning success with string no data", g_RegModuleName, RegLocalInstance, functionName.c_str());
+                    if (lpcbData != NULL)
+                    {
+                        Log(debugRequestLevel, L"[%s%d] %s:  Returning success with string no data, len needed=0x%x", g_RegModuleName, RegLocalInstance, functionName.c_str(), *lpcbData);
+                    }
+                    else
+                    {
+                        Log(debugRequestLevel, L"[%s%d] %s:  Returning success with string no data", g_RegModuleName, RegLocalInstance, functionName.c_str());
+                    }
                 }
-            }
-            break;
-        case REG_DWORD:
-            if (lpData != NULL)
-            {
-                Log(debugRequestLevel, L"[%s%d] %s:  Returning success with DWORD 0x%x", g_RegModuleName, RegLocalInstance, functionName.c_str(), *((DWORD*)lpData));
-            }
-            else
-            {
-                if (lpcbData != NULL)
+                break;
+            case REG_DWORD:
+                if (lpData != NULL)
                 {
-                    Log(debugRequestLevel, L"[%s%d] %s:  Returning success with DWORD, len needed=0x%x", g_RegModuleName, RegLocalInstance, functionName.c_str(), *lpcbData);
-                }
-                else
-                    Log(debugRequestLevel, L"[%s%d] %s:  Returning success with DWORD no data", g_RegModuleName, RegLocalInstance, functionName.c_str() );
-            }
-            break;
-        default:
-            if (lpData != NULL)
-            {
-                Log(debugRequestLevel, L"[%s%d] %s:  Returning success of type 0x%x", g_RegModuleName, RegLocalInstance, functionName.c_str(), dwType);
-            }
-            else
-            {
-                if (lpcbData != NULL)
-                {
-                    Log(debugRequestLevel, L"[%s%d] %s:  Returning success of type 0x%x no data, len needed=0x%x", g_RegModuleName, RegLocalInstance, functionName.c_str(), dwType, *lpcbData);
+                    Log(debugRequestLevel, L"[%s%d] %s:  Returning success with DWORD 0x%x", g_RegModuleName, RegLocalInstance, functionName.c_str(), *((DWORD*)lpData));
                 }
                 else
                 {
-                    Log(debugRequestLevel, "[%s%d] %s:  Returning success of type 0x%x no data", g_RegModuleName, RegLocalInstance, functionName.c_str(), dwType);
+                    if (lpcbData != NULL)
+                    {
+                        Log(debugRequestLevel, L"[%s%d] %s:  Returning success with DWORD, len needed=0x%x", g_RegModuleName, RegLocalInstance, functionName.c_str(), *lpcbData);
+                    }
+                    else
+                        Log(debugRequestLevel, L"[%s%d] %s:  Returning success with DWORD no data", g_RegModuleName, RegLocalInstance, functionName.c_str());
                 }
+                break;
+            default:
+                if (lpData != NULL)
+                {
+                    Log(debugRequestLevel, L"[%s%d] %s:  Returning success of type 0x%x", g_RegModuleName, RegLocalInstance, functionName.c_str(), *lpDwType);
+                }
+                else
+                {
+                    if (lpcbData != NULL)
+                    {
+                        Log(debugRequestLevel, L"[%s%d] %s:  Returning success of type 0x%x no data, len needed=0x%x", g_RegModuleName, RegLocalInstance, functionName.c_str(), *lpDwType, *lpcbData);
+                    }
+                    else
+                    {
+                        Log(debugRequestLevel, "[%s%d] %s:  Returning success of type 0x%x no data", g_RegModuleName, RegLocalInstance, functionName.c_str(), *lpDwType);
+                    }
+                }
+                break;
             }
-            break;
+        }
+        else
+        {
+            Log(debugRequestLevel, L"[%s%d] %s:  Returning success with no type information.", g_RegModuleName, RegLocalInstance, functionName.c_str());
         }
     }
     catch (...)

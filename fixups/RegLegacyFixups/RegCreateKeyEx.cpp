@@ -29,11 +29,13 @@
 #if INTERCEPT_KERNELBASE
 
 #ifdef _M_IX86
-#pragma comment(linker, "/EXPORT:RegCreateKeyExAFixupAnsi_Fixup=_RegCreateKeyExAFixupA.ansi")  // A test to see if exporting these names helps ProcessMonitor stack traces.
-#pragma comment(linker, "/EXPORT:RegCreateKeyExWFixupWide_Fixup=_RegCreateKeyExWFixupW.wide")  // A test to see if exporting these names helps ProcessMonitor stack traces.
+#pragma comment(linker, "/EXPORT:RegCreateKeyExAFixupAnsi_Fixup=impl::_KernelBaseRegCreateKeyExA.ansi")  // A test to see if exporting these names helps ProcessMonitor stack traces.
+#pragma comment(linker, "/EXPORT:RegCreateKeyExWFixupWide_Fixup=impl::_KernelBaseRegCreateKeyExW.wide")  // A test to see if exporting these names helps ProcessMonitor stack traces.
+#pragma comment(linker, "/EXPORT:RegCreateKeyExHelperWide_Fixup=_RegCreateKeyExHelper.wide")  // A test to see if exporting these names helps ProcessMonitor stack traces.
 #else
-#pragma comment(linker, "/EXPORT:RegCreateKeyExAFixupAnsi_Fixup=RegCreateKeyExAFixupA.ansi")  // A test to see if exporting these names helps ProcessMonitor stack traces.
-#pragma comment(linker, "/EXPORT:RegCreateKeyExWFixupWide_Fixup=RegCreateKeyExWFixupW.wide")  // A test to see if exporting these names helps ProcessMonitor stack traces.
+#pragma comment(linker, "/EXPORT:RegCreateKeyExAFixupAnsi_Fixup=impl::KernelBaseRegCreateKeyExA.ansi")  // A test to see if exporting these names helps ProcessMonitor stack traces.
+#pragma comment(linker, "/EXPORT:RegCreateKeyExWFixupWide_Fixup=impl::KernelBaseRegCreateKeyExW.wide")  // A test to see if exporting these names helps ProcessMonitor stack traces.
+#pragma comment(linker, "/EXPORT:RegCreateKeyExHelperWide_Fixup=RegCreateKeyExHelper.wide")  // A test to see if exporting these names helps ProcessMonitor stack traces.
 #endif
 
 
@@ -103,14 +105,14 @@ LSTATUS __stdcall RegCreateKeyExHelper(
                 Log(LogLevel_DebugIntermediate, L"[%s%d] RegCreateKeyExHelper is candidate for HKCU replacement.", g_RegModuleName, RegLocalInstance);
                 samModifiedRedirected = RegFixupSam(LogLevel_DebugMaximum, regCohorts.RedirectedPath, samDesired, RegLocalInstance);
                 HKEY  altKey;
-                std::wstring prefix = L"HKEY_CURRENT_USER\\" + HKLM2HKCU_RedirNameW;
+                std::wstring prefix = L"HKEY_CURRENT_USER\\" + HKLM2HKCU_RedirNameOnlyW;
                 if (regCohorts.RedirectedPath.length() == prefix.length())
                 {
-                    result = impl::KernelBaseRegCreateKeyExW(HKEY_CURRENT_USER, HKLM2HKCU_RedirNameW.c_str(), reserved, classType, options, samModifiedRedirected, securityAttributes, resultKey, disposition);
+                    result = impl::KernelBaseRegCreateKeyExW(HKEY_CURRENT_USER, HKLM2HKCU_RedirNameOnlyW.c_str(), reserved, classType, options, samModifiedRedirected, securityAttributes, resultKey, disposition);
                 }
                 else
                 {
-                    LSTATUS altResult = ::RegOpenKeyExW(HKEY_CURRENT_USER, HKLM2HKCU_RedirNameW.c_str(), options, samModifiedRedirected, &altKey);
+                    LSTATUS altResult = ::RegOpenKeyExW(HKEY_CURRENT_USER, HKLM2HKCU_RedirNameOnlyW.c_str(), options, samModifiedRedirected, &altKey);
                     if (altResult == ERROR_ALREADY_EXISTS ||
                         altResult == ERROR_SUCCESS)
                     {
@@ -140,7 +142,7 @@ LSTATUS __stdcall RegCreateKeyExHelper(
         bool savedLogging = g_psf_NoLogging;
         g_psf_NoLogging = true;
         std::wstring wSubKeyString = InterpretStringW(subKey);
-        Log(LogLevel_DebugBasic, L"[%s%d] RegCreateKeyExHelper result=%s, key=%s, name=%s; may need to pre-create key in package?", g_RegModuleName, RegLocalInstance, LStatusToWstring(result).c_str(), wKeyOnlyPath.c_str(), wSubKeyString.c_str());
+        Log(LogLevel_DebugBasic, L"[%s%d] RegCreateKeyExHelper key=%s, name=%s; may need to pre-create key in package? result=%s", g_RegModuleName, RegLocalInstance, wKeyOnlyPath.c_str(), wSubKeyString.c_str(), LStatusToWstring(result).c_str());
         g_psf_NoLogging = savedLogging;
 
         if (wKeyPath._Starts_with(L"HKEY_CURRENT_USER"))
@@ -149,17 +151,17 @@ LSTATUS __stdcall RegCreateKeyExHelper(
             // Known issue: Cannot create subkey of a package virtual key created by the app at runtime and not in the original package.
             // Workaround: Try creating from the root of the hive.
         }
-        if (wKeyPath._Starts_with(L"=\\Registry\\Users\\"))
+        if (wKeyPath._Starts_with(L"=\\REGISTRY\\USER\\"))
         {
             ;
             // Known issue: Cannot create subkey of a package virtual key created by the app at runtime and not in the original package.
             // Workaround: Try creating from the root of the hive.
-            size_t offset = regCohorts.RequestedPath.find(HKLM2HKCU_RedirNameW.c_str());
+            size_t offset = regCohorts.RequestedPath.find(HKLM2HKCU_RedirNameOnlyW.c_str());
             if (offset != std::wstring::npos)
             {
                 Log(LogLevel_DebugIntermediate, L"[%s%d]  RegCreateKeyExHelper retry using HKCU and %s", g_RegModuleName, RegLocalInstance, regCohorts.RequestedPath.substr(offset).c_str());
                 result = impl::KernelBaseRegCreateKeyExW(HKEY_CURRENT_USER, regCohorts.RequestedPath.substr(offset).c_str(), reserved, classType, options, samModifiedRequested, securityAttributes, resultKey, disposition);
-                Log(LogLevel_DebugIntermediate, L"[%s%d]  RegCreateKeyExHelper retry result=0%s key=0x%x", g_RegModuleName, RegLocalInstance, LStatusToWstring(result).c_str(), regCohorts.RequestedPath.substr(offset).c_str());
+                Log(LogLevel_DebugIntermediate, L"[%s%d]  RegCreateKeyExHelper retry  key=0x%x result=%s", g_RegModuleName, RegLocalInstance, regCohorts.RequestedPath.substr(offset).c_str(), LStatusToWstring(result).c_str());
             }
         }
     }
@@ -237,7 +239,7 @@ LSTATUS __stdcall RegCreateKeyExAFixup(
             result = RegCreateKeyExHelper(key, wSubKey.c_str(), reserved, NULL, options, samDesired, securityAttributes, resultKey, disposition);
         }
 
-        Log(LogLevel_DebugBasic, L"[%s%d]\tRegCreateKeyExA modified result=%s and key=0x%x\n", g_RegModuleName, RegLocalInstance, LStatusToWstring(result).c_str(), *resultKey);
+        Log(LogLevel_DebugBasic, L"[%s%d]\tRegCreateKeyExA modified key=0x%x result=%s", g_RegModuleName, RegLocalInstance, *resultKey, LStatusToWstring(result).c_str());
         return result;
     }
     else
@@ -266,7 +268,7 @@ LSTATUS __stdcall RegCreateKeyExWFixup(
 
         LSTATUS result = RegCreateKeyExHelper(key, subKey, reserved, classType, options, samDesired, securityAttributes, resultKey, disposition);
      
-        Log(LogLevel_DebugBasic, L"[%s%d]\tRegCreateKeyExW modified result=%s key=0x%x\n", g_RegModuleName, RegLocalInstance, LStatusToWstring(result).c_str(), *resultKey);
+        Log(LogLevel_DebugBasic, L"[%s%d]\tRegCreateKeyExW modified key=0x%x result=%s", g_RegModuleName, RegLocalInstance, *resultKey, LStatusToWstring(result).c_str());
         return result;
     }
     else

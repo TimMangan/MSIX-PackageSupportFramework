@@ -29,6 +29,15 @@
 #if INTERCEPT_KERNELBASE
 #if TRYHKLM2HKCU
 
+
+#ifdef _M_IX86
+#pragma comment(linker, "/EXPORT:RegEnumKeyExAFixupAnsi_Fixup=impl::_KernelBaseRegEnumKeyExA.ansi")  // A test to see if exporting these names helps ProcessMonitor stack traces.
+#pragma comment(linker, "/EXPORT:RegEnumKeyExWFixupWide_Fixup=impl::_KernelBaseRegEnumKeyExW.wide")  // A test to see if exporting these names helps ProcessMonitor stack traces.
+#else
+#pragma comment(linker, "/EXPORT:RegEnumKeyExAFixupAnsi_Fixup=impl::KernelBaseRegEnumKeyExA.ansi")  // A test to see if exporting these names helps ProcessMonitor stack traces.
+#pragma comment(linker, "/EXPORT:RegEnumKeyExWFixupWide_Fixup=impl::KernelBaseRegEnumKeyExW.wide")  // A test to see if exporting these names helps ProcessMonitor stack traces.
+#endif
+
 struct KeyChildEnumerationA
 {
     std::string Path;
@@ -333,7 +342,7 @@ LSTATUS __stdcall RegEnumKeyExAFixup(
                 }
                 else
                 {
-                    Log(LogLevel_DebugIntermediate, L"[%s%d] RegEnumKeyExA:  reverse redireccted index=%d used unexpected result=%s",
+                    Log(LogLevel_DebugIntermediate, L"[%s%d] RegEnumKeyExA:  reverse redirected index=%d used unexpected result=%s",
                         g_RegModuleName, RegLocalInstance, currentListIndex, LStatusToWstring(result).c_str());
                 }
                 currentListIndex++;
@@ -345,11 +354,11 @@ LSTATUS __stdcall RegEnumKeyExAFixup(
         if (!Done)
         {
             result = ERROR_NO_MORE_ITEMS;
-            Log(LogLevel_DebugBasic, L"[%s%d] RegEnumKeyExA:  Returning No more items (normal failure) %s.", g_RegModuleName, RegLocalInstance, LStatusToWstring(result).c_str());
+            Log(LogLevel_DebugBasic, L"[%s%d] RegEnumKeyExA:  Returning No more items (normal failure) %s", g_RegModuleName, RegLocalInstance, LStatusToWstring(result).c_str());
         }
         else
         {
-            Log(LogLevel_DebugBasic, L"[%s%d] RegEnumKeyExA:  Returning success %s with %S.", g_RegModuleName, RegLocalInstance, LStatusToWstring(result).c_str(), lpName);
+            Log(LogLevel_DebugBasic, L"[%s%d] RegEnumKeyExA:  Returning %S  with success %s", g_RegModuleName, RegLocalInstance, lpName, LStatusToWstring(result).c_str());
         }
 
         // Cleanup
@@ -480,13 +489,22 @@ LSTATUS __stdcall RegEnumKeyExWFixup(
         DWORD currentListIndex = 0;
         bool  Done = false;
 
-        if (keyChildEnumerations[0].ValidKey)
+        if (keyChildEnumerations[0].ValidKey && keyChildEnumerations[0].SubKeyCount > 0)
         {
             currentListIndex = 0;
+            keyChildEnumerations[0].SubKeys.reserve(keyChildEnumerations[0].SubKeyCount);
             while (!Done && currentListIndex < keyChildEnumerations[0].SubKeyCount)
             {
                 *lpcchName = origLpcchName;
-                result = impl::KernelBaseRegEnumKeyExW(keyChildEnumerations[0].Key, currentListIndex, lpName, lpcchName, lpReserved, lpClass, lpcchClass, lpftLastWriteTime);
+                try
+                {
+                    result = impl::KernelBaseRegEnumKeyExW(keyChildEnumerations[0].Key, currentListIndex, lpName, lpcchName, lpReserved, lpClass, lpcchClass, lpftLastWriteTime);
+                }
+                catch (...)
+                {
+                    // We sometimes see this happen but not sure why.  Possibly someone manipulated the underlying values?  But in any case we should not crash.
+                    result = GetLastError();
+                }
                 if (result == ERROR_SUCCESS)
                 {
                     bool isHiddenOrDeletion = false;
@@ -527,6 +545,20 @@ LSTATUS __stdcall RegEnumKeyExWFixup(
                         // skipping
                     }
                 }
+                else if (result == ERROR_MORE_DATA)
+                {
+                    // It turns out that we can't trust that max length field.  Some apps call with insuccient buffers.
+                    if (currentListIndex + indexesOfPreviousVisibleEnumerations == dwIndex)
+                    {
+                        Log(LogLevel_DebugIntermediate, L"[%s%d] RegEnumKeyExW:  redirected index=%d used result=%s",
+                            g_RegModuleName, RegLocalInstance, currentListIndex, LStatusToWstring(result).c_str());
+                        Done = true;
+                    }
+                    else
+                    {
+                        // Ignore it as we don't care about this entry
+                    }
+                }
                 else
                 {
                     Log(LogLevel_DebugIntermediate, L"[%s%d] RegEnumKeyExW:  redirected index=%d used unexpected result=%s",
@@ -538,13 +570,22 @@ LSTATUS __stdcall RegEnumKeyExWFixup(
         }
 
 
-        if (!Done && keyChildEnumerations[1].ValidKey)
+        if (!Done && keyChildEnumerations[1].ValidKey && keyChildEnumerations[1].SubKeyCount>0)
         {
             currentListIndex = 0;
+            keyChildEnumerations[1].SubKeys.reserve(keyChildEnumerations[1].SubKeyCount);
             while (!Done && currentListIndex < keyChildEnumerations[1].SubKeyCount)
             {
                 *lpcchName = origLpcchName;
-                result = impl::KernelBaseRegEnumKeyExW(keyChildEnumerations[1].Key, currentListIndex, lpName, lpcchName, lpReserved, lpClass, lpcchClass, lpftLastWriteTime);
+                try
+                {
+                    result = impl::KernelBaseRegEnumKeyExW(keyChildEnumerations[1].Key, currentListIndex, lpName, lpcchName, lpReserved, lpClass, lpcchClass, lpftLastWriteTime);
+                }
+                catch (...)
+                {
+                    // We sometimes see this happen but not sure why.  Possibly someone manipulated the underlying values?  But in any case we should not crash.
+                    result = GetLastError();
+                }
                 if (result == ERROR_SUCCESS)
                 {
                     bool isHiddenOrDeletion = false;
@@ -592,6 +633,20 @@ LSTATUS __stdcall RegEnumKeyExWFixup(
                         // skipping
                     }
                 }
+                else if (result == ERROR_MORE_DATA)
+                {
+                    // It turns out that we can't trust that max length field.  Some apps call with insuccient buffers.
+                    if (currentListIndex + indexesOfPreviousVisibleEnumerations == dwIndex)
+                    {
+                        Log(LogLevel_DebugIntermediate, L"[%s%d] RegEnumKeyExW:  requested index=%d used result=%s",
+                            g_RegModuleName, RegLocalInstance, currentListIndex, LStatusToWstring(result).c_str());
+                        Done = true;
+                    }
+                    else
+                    {
+                        // Ignore it as we don't care about this entry
+                    }
+                }
                 else
                 {
                     Log(LogLevel_DebugIntermediate, L"[%s%d] RegEnumKeyExW:  requested index=%d used unexpected result=%s",
@@ -603,13 +658,22 @@ LSTATUS __stdcall RegEnumKeyExWFixup(
         }
 
 
-        if (!Done && keyChildEnumerations[2].ValidKey)
+        if (!Done && keyChildEnumerations[2].ValidKey && keyChildEnumerations[2].SubKeyCount>0)
         {
             currentListIndex = 0;
+            keyChildEnumerations[2].SubKeys.reserve(keyChildEnumerations[2].SubKeyCount);
             while (!Done && currentListIndex < keyChildEnumerations[2].SubKeyCount)
             {
                 *lpcchName = origLpcchName;
-                result = impl::KernelBaseRegEnumKeyExW(keyChildEnumerations[2].Key, currentListIndex, lpName, lpcchName, lpReserved, lpClass, lpcchClass, lpftLastWriteTime);
+                try
+                {
+                    result = impl::KernelBaseRegEnumKeyExW(keyChildEnumerations[2].Key, currentListIndex, lpName, lpcchName, lpReserved, lpClass, lpcchClass, lpftLastWriteTime);
+                }
+                catch (...)
+                {
+                    // We sometimes see this happen but not sure why.  Possibly someone manipulated the underlying values?  But in any case we should not crash.
+                    result = GetLastError();
+                }
                 if (result == ERROR_SUCCESS)
                 {
                     bool isHiddenOrDeletion = false;
@@ -664,6 +728,20 @@ LSTATUS __stdcall RegEnumKeyExWFixup(
                         // skipping
                     }
                 }
+                else if (result == ERROR_MORE_DATA)
+                {
+                    // It turns out that we can't trust that max length field.  Some apps call with insuccient buffers.
+                    if (currentListIndex + indexesOfPreviousVisibleEnumerations == dwIndex)
+                    {
+                        Log(LogLevel_DebugIntermediate, L"[%s%d] RegEnumKeyExW:  reverse redirected index=%d used result=%s",
+                            g_RegModuleName, RegLocalInstance, currentListIndex, LStatusToWstring(result).c_str());
+                        Done = true;
+                    }
+                    else
+                    {
+                        // Ignore it as we don't care about this entry
+                    }
+                }
                 else
                 {
                     Log(LogLevel_DebugIntermediate, L"[%s%d] RegEnumKeyExW:  reverse redirected index=%d used unexpected result=%s",
@@ -677,11 +755,11 @@ LSTATUS __stdcall RegEnumKeyExWFixup(
         if (!Done)
         {
             result = ERROR_NO_MORE_ITEMS;
-            Log(LogLevel_DebugBasic, L"[%s%d] RegEnumKeyExW:  Returning No more items (normal failure) %s.", g_RegModuleName, RegLocalInstance, LStatusToWstring(result).c_str());
+            Log(LogLevel_DebugBasic, L"[%s%d] RegEnumKeyExW:  Returning No more items (normal failure) %s", g_RegModuleName, RegLocalInstance, LStatusToWstring(result).c_str());
         }
         else
         {
-            Log(LogLevel_DebugBasic, L"[%s%d] RegEnumKeyExW:  Returning success %s with %s.", g_RegModuleName, RegLocalInstance, LStatusToWstring(result).c_str(), lpName);
+            Log(LogLevel_DebugBasic, L"[%s%d] RegEnumKeyExW:  Returning %s with success %s", g_RegModuleName, RegLocalInstance, lpName, LStatusToWstring(result).c_str());
         }
 
         // Cleanup

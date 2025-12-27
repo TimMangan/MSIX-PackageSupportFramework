@@ -27,11 +27,11 @@
 
 
 #ifdef _M_IX86
-#pragma comment(linker, "/EXPORT:RegQueryValueExAFixupAnsi_Fixup=_RegQueryValueFixupA.ansi")  // A test to see if exporting these names helps ProcessMonitor stack traces.
-#pragma comment(linker, "/EXPORT:RegQueryValueExWFixupWide_Fixup=_RegQueryValueFixupW.wide")  // A test to see if exporting these names helps ProcessMonitor stack traces.
+#pragma comment(linker, "/EXPORT:RegQueryValueExAFixupAnsi_Fixup=impl::_KernelBaseRegQueryValueExA.ansi")  // A test to see if exporting these names helps ProcessMonitor stack traces.
+#pragma comment(linker, "/EXPORT:RegQueryValueExWFixupWide_Fixup=impl::_KernelBaseRegQueryValueExW.wide")  // A test to see if exporting these names helps ProcessMonitor stack traces.
 #else
-#pragma comment(linker, "/EXPORT:RegQueryValueExAFixupAnsi_Fixup=RegQueryValueFixupA.ansi")  // A test to see if exporting these names helps ProcessMonitor stack traces.
-#pragma comment(linker, "/EXPORT:RegQueryValueExWFixupWide_Fixup=RegQueryValueFixupW.wide")  // A test to see if exporting these names helps ProcessMonitor stack traces.
+#pragma comment(linker, "/EXPORT:RegQueryValueExAFixupAnsi_Fixup=impl::KernelBaseRegQueryValueExA.ansi")  // A test to see if exporting these names helps ProcessMonitor stack traces.
+#pragma comment(linker, "/EXPORT:RegQueryValueExWFixupWide_Fixup=impl::KernelBaseRegQueryValueExW.wide")  // A test to see if exporting these names helps ProcessMonitor stack traces.
 #endif
 
 
@@ -55,12 +55,20 @@ LSTATUS __stdcall RegQueryValueExAFixup(
         {
             std::string keyOnlyPath = InterpretKeyPath(key);
 
+            DWORD inputDataSize = 0;
+            if (lpData != NULL && lpcbData != NULL)
+            {
+                inputDataSize = *lpcbData;
+            }
 
             std::string sValueName = "NULL";
             if (lpValueName != NULL)
                 sValueName = lpValueName;
             Log(LogLevel_DebugBasic, L"[%s%d] RegQueryValueExA:  key=0x%x keyname=%S ValueName=%S", g_RegModuleName, RegLocalInstance, (ULONG)(ULONG_PTR)key, keyOnlyPath.c_str(), sValueName.c_str());
-
+            if (lpData != NULL && lpcbData != NULL)
+            {
+                Log(LogLevel_DebugIntermediate, L"[%s%d] RegQueryValueExA:     Buffer size for Data=0x%x", g_RegModuleName, RegLocalInstance, inputDataSize);
+            }
 
 
             bool testDeletionMaker = HasDeletionMarkerSpecified();
@@ -93,25 +101,20 @@ LSTATUS __stdcall RegQueryValueExAFixup(
                         // If redirection is possible, this is what we must do when creating the key.
                         Log(LogLevel_DebugIntermediate, L"[%s%d] RegQueryValueExA is candidate for HKCU replacement.", g_RegModuleName, RegLocalInstance);
                         HKEY  altKey;
-                        std::wstring prefix = L"HKEY_CURRENT_USER\\" + HKLM2HKCU_RedirNameW;
+                        std::wstring prefix = L"HKEY_CURRENT_USER\\" + HKLM2HKCU_RedirNameOnlyW;
                         if (regCohorts.RedirectedPath.length() != prefix.length())
                         {
                             LSTATUS altResult = ::RegOpenKey(HKEY_CURRENT_USER, regCohorts.RedirectedPath.substr(18).c_str(), &altKey);
                             if (altResult == ERROR_ALREADY_EXISTS ||
                                 altResult == ERROR_SUCCESS)
                             {
-                                DWORD dwType;
-                                result = impl::KernelBaseRegQueryValueExA(altKey, lpValueName, lpReservered, &dwType, lpData, lpcbData);
+                                result = impl::KernelBaseRegQueryValueExA(altKey, lpValueName, lpReservered, lpDwType, lpData, lpcbData);
                                 RegCloseKey(altKey);
                                 if (result == ERROR_SUCCESS)
                                 {
-                                    if (lpDwType != NULL)
-                                    {
-                                        *lpDwType = dwType;
-                                    }
                                     try
                                     {
-                                        StoreAndLogRegistryValueA(LogLevel_DebugIntermediate, dwType, lpData, lpcbData, L"RegQueryValueExA", RegLocalInstance);
+                                        LogRegistryValueA(LogLevel_DebugIntermediate, lpDwType, lpData, lpcbData, L"RegQueryValueExA", RegLocalInstance);
                                     }
                                     catch (...)
                                     {
@@ -122,12 +125,12 @@ LSTATUS __stdcall RegQueryValueExAFixup(
                                 }
                                 else
                                 {
-                                    Log(LogLevel_DebugIntermediate, L"[%s%d] RegQueryValueExA redirected result=%s, path=%s", g_RegModuleName, RegLocalInstance, LStatusToWstring(result).c_str(), regCohorts.RedirectedPath.c_str());
+                                    Log(LogLevel_DebugIntermediate, L"[%s%d] RegQueryValueExA redirected path=%s result=%s", g_RegModuleName, RegLocalInstance, regCohorts.RedirectedPath.c_str(), LStatusToWstring(result).c_str());
                                 }
                             }
                             else
                             {
-                                Log(LogLevel_DebugIntermediate, L"[%s%d] RegQueryValueExA redirected parent key result=%s, path=%s", g_RegModuleName, RegLocalInstance, LStatusToWstring(altResult).c_str(), regCohorts.RedirectedPath.c_str());
+                                Log(LogLevel_DebugIntermediate, L"[%s%d] RegQueryValueExA redirected parent key path=%s result=%s", g_RegModuleName, RegLocalInstance, regCohorts.RedirectedPath.c_str(), LStatusToWstring(altResult).c_str());
                             }
                         }
                     }
@@ -141,28 +144,28 @@ LSTATUS __stdcall RegQueryValueExAFixup(
 #endif
 
 
-            DWORD dwType;
-            result = impl::KernelBaseRegQueryValueExA(key, lpValueName, lpReservered, &dwType, lpData, lpcbData);
-            if (lpDwType != NULL)
+            if (lpData != NULL && lpcbData != NULL)
             {
-                *lpDwType = dwType;
+                *lpcbData = inputDataSize;
             }
+            result = impl::KernelBaseRegQueryValueExA(key, lpValueName, lpReservered, lpDwType, lpData, lpcbData);
+            Log(LogLevel_DebugMaximum, L"[%s%d] RegQueryValueExA requested result=0x%x", g_RegModuleName, RegLocalInstance, result);
             if (result == ERROR_SUCCESS)
             {
                 try
                 {
-                    StoreAndLogRegistryValueA(LogLevel_DebugIntermediate, dwType, lpData, lpcbData, L"RegQueryValueExA", RegLocalInstance);
+                    LogRegistryValueA(LogLevel_DebugIntermediate, lpDwType, lpData, lpcbData, L"RegQueryValueExA", RegLocalInstance);
                 }
                 catch (...)
                 {
-                    Log(LogLevel_Exception, L"[%s%d] RegGetQueryValueExW exception logging captured value.  May be ignored", g_RegModuleName, RegLocalInstance);
+                    Log(LogLevel_Exception, L"[%s%d] RegGetQueryValueExA exception logging captured value.  May be ignored", g_RegModuleName, RegLocalInstance);
                 }
-                Log(LogLevel_DebugBasic, L"[%s%d] RegQueryValueExA requested result=%s, path=%s", g_RegModuleName, RegLocalInstance, LStatusToWstring(result).c_str(), regCohorts.RedirectedPath.c_str());
+                Log(LogLevel_DebugBasic, L"[%s%d] RegQueryValueExA requested path=%s result=%s", g_RegModuleName, RegLocalInstance, regCohorts.RedirectedPath.c_str(), LStatusToWstring(result).c_str());
                 return result;
             }
             else
             {
-                Log(LogLevel_DebugIntermediate, L"[%s%d] RegQueryValueExA requested result=%s, path=%s", g_RegModuleName, RegLocalInstance, LStatusToWstring(result).c_str(), regCohorts.RedirectedPath.c_str());
+                Log(LogLevel_DebugIntermediate, L"[%s%d] RegQueryValueExA requested path=%s result=%s", g_RegModuleName, RegLocalInstance, regCohorts.RedirectedPath.c_str(), LStatusToWstring(result).c_str());
             }
 
 #if TRYHKLM2HKCU
@@ -175,40 +178,40 @@ LSTATUS __stdcall RegQueryValueExAFixup(
                     {
                         Log(LogLevel_DebugIntermediate, L"[%s%d] RegQueryValueExA is candidate for reverse HKCU replacement.", g_RegModuleName, RegLocalInstance);
                         HKEY  altKey;
-                        std::wstring prefix = L"HKEY_LOCAL_MACHINE\\" + HKLM2HKCU_RedirNameW;
+                        std::wstring prefix = L"HKEY_LOCAL_MACHINE\\" + HKLM2HKCU_RedirNameOnlyW;
                         if (regCohorts.RedirectedPath.length() != prefix.length())
                         {
                             LSTATUS altResult = ::RegOpenKey(HKEY_LOCAL_MACHINE, regCohorts.StandardPath.substr(19).c_str(), &altKey);
                             if (altResult == ERROR_ALREADY_EXISTS ||
                                 altResult == ERROR_SUCCESS)
                             {
-                                result = impl::KernelBaseRegQueryValueExA(altKey, lpValueName, lpReservered, &dwType, lpData, lpcbData);
+                                if (lpData != NULL && lpcbData != NULL)
+                                {
+                                    *lpcbData = inputDataSize;
+                                }
+                                result = impl::KernelBaseRegQueryValueExA(altKey, lpValueName, lpReservered, lpDwType, lpData, lpcbData);
                                 RegCloseKey(altKey);
                                 if (result == ERROR_SUCCESS)
                                 {
-                                    if (lpDwType != NULL)
-                                    {
-                                        *lpDwType = dwType;
-                                    }
                                     try
                                     {
-                                        StoreAndLogRegistryValueA(LogLevel_DebugIntermediate, dwType, lpData, lpcbData, L"RegQueryValueExA", RegLocalInstance);
+                                        LogRegistryValueA(LogLevel_DebugIntermediate, lpDwType, lpData, lpcbData, L"RegQueryValueExA", RegLocalInstance);
                                     }
                                     catch (...)
                                     {
                                         Log(LogLevel_Exception, L"[%s%d] RegQueryValueExA exception logging captured value.  May be ignored", g_RegModuleName, RegLocalInstance);
                                     }
-                                    Log(LogLevel_DebugBasic, L"[%s%d] RegQueryValueExA reverse redirected result=%s, path=%s", g_RegModuleName, RegLocalInstance, LStatusToWstring(result).c_str(), regCohorts.RedirectedPath.c_str());
+                                    Log(LogLevel_DebugBasic, L"[%s%d] RegQueryValueExA reverse redirected path=%s result=%s", g_RegModuleName, RegLocalInstance, regCohorts.RedirectedPath.c_str(), LStatusToWstring(result).c_str());
                                     return result;
                                 }
                                 else
                                 {
-                                    Log(LogLevel_DebugIntermediate, L"[%s%d] RegQueryValueExA reverse redirected result=%s, path=%s", g_RegModuleName, RegLocalInstance, LStatusToWstring(result).c_str(), regCohorts.RedirectedPath.c_str());
+                                    Log(LogLevel_DebugIntermediate, L"[%s%d] RegQueryValueExA reverse redirected path=%s result=%s", g_RegModuleName, RegLocalInstance, regCohorts.RedirectedPath.c_str(), LStatusToWstring(result).c_str());
                                 }
                             }
                             else
                             {
-                                Log(LogLevel_DebugIntermediate, L"[%s%d] RegQueryValueExA reverse redirected parent key result=%s, path=%s", g_RegModuleName, RegLocalInstance, LStatusToWstring(altResult).c_str(), regCohorts.RedirectedPath.c_str());
+                                Log(LogLevel_DebugIntermediate, L"[%s%d] RegQueryValueExA reverse redirected parent key path=%s result=%s", g_RegModuleName, RegLocalInstance, regCohorts.RedirectedPath.c_str(), LStatusToWstring(altResult).c_str());
                             }
                         }
                     }
@@ -220,7 +223,7 @@ LSTATUS __stdcall RegQueryValueExAFixup(
             }
 #endif
 
-            Log(LogLevel_DebugBasic, L"[%s%d] RegQueryValueExA:  Returning failure %s.", g_RegModuleName, RegLocalInstance, LStatusToWstring(result).c_str());
+            Log(LogLevel_DebugBasic, L"[%s%d] RegQueryValueExA:  Returning failure %s", g_RegModuleName, RegLocalInstance, LStatusToWstring(result).c_str());
         }
         catch (...)
         {
@@ -254,12 +257,20 @@ LSTATUS __stdcall RegQueryValueExWFixup(
         {
             std::string keyOnlyPath = InterpretKeyPath(key);
 
+            DWORD inputDataSize = 0;
+            if (lpData != NULL && lpcbData != NULL)
+            {
+                inputDataSize = *lpcbData;
+            }
 
             std::string sValueName = "NULL";
             if (lpValueName != NULL)
                 sValueName = narrow(lpValueName);
             Log(LogLevel_DebugBasic, L"[%s%d] RegQueryValueExW:  key=0x%x keyname=%S ValueName=%S", g_RegModuleName, RegLocalInstance, (ULONG)(ULONG_PTR)key, keyOnlyPath.c_str(), sValueName.c_str());
-
+            if (lpData != NULL && lpcbData != NULL)
+            {
+                Log(LogLevel_DebugIntermediate, L"[%s%d] RegQueryValueExW:     Buffer size for Data=0x%x", g_RegModuleName, RegLocalInstance, inputDataSize);
+            }
 
 
             bool testDeletionMaker = HasDeletionMarkerSpecified();
@@ -292,34 +303,29 @@ LSTATUS __stdcall RegQueryValueExWFixup(
                         // If redirection is possible, this is what we must do when creating the key.
                         Log(LogLevel_DebugIntermediate, L"[%s%d] RegQueryValueExW is candidate for HKCU replacement.", g_RegModuleName, RegLocalInstance);
                         HKEY  altKey;
-                        std::wstring prefix = L"HKEY_CURRENT_USER\\" + HKLM2HKCU_RedirNameW;
+                        std::wstring prefix = L"HKEY_CURRENT_USER\\" + HKLM2HKCU_RedirNameOnlyW;
                         if (regCohorts.RedirectedPath.length() != prefix.length())
                         {
                             LSTATUS altResult = ::RegOpenKey(HKEY_CURRENT_USER, regCohorts.RedirectedPath.substr(18).c_str(), &altKey);
                             if (altResult == ERROR_ALREADY_EXISTS ||
                                 altResult == ERROR_SUCCESS)
                             {
-                                DWORD dwType;
-                                result = impl::KernelBaseRegQueryValueExW(altKey, lpValueName, lpReservered, &dwType, lpData, lpcbData);
+                                result = impl::KernelBaseRegQueryValueExW(altKey, lpValueName, lpReservered, lpDwType, lpData, lpcbData);
                                 RegCloseKey(altKey);
                                 if (result == ERROR_SUCCESS)
-                                {
-                                    if (lpDwType != NULL)
-                                    {
-                                        *lpDwType = dwType;
-                                    }
-                                    StoreAndLogRegistryValueW(LogLevel_DebugIntermediate, dwType, lpData, lpcbData, L"RegQueryValueExW", RegLocalInstance);
-                                    Log(LogLevel_DebugBasic, L"[%s%d] RegQueryValueExW redirected result=%s, path=%s", g_RegModuleName, RegLocalInstance, LStatusToWstring(result).c_str(), regCohorts.RedirectedPath.c_str());
+                                {                                    
+                                    LogRegistryValueW(LogLevel_DebugIntermediate, lpDwType, lpData, lpcbData, L"RegQueryValueExW", RegLocalInstance);
+                                    Log(LogLevel_DebugBasic, L"[%s%d] RegQueryValueExW redirected path=%s result=%s", g_RegModuleName, RegLocalInstance, regCohorts.RedirectedPath.c_str(), LStatusToWstring(result).c_str());
                                     return result;
                                 }
                                 else
                                 {
-                                    Log(LogLevel_DebugIntermediate, L"[%s%d] RegQueryValueExW redirected result=%s, path=%s", g_RegModuleName, RegLocalInstance, LStatusToWstring(result).c_str(), regCohorts.RedirectedPath.c_str());
+                                    Log(LogLevel_DebugIntermediate, L"[%s%d] RegQueryValueExW redirected path=%s result=%s", g_RegModuleName, RegLocalInstance, regCohorts.RedirectedPath.c_str(), LStatusToWstring(result).c_str());
                                 }
                             }
                             else
                             {
-                                Log(LogLevel_DebugIntermediate, L"[%s%d] RegQueryValueExW redirected parent key result=%s, path=%s", g_RegModuleName, RegLocalInstance, LStatusToWstring(altResult).c_str(), regCohorts.RedirectedPath.c_str());
+                                Log(LogLevel_DebugIntermediate, L"[%s%d] RegQueryValueExW redirected parent key path=%s result=%s", g_RegModuleName, RegLocalInstance, regCohorts.RedirectedPath.c_str(), LStatusToWstring(altResult).c_str());
                             }
                         }
                     }
@@ -332,21 +338,20 @@ LSTATUS __stdcall RegQueryValueExWFixup(
             }
 #endif
 
-            DWORD dwType;
-            result = impl::KernelBaseRegQueryValueExW(key, lpValueName, lpReservered, &dwType, lpData, lpcbData);
-            if (lpDwType != NULL)
+            if (lpData != NULL && lpcbData != NULL)
             {
-                *lpDwType = dwType;
+                *lpcbData = inputDataSize;
             }
+            result = impl::KernelBaseRegQueryValueExW(key, lpValueName, lpReservered, lpDwType, lpData, lpcbData);
             if (result == ERROR_SUCCESS)
             {
-                StoreAndLogRegistryValueW(LogLevel_DebugIntermediate, dwType, lpData, lpcbData, L"RegQueryValueExW", RegLocalInstance);
-                Log(LogLevel_DebugBasic, L"[%s%d] RegQueryValueExW requested result=%s, path=%s", g_RegModuleName, RegLocalInstance, LStatusToWstring(result).c_str(), regCohorts.RequestedPath.c_str());
+                LogRegistryValueW(LogLevel_DebugIntermediate, lpDwType, lpData, lpcbData, L"RegQueryValueExW", RegLocalInstance);
+                Log(LogLevel_DebugBasic, L"[%s%d] RegQueryValueExW requested path=%s result=%s", g_RegModuleName, RegLocalInstance, regCohorts.RequestedPath.c_str(), LStatusToWstring(result).c_str());
                 return result;
             }
             else
             {
-                Log(LogLevel_DebugIntermediate, L"[%s%d] RegQueryValueExW requested result=%s, path=%s", g_RegModuleName, RegLocalInstance, LStatusToWstring(result).c_str(), regCohorts.RedirectedPath.c_str());
+                Log(LogLevel_DebugIntermediate, L"[%s%d] RegQueryValueExW requested path=%s result=%s", g_RegModuleName, RegLocalInstance, regCohorts.RedirectedPath.c_str(), LStatusToWstring(result).c_str());
             }
 
 
@@ -360,22 +365,22 @@ LSTATUS __stdcall RegQueryValueExWFixup(
                     {
                         Log(LogLevel_DebugIntermediate, L"[%s%d] RegQueryValueExW is candidate for reverse HKCU replacement.", g_RegModuleName, RegLocalInstance);
                         HKEY  altKey;
-                        std::wstring prefix = L"HKEY_LOCAL_MACHINE\\" + HKLM2HKCU_RedirNameW;
+                        std::wstring prefix = L"HKEY_LOCAL_MACHINE\\" + HKLM2HKCU_RedirNameOnlyW;
                         if (regCohorts.RedirectedPath.length() != prefix.length())
                         {
                             LSTATUS altResult = ::RegOpenKey(HKEY_LOCAL_MACHINE, regCohorts.StandardPath.substr(19).c_str(), &altKey);
                             if (altResult == ERROR_ALREADY_EXISTS ||
                                 altResult == ERROR_SUCCESS)
                             {
-                                result = impl::KernelBaseRegQueryValueExW(altKey, lpValueName, lpReservered, &dwType, lpData, lpcbData);
+                                if (lpData != NULL && lpcbData != NULL)
+                                {
+                                    *lpcbData = inputDataSize;
+                                }
+                                result = impl::KernelBaseRegQueryValueExW(altKey, lpValueName, lpReservered, lpDwType, lpData, lpcbData);
                                 RegCloseKey(altKey);
                                 if (result == ERROR_SUCCESS)
                                 {
-                                    if (lpDwType != NULL)
-                                    {
-                                        *lpDwType = dwType;
-                                    }
-                                    StoreAndLogRegistryValueW(LogLevel_DebugIntermediate, dwType, lpData, lpcbData, L"RegQueryValueExW", RegLocalInstance);
+                                    LogRegistryValueW(LogLevel_DebugIntermediate, lpDwType, lpData, lpcbData, L"RegQueryValueExW", RegLocalInstance);
                                     Log(LogLevel_DebugBasic, L"[%s%d] RegQueryValueExW reverse redirected result=0x%x, path=%s", g_RegModuleName, RegLocalInstance, result, regCohorts.RedirectedPath.c_str());
                                     return result;
                                 }
@@ -398,7 +403,7 @@ LSTATUS __stdcall RegQueryValueExWFixup(
             }
 #endif
 
-            Log(LogLevel_DebugBasic, L"[%s%d] RegQueryValueExW:  Returning failure %s.", g_RegModuleName, RegLocalInstance, LStatusToWstring(result).c_str());
+            Log(LogLevel_DebugBasic, L"[%s%d] RegQueryValueExW:  Returning failure %s", g_RegModuleName, RegLocalInstance, LStatusToWstring(result).c_str());
             
         }
         catch (...)

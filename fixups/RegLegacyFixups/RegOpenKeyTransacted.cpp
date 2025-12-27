@@ -27,6 +27,15 @@
 #endif
 
 
+#ifdef _M_IX86
+#pragma comment(linker, "/EXPORT:RegOpenKeyTransactedAFixupAnsi_Fixup=_RegOpenKeyTransactedImplA.ansi")  // A test to see if exporting these names helps ProcessMonitor stack traces.
+#pragma comment(linker, "/EXPORT:RegOpenKeyTransactedWFixupWide_Fixup=_RegOpenKeyTransactedImplW.wide")  // A test to see if exporting these names helps ProcessMonitor stack traces.
+#else
+#pragma comment(linker, "/EXPORT:RegOpenKeyTransactedAFixupAnsi_Fixup=RegOpenKeyTransactedImplA.ansi")  // A test to see if exporting these names helps ProcessMonitor stack traces.
+#pragma comment(linker, "/EXPORT:RegOpenKeyTransactedWFixupWide_Fixup=RegOpenKeyTransactedImplW.wide")  // A test to see if exporting these names helps ProcessMonitor stack traces.
+#endif
+
+
 auto RegOpenKeyTransactedImpl = psf::detoured_string_function(&::RegOpenKeyTransactedA, &::RegOpenKeyTransactedW);
 template <typename CharT>
 LSTATUS __stdcall RegOpenKeyTransactedFixup(
@@ -100,14 +109,14 @@ LSTATUS __stdcall RegOpenKeyTransactedFixup(
                     // If redirection is possible, this is what we must do when creating the key.
                     Log(LogLevel_DebugIntermediate, L"[%s%d] RegOpenKeyTransacted is candidate for HKCU replacement.", g_RegModuleName, RegLocalInstance);
                     HKEY  altKey;
-                    std::wstring prefix = L"HKEY_CURRENT_USER\\" + HKLM2HKCU_RedirNameW;
+                    std::wstring prefix = L"HKEY_CURRENT_USER\\" + HKLM2HKCU_RedirNameOnlyW;
                     if (regCohorts.RedirectedPath.length() == prefix.length())
                     {
-                        result = ::RegOpenKey(HKEY_CURRENT_USER, HKLM2HKCU_RedirNameW.c_str(), resultKey);
+                        result = ::RegOpenKey(HKEY_CURRENT_USER, HKLM2HKCU_RedirNameOnlyW.c_str(), resultKey);
                     }
                     else
                     {
-                        LSTATUS altResult = ::RegCreateKey(HKEY_CURRENT_USER, HKLM2HKCU_RedirNameW.c_str(), &altKey);
+                        LSTATUS altResult = ::RegCreateKey(HKEY_CURRENT_USER, HKLM2HKCU_RedirNameOnlyW.c_str(), &altKey);
                         if (altResult == ERROR_ALREADY_EXISTS ||
                             altResult == ERROR_SUCCESS)
                         {
@@ -167,7 +176,7 @@ LSTATUS __stdcall RegOpenKeyTransactedFixup(
         }
         else
         {
-            Log(LogLevel_DebugBasic, L"[%s%d] RegOpenKeyTransacted result=SUCCESS %s key=0x%x", g_RegModuleName, RegLocalInstance, LStatusToWstring(result).c_str(), *resultKey);
+            Log(LogLevel_DebugBasic, L"[%s%d] RegOpenKeyTransacted key=0x%x result=SUCCESS %s", g_RegModuleName, RegLocalInstance, *resultKey, LStatusToWstring(result).c_str());
         }
     }
     else

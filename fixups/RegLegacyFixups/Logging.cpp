@@ -592,8 +592,16 @@ std::string InterpretKeyPath(HKEY key)
             ZeroMemory(buffer.get(), size +2);
             if (NT_SUCCESS(impl::NtQueryKey(key, winternl::KeyNameInformation, buffer.get(), size, &size)))
             {
+                buffer[size] = 0x0;
+                buffer[size + 1] = 0x0;  // Add string termination character
                 auto info = reinterpret_cast<winternl::PKEY_NAME_INFORMATION>(buffer.get());
-                sret = InterpretCountedString("", info->Name, info->NameLength / 2);
+                if (info != NULL && info->Name != NULL && info->NameLength > 0 && info->NameLength < 4096)
+                    sret = InterpretCountedString("", info->Name, info->NameLength / 2);
+                else
+                {
+                    sret = "InterpretKeyPath failure 2a";
+                    Log(LogLevel_Exception, L"InterpretKeyPath failure2a.");
+                }
             }
             else
             {
@@ -643,7 +651,7 @@ std::string InterpretKeyPath(HKEY key)
     // Let's keep these out of the container registry
     if (sret._Starts_with("=\\REGISTRY\\MACHINE\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\AppModel"))
     {
-        sret = "HKEY_LOCAL_MACHINE" + sret.substr(10);
+        sret = "HKEY_LOCAL_MACHINE" + sret.substr(18);
     }
 
     return sret;
