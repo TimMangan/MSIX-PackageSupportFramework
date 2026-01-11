@@ -373,18 +373,34 @@ std::wstring InterpretStringW(const wchar_t* value)
 }
 
 
-std::string InterpretCountedString(const char* name, const wchar_t* value, std::size_t length)
+std::string InterpretCountedString(const char* name, const wchar_t* value, [[maybe_unused]] std::size_t length)
 {
-    std::ostringstream sout;
+    // We have changed all callers to ensure the value is now null terminated.
+    // The code below now avoids the ostringstream initialization causing a crash, although that probably meant the app was already toast.
+    //std::ostringstream sout;
     if (value != NULL)
     {
-        sout << name << "=" << std::setw(length) << narrow(value).c_str();
+        std::string ans;
+        if (name != NULL)
+        {
+            ans = name;
+        }
+        else
+        {
+            ans = "";
+        }
+        ans.append("=");
+        ans.append(narrow(value));
+        return ans;
+        //sout << name << "=" << std::setw(length) << narrow(value).c_str();
     }
     else
     {
-        sout << name << "=NULL";
+        std::string ans = "NULL";
+        return ans;
+        //sout << name << "=NULL";
     }
-    return sout.str();
+    //return sout.str();
 }
 
 
