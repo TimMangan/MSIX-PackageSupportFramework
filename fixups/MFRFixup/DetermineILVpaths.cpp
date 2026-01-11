@@ -58,8 +58,10 @@ std::wstring DetermineIlvPathForReadOperations(Json_Debug_Levels debugRequestLev
     {
         SkipRedirection = true;
     }
-    if (!cohorts.NativeIsValidOptionInScenario || cohorts.WsRequested == cohorts.WsPackage)
-    {
+    //if (!cohorts.NativeIsValidOptionInScenario || cohorts.WsRequested == cohorts.WsPackage)
+    // changed 2026.01.09 due to NetworkManager app launch issue.  Native path should be considered if not in other places.
+    if (!cohorts.NativeIsValidOptionInScenario )
+    { 
         SkipNative = true;
     }
 
@@ -68,7 +70,7 @@ std::wstring DetermineIlvPathForReadOperations(Json_Debug_Levels debugRequestLev
         PackageAttributes = impl::GetFileAttributes(MakeLongPath(cohorts.WsPackage).c_str());
         PackageError = GetLastError();
         SetLastError(0);
-    }
+    } 
 
    
     if (!SkipRedirection)
@@ -76,13 +78,13 @@ std::wstring DetermineIlvPathForReadOperations(Json_Debug_Levels debugRequestLev
         RedirectedAttributes = impl::GetFileAttributes(MakeLongPath(cohorts.WsRedirected).c_str());
         RedirectedError = GetLastError();
         SetLastError(0);
-    }
+    } 
     if (!SkipNative)
     {
         NativeAttributes = impl::GetFileAttributes(MakeLongPath(cohorts.WsNative).c_str());
         NativeError = GetLastError();
         SetLastError(0);
-    }
+    } 
 
     bool RedirectionDeletionMarker = false;
     if (!SkipRedirection)
@@ -96,7 +98,7 @@ std::wstring DetermineIlvPathForReadOperations(Json_Debug_Levels debugRequestLev
     }
     
     SetLastError(oldErr);
-    Log(debugRequestLevel, L"[%s%d]        DetermineILVPathsForRead Atts[skip]Att/Err  Req=[0]0x%x/0x%x Pkg=[%d]0x%x/0x%x Redir=[%d]0x%x/0x%x Native=[%d]0x%x/0x%x", g_MfrModuleName, dllInstance, RequestedAttributes, RequestedError, SkipPackage, PackageAttributes, PackageError, SkipRedirection, RedirectedAttributes, RedirectedError, SkipNative, NativeAttributes, NativeError);
+    Log(debugRequestLevel, L"[%s%d]        DetermineILVPathsForRead type=[skip]Att/Err  Req=[0]0x%x/0x%x Pkg=[%d]0x%x/0x%x Redir=[%d]0x%x/0x%x Native=[%d]0x%x/0x%x", g_MfrModuleName, dllInstance, RequestedAttributes, RequestedError, SkipPackage, PackageAttributes, PackageError, SkipRedirection, RedirectedAttributes, RedirectedError, SkipNative, NativeAttributes, NativeError);
     
     switch (cohorts.file_mfr.Request_MfrPathType)
     {
@@ -318,8 +320,23 @@ std::wstring DetermineIlvPathForReadOperations(Json_Debug_Levels debugRequestLev
                 cohorts.map.IsAnExclusionToRedirect == mfr::mfr_exclusion_types::not_excluded &&
                 (cohorts.map.RedirectionFlags == mfr::mfr_redirect_flags::prefer_redirection_containerized ||
                  cohorts.map.RedirectionFlags == mfr::mfr_redirect_flags::prefer_redirection_if_package_vfs))
-        {
-            UseFile = cohorts.WsPackage;
+        { 
+            if (RedirectedAttributes != INVALID_FILE_ATTRIBUTES)
+            {
+                UseFile = cohorts.WsRedirected;
+            }
+            else if (PackageAttributes != INVALID_FILE_ATTRIBUTES)
+            {
+                UseFile = cohorts.WsPackage;
+            } 
+            else if (NativeAttributes != INVALID_FILE_ATTRIBUTES && cohorts.NativeIsValidOptionInScenario)
+            {
+                UseFile = cohorts.WsNative;
+            }
+            else
+            {
+                UseFile = cohorts.WsRequested;
+            }
             break;
         }
         else
@@ -354,7 +371,7 @@ std::wstring DetermineIlvPathForReadOperations(Json_Debug_Levels debugRequestLev
     }
 
 
-
+    Log(debugRequestLevel, L"[%s%d]        DetermineILVPathsForRead selected path=%s", g_MfrModuleName, dllInstance, UseFile.c_str());
 
     return UseFile;
 }  // DetermineIlvPathForReadOperations()
