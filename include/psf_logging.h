@@ -17,7 +17,8 @@ enum Json_Debug_Levels
     LogLevel_Launching = 2,      // Log only during startup and teardown operations
     LogLevel_DebugBasic = 3,          // Basic debug level logging in intercepts (formerly DEBUG)
     LogLevel_DebugIntermediate = 4,   // Intermediate level logging in intercepts (formerly MOREDEBUG)
-    LogLevel_DebugMaximum = 9         // Maximum level logging in intercepts (formerly MOREDEBUG2 or EVENMOREDEBUG)
+    LogLevel_DebugMaximum = 9,         // Maximum level logging in intercepts (formerly MOREDEBUG2 or EVENMOREDEBUG)
+    LogLevel_DebugSuperMax = 20         // Beyond, reserved for PSF debugging.
 };
 extern Json_Debug_Levels g_JsonDebugLevel; // Json_Debug_Levels
 extern bool g_psf_NoLogging;  // Acts as a temporary override to disable all logging
