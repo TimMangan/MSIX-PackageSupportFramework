@@ -34,7 +34,7 @@
 
 using namespace std::literals;
 
-const wchar_t* PsfFtaComName = L"c";
+const wchar_t* PsfFtaComName = L"x";
 
 // Forward declarations
 extern void LogApplicationAndProcessesCollection();
@@ -312,9 +312,10 @@ void LogApplicationAndProcessesCollection()
     auto configRoot = PSFQueryConfigRoot();
     const wchar_t* exeStr = NULL;
     const wchar_t* idStr = NULL;
-    const wchar_t* hasShellVerbsStr = NULL;
+    bool hasShellVerbsBool = false;
     if (auto applications = configRoot->as_object().try_get("applications"))
     {
+        Log(LogLevel_Launching, L"[%s%d] Looking at applications in manifest:", PsfFtaComName, 0);
         for (auto& applicationsConfig : applications->as_array())
         {
             try { 
@@ -332,19 +333,19 @@ void LogApplicationAndProcessesCollection()
             catch (...) {}
             try 
             {
-                auto hasShellVerbsObj = applicationsConfig.as_object().try_get("shellVerbs");
+                auto hasShellVerbsObj = applicationsConfig.as_object().try_get("hasShellVerbs");
                 if (hasShellVerbsObj != NULL)
-                    hasShellVerbsStr = hasShellVerbsObj->as_string().wide();
+                    hasShellVerbsBool = hasShellVerbsObj-> as_boolean().get();
             }
             catch (...) {}
 
 
-            if (exeStr != NULL)
-                LogString(LogLevel_Launching, PsfFtaComName, 0, L"executable", exeStr);
             if (idStr != NULL)
-                LogString(LogLevel_Launching, PsfFtaComName, 0, L"id", idStr);
-            if (hasShellVerbsStr != NULL)
-                LogString(LogLevel_Launching, PsfFtaComName, 0, L"shellVerbs", hasShellVerbsStr);
+                LogString(LogLevel_Launching, PsfFtaComName, 0, L"\tid", idStr);
+            if (exeStr != NULL)
+                LogString(LogLevel_Launching, PsfFtaComName, 0, L"\t\texecutable", exeStr);
+            if (hasShellVerbsBool )
+                LogString(LogLevel_Launching, PsfFtaComName, 0, L"\t\tshellVerbs", L"true");
         }
     }
 
