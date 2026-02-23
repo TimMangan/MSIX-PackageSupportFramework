@@ -27,7 +27,7 @@ std::filesystem::path FID_RoamingAppData;
 std::filesystem::path FID_UserProgramFiles;
 std::filesystem::path FID_Desktop;
 std::filesystem::path FID_Documents;
-std::filesystem::path FID_PublicDesktop;
+std::filesystem::path FID_PublicDesktop; 
 std::filesystem::path FID_PublicDocuments;
 #if MORE_ADDMOREEXCLUSIONS
 std::filesystem::path FID_Downloads;        // aka c:\users\username\downloads      [{Profile}]\Downloads

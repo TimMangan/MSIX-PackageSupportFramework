@@ -127,11 +127,11 @@ extern "C" HANDLE __stdcall FindFirstFileAFixupHelper(_In_ const char* fileName,
     {      
         if (result->cached_data[Result_Redirected].cAlternateFileName != NULL)
         {
-            Log(LogLevel_DebugBasic, L"[%s%d] FindFirstFileAFixup[%d] (from redirected): had results=%ls %ls", g_MfrModuleName, dllInstance, Result_Redirected, result->cached_data[Result_Redirected].cFileName, result->cached_data[Result_Redirected].cAlternateFileName);
+            Log(LogLevel_DebugBasic, L"[%s%d] FindFirstFileAFixup[%d] (from redirected): had results=\'%ls\' \'%ls\'", g_MfrModuleName, dllInstance, Result_Redirected, result->cached_data[Result_Redirected].cFileName, result->cached_data[Result_Redirected].cAlternateFileName);
         }
         else
         {
-            Log(LogLevel_DebugBasic, L"[%s%d] FindFirstFileAFixup[%d] (from redirected): had results=%ls", g_MfrModuleName, dllInstance, Result_Redirected, result->cached_data[Result_Redirected].cFileName);
+            Log(LogLevel_DebugBasic, L"[%s%d] FindFirstFileAFixup[%d] (from redirected): had result=\'%ls\'", g_MfrModuleName, dllInstance, Result_Redirected, result->cached_data[Result_Redirected].cFileName);
         }
 
     }
@@ -142,7 +142,7 @@ extern "C" HANDLE __stdcall FindFirstFileAFixupHelper(_In_ const char* fileName,
 
         // Path doesn't exist or match any files. We can safely get away without the redirected file exists check
         //result->redirect_path.clear();
-        Log(LogLevel_DebugBasic, L"[%s%d] FindFirstFileAFixup[%d] (from redirected): no results.", g_MfrModuleName, dllInstance, Result_Redirected);
+        Log(LogLevel_DebugBasic, L"[%s%d] FindFirstFileAFixup[%d] (from redirected): had no results", g_MfrModuleName, dllInstance, Result_Redirected);
     }
     // save for next level
 
@@ -153,11 +153,11 @@ extern "C" HANDLE __stdcall FindFirstFileAFixupHelper(_In_ const char* fileName,
     {
         if (result->cached_data[Result_Package].cAlternateFileName != NULL)
         {
-            Log(LogLevel_DebugBasic, L"[%s%d] FindFirstFileAFixup[%d] (from package):   had results=%ls %ls", g_MfrModuleName, dllInstance, Result_Package, result->cached_data[Result_Package].cFileName, result->cached_data[Result_Package].cAlternateFileName);
+            Log(LogLevel_DebugBasic, L"[%s%d] FindFirstFileAFixup[%d] (from package):   had results=\'%ls\' \'%ls\'", g_MfrModuleName, dllInstance, Result_Package, result->cached_data[Result_Package].cFileName, result->cached_data[Result_Package].cAlternateFileName);
         }
         else
         {
-            Log(LogLevel_DebugBasic, L"[%s%d] FindFirstFileAFixup[%d] (from package):   had results=%ls", g_MfrModuleName, dllInstance, Result_Package, result->cached_data[Result_Package].cFileName);
+            Log(LogLevel_DebugBasic, L"[%s%d] FindFirstFileAFixup[%d] (from package):   had result=\'%ls\'", g_MfrModuleName, dllInstance, Result_Package, result->cached_data[Result_Package].cFileName);
         }
         initialFindError = ERROR_SUCCESS;
     }
@@ -166,7 +166,7 @@ extern "C" HANDLE __stdcall FindFirstFileAFixupHelper(_In_ const char* fileName,
         if (initialFindError != ERROR_SUCCESS && GetLastError() == ERROR_FILE_NOT_FOUND)
             initialFindError = ERROR_FILE_NOT_FOUND;
         ///result->package_vfs_path.clear();
-        Log(LogLevel_DebugBasic, L"[%s%d] FindFirstFileAFixup[%d] (from package):   no results.", g_MfrModuleName, dllInstance, Result_Package);
+        Log(LogLevel_DebugBasic, L"[%s%d] FindFirstFileAFixup[%d] (from package):   had no results", g_MfrModuleName, dllInstance, Result_Package);
     }
 
  
@@ -179,11 +179,11 @@ extern "C" HANDLE __stdcall FindFirstFileAFixupHelper(_In_ const char* fileName,
         {
             if (result->cached_data[Result_Native].cAlternateFileName != NULL)
             {
-                Log(LogLevel_DebugBasic, L"[%s%d] FindFirstFileAFixup[%d] (from native)    had results=%ls %ls", g_MfrModuleName, dllInstance, Result_Native, result->cached_data[Result_Native].cFileName, result->cached_data[Result_Native].cAlternateFileName);
+                Log(LogLevel_DebugBasic, L"[%s%d] FindFirstFileAFixup[%d] (from native)    had results=\'%ls\' \'%ls\'", g_MfrModuleName, dllInstance, Result_Native, result->cached_data[Result_Native].cFileName, result->cached_data[Result_Native].cAlternateFileName);
             }
             else
             {
-                Log(LogLevel_DebugBasic, L"[%s%d] FindFirstFileAFixup[%d] (from native)    had results=%ls", g_MfrModuleName, dllInstance, Result_Native, result->cached_data[Result_Native].cFileName);
+                Log(LogLevel_DebugBasic, L"[%s%d] FindFirstFileAFixup[%d] (from native)    had result=\'%ls\'", g_MfrModuleName, dllInstance, Result_Native, result->cached_data[Result_Native].cFileName);
             }
             initialFindError = ERROR_SUCCESS;
         }
@@ -191,13 +191,13 @@ extern "C" HANDLE __stdcall FindFirstFileAFixupHelper(_In_ const char* fileName,
         {
             if (initialFindError != ERROR_SUCCESS && GetLastError() == ERROR_FILE_NOT_FOUND)
                 initialFindError = ERROR_FILE_NOT_FOUND;
-            Log(LogLevel_DebugBasic, L"[%s%d] FindFirstFileAFixup[%d] (from native):   no results.", g_MfrModuleName, dllInstance, Result_Native);
+            Log(LogLevel_DebugBasic, L"[%s%d] FindFirstFileAFixup[%d] (from native):   had no results", g_MfrModuleName, dllInstance, Result_Native);
         }
         
     }
     else
     {
-        Log(LogLevel_DebugBasic, L"[%s%d] FindFirstFileAFixup[%d] (from native):    no results possible.", g_MfrModuleName, dllInstance, Result_Native);
+        Log(LogLevel_DebugBasic, L"[%s%d] FindFirstFileAFixup[%d] (from native):    no results possible", g_MfrModuleName, dllInstance, Result_Native);
     }
 
     if (result->find_handles[Result_Redirected] ||
@@ -268,11 +268,11 @@ extern "C" HANDLE __stdcall FindFirstFileAFixupHelper(_In_ const char* fileName,
         }
         if (result->cached_data[UseIndex].cAlternateFileName != NULL)
         {
-            Log(LogLevel_DebugBasic, L"[%s%d] FindFirstFileAFixup returns using index=%d %ls %ls", g_MfrModuleName, dllInstance, UseIndex, result->cached_data[UseIndex].cFileName, result->cached_data[UseIndex].cAlternateFileName);
+            Log(LogLevel_DebugBasic, L"[%s%d] FindFirstFileAFixup returns from index=%d \'%ls\' \'%ls\'", g_MfrModuleName, dllInstance, UseIndex, result->cached_data[UseIndex].cFileName, result->cached_data[UseIndex].cAlternateFileName);
         }
         else
         {
-            Log(LogLevel_DebugBasic, L"[%s%d] FindFirstFileAFixup returns using index=%d %ls", g_MfrModuleName, dllInstance, UseIndex, result->cached_data[UseIndex].cFileName);
+            Log(LogLevel_DebugBasic, L"[%s%d] FindFirstFileAFixup return from index=%d \'%ls\'", g_MfrModuleName, dllInstance, UseIndex, result->cached_data[UseIndex].cFileName);
         }
         result->sAlready_returned_list.push_back(result->cached_data[UseIndex].cFileName);
         ::SetLastError(ERROR_SUCCESS);
@@ -355,11 +355,11 @@ extern "C" HANDLE __stdcall FindFirstFileWFixupHelper(_In_ const wchar_t* fileNa
     {
         if (result->cached_data[Result_Redirected].cAlternateFileName != NULL)
         {
-            Log(LogLevel_DebugBasic, L"[%s%d] FindFirstFileWFixup[%d] (from redirected): had results=%ls %ls", g_MfrModuleName, dllInstance, Result_Redirected, result->cached_data[Result_Redirected].cFileName, result->cached_data[Result_Redirected].cAlternateFileName);
+            Log(LogLevel_DebugBasic, L"[%s%d] FindFirstFileWFixup[%d] (from redirected): had results=\'%s\' \'%s\'", g_MfrModuleName, dllInstance, Result_Redirected, result->cached_data[Result_Redirected].cFileName, result->cached_data[Result_Redirected].cAlternateFileName);
         }
         else
         {
-            Log(LogLevel_DebugBasic, L"[%s%d] FindFirstFileWFixup[%d] (from redirected): had results=%ls", g_MfrModuleName, dllInstance, Result_Redirected, result->cached_data[Result_Redirected].cFileName);
+            Log(LogLevel_DebugBasic, L"[%s%d] FindFirstFileWFixup[%d] (from redirected): had results=\'%s\'", g_MfrModuleName, dllInstance, Result_Redirected, result->cached_data[Result_Redirected].cFileName);
         }
     }
     else
@@ -369,7 +369,7 @@ extern "C" HANDLE __stdcall FindFirstFileWFixupHelper(_In_ const wchar_t* fileNa
 
         // Path doesn't exist or match any files. We can safely get away without the redirected file exists check
         //result->redirect_path.clear();
-        Log(LogLevel_DebugBasic, L"[%s%d] FindFirstFileWFixup[%d] (from redirected): no results.", g_MfrModuleName, dllInstance, Result_Redirected);
+        Log(LogLevel_DebugBasic, L"[%s%d] FindFirstFileWFixup[%d] (from redirected): had no results", g_MfrModuleName, dllInstance, Result_Redirected);
 
     }
 
@@ -380,11 +380,11 @@ extern "C" HANDLE __stdcall FindFirstFileWFixupHelper(_In_ const wchar_t* fileNa
     {
         if (result->cached_data[Result_Package].cAlternateFileName != NULL)
         {
-            Log(LogLevel_DebugBasic, L"[%s%d] FindFirstFileWFixup[%d] (from package):   had results=%ls %ls", g_MfrModuleName, dllInstance, Result_Package, result->cached_data[Result_Package].cFileName, result->cached_data[Result_Package].cAlternateFileName);
+            Log(LogLevel_DebugBasic, L"[%s%d] FindFirstFileWFixup[%d] (from package):   had results=\'%s\' \'%s\'", g_MfrModuleName, dllInstance, Result_Package, result->cached_data[Result_Package].cFileName, result->cached_data[Result_Package].cAlternateFileName);
         }
         else
         {
-            Log(LogLevel_DebugBasic, L"[%s%d] FindFirstFileWFixup[%d] (from package):   had results=%ls", g_MfrModuleName, dllInstance, Result_Package, result->cached_data[Result_Package].cFileName);
+            Log(LogLevel_DebugBasic, L"[%s%d] FindFirstFileWFixup[%d] (from package):   had result=\'%s\'", g_MfrModuleName, dllInstance, Result_Package, result->cached_data[Result_Package].cFileName);
         }
         initialFindError = ERROR_SUCCESS;
     }
@@ -393,7 +393,7 @@ extern "C" HANDLE __stdcall FindFirstFileWFixupHelper(_In_ const wchar_t* fileNa
         if (initialFindError != ERROR_SUCCESS && GetLastError() == ERROR_FILE_NOT_FOUND)
             initialFindError = ERROR_FILE_NOT_FOUND;
         ///result->package_vfs_path.clear();
-        Log(LogLevel_DebugBasic, L"[%s%d] FindFirstFileWFixup[%d] (from package):   no results.", g_MfrModuleName, dllInstance, Result_Package);
+        Log(LogLevel_DebugBasic, L"[%s%d] FindFirstFileWFixup[%d] (from package):   had no results", g_MfrModuleName, dllInstance, Result_Package);
     }
 
 
@@ -406,11 +406,11 @@ extern "C" HANDLE __stdcall FindFirstFileWFixupHelper(_In_ const wchar_t* fileNa
         {
             if (result->cached_data[Result_Native].cAlternateFileName != NULL)
             {
-                Log(LogLevel_DebugBasic, L"[%s%d] FindFirstFileWFixup[%d] (from native)    had results=%ls %ls", g_MfrModuleName, dllInstance, Result_Native, result->cached_data[Result_Native].cFileName, result->cached_data[Result_Native].cAlternateFileName);
+                Log(LogLevel_DebugBasic, L"[%s%d] FindFirstFileWFixup[%d] (from native)    had results=\'%s\' \'%s\'", g_MfrModuleName, dllInstance, Result_Native, result->cached_data[Result_Native].cFileName, result->cached_data[Result_Native].cAlternateFileName);
             }
             else
             {
-                Log(LogLevel_DebugBasic, L"[%s%d] FindFirstFileWFixup[%d] (from native)    had results=%ls", g_MfrModuleName, dllInstance, Result_Native, result->cached_data[Result_Native].cFileName);
+                Log(LogLevel_DebugBasic, L"[%s%d] FindFirstFileWFixup[%d] (from native)    had result=\'%s\'", g_MfrModuleName, dllInstance, Result_Native, result->cached_data[Result_Native].cFileName);
             }
 
             initialFindError = ERROR_SUCCESS;
@@ -419,13 +419,13 @@ extern "C" HANDLE __stdcall FindFirstFileWFixupHelper(_In_ const wchar_t* fileNa
         {
             if (initialFindError != ERROR_SUCCESS && GetLastError() == ERROR_FILE_NOT_FOUND)
                 initialFindError = ERROR_FILE_NOT_FOUND;
-            Log(LogLevel_DebugBasic, L"[%s%d] FindFirstFileWFixup[%d] (from native):   no results.", g_MfrModuleName, dllInstance, Result_Native);
+            Log(LogLevel_DebugBasic, L"[%s%d] FindFirstFileWFixup[%d] (from native):   had no results", g_MfrModuleName, dllInstance, Result_Native);
         }
 
     }
     else
     {
-        Log(LogLevel_DebugBasic, L"[%s%d] FindFirstFileWFixup[%d] (from native):    no results possible.", g_MfrModuleName, dllInstance, Result_Native);
+        Log(LogLevel_DebugBasic, L"[%s%d] FindFirstFileWFixup[%d] (from native):    no results possible", g_MfrModuleName, dllInstance, Result_Native);
     }
 
     if (result->find_handles[Result_Redirected] ||
@@ -498,11 +498,11 @@ extern "C" HANDLE __stdcall FindFirstFileWFixupHelper(_In_ const wchar_t* fileNa
 
         if (result->cached_data[UseIndex].cAlternateFileName != NULL)
         {
-            Log(LogLevel_DebugBasic, L"[%s%d] FindFirstFileWFixup returns from index=%d %s %s", g_MfrModuleName, dllInstance, UseIndex, result->cached_data[UseIndex].cFileName, result->cached_data[UseIndex].cAlternateFileName);
+            Log(LogLevel_DebugBasic, L"[%s%d] FindFirstFileWFixup returns from index=%d \'%s\' \'%s\'", g_MfrModuleName, dllInstance, UseIndex, result->cached_data[UseIndex].cFileName, result->cached_data[UseIndex].cAlternateFileName);
         }
         else
         {
-            Log(LogLevel_DebugBasic, L"[%s%d] FindFirstFileWFixup returns from index=%d %s", g_MfrModuleName, dllInstance, UseIndex, result->cached_data[UseIndex].cFileName);
+            Log(LogLevel_DebugBasic, L"[%s%d] FindFirstFileWFixup return from index=%d \'%s\'", g_MfrModuleName, dllInstance, UseIndex, result->cached_data[UseIndex].cFileName);
         }
         result->wsAlready_returned_list.push_back(result->cached_data[UseIndex].cFileName);
         ::SetLastError(ERROR_SUCCESS);
