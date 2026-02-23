@@ -99,7 +99,7 @@ HMODULE __stdcall LoadLibraryFixup(_In_ const CharT* libFileName)
             {
                 try
                 {
-                    LogString(LogLevel_DebugMaximum, g_LoadLibraryName, LoadLibraryInstance, L"LoadLibraryFixup: testing against", spec.filename.data());
+                    LogString(LogLevel_DebugSuperMax, g_LoadLibraryName, LoadLibraryInstance, L"LoadLibraryFixup: testing against", spec.filename.data());
                     if (compare_dllname(spec.filename.data(), libFileNameW) == 0)
                     {
                         bool useThis = true;
@@ -108,61 +108,61 @@ HMODULE __stdcall LoadLibraryFixup(_In_ const CharT* libFileName)
                         {
                         case x86:
 #if defined(_WIN64)
-                            Log(LogLevel_DebugMaximum, L"[%s%d] LoadLibraryFixup:  We are in an x64 build and this match is 32bit.", g_LoadLibraryName, LoadLibraryInstance);
+                            Log(LogLevel_DebugSuperMax, L"[%s%d] LoadLibraryFixup:  We are in an x64 build and this match is 32bit.", g_LoadLibraryName, LoadLibraryInstance);
                             if (IsWow64Process(GetCurrentProcess(), &procTest))
                             {
                                 if (procTest == TRUE)
                                 {
-                                    Log(LogLevel_DebugMaximum, L"[%s%d] LoadLibraryFixup:   we are in WOW so allow match.", g_LoadLibraryName, LoadLibraryInstance);
+                                    Log(LogLevel_DebugSuperMax, L"[%s%d] LoadLibraryFixup:   we are in WOW so allow match.", g_LoadLibraryName, LoadLibraryInstance);
                                     // 32-bit process on an x64 OS
                                     useThis = true;
                                 }
                                 else
                                 {
-                                    Log(LogLevel_DebugMaximum, L"[%s%d] LoadLibraryFixup:   we are NOT in WOW so dont allow match.", g_LoadLibraryName, LoadLibraryInstance);
+                                    Log(LogLevel_DebugSuperMax, L"[%s%d] LoadLibraryFixup:   we are NOT in WOW so dont allow match.", g_LoadLibraryName, LoadLibraryInstance);
                                     // 64-bit process on 64-bit OS
                                     useThis = false;
                                 }
                             }
                             else
                             {
-                                Log(LogLevel_DebugMaximum, L"[%s%d] LoadLibraryFixup:   WOW check failed.", g_LoadLibraryName, LoadLibraryInstance);
+                                Log(LogLevel_DebugSuperMax, L"[%s%d] LoadLibraryFixup:   WOW check failed.", g_LoadLibraryName, LoadLibraryInstance);
                                 // This call should never fail.
                                 useThis = false;
                             }
 #else
-                            Log(LogLevel_DebugMaximum, L"[%s%d] LoadLibraryFixup:  We are in a 32-bit build and this match is 32bit.", g_LoadLibraryName, LoadLibraryInstance);
+                            Log(LogLevel_DebugSuperMax, L"[%s%d] LoadLibraryFixup:  We are in a 32-bit build and this match is 32bit.", g_LoadLibraryName, LoadLibraryInstance);
                             // Only 32-bit is valid if we are built as 32-bit.
                             useThis = true;
 #endif
                             break;
                         case x64:
 #if defined(_WIN64)
-                            Log(LogLevel_DebugMaximum, L"[%s%d] LoadLibraryFixup:  We are in an x64 build and this match is 64bit.", g_LoadLibraryName, LoadLibraryInstance);
+                            Log(LogLevel_DebugSuperMax, L"[%s%d] LoadLibraryFixup:  We are in an x64 build and this match is 64bit.", g_LoadLibraryName, LoadLibraryInstance);
                             if (IsWow64Process(GetCurrentProcess(), &procTest))
                             {
                                 if (procTest == FALSE)
                                 {
-                                    Log(LogLevel_DebugMaximum, L"[%s%d] LoadLibraryFixup:   we are not in WOW so allow match.", g_LoadLibraryName, LoadLibraryInstance);
+                                    Log(LogLevel_DebugSuperMax, L"[%s%d] LoadLibraryFixup:   we are not in WOW so allow match.", g_LoadLibraryName, LoadLibraryInstance);
                                     // 64 bit process on an x64 OS
                                     useThis = true;
                                 }
                                 else
                                 {
-                                    Log(LogLevel_DebugMaximum, L"[%s%d] LoadLibraryFixup:   we are in WOW so dont allow match.", g_LoadLibraryName, LoadLibraryInstance);
+                                    Log(LogLevel_DebugSuperMax, L"[%s%d] LoadLibraryFixup:   we are in WOW so dont allow match.", g_LoadLibraryName, LoadLibraryInstance);
                                     // 32-bit process on 64-bit OS
                                     useThis = false;
                                 }
                             }
                             else
                             {
-                                Log(LogLevel_DebugMaximum, L"[%s%d] LoadLibraryFixup:   WOW check failed.", g_LoadLibraryName, LoadLibraryInstance);
+                                Log(LogLevel_DebugSuperMax, L"[%s%d] LoadLibraryFixup:   WOW check failed.", g_LoadLibraryName, LoadLibraryInstance);
 
                                 // This call should never fail.
                                 useThis = false;
                             }
 #else
-                            Log(LogLevel_DebugMaximum, L"[%s%d] LoadLibraryFixup:  We are in a 32-bit build and this match is 64bit.", g_LoadLibraryName, LoadLibraryInstance);
+                            Log(LogLevel_DebugSuperMax, L"[%s%d] LoadLibraryFixup:  We are in a 32-bit build and this match is 64bit.", g_LoadLibraryName, LoadLibraryInstance);
                             // Can't use x64 dll if we are a 32-bit process
                             useThis = false;
 #endif
@@ -210,7 +210,7 @@ HMODULE __stdcall LoadLibraryFixup(_In_ const CharT* libFileName)
                 }
                 catch (...)
                 {
-                    Log(LogLevel_Exception, L" [%s%d] LoadLibraryFixup: ERROR", g_LoadLibraryName, LoadLibraryInstance);
+                    Log(LogLevel_Exception, L" [%s%d] LoadLibraryFixup: Exception ERROR=0x%x", g_LoadLibraryName, LoadLibraryInstance, GetLastError());
                 }
             }
 
@@ -253,8 +253,8 @@ HMODULE __stdcall LoadLibraryExFixup(_In_ const CharT* libFileName, _Reserved_ H
             {
                 try
                 {
-                    Log(LogLevel_DebugMaximum, L" [%s%d] LoadLibraryExFixup testing %ls against entry %ls", g_LoadLibraryName, LoadLibraryExInstance, libFileNameW.c_str(), spec.full_filepath.native().c_str());
-                    LogString(LogLevel_DebugMaximum, g_LoadLibraryName, LoadLibraryExInstance, L"LoadLibraryExFixup testing against just filename", spec.filename.data());
+                    Log(LogLevel_DebugSuperMax, L" [%s%d] LoadLibraryExFixup testing %ls against entry %ls", g_LoadLibraryName, LoadLibraryExInstance, libFileNameW.c_str(), spec.full_filepath.native().c_str());
+                    LogString(LogLevel_DebugSuperMax, g_LoadLibraryName, LoadLibraryExInstance, L"LoadLibraryExFixup testing against just filename", spec.filename.data());
 
                     bool isAMatch = false;
                     if (compare_dllname(spec.filename.data(), libFileNameW) == 0)
@@ -278,61 +278,61 @@ HMODULE __stdcall LoadLibraryExFixup(_In_ const CharT* libFileName, _Reserved_ H
                         {
                         case x86:
 #if defined(_WIN64)
-                            Log(LogLevel_DebugIntermediate, L"[%s%d] LoadLibraryExFixup:  We are in an x64 build and this match is 32bit.", g_LoadLibraryName, LoadLibraryExInstance);
+                            Log(LogLevel_DebugSuperMax, L"[%s%d] LoadLibraryExFixup:  We are in an x64 build and this match is 32bit.", g_LoadLibraryName, LoadLibraryExInstance);
                             if (IsWow64Process(GetCurrentProcess(), &procTest))
                             {
                                 if (procTest == TRUE)
                                 {
-                                    Log(LogLevel_DebugIntermediate, L"[%s%d] LoadLibraryExFixup:   we are in WOW so allow match.", g_LoadLibraryName, LoadLibraryExInstance);
+                                    Log(LogLevel_DebugSuperMax, L"[%s%d] LoadLibraryExFixup:   we are in WOW so allow match.", g_LoadLibraryName, LoadLibraryExInstance);
 
                                     // 32-bit process on an x64 OS
                                     useThis = true;
                                 }
                                 else
                                 {
-                                    Log(LogLevel_DebugIntermediate, L"[%s%d] LoadLibraryExFixup:   we are NOT in WOW so dont allow match.", g_LoadLibraryName, LoadLibraryExInstance);
+                                    Log(LogLevel_DebugSuperMax, L"[%s%d] LoadLibraryExFixup:   we are NOT in WOW so dont allow match.", g_LoadLibraryName, LoadLibraryExInstance);
                                     // 64-bit process on 64-bit OS
                                     useThis = false;
                                 }
                             }
                             else
                             {
-                                Log(LogLevel_DebugIntermediate, L"[%s%d] LoadLibraryExFixup:   WOW check failed.", g_LoadLibraryName, LoadLibraryExInstance);
+                                Log(LogLevel_DebugSuperMax, L"[%s%d] LoadLibraryExFixup:   WOW check failed.", g_LoadLibraryName, LoadLibraryExInstance);
                                 // This call should never fail.
                                 useThis = false;
                             }
 #else
-                            Log(LogLevel_DebugIntermediate, L"[%s%d] LoadLibraryExFixup:  We are in a 32-bit build and this match is 32bit.", g_LoadLibraryName, LoadLibraryExInstance);
+                            Log(LogLevel_DebugSuperMax, L"[%s%d] LoadLibraryExFixup:  We are in a 32-bit build and this match is 32bit.", g_LoadLibraryName, LoadLibraryExInstance);
                             // Only 32-bit is valid if we are built as 32-bit.
                             useThis = true;
 #endif
                             break;
                         case x64:
 #if defined(_WIN64)
-                            Log(LogLevel_DebugIntermediate, L"[%s%d] LoadLibraryExFixup:  We are in an x64 build and this match is 64bit.", g_LoadLibraryName, LoadLibraryExInstance);
+                            Log(LogLevel_DebugSuperMax, L"[%s%d] LoadLibraryExFixup:  We are in an x64 build and this match is 64bit.", g_LoadLibraryName, LoadLibraryExInstance);
                             if (IsWow64Process(GetCurrentProcess(), &procTest))
                             {
                                 if (procTest == FALSE)
                                 {
-                                    Log(LogLevel_DebugIntermediate, L"[%s%d] LoadLibraryExFixup:   we are not in WOW so allow match.", g_LoadLibraryName, LoadLibraryExInstance);
+                                    Log(LogLevel_DebugSuperMax, L"[%s%d] LoadLibraryExFixup:   we are not in WOW so allow match.", g_LoadLibraryName, LoadLibraryExInstance);
                                     // 64 bit process on an x64 OS
                                     useThis = true;
                                 }
                                 else
                                 {
-                                    Log(LogLevel_DebugIntermediate, L"[%s%d] LoadLibraryExFixup:   we are in WOW so dont allow match.", g_LoadLibraryName, LoadLibraryExInstance);
+                                    Log(LogLevel_DebugSuperMax, L"[%s%d] LoadLibraryExFixup:   we are in WOW so dont allow match.", g_LoadLibraryName, LoadLibraryExInstance);
                                     // 32-bit process on 64-bit OS
                                     useThis = false;
                                 }
                             }
                             else
                             {
-                                Log(LogLevel_DebugIntermediate, L"[%s%d] LoadLibraryExFixup:   WOW check failed.", g_LoadLibraryName, LoadLibraryExInstance);
+                                Log(LogLevel_DebugSuperMax, L"[%s%d] LoadLibraryExFixup:   WOW check failed.", g_LoadLibraryName, LoadLibraryExInstance);
                                 // This call should never fail.
                                 useThis = false;
                             }
 #else
-                            Log(LogLevel_DebugIntermediate, L"[%s%d] LoadLibraryExFixup:  We are in a 32-bit build and this match is 64bit.", g_LoadLibraryName, LoadLibraryExInstance);
+                            Log(LogLevel_DebugSuperMax, L"[%s%d] LoadLibraryExFixup:  We are in a 32-bit build and this match is 64bit.", g_LoadLibraryName, LoadLibraryExInstance);
                             // Can't use x64 dll if we are a 32-bit process
                             useThis = false;
 #endif
@@ -348,11 +348,14 @@ HMODULE __stdcall LoadLibraryExFixup(_In_ const CharT* libFileName, _Reserved_ H
 
                         if (useThis)
                         {
-                            /// The flags parameter set by the caller might not make sense when we are trying to force a specific path.
+                            /// The flags parameter set by the caller might not make sense when we are trying to force a specific path, 
+                            /// and the caller did not supply the path.
                             /// In this code, we can look for cases and adjust as appropriate.  
                             /// It is possible that there are other cases needing adjustment, but we will start with the most obvious ones.
                             DWORD altFlags = flags;
-                            if (altFlags == LOAD_WITH_ALTERED_SEARCH_PATH)
+                            Log(LogLevel_DebugMaximum, L"[%s%d] LoadLibraryExFixup: Original flags=0x%x", g_LoadLibraryName, LoadLibraryExInstance, flags);
+                            if ((altFlags & LOAD_WITH_ALTERED_SEARCH_PATH) != 0 &&
+                                libFileNameW.find(L'\\') == std::wstring::npos)
                             {
                                 // Can't be combined with other options.  As we are supplying a full path, the use of this flag would tell the call
                                 // to ignore our path and use the search path instead.  Can't have that!
@@ -360,7 +363,7 @@ HMODULE __stdcall LoadLibraryExFixup(_In_ const CharT* libFileName, _Reserved_ H
                             }
                             if (altFlags != flags)
                             {
-                                Log(LogLevel_DebugBasic, L"[%s%d] LoadLibraryExFixup: Adjusted flags from 0x%x to 0x%x", g_LoadLibraryName, LoadLibraryExInstance, flags, altFlags);
+                                Log(LogLevel_DebugMaximum, L"[%s%d] LoadLibraryExFixup: Adjusted flags from 0x%x to 0x%x", g_LoadLibraryName, LoadLibraryExInstance, flags, altFlags);
                             }
 
 
@@ -397,7 +400,7 @@ HMODULE __stdcall LoadLibraryExFixup(_In_ const CharT* libFileName, _Reserved_ H
                 }
                 catch (...)
                 {
-                    Log(LogLevel_Exception, L" [%s%d] LoadLibraryExFixup Error", g_LoadLibraryName, LoadLibraryExInstance);
+                    Log(LogLevel_Exception, L" [%s%d] LoadLibraryExFixup Exception Error=x%x", g_LoadLibraryName, LoadLibraryExInstance, GetLastError());
                 }
             }
  
