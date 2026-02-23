@@ -74,20 +74,28 @@ inline void DumpStartupAttributes(Json_Debug_Levels debugRequestLevel, SIH_PROC_
                         Log(debugRequestLevel, L"\t\t[%s%d]\t\t\t\t The item is Attribute_Parent_Process", moduleName, instance);
                         break;
                     case 1: // undefined: possibly PROC_THREAD_ATTRIBUTE_REPLACE_VALUE on ProcThreadAttributeParentProcess ?
-                        Log(debugRequestLevel, L"\t\t[%s%d]\t\t\t\t The item is Attribute_PseudoConsole as seen(1)", moduleName, instance);
+                        Log(debugRequestLevel, L"\t\t[%s%d]\t\t\t\t The item is undocumented(1)", moduleName, instance);
                         if (Entry.lpvalue == NULL)
                         {
                             Log(debugRequestLevel, L"\t\t[%s%d]\t\t\t\t\tValue is NULL", moduleName, instance);
                         }
                         else
                         {
-                            if (Entry.lpvalue > (void*)3)
+                            try
                             {
-                                Loghexdump(LogLevel_Launching, Entry.lpvalue, (long)Entry.cbSize, moduleName, instance);
+                                if (Entry.cbSize == 4)
+                                {
+                                    // can't be a pointer
+                                    Loghexdump(LogLevel_Launching, &Entry.lpvalue, (long)Entry.cbSize, moduleName, instance);
+                                }
+                                else
+                                {
+                                    Loghexdump(LogLevel_Launching, Entry.lpvalue, (long)Entry.cbSize, moduleName, instance);
+                                }
                             }
-                            else
-                            {
-                                Log(debugRequestLevel, L"\t\t[%s%d]\t\t\t\t\tValue is not standard handle %p", moduleName, instance, Entry.lpvalue);
+                            catch (...)
+                            { 
+                                Log(debugRequestLevel, L"\t\t[%s%d]\t\t\t\t\tcannot display value", moduleName, instance); 
                             }
                         }
                         break;
@@ -214,6 +222,14 @@ inline void DumpStartupAttributes(Json_Debug_Levels debugRequestLevel, SIH_PROC_
                         break;
                     case  22: // 22 = 0x16
                         Log(debugRequestLevel, L"\t\t[%s%d]\t\t\t\t The item is Attribute_PseudoConsole as documented (22)", moduleName, instance);
+                        if (Entry.lpvalue == NULL)
+                        {
+                            Log(debugRequestLevel, L"\t\t[%s%d]\t\t\t\t\tValue is NULL", moduleName, instance);
+                        }
+                        else
+                        {
+                            Loghexdump(LogLevel_Launching, Entry.lpvalue, (long)Entry.cbSize, moduleName, instance);
+                        }
                         break;
                     case PROC_THREAD_ATTRIBUTE_MITIGATION_AUDIT_POLICY & 0x0FFFF:  // 24 = 0x18
                         Log(debugRequestLevel, L"\t\t[%s%d]\t\t\t\t The item is Attribute_Mitigation_Audit_Policy", moduleName, instance);
@@ -366,11 +382,11 @@ private:
     // by using PROC_THREAD_ATTRIBUTE_PROTECTION_LEVEL.
     //
     // The code here currently does not set this level as we prefer to keep the same level anyway.
-    // UPDATE: If we provide an atttribute list we must include this for certain proesses anyway.
+    // UPDATE: If we provide an attribute list we must include this for certain processes anyway.
     DWORD attProtLevel = ProcThreadAttributeProtectionLevel;
     DWORD protectionLevel = PROTECTION_LEVEL_SAME;
 
-    // Should it become neccessary to change more than one attribute, the number of attributes will need
+    // Should it become necessary to change more than one attribute, the number of attributes will need
     // to be modified in both initialization calls in the CTOR.
 
     std::unique_ptr<_PROC_THREAD_ATTRIBUTE_LIST> attributeList;
@@ -457,10 +473,11 @@ public:
     {
         DWORD ReservedMustBeZero = 0;
         DWORD countAtt = 0;
-        DWORD haveSet = false;
+        DWORD haveSet_desktop_app_policy = false;
         if (AttributeListInput != NULL)
         {
             countAtt = AttributeListInput->Count;
+
             if ((AttributeListInput->dwflags & SIH_PROC_THREAD_ATTRIBUTE_DESKTOP_APP_POLICY) != 0)
             {
                 // We don't need to add the policy, just fix it.
@@ -471,7 +488,7 @@ public:
                     {
                         if (Entry.cbSize == 4)
                         {
-                            haveSet = true;
+                            haveSet_desktop_app_policy = true;
                             DWORD attval = *((DWORD*)(Entry.lpvalue));
                             if ((attval & PROCESS_CREATION_DESKTOP_APP_BREAKAWAY_OVERRIDE) == 0)
                             {
@@ -499,23 +516,24 @@ public:
                 }
             }
         }
-        if (!haveSet)
+        if (!haveSet_desktop_app_policy)
         {
             countAtt++;
         }
 
 
-        if (AttributeListInput && !haveSet) // AttributeListInput->Count != countAtt)
+        if (AttributeListInput && !haveSet_desktop_app_policy) // AttributeListInput->Count != countAtt)
         {
 #if ADDASNEWREPLACEMENT
             // We need to add an extra attribute, so we'll replace the entire set.
             Log(debugLevel, L"[%s%d] MyProcThreadAttributeList: Rebuilding attribute list to add desktop app policy. Need count=%d in list", moduleName, instance, countAtt);
             SIZE_T AttributeListSize=0;
-            BOOL ugh;
+            BOOL ugh=false;
             InitializeProcThreadAttributeList(nullptr, countAtt, ReservedMustBeZero, &AttributeListSize);
             attributeList = std::unique_ptr<_PROC_THREAD_ATTRIBUTE_LIST>(reinterpret_cast<_PROC_THREAD_ATTRIBUTE_LIST*>(new char[AttributeListSize]));
             InitializeProcThreadAttributeList( attributeList.get(),  countAtt,
                                                 ReservedMustBeZero, &AttributeListSize);
+            bool newListOK = true;
             for (ULONG inx = 0; inx < AttributeListInput->Count; inx++)
             {
                 SIH_PROC_THREAD_ATTRIBUTE_ENTRY Entry = AttributeListInput->Entry[inx];
@@ -529,35 +547,45 @@ public:
                 else
                 {
                     // These values are not pointers and must be dealt with differently
-                    HANDLE fake = Entry.lpvalue;
+                    //HANDLE fake = Entry.lpvalue;
                     ugh = UpdateProcThreadAttribute(attributeList.get(), ReservedMustBeZero,
-                        Entry.Attribute,
-                        &fake,sizeof(HANDLE),
+                        ProcThreadAttributePseudoConsole,
+                        //&fake, sizeof(HANDLE),
+                        &(Entry.lpvalue), Entry.cbSize,
                         nullptr, nullptr);
                 }
                 if (!ugh)
                 {
-                    Log(debugLevel, L"[%s%d] MyProcThreadAttributeList: Could not add original index=0x%d.", moduleName, instance, inx);
+                    Log(debugLevel, L"[%s%d] MyProcThreadAttributeList: Could not add original index=0x%d err=0x%x.", moduleName, instance, inx,GetLastError());
+                    newListOK = false;
                 }
             }
-            
-            if (setContainer && inside)
+            if (!newListOK)
             {
-                ugh = UpdateProcThreadAttribute(attributeList.get(), ReservedMustBeZero,
-                    ProcThreadAttributeValue(18, FALSE, TRUE, FALSE), // PROC_THREAD_ATTRIBUTE_DESKTOP_APP_POLICY
-                    &AttributeForCreateInContainerAndPreventBreakaway, sizeof(AttributeForCreateInContainerAndPreventBreakaway),
-                    nullptr, nullptr);
-            }
-            else if (setContainer)
-            {
-                ugh = UpdateProcThreadAttribute(attributeList.get(), ReservedMustBeZero,
-                    ProcThreadAttributeValue(18, FALSE, TRUE, FALSE), // PROC_THREAD_ATTRIBUTE_DESKTOP_APP_POLICY
-                    &AttributeForCreateOutsideContainer, sizeof(AttributeForCreateOutsideContainer),
-                    nullptr, nullptr);
+                Log(debugLevel, L"[%s%d] MyProcThreadAttributeList: Just use original.", moduleName, instance );
+                attributeList = std::unique_ptr<_PROC_THREAD_ATTRIBUTE_LIST>(reinterpret_cast<_PROC_THREAD_ATTRIBUTE_LIST*>(AttributeListInput));
+                SetLastError(0);
             }
             else
             {
-                ugh = true;
+                if (setContainer && inside)
+                {
+                    ugh = UpdateProcThreadAttribute(attributeList.get(), ReservedMustBeZero,
+                        ProcThreadAttributeValue(18, FALSE, TRUE, FALSE), // PROC_THREAD_ATTRIBUTE_DESKTOP_APP_POLICY
+                        &AttributeForCreateInContainerAndPreventBreakaway, sizeof(AttributeForCreateInContainerAndPreventBreakaway),
+                        nullptr, nullptr);
+                }
+                else if (setContainer)
+                {
+                    ugh = UpdateProcThreadAttribute(attributeList.get(), ReservedMustBeZero,
+                        ProcThreadAttributeValue(18, FALSE, TRUE, FALSE), // PROC_THREAD_ATTRIBUTE_DESKTOP_APP_POLICY
+                        &AttributeForCreateOutsideContainer, sizeof(AttributeForCreateOutsideContainer),
+                        nullptr, nullptr);
+                }
+                else
+                {
+                    ugh = true;
+                }
             }
             if (!ugh)
             {
