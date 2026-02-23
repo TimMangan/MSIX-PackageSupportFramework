@@ -151,7 +151,7 @@ LSTATUS __stdcall RegGetValueAFixup(
             {
                 Log(LogLevel_Exception, L"[%s%d] RegGetValueA exception logging captured value.  May be ignored", g_RegModuleName, RegLocalInstance);
             }
-            Log(LogLevel_DebugBasic, L"[%s%d] RegGetValueA requested path=%s result=%s", g_RegModuleName, RegLocalInstance, regCohorts.RequestedPath.c_str(), LStatusToWstring(result).c_str());
+            Log(LogLevel_DebugBasic, L"[%s%d] RegGetValueA requested result=%s", g_RegModuleName, RegLocalInstance, LStatusToWstring(result).c_str());
             return result;
         }
         else
@@ -325,7 +325,7 @@ LSTATUS __stdcall RegGetValueWFixup(
             {
                 Log(LogLevel_Exception, L"[%s%d] RegGetValueW exception logging captured value.  May be ignored", g_RegModuleName, RegLocalInstance);
             }
-            Log(LogLevel_DebugBasic, L"[%s%d] RegGetValueW requested path=%s result=%s", g_RegModuleName, RegLocalInstance, regCohorts.RequestedPath.c_str(), LStatusToWstring(result).c_str());
+            Log(LogLevel_DebugBasic, L"[%s%d] RegGetValueW requested result=%s", g_RegModuleName, RegLocalInstance,  LStatusToWstring(result).c_str());
             return result;
         }
         else

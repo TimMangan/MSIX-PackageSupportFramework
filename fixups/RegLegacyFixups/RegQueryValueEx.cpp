@@ -160,12 +160,12 @@ LSTATUS __stdcall RegQueryValueExAFixup(
                 {
                     Log(LogLevel_Exception, L"[%s%d] RegGetQueryValueExA exception logging captured value.  May be ignored", g_RegModuleName, RegLocalInstance);
                 }
-                Log(LogLevel_DebugBasic, L"[%s%d] RegQueryValueExA requested path=%s result=%s", g_RegModuleName, RegLocalInstance, regCohorts.RedirectedPath.c_str(), LStatusToWstring(result).c_str());
+                Log(LogLevel_DebugBasic, L"[%s%d] RegQueryValueExA requested result=%s", g_RegModuleName, RegLocalInstance,LStatusToWstring(result).c_str());
                 return result;
             }
             else
             {
-                Log(LogLevel_DebugIntermediate, L"[%s%d] RegQueryValueExA requested path=%s result=%s", g_RegModuleName, RegLocalInstance, regCohorts.RedirectedPath.c_str(), LStatusToWstring(result).c_str());
+                Log(LogLevel_DebugIntermediate, L"[%s%d] RegQueryValueExA requested result=%s", g_RegModuleName, RegLocalInstance, LStatusToWstring(result).c_str());
             }
 
 #if TRYHKLM2HKCU
@@ -346,12 +346,12 @@ LSTATUS __stdcall RegQueryValueExWFixup(
             if (result == ERROR_SUCCESS)
             {
                 LogRegistryValueW(LogLevel_DebugIntermediate, lpDwType, lpData, lpcbData, L"RegQueryValueExW", RegLocalInstance);
-                Log(LogLevel_DebugBasic, L"[%s%d] RegQueryValueExW requested path=%s result=%s", g_RegModuleName, RegLocalInstance, regCohorts.RequestedPath.c_str(), LStatusToWstring(result).c_str());
+                Log(LogLevel_DebugBasic, L"[%s%d] RegQueryValueExW requested result=%s", g_RegModuleName, RegLocalInstance,  LStatusToWstring(result).c_str());
                 return result;
             }
             else
             {
-                Log(LogLevel_DebugIntermediate, L"[%s%d] RegQueryValueExW requested path=%s result=%s", g_RegModuleName, RegLocalInstance, regCohorts.RedirectedPath.c_str(), LStatusToWstring(result).c_str());
+                Log(LogLevel_DebugIntermediate, L"[%s%d] RegQueryValueExW requested result=%s", g_RegModuleName, RegLocalInstance, LStatusToWstring(result).c_str());
             }
 
 

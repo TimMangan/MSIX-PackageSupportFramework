@@ -45,7 +45,7 @@ LSTATUS __stdcall RegDeleteKeyFixup(
         }
         else
         {
-            Log(LogLevel_DebugBasic, "[%s%d] RegDeleteKey (W): key=0x%x Name=%s", g_RegModuleName, RegLocalInstance, key, subKey);
+            Log(LogLevel_DebugBasic, L"[%s%d] RegDeleteKey (W): key=0x%x Name=%s", g_RegModuleName, RegLocalInstance, key, subKey);
         }
         result = RegDeleteKeyImpl(key, subKey);
         auto functionResult = from_win32(result);
@@ -59,12 +59,12 @@ LSTATUS __stdcall RegDeleteKeyFixup(
                     std::string keypath = ReplaceAppRegistrySyntaxA(InterpretKeyPath(key) + "\\" + InterpretStringA(subKey));
                     if (keypath.find("InterpretKeyPath failure") != std::string::npos)
                     {
-                        Log(LogLevel_DebugIntermediate, L"[%s%d] RegDeleteKey (A): Path=%s", g_RegModuleName, RegLocalInstance, widen(keypath).c_str());
+                        Log(LogLevel_DebugIntermediate, L"[%s%d] RegDeleteKey: Path=%s", g_RegModuleName, RegLocalInstance, widen(keypath).c_str());
                         result = 0;
                     }
                     else
                     {
-                        Log(LogLevel_DebugIntermediate, L"[%s%d] RegDeleteKey (A): Path=%s", g_RegModuleName, RegLocalInstance, widen(keypath).c_str());
+                        Log(LogLevel_DebugIntermediate, L"[%s%d] RegDeleteKey: Path=%s", g_RegModuleName, RegLocalInstance, widen(keypath).c_str());
                         if (RegFixupFakeDelete(LogLevel_DebugIntermediate, keypath, RegLocalInstance) == true)
                         {
                             LogCallingModuleInstanceCommon(LogLevel_DebugIntermediate, g_RegModuleName, RegLocalInstance);
