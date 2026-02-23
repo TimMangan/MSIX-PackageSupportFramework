@@ -294,7 +294,7 @@ int launcher_main(PCWSTR args, int cmdShow) noexcept try
     {
         LogString(LogLevel_Launching, PsfLauncherName, 0, L"Shell Launch", exePath.c_str());
         LogString(LogLevel_Launching, PsfLauncherName, 0, L"\tArguments", exeArgString.c_str());
-        LogString(LogLevel_Launching, PsfLauncherName, 0, L"\\tWorking Directory: ", currentDirectory.c_str());
+        LogString(LogLevel_Launching, PsfLauncherName, 0, L"\tWorking Directory: ", currentDirectory.c_str());
         
         if (check_suffix_if(exeName, L".cmd"_isv) || check_suffix_if(exeName, L".bat"_isv))
         {
@@ -363,9 +363,14 @@ int launcher_main(PCWSTR args, int cmdShow) noexcept try
             wchar_t szBuf[1024];
             DWORD cbBufSize = sizeof(szBuf);
 
-            cbBufSize = sizeof(szBuf);  // resetting for second call...
             HRESULT hr = AssocQueryString(0, ASSOCSTR_EXECUTABLE,
                                           ext.c_str(), NULL, szBuf, &cbBufSize);
+            if (FAILED(hr))
+            {
+                cbBufSize = sizeof(szBuf);  // resetting for second call...
+                hr = AssocQueryString(0, ASSOCSTR_EXECUTABLE,
+                    ext.c_str(), NULL, szBuf, &cbBufSize);
+            }
             if (FAILED(hr))
             {
                 Log(LogLevel_Launching, L"[%s%d] Failed to get an FTA default command 0x0x", PsfLauncherName, 0, GetLastError());
@@ -392,34 +397,64 @@ int launcher_main(PCWSTR args, int cmdShow) noexcept try
                 }
                 else
                 {
-                    // We are going to assume this FTA takes the file as an unadorned argument.  Not perfect but should cover most of our cases.
-                    // In a pinch, one could add command line arguments to the json.  
-                    //      So the jason says executable: file.ext  and Arguments: /xxx
-                    //      We construct a command that is:    DefaultExeForFTA.exe /xxx  file.ext
-                    // Note: If there is no FTA, the query returns with OpenWith.exe, which means the user will be prompted with what they want to do.  
-                    //       That is probably the best we can do.
-                    Log(LogLevel_Launching, L"[%s%d] Default command for FTA is %ls, use StartMenuShellLaunchWrapperScript.ps1 to inject into container, if possible.", PsfLauncherName, 0, szBuf);
-                    std::wstring newcmd = szBuf;
-
-                    std::filesystem::path SSShellWrapper = packageRoot / L"StartMenuShellLaunchWrapperScript.ps1";
-                    if (!std::filesystem::exists(SSShellWrapper))
+                    Log(LogLevel_Launching, L"[%s%d] Default command for FTA is %ls", PsfLauncherName, 0, szBuf);
+                    if (_wcsnicmp(szBuf, L"C:\\Program Files\\WindowsApps\\", 28) == 0)
                     {
-                        // The wrapper isn't in this folder, so we should search for it elewhere in the package.
-                        for (const auto& file : std::filesystem::recursive_directory_iterator(packageRoot))
+                        Log(LogLevel_Launching, L"[%s%d] FTA default command is a different packaged app. Try command externally to bounce into their container", PsfLauncherName, 0);
+                        // This is the "Notepad" case.  It should work for not just notepad but any packaged app FTA as long as we are passing the long path to the file.
+                        // As we are coming from a shortcut in our package, that should be the case.
+                        MyProcThreadAttributeList m_AttributeListOutside = MyProcThreadAttributeList(true, false, false);
+                        std::wstring fullCommand = L"\"";
+                        fullCommand.append(szBuf);
+                        fullCommand.append(L"\" ");
+                        fullCommand.append(L"\"");
+                        fullCommand.append(exePath);
+                        fullCommand.append(L"\" ");
+                        fullCommand.append(exeArgString);
+                        DWORD flags = EXTENDED_STARTUPINFO_PRESENT;  // no need to start suspended since outside of our container.
+                        Log(LogLevel_Launching, L"[%s%d] full command to launch in another package=%s", PsfLauncherName, 0, fullCommand.c_str());
+                        hr = StartProcess(szBuf, fullCommand.data(), currentDirectory.c_str(), SW_SHOW, INFINITE, true, flags, m_AttributeListOutside.get());
+                        if (hr != ERROR_SUCCESS)
                         {
-                            if (file.path().filename().compare(SSShellWrapper.filename()) == 0)
-                            {
-                                SSShellWrapper = file.path();
-                                break;
-                            }
+                            Log(LogLevel_Launching, L"[%s%d] Error return from launching external packaged app from FTA 0x%x.", PsfLauncherName, 0, GetLastError());
+                        }
+                        else
+                        {
+                            Log(LogLevel_Launching, L"[%s%d] FTA packaged app was launched successfully.", PsfLauncherName, 0);
                         }
                     }
+                    else
+                    {
+                        // We are going to assume this FTA takes the file as an unadorned argument.  Not perfect but should cover most of our cases.
+                        // In a pinch, one could add command line arguments to the json.  
+                        //      So the jason says executable: file.ext  and Arguments: /xxx
+                        //      We construct a command that is:    DefaultExeForFTA.exe /xxx  file.ext
+                        // Note: If there is no FTA, the query returns with OpenWith.exe, which means the user will be prompted with what they want to do.  
+                        //       That is probably the best we can do.
+                        Log(LogLevel_Launching, L"[%s%d] Default command for FTA is a native command, use StartMenuShellLaunchWrapperScript.ps1 to inject into container, if possible.", PsfLauncherName, 0);
+                        std::wstring newcmd = szBuf;
 
-                    std::wstring wArgs = args;
-                    wArgs.append(L" \"");
-                    wArgs.append(exePath.c_str());
-                    wArgs.append(L"\"");
-                    powershellScriptRunner.RunOtherScript(SSShellWrapper.c_str(), currentDirectory.c_str(), newcmd.c_str(), wArgs.c_str(), false);
+                        std::filesystem::path SSShellWrapper = packageRoot / L"StartMenuShellLaunchWrapperScript.ps1";
+                        if (!std::filesystem::exists(SSShellWrapper))
+                        {
+                            // The wrapper isn't in this folder, so we should search for it elsewhere in the package.
+                            for (const auto& file : std::filesystem::recursive_directory_iterator(packageRoot))
+                            {
+                                if (file.path().filename().compare(SSShellWrapper.filename()) == 0)
+                                {
+                                    SSShellWrapper = file.path();
+                                    break;
+                                }
+                            }
+                        }
+
+                        std::wstring wArgs = args;
+                        wArgs.append(L" \"");
+                        wArgs.append(exePath.c_str());
+                        wArgs.append(L"\"");
+                        powershellScriptRunner.RunOtherScript(SSShellWrapper.c_str(), currentDirectory.c_str(), newcmd.c_str(), wArgs.c_str(), false);
+                        
+                    }
                 }
             }
         }
