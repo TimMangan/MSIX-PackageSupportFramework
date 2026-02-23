@@ -538,8 +538,10 @@ HANDLE __stdcall CreateFile2Fixup(
 
     if (fileName != nullptr)
     {
-        std::wstring LongDirectory = MakeLongPath(fileName);
-        retfinal = impl::CreateFile2(LongDirectory.c_str(), desiredAccess, shareMode, creationDisposition, createExParams);
+        // As in CreateFileFixup, we are not doing long path conversion here for now.
+        //std::wstring LongDirectory = MakeLongPath(fileName);
+        //retfinal = impl::CreateFile2(LongDirectory.c_str(), desiredAccess, shareMode, creationDisposition, createExParams);
+        retfinal = impl::CreateFile2(fileName, desiredAccess, shareMode, creationDisposition, createExParams);
     }
     else
     {

@@ -76,6 +76,8 @@ HANDLE __stdcall CreateFileFixup(_In_ const CharT* pathName,
             wPathName = AdjustSlashes(wPathName, dllInstance);
             wPathName = AdjustLocalPipeName(wPathName);
 
+            LogString(LogLevel_DebugBasic, g_MfrModuleName, dllInstance, L"CreateFileFixup for path", pathName);
+
             if (wPathName._Starts_with(L"\\\\?\\UNC"))
             {
                 wPathName = L"\\" + wPathName.substr(7);
@@ -92,10 +94,9 @@ HANDLE __stdcall CreateFileFixup(_In_ const CharT* pathName,
                 if (wPathName.compare(L"C:\\") ||
                     wPathName.compare(L"c:\\"))
                 {
-                    Log(LogLevel_DebugBasic, L"[%s%d] CreateFileFixup for native equivalent of AppVPackageDrive", g_MfrModuleName, dllInstance);
+                    Log(LogLevel_DebugBasic, L"[%s%d] CreateFileFixup for native equivalent of AppVPackageDrive %s", g_MfrModuleName, dllInstance, wPathName.c_str());
                 }
             }
-            LogString(LogLevel_DebugBasic, g_MfrModuleName, dllInstance, L"CreateFileFixup for path", pathName);
             Log(LogLevel_DebugBasic, L"[%s%d]        DesiredAccess %s", g_MfrModuleName, dllInstance, Log_DesiredAccess(desiredAccess).c_str());
             Log(LogLevel_DebugBasic, L"[%s%d]        ShareMode %s", g_MfrModuleName, dllInstance, Log_ShareMode(shareMode).c_str());
             Log(LogLevel_DebugBasic, L"[%s%d]        creationDisposition %s", g_MfrModuleName, dllInstance, Log_CreationDisposition(creationDisposition).c_str());
@@ -850,15 +851,16 @@ HANDLE __stdcall CreateFileFixup(_In_ const CharT* pathName,
 
     if (pathName != nullptr)
     {
-        std::wstring LongDirectory = MakeLongPath(widen(pathName));
-        if (LongDirectory.length() != widen(pathName).length())
-        {
-            retfinal = impl::CreateFileW(LongDirectory.c_str(), desiredAccess, shareMode, securityAttributes, creationDisposition, flagsAndAttributes, templateFile);
-        }
-        else
-        {
+        // We were making the paths use the long syntax, but that is causing problems with some apps, like those opening 'CONOUT$' for console access.
+        //std::wstring LongDirectory = MakeLongPath(widen(pathName));
+        //if (LongDirectory.length() != widen(pathName).length())
+        //{
+        //    retfinal = impl::CreateFileW(LongDirectory.c_str(), desiredAccess, shareMode, securityAttributes, creationDisposition, flagsAndAttributes, templateFile);
+        //}
+        //else
+        //{
             retfinal = impl::CreateFile(pathName, desiredAccess, shareMode, securityAttributes, creationDisposition, flagsAndAttributes, templateFile);
-        }
+        //}
     }
     else
     {
