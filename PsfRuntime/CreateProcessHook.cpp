@@ -14,6 +14,7 @@
 // NOTE: Other CreateProcess variants (e.g. CreateProcessAsUser[AW]) aren't currently detoured as the Detours framework
 //       does not make it easy to accomplish that at this time.
 //
+#define PATCH_NOEXE_IN_CMDLINE 1
 
 #include <string_view>
 #include <vector>
@@ -94,7 +95,14 @@ USHORT GetProcessBitness(Json_Debug_Levels debugLevel, HANDLE hProcess, const wc
         {
             return 0;
         }
-        Log(debugLevel, L"[%s%d]\tProcess Handle=0x%x Machine=0x%x MachineNative=0x%x", moduleName, instance, hProcess, pProcessMachine, pMachineNative);
+        if (hProcess == GetCurrentProcess())
+        {
+            Log(debugLevel, L"[%s%d]\tCurrent Process Handle Machine=0x%x MachineNative=0x%x", moduleName, instance, pProcessMachine, pMachineNative);
+        }
+        else
+        {
+            Log(debugLevel, L"[%s%d]\tProcess Handle=0x%x Machine=0x%x MachineNative=0x%x", moduleName, instance, hProcess, pProcessMachine, pMachineNative);
+        }
         if (pProcessMachine == IMAGE_FILE_MACHINE_UNKNOWN)
         {
             if (pMachineNative == IMAGE_FILE_MACHINE_AMD64)
@@ -268,6 +276,390 @@ std::wstring ExtractArgs(LPWSTR commandline)
     return args;
 }
 
+std::string  FixQuotesInCmdExe(Json_Debug_Levels debugRequestLevel, const wchar_t* moduleName, DWORD Instance, std::string commandline)
+{
+    std::string AltCommandLine = commandline;
+    // Fix for certian apps that launch cmd.exe with /c but put entire remaining command in quotes, causing cmd.exe to fail to parse it correctly
+    // ex:   cmd.exe /c "somecommand arg1 arg2"  we want to change to   cmd.exe /c "somecommand" arg1 arg2
+    // ex:   cmd.exe /c "C:\path\to\somecommand arg1 arg2"  we want to change to   cmd.exe /c "C:\path\to\somecommand" arg1 arg2
+    // ex:   cmd.exe /c 'somecommand arg1 arg2'  we want to change to   cmd.exe /c 'somecommand' arg1 arg2
+    // ex:   cmd.exe /c "C:\path\to\folder with spaces\somecommand.exe" arg1 arg2  we want to change to   cmd.exe /c "C:\path\to\folder with spaces\somecommand.exe" arg1 arg2
+    // ex:   "cmd.exe" /b /c "somecommand arg1 arg2"  we want to change to   "cmd.exe" /c "somecommand" arg1 arg2
+    // ex:   cmd.exe /c ""c:\path\to\folder with spaces\commandcommand.exe" arg1 arg2"  we want to change to   cmd.exe /c ""c:\path\to\folder with spaces\commandcommand.exe" arg1 arg2" 
+
+    size_t CKIndex = std::string::npos;  // Index of the space following /c or /C or /k or /K
+    size_t FirstQuoteStartAfterCKIndex = std::string::npos;  // Index of first quote after /c or /C or /k or /K
+    size_t FirstQuoteEndIndex = std::string::npos;  // Index of last quote in the command line
+    size_t InnerQuoteStartIndex = std::string::npos; // Index of start of second quote in middle, if present
+    size_t InnerQuoteEndIndex = std::string::npos; // Index of end of second quote in middle, if present
+
+    Log(debugRequestLevel, L"\t[%s%d] CreateProcessFixupA: FixQuotesInCmdExe Checking for cmd adjustments", moduleName, Instance);
+
+    CKIndex = AltCommandLine.find(" /c ");
+    if (CKIndex == std::string::npos)
+    {
+        CKIndex = AltCommandLine.find(" /C ");
+        if (CKIndex == std::string::npos)
+        {
+            CKIndex = AltCommandLine.find(" /k ");
+            if (CKIndex == std::string::npos)
+            {
+                AltCommandLine.find(" /k ");
+            }
+        }
+    }
+    
+    if (CKIndex != std::string::npos)
+    {
+        CKIndex += 4; // move past /c or /C or /k or /K
+        Log(debugRequestLevel, L"\t[%s%d] CreateProcessFixupA: FixQuotesInCmdExe have /c or /k", moduleName, Instance);
+        FirstQuoteStartAfterCKIndex = AltCommandLine.find_first_of("\"", CKIndex);
+        if (FirstQuoteStartAfterCKIndex != std::string::npos)
+        {
+            // Double Quotes on the outer
+            FirstQuoteEndIndex = AltCommandLine.find_last_of("\"");
+            if (FirstQuoteEndIndex != std::string::npos)
+            {
+                InnerQuoteStartIndex = AltCommandLine.substr(0, FirstQuoteEndIndex).find_first_of("\"", FirstQuoteStartAfterCKIndex + 1);
+                if (InnerQuoteStartIndex != std::string::npos)
+                {
+                    // Double quotes on the Inner
+                    InnerQuoteEndIndex = AltCommandLine.substr(0, FirstQuoteEndIndex).find_first_of("\"", InnerQuoteStartIndex + 1);
+                    if (InnerQuoteEndIndex == std::string::npos)
+                    {
+                        //Mismatch in number quotes; don't try to fix
+                        Log(debugRequestLevel, L"\t[%s%d] CreateProcessFixupA: FixQuotesInCmdExe quote mismatch case 1", moduleName, Instance);
+                        return AltCommandLine;
+                    }
+                }
+                else
+                {
+                    InnerQuoteStartIndex = AltCommandLine.substr(0, FirstQuoteEndIndex).find_first_of("\'", FirstQuoteStartAfterCKIndex + 1);
+                    if (InnerQuoteStartIndex != std::string::npos)
+                    {
+                        // Single quotes on the Inner
+                        InnerQuoteEndIndex = AltCommandLine.substr(0, FirstQuoteEndIndex).find_first_of("\'", InnerQuoteStartIndex + 1);
+                        if (InnerQuoteEndIndex == std::string::npos)
+                        {
+                            //Mismatch in number quotes; don't try to fix
+                            Log(debugRequestLevel, L"\t[%s%d] CreateProcessFixupA: FixQuotesInCmdExe quote mismatch case 2", moduleName, Instance);
+                            return AltCommandLine;
+                        }
+                    }
+                    else
+                    {
+                        // no Inner quotes, we can fix if needed
+                    }
+                }
+            }
+            else
+            { 
+                // Mismatch in number of quotes; don't try to fix
+                Log(debugRequestLevel, L"\t[%s%d] CreateProcessFixupA: FixQuotesInCmdExe quote mismatch case 3", moduleName, Instance);
+                return AltCommandLine;
+            }
+        }
+        else
+        { 
+            FirstQuoteStartAfterCKIndex = AltCommandLine.find_first_of("\'", CKIndex);
+            if (FirstQuoteStartAfterCKIndex != std::string::npos)
+            {
+                // Single Quotes on the outer
+                FirstQuoteEndIndex = AltCommandLine.find_last_of("\'");
+                if (FirstQuoteEndIndex != std::string::npos)
+                {
+                    InnerQuoteStartIndex = AltCommandLine.substr(0, FirstQuoteEndIndex).find_first_of("\"", FirstQuoteStartAfterCKIndex + 1);
+                    if (InnerQuoteStartIndex != std::string::npos)
+                    {
+                        // Double quotes on the Inner
+                        InnerQuoteEndIndex = AltCommandLine.substr(0, FirstQuoteEndIndex).find_first_of("\"", InnerQuoteStartIndex + 1);
+                        if (InnerQuoteEndIndex == std::string::npos)
+                        {
+                            //Mismatch in number quotes; don't try to fix
+                            Log(debugRequestLevel, L"\t[%s%d] CreateProcessFixupA: FixQuotesInCmdExe quote mismatch case 4", moduleName, Instance);
+                            return AltCommandLine;
+                        }
+                    }
+                    else
+                    {
+                        InnerQuoteStartIndex = AltCommandLine.substr(0, FirstQuoteEndIndex).find_first_of("\'", FirstQuoteStartAfterCKIndex + 1);
+                        if (InnerQuoteStartIndex != std::string::npos)
+                        {
+                            // Single quotes on the Inner
+                            InnerQuoteEndIndex = AltCommandLine.substr(0, FirstQuoteEndIndex).find_first_of("\'", InnerQuoteStartIndex + 1);
+                            if (InnerQuoteEndIndex == std::string::npos)
+                            {
+                                //Mismatch in number quotes; don't try to fix
+                                Log(debugRequestLevel, L"\t[%s%d] CreateProcessFixupA: FixQuotesInCmdExe quote mismatch case 5", moduleName, Instance);
+                                return AltCommandLine;
+                            }
+                        }
+                        else
+                        {
+                            // no Inner quotes, we can fix if needed
+                        }
+                    }
+                }
+                else
+                {
+                    // Mismatch in number of quotes; don't try to fix
+                    Log(debugRequestLevel, L"\t[%s%d] CreateProcessFixupA: FixQuotesInCmdExe quote mismatch case 6", moduleName, Instance);
+                    return AltCommandLine;
+                }
+            }
+            else
+            {
+                // No quotes found after /c or /k, nothing to fix
+                Log(debugRequestLevel, L"\t[%s%d] CreateProcessFixupA: FixQuotesInCmdExe no quotes after /c or /k; skip adjustment", moduleName, Instance);
+                return AltCommandLine;
+            }
+        }
+
+        Log(debugRequestLevel, L"\t[%s%d] CreateProcessFixupA: FixQuotesInCmdExe mid OuterStart=%d OuterEnd=%d", moduleName, Instance, FirstQuoteStartAfterCKIndex, FirstQuoteEndIndex);
+        if (InnerQuoteStartIndex != std::wstring::npos)
+        {
+            Log(debugRequestLevel, L"\t[%s%d] CreateProcessFixupW: FixQuotesInCmdExe mid InnerStart=%d InnerEnd=%d", moduleName, Instance, InnerQuoteStartIndex, InnerQuoteEndIndex);
+        }
+
+        if (FirstQuoteStartAfterCKIndex != std::string::npos && InnerQuoteStartIndex != std::string::npos)
+        {
+            // There are inner quotes, so likely already correct
+            Log(debugRequestLevel, L"\t[%s%d] CreateProcessFixupA: FixQuotesInCmdExe two sets of quotes after /c or /k; skip adjustment", moduleName, Instance);
+            return AltCommandLine;;
+        }
+
+        if (FirstQuoteStartAfterCKIndex != std::string::npos && InnerQuoteStartIndex == std::string::npos)
+        {
+            // There is only one set of quotes, so we may need to fix
+            if (AltCommandLine.substr(FirstQuoteEndIndex - 4, 4).compare(".exe") == 0 ||
+                AltCommandLine.substr(FirstQuoteEndIndex - 4, 4).compare(".EXE") == 0)
+            {
+                // The quoted part ends with .exe, so likely correct already
+                Log(debugRequestLevel, L"\t[%s%d] CreateProcessFixupA: FixQuotesInCmdExe One set of quotes ends in exe; skip adjustment", moduleName, Instance);
+                return AltCommandLine;
+            }
+            // Look for next space after first quote
+            size_t NextSpaceIndex = AltCommandLine.find_first_of(" ", FirstQuoteStartAfterCKIndex +1);
+            if (NextSpaceIndex != std::string::npos)
+            {
+                //NextSpaceIndex += FirstQuoteIndex;
+                Log(debugRequestLevel, L"\t[%s%d] CreateProcessFixupA: FixQuotesInCmdExe mid NextSpaceIndex=%d", moduleName, Instance, NextSpaceIndex);
+
+                // There is a space inside the quotes, so likely marks the end of the program to be run and we should move the quote here.
+                if (NextSpaceIndex < InnerQuoteStartIndex)
+                {
+                    std::string extractedCmd = AltCommandLine.substr(0, FirstQuoteStartAfterCKIndex); // everything before the first quote after the /c or /k
+                    std::string extractedOuterQuoteMark = AltCommandLine.substr(FirstQuoteStartAfterCKIndex, 1); // single or double quote character
+                    std::string extracted2ndCmd = AltCommandLine.substr(FirstQuoteStartAfterCKIndex + 1, NextSpaceIndex - (FirstQuoteStartAfterCKIndex +1)); // without quote, but without space
+                    std::string extractedArgs = AltCommandLine.substr(NextSpaceIndex, FirstQuoteEndIndex - NextSpaceIndex); // space to just before quote
+                    std::string remainder = "";
+                    if (AltCommandLine.length() > InnerQuoteStartIndex + 1)
+                    {
+                        AltCommandLine.substr(InnerQuoteStartIndex + 1); // rest of line if there is any
+                    }
+                    AltCommandLine = extractedCmd + extractedOuterQuoteMark + extracted2ndCmd + extractedOuterQuoteMark + extractedArgs + remainder;
+                    Log(debugRequestLevel, L"\t[%s%d] CreateProcessFixupA: FixQuotesInCmdExe adjusted is %S", moduleName, Instance, AltCommandLine.c_str());
+                    return AltCommandLine;
+                }
+            }
+            else
+            {
+                Log(debugRequestLevel, L"\t[%s%d] CreateProcessFixupA: FixQuotesInCmdExe One set of quotes with no spaces in-between; skip adjustment", moduleName, Instance);
+                return AltCommandLine;
+            }
+        }
+    }
+    Log(debugRequestLevel, L"\t[%s%d] CreateProcessFixupA: FixQuotesInCmdExe Fall through; skip adjustment", moduleName, Instance);
+    return AltCommandLine;
+}
+std::wstring  FixQuotesInCmdExe(Json_Debug_Levels debugRequestLevel, const wchar_t* moduleName, DWORD Instance, std::wstring commandline)
+{
+    std::wstring AltCommandLine = commandline;
+    // Fix for certian apps that launch cmd.exe with /c but put entire remaining command in quotes, causing cmd.exe to fail to parse it correctly
+    // ex:   cmd.exe /c "somecommand arg1 arg2"  we want to change to   cmd.exe /c "somecommand" arg1 arg2
+    // ex:   cmd.exe /c "C:\path\to\somecommand arg1 arg2"  we want to change to   cmd.exe /c "C:\path\to\somecommand" arg1 arg2
+    // ex:   cmd.exe /c 'somecommand arg1 arg2'  we want to change to   cmd.exe /c 'somecommand' arg1 arg2
+    // ex:   cmd.exe /c "C:\path\to\folder with spaces\somecommand.exe" arg1 arg2  we want to change to   cmd.exe /c "C:\path\to\folder with spaces\somecommand.exe" arg1 arg2
+    // ex:   
+    size_t CKIndex = std::wstring::npos;  // Index of the space following /c or /C or /k or /K
+    size_t FirstQuoteStartAfterCKIndex = std::wstring::npos;  // Index of first quote after /c or /C or /k or /K
+    size_t FirstQuoteEndIndex = std::wstring::npos;  // Index of end quote in the command line
+    size_t InnerQuoteStartIndex = std::wstring::npos; // Index of start of second quote in middle, if present
+    size_t InnerQuoteEndIndex = std::wstring::npos; // Index of end of second quote in middle, if present
+
+    Log(debugRequestLevel, L"\t[%s%d] CreateProcessFixupW: FixQuotesInCmdExe Checking for cmd adjustments", moduleName, Instance);
+
+    CKIndex = AltCommandLine.find(L" /c ");
+    if (CKIndex == std::wstring::npos)
+    {
+        CKIndex = AltCommandLine.find(L" /C ");
+        if (CKIndex == std::wstring::npos)
+        {
+            CKIndex = AltCommandLine.find(L" /k ");
+            if (CKIndex == std::wstring::npos)
+            {
+                AltCommandLine.find(L" /k ");
+            }
+        }
+    }
+    if (CKIndex != std::wstring::npos)
+    {
+        CKIndex += 4; // move index to the space after /c or /k
+        Log(debugRequestLevel, L"\t[%s%d] CreateProcessFixupW: FixQuotesInCmdExe have /c or /k", moduleName, Instance);
+        FirstQuoteStartAfterCKIndex = AltCommandLine.find_first_of(L"\"", CKIndex);
+        if (FirstQuoteStartAfterCKIndex != std::string::npos)
+        {
+            // Double Quotes on the outer
+            FirstQuoteEndIndex = AltCommandLine.find_last_of(L"\"");
+            if (FirstQuoteEndIndex != std::string::npos)
+            {
+                InnerQuoteStartIndex = AltCommandLine.substr(0, FirstQuoteEndIndex).find_first_of(L"\"", FirstQuoteStartAfterCKIndex + 1);
+                if (InnerQuoteStartIndex != std::string::npos)
+                {
+                    // Double quotes on the Inner
+                    InnerQuoteEndIndex = AltCommandLine.substr(0, FirstQuoteEndIndex).find_first_of(L"\"", InnerQuoteStartIndex + 1);
+                    if (InnerQuoteEndIndex == std::string::npos)
+                    {
+                        //Mismatch in number quotes; don't try to fix
+                        Log(debugRequestLevel, L"\t[%s%d] CreateProcessFixupW: FixQuotesInCmdExe quote mismatch case 1", moduleName, Instance);
+                        return AltCommandLine;
+                    }
+                }
+                else
+                {
+                    InnerQuoteStartIndex = AltCommandLine.substr(0, FirstQuoteEndIndex).find_first_of(L"\'", FirstQuoteStartAfterCKIndex + 1);
+                    if (InnerQuoteStartIndex != std::string::npos)
+                    {
+                        // Single quotes on the Inner
+                        InnerQuoteEndIndex = AltCommandLine.substr(0, FirstQuoteEndIndex).find_first_of(L"\'", InnerQuoteStartIndex + 1);
+                        if (InnerQuoteEndIndex == std::string::npos)
+                        {
+                            //Mismatch in number quotes; don't try to fix
+                            Log(debugRequestLevel, L"\t[%s%d] CreateProcessFixupW: FixQuotesInCmdExe quote mismatch case 2", moduleName, Instance);
+                            return AltCommandLine;
+                        }
+                    }
+                    else
+                    {
+                        // no Inner quotes, we can fix if needed
+                    }
+                }
+            }
+            else
+            {
+                // Mismatch in number of quotes; don't try to fix
+                Log(debugRequestLevel, L"\t[%s%d] CreateProcessFixupW: FixQuotesInCmdExe quote mismatch case 3", moduleName, Instance);
+                return AltCommandLine;
+            }
+        }
+        else
+        {
+            FirstQuoteStartAfterCKIndex = AltCommandLine.find_first_of(L"\'", CKIndex);
+            if (FirstQuoteStartAfterCKIndex != std::string::npos)
+            {
+                // Single Quotes on the outer
+                FirstQuoteEndIndex = AltCommandLine.find_last_of(L"\'");
+                if (FirstQuoteEndIndex != std::string::npos)
+                {
+                    InnerQuoteStartIndex = AltCommandLine.substr(0, FirstQuoteEndIndex).find_first_of(L"\"", FirstQuoteStartAfterCKIndex + 1);
+                    if (InnerQuoteStartIndex != std::string::npos)
+                    {
+                        // Double quotes on the Inner
+                        InnerQuoteEndIndex = AltCommandLine.substr(0, FirstQuoteEndIndex).find_first_of(L"\"", InnerQuoteStartIndex + 1);
+                        if (InnerQuoteEndIndex == std::string::npos)
+                        {
+                            //Mismatch in number quotes; don't try to fix
+                            Log(debugRequestLevel, L"\t[%s%d] CreateProcessFixupW: FixQuotesInCmdExe quote mismatch case 4", moduleName, Instance);
+                            return AltCommandLine;
+                        }
+                    }
+                    else
+                    {
+                        InnerQuoteStartIndex = AltCommandLine.substr(0, FirstQuoteEndIndex).find_first_of(L"\'", FirstQuoteStartAfterCKIndex + 1);
+                        if (InnerQuoteStartIndex != std::string::npos)
+                        {
+                            // Single quotes on the Inner
+                            InnerQuoteEndIndex = AltCommandLine.substr(0, FirstQuoteEndIndex).find_first_of(L"\'", InnerQuoteStartIndex + 1);
+                            if (InnerQuoteEndIndex == std::string::npos)
+                            {
+                                //Mismatch in number quotes; don't try to fix
+                                Log(debugRequestLevel, L"\t[%s%d] CreateProcessFixupW: FixQuotesInCmdExe quote mismatch case 5", moduleName, Instance);
+                                return AltCommandLine;
+                            }
+                        }
+                        else
+                        {
+                            // no Inner quotes, we can fix if needed
+                        }
+                    }
+                }
+                else
+                {
+                    // Mismatch in number of quotes; don't try to fix
+                    Log(debugRequestLevel, L"\t[%s%d] CreateProcessFixupW: FixQuotesInCmdExe quote mismatch case 6", moduleName, Instance);
+                    return AltCommandLine;
+                }
+            }
+            else
+            {
+                // No quotes found after /c or /k, nothing to fix
+                Log(debugRequestLevel, L"\t[%s%d] CreateProcessFixupW: FixQuotesInCmdExe no quotes after /c or /k", moduleName, Instance);
+                return AltCommandLine;
+            }
+        }
+
+        Log(debugRequestLevel, L"\t[%s%d] CreateProcessFixupW: FixQuotesInCmdExe mid OuterStart=%d OuterEnd=%d", moduleName, Instance, FirstQuoteStartAfterCKIndex, FirstQuoteEndIndex);
+        if (InnerQuoteStartIndex != std::wstring::npos)
+        {
+            Log(debugRequestLevel, L"\t[%s%d] CreateProcessFixupW: FixQuotesInCmdExe mid InnerStart=%d InnerEnd=%d", moduleName, Instance, InnerQuoteStartIndex, InnerQuoteEndIndex);
+        }
+
+        if (FirstQuoteStartAfterCKIndex != std::string::npos && InnerQuoteStartIndex == std::string::npos)
+        {
+            // There is only one set of quotes, so we may need to fix
+            if (AltCommandLine.substr(FirstQuoteEndIndex - 4, 4).compare(L".exe") == 0 ||
+                AltCommandLine.substr(FirstQuoteEndIndex - 4, 4).compare(L".EXE") == 0)
+            {
+                // The quoted part ends with .exe, so likely correct already
+                Log(debugRequestLevel, L"\t[%s%d] CreateProcessFixupW: FixQuotesInCmdExe One set of quotes ends in exe; skip adjustment", moduleName, Instance);
+                return AltCommandLine;
+            }
+            // Look for next space after first quote
+            size_t NextSpaceIndex = AltCommandLine.find_first_of(L" ", FirstQuoteStartAfterCKIndex + 1);
+            if (NextSpaceIndex != std::string::npos)
+            {
+                //NextSpaceIndex += FirstQuoteIndex;
+                Log(debugRequestLevel, L"\t[%s%d] CreateProcessFixupW: FixQuotesInCmdExe mid NextSpaceIndex=%d", moduleName, Instance, NextSpaceIndex);
+
+                // There is a space inside the quotes, so likely marks the end of the program to be run and we should move the quote here.
+                if (NextSpaceIndex < InnerQuoteStartIndex)
+                {
+                    std::wstring extractedCmd = AltCommandLine.substr(0, FirstQuoteStartAfterCKIndex); // everything before the first quote after the /c or /k
+                    std::wstring extractedOuterQuoteMark = AltCommandLine.substr(FirstQuoteStartAfterCKIndex, 1); // single or double quote character
+                    std::wstring extracted2ndCmd = AltCommandLine.substr(FirstQuoteStartAfterCKIndex + 1, NextSpaceIndex - (FirstQuoteStartAfterCKIndex + 1)); // without quote, but without space
+                    std::wstring extractedArgs = AltCommandLine.substr(NextSpaceIndex, FirstQuoteEndIndex - NextSpaceIndex); // space to just before quote
+                    std::wstring remainder = L"";
+                    if (AltCommandLine.length() > InnerQuoteStartIndex + 1)
+                    {
+                        AltCommandLine.substr(InnerQuoteStartIndex + 1); // rest of line if there is any
+                    }
+                    AltCommandLine = extractedCmd + extractedOuterQuoteMark + extractedOuterQuoteMark + extracted2ndCmd + extractedOuterQuoteMark + extractedArgs + extractedOuterQuoteMark + remainder;
+                    Log(debugRequestLevel, L"\t[%s%d] CreateProcessFixupW: FixQuotesInCmdExe adjusted is %s", moduleName, Instance, AltCommandLine.c_str());
+                    return AltCommandLine;
+                }
+            }
+            else
+            {
+                Log(debugRequestLevel, L"\t[%s%d] CreateProcessFixupW: FixQuotesInCmdExe One set of quotes with no spaces in-between; skip adjustment", moduleName, Instance);
+                return AltCommandLine;
+            }
+        }
+    }
+    Log(debugRequestLevel, L"\t[%s%d] CreateProcessFixupW: FixQuotesInCmdExe Fall through; skip adjustment", moduleName, Instance);
+    return AltCommandLine;
+}
+
+
 void LogCreationFlags(Json_Debug_Levels debugRequestLevel, const wchar_t* moduleName, DWORD Instance, DWORD CreationFlags, LPCWSTR InterceptName)
 {
 
@@ -320,6 +712,53 @@ void LogCreationFlags(Json_Debug_Levels debugRequestLevel, const wchar_t* module
     }
     Log(debugRequestLevel, form.c_str(), moduleName, Instance, CreationFlags);
 }
+
+void LogStartupInfoFlags(Json_Debug_Levels debugRequestLevel, const wchar_t* moduleName, DWORD Instance, LPCWSTR InterceptName, STARTUPINFOEX* startupInfo)
+{
+    std::wstring form;
+    form = L"\t[%s%d]\t";
+    form.append(InterceptName);
+    form.append(L": StartupInfo.dwFlags = 0x % x = ");
+    if (startupInfo->StartupInfo.dwFlags == 0)
+    {
+        form.append(L"{none}");
+    }
+    else
+    {
+        if ((startupInfo->StartupInfo.dwFlags & STARTF_FORCEONFEEDBACK) != 0)
+            form.append(L"STARTF_FORCEONFEEDBACK ");
+        if ((startupInfo->StartupInfo.dwFlags & STARTF_FORCEOFFFEEDBACK) != 0)
+            form.append(L"STARTF_FORCEOFFFEEDBACK ");
+        if ((startupInfo->StartupInfo.dwFlags & STARTF_PREVENTPINNING) != 0)
+            form.append(L"STARTF_PREVENTPINNING ");
+        if ((startupInfo->StartupInfo.dwFlags & STARTF_RUNFULLSCREEN) != 0)
+            form.append(L"STARTF_RUNFULLSCREEN ");
+        if ((startupInfo->StartupInfo.dwFlags & STARTF_TITLEISAPPID) != 0)
+            form.append(L"STARTF_TITLEISAPPID ");
+        if ((startupInfo->StartupInfo.dwFlags & STARTF_TITLEISLINKNAME) != 0)
+            form.append(L"STARTF_TITLEISLINKNAME ");
+        if ((startupInfo->StartupInfo.dwFlags & STARTF_UNTRUSTEDSOURCE) != 0)
+            form.append(L"STARTF_UNTRUSTEDSOURCE ");
+        if ((startupInfo->StartupInfo.dwFlags & STARTF_USECOUNTCHARS) != 0)
+            form.append(L"STARTF_USECOUNTCHARS ");
+        if ((startupInfo->StartupInfo.dwFlags & STARTF_USEFILLATTRIBUTE) != 0)
+            form.append(L"STARTF_USEFILLATTRIBUTE ");
+        if ((startupInfo->StartupInfo.dwFlags & STARTF_USEHOTKEY) != 0)
+            form.append(L"STARTF_USEHOTKEY ");
+        if ((startupInfo->StartupInfo.dwFlags & STARTF_USEPOSITION) != 0)
+            form.append(L"STARTF_USEPOSITION ");
+        if ((startupInfo->StartupInfo.dwFlags & STARTF_USESHOWWINDOW) != 0)
+            form.append(L"STARTF_USESHOWWINDOW ");
+        if ((startupInfo->StartupInfo.dwFlags & STARTF_USESIZE) != 0)
+            form.append(L"STARTF_USESIZE ");
+        if ((startupInfo->StartupInfo.dwFlags & STARTF_USESTDHANDLES) != 0)
+            form.append(L"STARTF_USESTDHANDLES ");
+    }
+    Log(debugRequestLevel, form.c_str(), moduleName, Instance, startupInfo->StartupInfo.dwFlags);
+
+}
+
+
 
 auto CreateProcessImpl = psf::detoured_string_function(&::CreateProcessA, &::CreateProcessW);
 
@@ -417,6 +856,34 @@ BOOL WINAPI CreateProcessFixup(
 
         LogString(LogLevel_Launching, g_PsfRunTimeName, CreateProcessInstance, L"CreateProcessFixup: commandLine", commandLine);
 
+        std::string AltCommandLineA; 
+        std::wstring AltCommandLineW;
+        if constexpr (psf::is_ansi<CharT>)
+        {
+            AltCommandLineA = commandLine;            
+            Log(LogLevel_DebugMaximum, L" [%s%d] CreateProcessFixupA: commandLine length=%d", g_PsfRunTimeName, CreateProcessInstance,AltCommandLineA.length());
+
+            if (findStringIC(commandLine, "cmd.exe") ||
+                findStringIC(commandLine, "\"cmd.exe\""))
+            {
+                //AltCommandLineA = FixQuotesInCmdExe(LogLevel_DebugMaximum, g_PsfRunTimeName, CreateProcessInstance, commandLine);
+                //LogString(LogLevel_Launching, g_PsfRunTimeName, CreateProcessInstance, L"CreateProcessFixupA: Possibly fixed cmdline=", AltCommandLineA.c_str());
+                //commandLine = const_cast<LPSTR>(AltCommandLineA.c_str()); // giving this a shot as we are not changing the length of the string
+            }
+        }
+        else
+        {
+            AltCommandLineW = commandLine;
+            Log(LogLevel_DebugMaximum, L" [%s%d] CreateProcessFixupW: commandLine length=%d", g_PsfRunTimeName, CreateProcessInstance, AltCommandLineW.length());
+            if (findStringIC(commandLine, L"cmd.exe") ||
+                findStringIC(commandLine, L"\"cmd.exe\""))
+            {
+                //AltCommandLineW = FixQuotesInCmdExe(LogLevel_DebugMaximum, g_PsfRunTimeName, CreateProcessInstance, commandLine);
+                //LogString(LogLevel_Launching, g_PsfRunTimeName, CreateProcessInstance, L"CreateProcessFixupW: Possibly fixed cmdline=", AltCommandLineW.c_str());
+                //commandLine = const_cast<LPWSTR>(AltCommandLineW.c_str());  // giving this a shot as we are not changing the length of the string
+            }
+        }
+
         LogCreationFlags(LogLevel_DebugIntermediate, g_PsfRunTimeName, CreateProcessInstance, creationFlags, L"CreateProcessFixup");
         if (creationFlags & CREATE_SUSPENDED)
         {
@@ -424,6 +891,10 @@ BOOL WINAPI CreateProcessFixup(
             OriginalCreationFlagSpecified_Suspended = true;
         }
 
+        if (MyReplacementStartupInfo != NULL)
+        {
+            LogStartupInfoFlags(LogLevel_DebugIntermediate, g_PsfRunTimeName, CreateProcessInstance, L"CreateProcessFixup", MyReplacementStartupInfo);
+        }
         bool LaunchNormallyButIntercept = false;
 #if FAILED_TECHNIQUE_TO_USE_SUPPLIED_LIST
         // If the request already has extended startup information, it turns out that we don't know how to add
@@ -559,7 +1030,13 @@ BOOL WINAPI CreateProcessFixup(
             MyProcThreadAttributeList* partialList = new MyProcThreadAttributeList(true, true, false);
             ///MyProcThreadAttributeList* protList = new MyProcThreadAttributeList(false, true, true);
             ///MyProcThreadAttributeList* noList = new MyProcThreadAttributeList(false, true, false);
-
+            
+            // Create a startupinfo structure to use if the caller did not provide one
+            DWORD startupFlags = STARTF_USESHOWWINDOW;
+            if ((creationFlags & CREATE_NO_WINDOW) != 0)
+            {
+                startupFlags = 0;
+            }
             STARTUPINFOEXW startupInfoExW =
             {
                 {
@@ -574,8 +1051,14 @@ BOOL WINAPI CreateProcessFixup(
                 , 0 // dwXCountChar
                 , 0 // dwYCountChar
                 , 0 // dwFillAttribute
-                , STARTF_USESHOWWINDOW // dwFlags
+                , startupFlags // dwFlags
                 , 0
+                // we were missing these???
+                , 0
+                , nullptr
+                , nullptr
+                , nullptr
+                , nullptr
                 }
             };
             STARTUPINFOEXA startupInfoExA =
@@ -592,8 +1075,14 @@ BOOL WINAPI CreateProcessFixup(
                 , 0 // dwXCountChar
                 , 0 // dwYCountChar
                 , 0 // dwFillAttribute
-                , STARTF_USESHOWWINDOW // dwFlags
+                , startupFlags // dwFlags
                 , 0 // wShowWindow
+                // we were missing these???
+                , 0
+                , nullptr
+                , nullptr
+                , nullptr
+                , nullptr
                 }
             };
 
@@ -704,17 +1193,17 @@ BOOL WINAPI CreateProcessFixup(
                         else
                         {
                             Log(LogLevel_DebugIntermediate, L"\t[%s%d] CreateProcessFixupA has existing extended attribute list, fix it up.", g_PsfRunTimeName, CreateProcessInstance);
-                            Log(LogLevel_DebugIntermediate, L"\t[%s%d] CreateProcessFixupA supplied attribute list", g_PsfRunTimeName, CreateProcessInstance);
+                            Log(LogLevel_DebugIntermediate, L"\t[%s%d] CreateProcessFixupA supplied attribute list:", g_PsfRunTimeName, CreateProcessInstance);
                             DumpStartupAttributes(LogLevel_DebugIntermediate, reinterpret_cast<SIH_PROC_THREAD_ATTRIBUTE_LIST*>(si->lpAttributeList), g_PsfRunTimeName, CreateProcessInstance);
                             if ((((SIH_PROC_THREAD_ATTRIBUTE_LIST*)(si->lpAttributeList))->dwflags & SIH_PROC_THREAD_ATTRIBUTE_DESKTOP_APP_POLICY) != 0)
                             {
-                                Log(LogLevel_DebugIntermediate, L"\t[%s%d] CreateProcessFixupA updated existing list", g_PsfRunTimeName, CreateProcessInstance);
+                                Log(LogLevel_DebugIntermediate, L"\t[%s%d] CreateProcessFixupA existing list has policy already", g_PsfRunTimeName, CreateProcessInstance);
                                 partialList = new MyProcThreadAttributeList(reinterpret_cast<SIH_PROC_THREAD_ATTRIBUTE_LIST*>(si->lpAttributeList), true, true, LogLevel_DebugMaximum, g_PsfRunTimeName, CreateProcessInstance);
                                 si->lpAttributeList = partialList->get();
                             }
                             else
                             {
-                                Log(LogLevel_DebugIntermediate, L"\t[%s%d] CreateProcessFixupA unable to add (currently), replace list", g_PsfRunTimeName, CreateProcessInstance);
+                                Log(LogLevel_DebugIntermediate, L"\t[%s%d] CreateProcessFixupA must replace list to add policy", g_PsfRunTimeName, CreateProcessInstance);
                                 partialList = new MyProcThreadAttributeList(reinterpret_cast<SIH_PROC_THREAD_ATTRIBUTE_LIST*>(si->lpAttributeList), true, true, LogLevel_DebugMaximum, g_PsfRunTimeName, CreateProcessInstance);
                                 si->lpAttributeList = partialList->get();
                             }
@@ -729,23 +1218,23 @@ BOOL WINAPI CreateProcessFixup(
                         {
                             Log(LogLevel_DebugIntermediate, L"\t[%s%d] CreateProcessFixupW no existing extended attribute list, just add one.", g_PsfRunTimeName, CreateProcessInstance);
                             si->lpAttributeList = partialList->get();
-                            Log(LogLevel_DebugIntermediate, L"\t[%s%d] CreateProcessFixupW created attribute list", g_PsfRunTimeName, CreateProcessInstance);
+                            Log(LogLevel_DebugIntermediate, L"\t[%s%d] CreateProcessFixupW created attribute list:", g_PsfRunTimeName, CreateProcessInstance);
                             DumpStartupAttributes(LogLevel_DebugIntermediate, reinterpret_cast<SIH_PROC_THREAD_ATTRIBUTE_LIST*>(si->lpAttributeList), g_PsfRunTimeName, CreateProcessInstance);
                         }
                         else
                         {
                             Log(LogLevel_DebugIntermediate, L"\t[%s%d] CreateProcessFixupW has existing extended attribute list, fix it up.", g_PsfRunTimeName, CreateProcessInstance);
-                            Log(LogLevel_DebugIntermediate, L"\t[%s%d] CreateProcessFixupW supplied attribute list", g_PsfRunTimeName, CreateProcessInstance);
+                            Log(LogLevel_DebugIntermediate, L"\t[%s%d] CreateProcessFixupW supplied attribute list:", g_PsfRunTimeName, CreateProcessInstance);
                             DumpStartupAttributes(LogLevel_DebugIntermediate, reinterpret_cast<SIH_PROC_THREAD_ATTRIBUTE_LIST*>(si->lpAttributeList), g_PsfRunTimeName, CreateProcessInstance);
                             if ((((SIH_PROC_THREAD_ATTRIBUTE_LIST*)(si->lpAttributeList))->dwflags & SIH_PROC_THREAD_ATTRIBUTE_DESKTOP_APP_POLICY) != 0)
                             {
-                                Log(LogLevel_DebugIntermediate, L"\t[%s%d] CreateProcessFixupW updated existing list", g_PsfRunTimeName, CreateProcessInstance);
+                                Log(LogLevel_DebugIntermediate, L"\t[%s%d] CreateProcessFixupW existing list has policy already:", g_PsfRunTimeName, CreateProcessInstance);
                                 partialList = new MyProcThreadAttributeList(reinterpret_cast<SIH_PROC_THREAD_ATTRIBUTE_LIST*>(si->lpAttributeList), true, true, LogLevel_DebugMaximum, g_PsfRunTimeName, CreateProcessInstance);
                                 si->lpAttributeList = partialList->get();
                             }
                             else
                             {
-                                Log(LogLevel_DebugIntermediate, L"\t[%s%d] CreateProcessFixupW unable to add (currently), replace list", g_PsfRunTimeName, CreateProcessInstance);
+                                Log(LogLevel_DebugIntermediate, L"\t[%s%d] CreateProcessFixupW must replace list in order to add policy", g_PsfRunTimeName, CreateProcessInstance);
                                 partialList = new MyProcThreadAttributeList(reinterpret_cast<SIH_PROC_THREAD_ATTRIBUTE_LIST*>(si->lpAttributeList), true, true, LogLevel_DebugMaximum, g_PsfRunTimeName, CreateProcessInstance);
                                 si->lpAttributeList = partialList->get();
                             }
@@ -966,6 +1455,72 @@ BOOL WINAPI CreateProcessFixup(
                 {
                     Log(LogLevel_Launching, L"\t[%s%d] CreateProcessFixup: Creation returned FALSE trying to force in container without prot 0x%x.", g_PsfRunTimeName, CreateProcessInstance, err);
                     Log(LogLevel_Launching, L"\t[%s%d] CreateProcessFixup: pid reported as 0x%x", g_PsfRunTimeName, CreateProcessInstance, processInformation->dwProcessId);
+
+#if PATCH_NOEXE_IN_CMDLINE
+                    if constexpr (psf::is_ansi<CharT>)
+                    {
+                        std::string input = commandLine;
+                        if (input.find(".exe") == std::string::npos)
+                        {
+                            size_t firstSpace = input.find(' ');
+                            if (firstSpace != std::string::npos)
+                            {
+                                std::string cmd = input.substr(0, firstSpace) + ".exe" + input.substr(firstSpace);
+                                Log(LogLevel_Launching, L"\t[%s%d] CreateProcessFixup: try altered cmd %S.", g_PsfRunTimeName, CreateProcessInstance,cmd.c_str());
+                                if (::CreateProcessA(
+                                    applicationName,
+                                    cmd.data(),
+                                    processAttributes,
+                                    threadAttributes,
+                                    inheritHandles,
+                                    PossiblyModifiedCreationFlags,
+                                    environment,
+                                    currentDirectory,
+                                    reinterpret_cast<startup_info_t<CharT>*>(MyReplacementStartupInfo), ///startupInfo,
+                                    processInformation) == FALSE)
+                                {
+                                    Log(LogLevel_Launching, L"\t[%s%d] CreateProcessFixup: altered cmd FALSE also.", g_PsfRunTimeName, CreateProcessInstance);
+                                }
+                                else
+                                {
+                                    Log(LogLevel_Launching, L"\t[%s%d] CreateProcessFixup: altered cmd SUCCESS pid=0x%x", g_PsfRunTimeName, CreateProcessInstance, processInformation->dwProcessId);
+                                }
+                            }
+                        }
+                    }
+                    else
+                    {
+                        std::wstring input = commandLine;
+                        if (input.find(L".exe") == std::wstring::npos)
+                        {
+                            size_t firstSpace = input.find(L' ');
+                            if (firstSpace != std::wstring::npos)
+                            {
+                                std::wstring input = commandLine;
+                                std::wstring cmd = input.substr(0, firstSpace) + L".exe" + input.substr(firstSpace);
+                                Log(LogLevel_Launching, L"\t[%s%d] CreateProcessFixup: try altered cmd %s.", g_PsfRunTimeName, CreateProcessInstance, cmd.c_str());
+                                if (::CreateProcessW(
+                                    applicationName,
+                                    cmd.data(),
+                                    processAttributes,
+                                    threadAttributes,
+                                    inheritHandles,
+                                    PossiblyModifiedCreationFlags,
+                                    environment,
+                                    currentDirectory,
+                                    reinterpret_cast<startup_info_t<CharT>*>(MyReplacementStartupInfo), ///startupInfo,
+                                    processInformation) == FALSE)
+                                {
+                                    Log(LogLevel_Launching, L"\t[%s%d] CreateProcessFixup: altered cmd FALSE also.", g_PsfRunTimeName, CreateProcessInstance);
+                                }
+                                else
+                                {
+                                    Log(LogLevel_Launching, L"\t[%s%d] CreateProcessFixup: altered cmd SUCCESS pid=0x%x", g_PsfRunTimeName, CreateProcessInstance, processInformation->dwProcessId);
+                                }
+                            }
+                        }
+                    }
+#endif
                     if (processInformation->dwProcessId == 0)
                     {
                         return FALSE;
@@ -1404,6 +1959,5 @@ catch (...)
     ::SetLastError(err);
     return FALSE;
 }
-
 DECLARE_STRING_FIXUP(CreateProcessImpl, CreateProcessFixup);
 

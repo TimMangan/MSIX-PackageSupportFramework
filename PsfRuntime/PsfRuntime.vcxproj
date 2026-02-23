@@ -31,6 +31,7 @@
     <ClCompile Include="CreateProcessHook.cpp" />
     <ClCompile Include="JobInfo.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="RoActivateInstance.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="PsfRuntime.def" />

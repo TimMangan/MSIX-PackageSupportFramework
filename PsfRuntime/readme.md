@@ -1,17 +1,17 @@
 # PSF Runtime
 The PSF Runtime serves several purposes. 
-* It provides an intercept for detouring `CreateProcess` to ensure that:
+* It provides an intercept for detouring `CreateProcess` like calls to ensure that:
 * * Any child process will run inside the container, along with grandchildren.
 * * Any child process gets the PSF Runtime injected into it. 
 * * If requested, child processes of the created process are terminated upon completion of the created process. 
-* It provides an intercept for detouring `SetDllDirectory` and `AddDllDirectory[A/W]` to fix up path information.
+* Currently Disabled: It provides an intercept for detouring `SetDllDirectory` and `AddDllDirectory[A/W]` to fix up path information.
 * It is responsible for loading and parsing the `config.json` DOM as well as loading any configured fixup dlls for the current executable. 
 * Finally, it exposes a set of utility functions collectively referred to as the "PSF Framework" for use by the individual fixup dlls. This includes helpers for interop with the Detours library, functions for querying information about the current package/app id, and a set of functions for querying information from the `config.json` DOM. See [psf_runtime.h](../include/psf_runtime.h) for a more complete idea of this API surface as well as [psf_config.h](../include/psf_config.h) for an idea of how the JSON data is exposed.
 
 ## Processes to be fixed up
 To ensure that all processes that require fixups are handled, PsfRuntime intercepts the processes creation API CreateProcess.  
 Ultimately, this covers cases of calls to CreateProcess by the PsfLauncher, 
-but also CreateProcess, StartProcess, and some of the managed code and private implementions by the target application that must eventually call this API.
+but also CreateProcess, StartProcess, and some of the managed code and private implementations by the target application that must eventually call this API.
 
 Generally, we want all such child processes to run inside the container, however there is an exception
 for the case of a CONHOST process which may not.
@@ -80,6 +80,32 @@ The PSF Runtime then calls `PSFInitialize` within a Detours transaction, failing
 
 ## Runtime Requirements
 As a part of its initialization, the PSF Runtime queries information about its environment that it then caches for later use. A few examples include parsing the `config.json`, caching the path to the package root, and caching the package name, among a couple other things. If any of these steps fail, e.g. because something is not present/cannot be found or any other failure, then the PSF Runtime dll will fail to load, which likely means that the process fails to start. Note that this implies the requirement that the application be running with package identity. There have been past conversations on adding support for a "debug" mode that works around this restriction (e.g. by using a fake package name, executable directory as the package root, etc.), but its benefit is questionable and has not yet been implemented.
+
+## Targeted Intercepts
+The following table lists the APIs are target for interception by this module, along with the purpose of the intercept.
+
+| Area | Intercept | A/W flavors | Fix or Log only |
+| --- | --- | ------ |
+| Process Creation | CreateProcess | Yes | Fixup |
+| Process Creation | CreateProcessAsUser | Yes | Fixup |
+| Dll Search | AddDllDirectory | No | Fixup |
+| Dll Search | GetDllDirectory | Yes | Logging only |
+| Dll Search | RemoveDllDirectory | No | Logging only |
+| Dll Search | SetDefaultDllDirectories | No | Fixup |
+| Dll Search | SetDllDirectory | Yes | Logging only |
+| COM | CLSIDFromProgID | No | Logging only |
+| COM | CLSIDFromProgIDEx | No | Logging only |
+| COM | CoCreateInstance | No | Logging only |
+| COM | CoCreateInstanceEx | No | Logging only |
+| COM | CoCreateInstanceFromApp | No | Logging only |
+| COM | CoGetClassObject | No | Logging only |
+| COM | CoGetObject | No | Logging only |
+| COM | CoLoadLibrary | No | Logging only |
+| COM | ProgIDFromCLSID | No | Logging only |
+| COM | RoActivateInstance | No | Logging only |
+| Named Pipes | CreateNamedPipe | Yes | Logging only |
+
+ All intercepts provide debug console port logging based on the PSF logging level set in the config.json file. "Logging Only"" intercepts  do not impact functionality and typically need PSF logging set at the Debug_Maximum level to produce any logging.
 
 ## Example Situations
 

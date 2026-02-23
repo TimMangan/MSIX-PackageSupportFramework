@@ -110,6 +110,7 @@ BOOL WINAPI CreateProcessAsUserFixup(
     {
 
         DWORD PossiblyModifiedCreationFlags = dwCreationFlags;
+        bool OriginalCreationFlagSpecified_Suspended = false;
         DWORD DllInstance = ++g_CreateProcessInterceptInstance;
 
         bool skipForce = false;  // exclude out certain processes from forcing to run inside the container, like conhost and maybe cmd and powershell
@@ -157,6 +158,11 @@ BOOL WINAPI CreateProcessAsUserFixup(
 
         LogString(LogLevel_Launching, g_PsfRunTimeName, DllInstance, L"CreateProcessAsUserFixup: commandline", lpCommandLine);
         LogCreationFlags(LogLevel_DebugBasic, g_PsfRunTimeName, DllInstance, PossiblyModifiedCreationFlags, L"CreateProcessAsUserFixup");
+        if (dwCreationFlags & CREATE_SUSPENDED)
+        {
+            // This means that we should not resume
+            OriginalCreationFlagSpecified_Suspended = true;
+        }
 
 
         if (lpProcessAttributes != NULL)
@@ -785,7 +791,7 @@ BOOL WINAPI CreateProcessAsUserFixup(
         {
             Log(LogLevel_Launching, L"\t[%s%d] CreateProcessAsUserFixup: The new process is not inside the container, so doesn't inject...", g_PsfRunTimeName, DllInstance);
         }
-        if ((dwCreationFlags & CREATE_SUSPENDED) != CREATE_SUSPENDED)
+        if (!OriginalCreationFlagSpecified_Suspended) ///(creationFlags & CREATE_SUSPENDED) != CREATE_SUSPENDED)
         {
             // Caller did not want the process to start suspended
             Log(LogLevel_Launching, L"\t[%s%d] CreateProcessAsUserFixup: Resume PID=%d\n", g_PsfRunTimeName, DllInstance, lpProcessInformation->dwProcessId);
@@ -795,7 +801,7 @@ BOOL WINAPI CreateProcessAsUserFixup(
 
         if (lpProcessInformation == &pi)
         {
-            // If we created this strucure we must close the handles in it
+            // If we created this structure we must close the handles in it
             ::CloseHandle(lpProcessInformation->hProcess);
             ::CloseHandle(lpProcessInformation->hThread);
         }

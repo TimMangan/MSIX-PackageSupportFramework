@@ -59,7 +59,8 @@ HANDLE WINAPI CreateNamedPipeAFixup(
 
 
         HANDLE HPipe = impl::CreateNamedPipeA(lpName, dwOpenMode, dwPipeMode, nMaxInstances, nOutBufferSize, nInBufferSize, nDefaultTimeOut, lpSecurityAttributes);
-            
+        Log(LogLevel_DebugBasic, L" [%s%d] CreateNamedPipeFixupW: (Informational) return handle 0x%x LastError=0x%x", g_PsfRunTimeName, CreateNamedPipeInstance,HPipe, GetLastError());
+
         return HPipe;
     }
     return impl::CreateNamedPipeA(lpName, dwOpenMode, dwPipeMode, nMaxInstances, nOutBufferSize, nInBufferSize, nDefaultTimeOut, lpSecurityAttributes);

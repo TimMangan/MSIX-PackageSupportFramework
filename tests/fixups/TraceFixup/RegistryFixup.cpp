@@ -131,7 +131,7 @@ LSTATUS __stdcall RegCreateKeyFixup(_In_ HKEY key, _In_opt_ const CharT* subKey,
         {
             try
             {
-                Log(LogLevel_DebugBasic, "[%s%d]/tRegCreateKey:", g_traceModuleName, 0);
+                Log(LogLevel_DebugBasic, "[%s%d]\tRegCreateKey:", g_traceModuleName, 0);
                 LogKeyPath(LogLevel_DebugBasic, g_traceModuleName, 0, key);
                 if (subKey) LogString(LogLevel_DebugBasic, "Sub Key", subKey);
                 LogFunctionResult(functionResult);

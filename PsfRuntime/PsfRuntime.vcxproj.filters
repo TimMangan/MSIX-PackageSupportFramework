@@ -41,6 +41,7 @@
     <ClCompile Include="JobInfo.cpp">
       <Filter>src</Filter>
     </ClCompile>
+    <ClCompile Include="RoActivateInstance.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="PsfRuntime.def" />

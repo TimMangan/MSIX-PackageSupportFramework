@@ -21,6 +21,33 @@ ideas:
 
 
 v.Next:
+	* Fix: MfrFixup: Handle case on GetAttributesEx when app requests package path but file is native.	
+	* Fix: RegLegacyFixup: Cleanup on logging code to avoid potential buffer overrun.
+	* Fix: MfrFixup: Do not convert paths to long paths when falling through to native calls.  This was causing issues with certain apps.
+	* Fix: MfrFixup: Update to special dos names not subject to redirection.
+	* Fix: PsfRuntime: In CreateProcessAsUser intercept, if app requested suspended process, do not resume it after injection (like in CreateProcess intercept).
+	* Fix: PsfRuntime: Fix to potential shell launch command line length overflow.
+	* Fix: PsfRuntime: Apply fix to CreateProcess/AsUser when app mis-uses quotes in command line so that the subcommand is located.
+	* Fix: PsfFtaCOM: Was looking for wrongly named element of the JSON to see if there were shell verbs.  
+	       This affected only the case of the application having a shortcut to a file covered by a shell launch file type.
+		   Correct name is "hasShellVerbs".
+	* Fix: PsfRuntime: In SetDllDirectory, it turns out we need to intercept the call to cover
+	       the case where MFR/ILV has created the folder in the redirection area, and the app asked
+		   to add the package path when that folder doesn't exist in the package.  Obviously only affects
+		   apps that download code and then use it.  Ugh!  
+		   The fix determines if this is the case and adds the redirected path.
+	* Fix: PsfLauncher: If a shortcut is to a .txt file, for example, we resolve the FTA to Notepad and start it with the file.
+			   However, Now that Notepad has it's own package, we can't run that inside our container.
+			   This fix looks at the path resolved by the FTA and if is a path to another container, just start the process ourside of our container.
+			   This requires the file to have a resolvable path outside of our container, but since this was a file from a shortcut, we have that.
+			   It also requires the new process does not need any of our other container things, but again, since this is a shortcut it should be OK.
+			   It should work for other FTAs that migrate to packages too.
+	* Fix: DynamicLibraryFixup: Fix for special case of call to LoadLibraryEx with a flag to adjust path search.
+	* Add: Added new informational-only intercept for RoAtivateFixup in PsfRuntime to provide information to determine if a fixup is needed.
+
+			   
+
+v.2025.12.28:
 	* Experimental: In MfrFixup, don't reject non absolutepath values for KnownFolders, but do log them.  We found some customers were using a form of folder redirection that was
 	                replacing the values of the KnownFolders with UNC share locations.
 	* Experimental: Added new optional rule for RegLegacyFixup, HKLM2HKCU to allow writes to HKLM keys and values to be redirected to a special key in the HKCU hive.
