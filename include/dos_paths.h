@@ -4,11 +4,14 @@
 //-------------------------------------------------------------------------------------------------------
 #pragma once
 
+#define OLD_DOSPATHCOMPARE 1
+
 #include <cassert>
 #include <cwctype>
 #include <string>
 
 #include <windows.h>
+#include "utilities.h"
 
 namespace psf
 {
@@ -57,12 +60,15 @@ namespace psf
     template <typename CharT>
     inline dos_path_type path_type(const CharT* path) noexcept
     {
-        if (Comp((wchar_t*)L"CONOUT$", 7, path) ||
-            Comp((wchar_t*)L"CONIN$", 6, path) ||
-            Comp((wchar_t*)L"CON:",  4, path) || // see list in https://learn.microsoft.com/en-us/windows/win32/fileio/naming-a-file
-            Comp((wchar_t*)L"PRN:",  4, path) ||
-            Comp((wchar_t*)L"AUX:",  4, path) ||
-            Comp((wchar_t*)L"NUL",   3, path) ||
+#ifdef OLD_DOSPATHCOMPARE
+        if (Comp((wchar_t*)L"CON:", 4, path) || // see list in https://learn.microsoft.com/en-us/windows/win32/fileio/naming-a-file
+            Comp((wchar_t*)L"PRN:", 4, path) || Comp((wchar_t*)L"AUX:", 4, path) ||
+            Comp((wchar_t*)L"NUL", 3, path))
+        {
+            // CORE DOS Device Names
+            return dos_path_type::DosSpecial;
+        }
+        if (Comp((wchar_t*)L"COM0:", 5, path) ||
             Comp((wchar_t*)L"COM1:", 5, path) ||
             Comp((wchar_t*)L"COM2:", 5, path) ||
             Comp((wchar_t*)L"COM3:", 5, path) ||
@@ -72,6 +78,7 @@ namespace psf
             Comp((wchar_t*)L"COM7:", 5, path) ||
             Comp((wchar_t*)L"COM8:", 5, path) ||
             Comp((wchar_t*)L"COM9:", 5, path) ||
+            Comp((wchar_t*)L"LPT0:", 5, path) ||
             Comp((wchar_t*)L"LPT1:", 5, path) ||
             Comp((wchar_t*)L"LPT2:", 5, path) ||
             Comp((wchar_t*)L"LPT3:", 5, path) ||
@@ -80,10 +87,19 @@ namespace psf
             Comp((wchar_t*)L"LPT6:", 5, path) ||
             Comp((wchar_t*)L"LPT7:", 5, path) ||
             Comp((wchar_t*)L"LPT8:", 5, path) ||
-            Comp((wchar_t*)L"LPT9:", 5, path))
+            Comp((wchar_t*)L"LPT9:", 5, path) )
         {
+            // Numbered DOS Device Names
             return dos_path_type::DosSpecial;
         }
+        if (Comp((wchar_t*)L"CONOUT$", 7, path) ||
+            Comp((wchar_t*)L"CONIN$", 6, path))
+        {
+            // Extended console device names
+            return dos_path_type::DosSpecial;
+        }
+        
+        
         if (Comp((wchar_t*)L"\\\\?\\STORAGE#Volume", 18, path) ||
             Comp((wchar_t*)L"STORAGE#Volume", 14, path))
         {
@@ -145,7 +161,116 @@ namespace psf
                 return dos_path_type::protocol;
             }
         }
+#else
+        std::wstring wpath = widen(path);
+        if (wpath._Starts_with(L"CON:") ||
+            wpath._Starts_with(L"PRN:") ||
+            wpath._Starts_with(L"NUL:") ||
+            wpath._Starts_with(L"nul:"))
+        {
+            // CORE DOS Device Names
+            return dos_path_type::DosSpecial;
+        }
+        if (wpath._Starts_with(L"COM0:") ||
+            wpath._Starts_with(L"COM1:") ||
+            wpath._Starts_with(L"COM2:") ||
+            wpath._Starts_with(L"COM3:") ||
+            wpath._Starts_with(L"COM4:") ||
+            wpath._Starts_with(L"COM5:") ||
+            wpath._Starts_with(L"COM6:") ||
+            wpath._Starts_with(L"COM7:") ||
+            wpath._Starts_with(L"COM8:") ||
+            wpath._Starts_with(L"COM9:") ||
+            wpath._Starts_with(L"LPT0:") ||
+            wpath._Starts_with(L"LPT1:") ||
+            wpath._Starts_with(L"LPT2:") ||
+            wpath._Starts_with(L"LPT3:") ||
+            wpath._Starts_with(L"LPT4:") ||
+            wpath._Starts_with(L"LPT5:") ||
+            wpath._Starts_with(L"LPT6:") ||
+            wpath._Starts_with(L"LPT7:") ||
+            wpath._Starts_with(L"LPT8:") ||
+            wpath._Starts_with(L"LPT9:"))
+        {
+            // Numbered DOS Device Names
+            return dos_path_type::DosSpecial;
+        }
+        if (wpath._Starts_with(L"CONOUT$") ||
+            wpath._Starts_with(L"CONIN$"))
+        {
+            // Extended console device names
+            return dos_path_type::DosSpecial;
+        }
+        if (wpath.substr(wpath.length() - 4)._Equal(L"\\NUL") ||
+            wpath.substr(wpath.length() - 4)._Equal(L"CON.txt") ||
+            wpath._Equal(L"\\\\.\\CON"))
+        {
+            // Some other names that shouldn't be used but are known to be treated as special device names
+            return dos_path_type::DosSpecial;
+        }
 
+        if (wpath._Starts_with(L"\\\\?\\STORAGE#Volume") ||
+            wpath._Starts_with(L"STORAGE#Volume"))
+        {
+            // This seems to be a reference to a storage namespace.
+            // Generally we think we want to just pass these through, but we may want to do some special handling
+            return dos_path_type::storage_namespace;
+        }
+
+        // NOTE: Root-local device paths don't get normalized and therefore do not allow forward slashes
+        constexpr wchar_t root_local_device_prefix[] = LR"(\\?\)";
+        if (std::equal(root_local_device_prefix, root_local_device_prefix + 4, path))
+        {
+            return dos_path_type::root_local_device;
+        }
+
+        constexpr wchar_t root_local_device_prefix_dot[] = LR"(\\.\)";
+        if (std::equal(root_local_device_prefix_dot, root_local_device_prefix_dot + 4, path))
+        {
+            return dos_path_type::local_device;
+        }
+
+        constexpr wchar_t unc_prefix[] = LR"(\\)";
+        if (std::equal(unc_prefix, unc_prefix + 2, path))
+        {
+            // Otherwise assume any other character is the start of a server name
+            return dos_path_type::unc_absolute;
+        }
+
+        constexpr wchar_t rooted_prefix[] = LR"(\)";
+        if (std::equal(rooted_prefix, rooted_prefix + 1, path))
+        {
+            return dos_path_type::rooted;
+        }
+
+        constexpr wchar_t shell1_prefix[] = LR"(shell::)";
+        constexpr wchar_t shell2_prefix[] = LR"(::)";
+        if (std::equal(shell1_prefix, shell1_prefix + 7, path) ||
+            std::equal(shell2_prefix, shell2_prefix + 2, path))
+        {
+            return dos_path_type::shell;
+        }
+
+        if (std::iswalpha(path[0]) && (path[1] == ':'))
+        {
+            return is_path_separator(path[2]) ? dos_path_type::drive_absolute : dos_path_type::drive_relative;
+        }
+
+        if constexpr (std::is_same_v<CharT, char>)
+        {
+            if (std::string(path).find(":") != std::string::npos)
+            {
+                return dos_path_type::protocol;
+            }
+        }
+        else
+        {
+            if (std::wstring(path).find(L":") != std::wstring::npos)
+            {
+                return dos_path_type::protocol;
+            }
+        }
+#endif
         // Otherwise assume that it's a relative path
         return dos_path_type::relative;
     }
