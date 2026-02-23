@@ -98,7 +98,7 @@ NTSTATUS TripplePlay_NtQueryDirectoryFileImpl(
     [[maybe_unused]] DWORD filePathLength = GetFinalPathNameByHandle(FileHandle, filePath, MAX_PATH, FILE_NAME_NORMALIZED);
     DirPathUsed = filePath;
     retfinal = ntdllimpl::NtQueryDirectoryFileImpl(FileHandle, Event, ApcRoutine, ApcContext, IoStatusBlock, FileInformation, Length, FileInformationClass, ReturnSingleEntry, FileName, RestartScan);
-    Log(LogLevel_DebugBasic, L"[%s%d] NtDll_NtQueryDirectoryFileFixup as requested %s return status=0x%x", g_MfrModuleName, dllInstance, filePath, retfinal);
+    Log(LogLevel_DebugBasic, L"[%s%d] NtDll_NtQueryDirectoryFileFixup as requested %s returned status=0x%x", g_MfrModuleName, dllInstance, filePath, retfinal);
 
     //#define STATUS_BUFFER_OVERFLOW            ((DWORD   )0x80000005L)    // Documented
     //#define STATUS_NO_MORE_FILES              ((DWORD   )0x80000006L)    // Seen
@@ -108,9 +108,10 @@ NTSTATUS TripplePlay_NtQueryDirectoryFileImpl(
     //#define STATUS_BUFFER_TOO_SMALL           ((DWORD   )0xC0000023L)    // Documented
     if (retfinal == 0xC000000FL)
     {
-        // We did not it in the requested area, so we need to try the other areas.  Other results we just return back without looking elsewhere.
+        // We did not find it in the requested area, so we need to try the other areas.  Other results we just return back without looking elsewhere.
         // If we try to handle requests for more than one result that has to return here, we will need to consider no more files scenario also.
-        
+        Log(LogLevel_DebugBasic, L"[%s%d] NtDll_NtQueryDirectoryFileFixup may need alternative forms checked.", g_MfrModuleName, dllInstance);
+
 
         // Make adjustments to the found path to more normalize it.  
         // This is probably not needed because it didn't come from the application directly, but we do this in FindFiles and it can't hurt.
