@@ -109,13 +109,17 @@ void LogString(Json_Debug_Levels debugRequestLevel, const char* name, const char
     {
         if (debugRequestLevel <= g_JsonDebugLevel)
         {
-            if ((value != NULL && value[1] != 0x0))
+            if ((value != NULL && value[0] != 0x0))
             {
                 Log(debugRequestLevel, L"%S=%S\n", name, value);
             }
+            else if (value == NULL)
+            {
+                Log(debugRequestLevel, L"%S=<{NULL}>", name);
+            }
             else
             {
-                Log(debugRequestLevel, L"%s=%s", name, (wchar_t*)value);
+                Log(debugRequestLevel, L"%S=<{EMPTY}>", name);
             }
         }
     }
@@ -127,13 +131,17 @@ void LogString(Json_Debug_Levels debugRequestLevel, const char* name, const wcha
     {
         if (debugRequestLevel <= g_JsonDebugLevel)
         {
-            if ((value != NULL && ((char*)value)[1] == 0x0))
+            if ((value != NULL && ((char*)value)[0] == 0x0))
             {
                 Log(debugRequestLevel, L"%S=%s\n", name, value);
             }
+            else if (value == NULL)
+            {
+                Log(debugRequestLevel, L"%S=<{NULL}>", name);
+            }
             else
             {
-                Log(debugRequestLevel, L"%S=%S", name, (char*)value);
+                Log(debugRequestLevel, L"%S=<{EMPTY}>", name);
             }
         }
     }
@@ -145,7 +153,18 @@ void LogString(Json_Debug_Levels debugRequestLevel, const wchar_t* name, const c
     {
         if (debugRequestLevel <= g_JsonDebugLevel)
         {
-            Log(debugRequestLevel, L"%s=%S\n", name, widen(value).c_str());
+            if ((value != NULL && value[0] == 0x0))
+            {
+                Log(debugRequestLevel, L"%s=%S\n", name, widen(value).c_str());
+            }
+            else if (value == NULL)
+            {
+                Log(debugRequestLevel, L"%s=<{NULL}>", name);
+            }
+            else
+            {
+                Log(debugRequestLevel, L"%s=<{EMPTY}>", name);
+            }
         }
     }
 }
@@ -156,7 +175,18 @@ void LogString(Json_Debug_Levels debugRequestLevel, const wchar_t* name, const w
     {
         if (debugRequestLevel <= g_JsonDebugLevel)
         {
-            Log(debugRequestLevel, L"%s=%s\n", name, value);
+            if ((value != NULL && ((char*)value)[0] == 0x0))
+            {
+                Log(debugRequestLevel, L"%s=%s\n", name, value);
+            }
+            else if (value == NULL)
+            {
+                Log(debugRequestLevel, L"%s=<{NULL}>", name);
+            }
+            else
+            {
+                Log(debugRequestLevel, L"%s=<{EMPTY}>", name);
+            }
         }
     }
 }
