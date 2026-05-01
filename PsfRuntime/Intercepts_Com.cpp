@@ -3,7 +3,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 //-------------------------------------------------------------------------------------------------------
 //
-// The PsfRuntime intercepts all AddDirectory and SetDirectory[AW] calls so that paths may be fixed up. 
+// The PsfRuntime intercepts all COM calls. 
 
 #define Intercept_CoCreateInstance 1
 
