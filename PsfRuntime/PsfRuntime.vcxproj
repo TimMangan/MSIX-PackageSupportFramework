@@ -24,14 +24,17 @@
     <ClCompile Include="..\CommonSrc\findStringIC.cpp" />
     <ClCompile Include="..\CommonSrc\psf_logging.cpp" />
     <ClCompile Include="AddSetDllDirectory.cpp" />
-    <ClCompile Include="CoCreateInstance.cpp" />
+    <ClCompile Include="Intercepts_Com.cpp" />
     <ClCompile Include="Config.cpp" />
-    <ClCompile Include="CreateNamedPipe.cpp" />
+    <ClCompile Include="Intercepts_MailSlot.cpp" />
+    <ClCompile Include="Intercepts_NamedPipe.cpp" />
     <ClCompile Include="CreateProcessAsUser.cpp" />
     <ClCompile Include="CreateProcessHook.cpp" />
+    <ClCompile Include="Intercepts_SemaphoreMutex.cpp" />
     <ClCompile Include="JobInfo.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="RoActivateInstance.cpp" />
+    <ClCompile Include="Intercepts_UnnamedPipe.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="PsfRuntime.def" />
@@ -84,15 +87,23 @@
   <Import Project="$(MSBuildThisFileDirectory)\..\Common.Build.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <PostBuildEventUseInBuild>true</PostBuildEventUseInBuild>
+    <CustomBuildAfterTargets>
+    </CustomBuildAfterTargets>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <PostBuildEventUseInBuild>true</PostBuildEventUseInBuild>
+    <CustomBuildAfterTargets>
+    </CustomBuildAfterTargets>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <PostBuildEventUseInBuild>true</PostBuildEventUseInBuild>
+    <CustomBuildAfterTargets>
+    </CustomBuildAfterTargets>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <PostBuildEventUseInBuild>true</PostBuildEventUseInBuild>
+    <CustomBuildAfterTargets>
+    </CustomBuildAfterTargets>
   </PropertyGroup>
   <ItemDefinitionGroup>
     <ClCompile>
@@ -118,29 +129,45 @@
       <ModuleDefinitionFile>PsfRuntime.def</ModuleDefinitionFile>
     </Link>
     <PostBuildEvent>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">powershell.exe /f $(SolutionDir)Set-DllVersionByDate.ps1 $(SolutionDir)verpatch\verpatch.exe  $(OutputPath)$(TargetName)$(TargetExt)</Command>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">powershell.exe /f $(SolutionDir)PostProjectBuildEvent.ps1     $(SolutionDir)verpatch\verpatch.exe      $(TargetPath)     $(TargetDir)      $(TargetDir)$(TargetName).SBOM.xml         $(ProjectPath)</Command>
     </PostBuildEvent>
     <PostBuildEvent>
-      <Message Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Set the Build</Message>
+      <Message Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Post Build Script</Message>
     </PostBuildEvent>
     <PostBuildEvent>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">powershell.exe /f $(SolutionDir)Set-DllVersionByDate.ps1 $(SolutionDir)verpatch\verpatch.exe  $(OutputPath)$(TargetName)$(TargetExt)</Command>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">powershell.exe /f $(SolutionDir)PostProjectBuildEvent.ps1     $(SolutionDir)verpatch\verpatch.exe      $(TargetPath)     $(TargetDir)      $(TargetDir)$(TargetName).SBOM.xml         $(ProjectPath)</Command>
     </PostBuildEvent>
     <PostBuildEvent>
-      <Message Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Set the Build</Message>
+      <Message Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Post Build Script</Message>
     </PostBuildEvent>
     <PostBuildEvent>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">powershell.exe /f $(SolutionDir)Set-DllVersionByDate.ps1 $(SolutionDir)verpatch\verpatch.exe  $(OutputPath)$(TargetName)$(TargetExt)</Command>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">powershell.exe /f $(SolutionDir)PostProjectBuildEvent.ps1     $(SolutionDir)verpatch\verpatch.exe      $(TargetPath)     $(TargetDir)      $(TargetDir)$(TargetName).SBOM.xml         $(ProjectPath)</Command>
     </PostBuildEvent>
     <PostBuildEvent>
-      <Message Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Set the Build</Message>
+      <Message Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Post Build Script</Message>
     </PostBuildEvent>
     <PostBuildEvent>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">powershell.exe /f $(SolutionDir)Set-DllVersionByDate.ps1 $(SolutionDir)verpatch\verpatch.exe  $(OutputPath)$(TargetName)$(TargetExt)</Command>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">powershell.exe /f $(SolutionDir)PostProjectBuildEvent.ps1     $(SolutionDir)verpatch\verpatch.exe      $(TargetPath)     $(TargetDir)      $(TargetDir)$(TargetName).SBOM.xml         $(ProjectPath)</Command>
     </PostBuildEvent>
     <PostBuildEvent>
-      <Message Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Set the Build</Message>
+      <Message Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Post Build Script</Message>
     </PostBuildEvent>
+    <CustomBuildStep>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+      </Command>
+    </CustomBuildStep>
+    <CustomBuildStep>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+      </Command>
+    </CustomBuildStep>
+    <CustomBuildStep>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+      </Command>
+    </CustomBuildStep>
+    <CustomBuildStep>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+      </Command>
+    </CustomBuildStep>
   </ItemDefinitionGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">

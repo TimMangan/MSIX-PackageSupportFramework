@@ -116,7 +116,7 @@
       <AdditionalIncludeDirectories>$(SolutionDir)\CommonSrc;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <PostBuildEvent>
-      <Command>powershell.exe /f $(SolutionDir)Set-DllVersionByDate.ps1 $(SolutionDir)verpatch\verpatch.exe  $(OutputPath)$(TargetName)$(TargetExt)</Command>
+      <Command>powershell.exe /f $(SolutionDir)PostProjectBuildEvent.ps1     $(SolutionDir)verpatch\verpatch.exe      $(TargetPath)     $(TargetDir)      $(TargetDir)$(TargetName).SBOM.xml         $(ProjectPath)</Command>
     </PostBuildEvent>
     <PostBuildEvent>
       <Message>Set the build</Message>
@@ -133,7 +133,7 @@
       <AdditionalIncludeDirectories>$(SolutionDir)\CommonSrc;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <PostBuildEvent>
-      <Command>powershell.exe /f $(SolutionDir)Set-DllVersionByDate.ps1 $(SolutionDir)verpatch\verpatch.exe  $(OutputPath)$(TargetName)$(TargetExt)</Command>
+      <Command>powershell.exe /f $(SolutionDir)PostProjectBuildEvent.ps1     $(SolutionDir)verpatch\verpatch.exe      $(TargetPath)     $(TargetDir)      $(TargetDir)$(TargetName).SBOM.xml         $(ProjectPath)</Command>
     </PostBuildEvent>
     <PostBuildEvent>
       <Message>Set the build</Message>
@@ -150,7 +150,7 @@
       <AdditionalIncludeDirectories>$(SolutionDir)\CommonSrc;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <PostBuildEvent>
-      <Command>powershell.exe /f $(SolutionDir)Set-DllVersionByDate.ps1 $(SolutionDir)verpatch\verpatch.exe  $(OutputPath)$(TargetName)$(TargetExt)</Command>
+      <Command>powershell.exe /f $(SolutionDir)PostProjectBuildEvent.ps1     $(SolutionDir)verpatch\verpatch.exe      $(TargetPath)     $(TargetDir)      $(TargetDir)$(TargetName).SBOM.xml         $(ProjectPath)</Command>
     </PostBuildEvent>
     <PostBuildEvent>
       <Message>Set the build</Message>
@@ -167,7 +167,7 @@
       <AdditionalIncludeDirectories>$(SolutionDir)\CommonSrc;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <PostBuildEvent>
-      <Command>powershell.exe /f $(SolutionDir)Set-DllVersionByDate.ps1 $(SolutionDir)verpatch\verpatch.exe  $(OutputPath)$(TargetName)$(TargetExt)</Command>
+      <Command>powershell.exe /f $(SolutionDir)PostProjectBuildEvent.ps1     $(SolutionDir)verpatch\verpatch.exe      $(TargetPath)     $(TargetDir)      $(TargetDir)$(TargetName).SBOM.xml         $(ProjectPath)</Command>
     </PostBuildEvent>
     <PostBuildEvent>
       <Message>Set the build</Message>

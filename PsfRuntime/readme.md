@@ -103,7 +103,16 @@ The following table lists the APIs are target for interception by this module, a
 | COM | CoLoadLibrary | No | Logging only |
 | COM | ProgIDFromCLSID | No | Logging only |
 | COM | RoActivateInstance | No | Logging only |
-| Named Pipes | CreateNamedPipe | Yes | Logging only |
+| Pipes | CreateNamedPipeA | No | Logging only |
+| Pipes | ConnectNamedPipe | No | Logging only |
+| Pipes | CreatePipe | No | Logging only |
+| Mailslot | CreateMailSlot | Yes | Logging only |
+| Synchronization | CreateSemaphore | Yes | Logging only |
+| Synchronization | CreateSemaphoreEx | Yes | Logging only |
+| Synchronization | OpenSemaphoreW | No | Logging only |
+| Synchronization | CreateMutex | Yes | Logging only |
+| Synchronization | CreateMutexEx | Yes | Logging only |
+| Synchronization | OpenMutexW | No | Logging only |
 
  All intercepts provide debug console port logging based on the PSF logging level set in the config.json file. "Logging Only"" intercepts  do not impact functionality and typically need PSF logging set at the Debug_Maximum level to produce any logging.
 
@@ -120,7 +129,7 @@ However, there are situations where we don't want the injection:
 
 If PsfRuntime's CreateProcess hook detects that the process config for the child process contains no fixups, it will skip injecting the launcher into that child process.  
 In the example below, the child process `notme.exe` will not get PSF injections.
-
+Yes
 
 ```json
  {

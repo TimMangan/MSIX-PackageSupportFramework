@@ -125,7 +125,7 @@
       <AdditionalLibraryDirectories>C:\Program Files (x86)\Windows Kits\10\Lib\10.0.22621.0\um\$(PlatformTarget)</AdditionalLibraryDirectories>
     </Link>
     <PostBuildEvent>
-      <Command>powershell.exe /f $(SolutionDir)Set-DllVersionByDate.ps1 $(SolutionDir)verpatch\verpatch.exe  $(OutputPath)$(TargetName)$(TargetExt)</Command>
+      <Command>powershell.exe /f $(SolutionDir)PostProjectBuildEvent.ps1     $(SolutionDir)verpatch\verpatch.exe      $(TargetPath)     $(TargetDir)      $(TargetDir)$(TargetName).SBOM.xml         $(ProjectPath)</Command>
       <Message>Set the build</Message>
     </PostBuildEvent>
   </ItemDefinitionGroup>
@@ -160,7 +160,7 @@
       <AdditionalLibraryDirectories>C:\Program Files (x86)\Windows Kits\10\Lib\10.0.22621.0\um\$(PlatformTarget)</AdditionalLibraryDirectories>
     </Link>
     <PostBuildEvent>
-      <Command>powershell.exe /f $(SolutionDir)Set-DllVersionByDate.ps1 $(SolutionDir)verpatch\verpatch.exe  $(OutputPath)$(TargetName)$(TargetExt)</Command>
+      <Command>powershell.exe /f $(SolutionDir)PostProjectBuildEvent.ps1     $(SolutionDir)verpatch\verpatch.exe      $(TargetPath)     $(TargetDir)      $(TargetDir)$(TargetName).SBOM.xml         $(ProjectPath)</Command>
       <Message>Set the build</Message>
     </PostBuildEvent>
   </ItemDefinitionGroup>
@@ -190,7 +190,7 @@
       <AdditionalLibraryDirectories>C:\Program Files (x86)\Windows Kits\10\Lib\10.0.22621.0\um\$(PlatformTarget)</AdditionalLibraryDirectories>
     </Link>
     <PostBuildEvent>
-      <Command>powershell.exe /f $(SolutionDir)Set-DllVersionByDate.ps1 $(SolutionDir)verpatch\verpatch.exe  $(OutputPath)$(TargetName)$(TargetExt)</Command>
+      <Command>powershell.exe /f $(SolutionDir)PostProjectBuildEvent.ps1     $(SolutionDir)verpatch\verpatch.exe      $(TargetPath)     $(TargetDir)      $(TargetDir)$(TargetName).SBOM.xml         $(ProjectPath)</Command>
       <Message>Set the build</Message>
     </PostBuildEvent>
   </ItemDefinitionGroup>
@@ -225,7 +225,7 @@
       <AdditionalLibraryDirectories>C:\Program Files (x86)\Windows Kits\10\Lib\10.0.22621.0\um\$(PlatformTarget)</AdditionalLibraryDirectories>
     </Link>
     <PostBuildEvent>
-      <Command>powershell.exe /f $(SolutionDir)Set-DllVersionByDate.ps1 $(SolutionDir)verpatch\verpatch.exe  $(OutputPath)$(TargetName)$(TargetExt)</Command>
+      <Command>powershell.exe /f $(SolutionDir)PostProjectBuildEvent.ps1     $(SolutionDir)verpatch\verpatch.exe      $(TargetPath)     $(TargetDir)      $(TargetDir)$(TargetName).SBOM.xml         $(ProjectPath)</Command>
       <Message>Set the build</Message>
     </PostBuildEvent>
   </ItemDefinitionGroup>

@@ -36,12 +36,15 @@
     <ClCompile Include="CreateProcessAsUser.cpp">
       <Filter>src</Filter>
     </ClCompile>
-    <ClCompile Include="CreateNamedPipe.cpp" />
-    <ClCompile Include="CoCreateInstance.cpp" />
+    <ClCompile Include="Intercepts_NamedPipe.cpp" />
+    <ClCompile Include="Intercepts_Com.cpp" />
     <ClCompile Include="JobInfo.cpp">
       <Filter>src</Filter>
     </ClCompile>
     <ClCompile Include="RoActivateInstance.cpp" />
+    <ClCompile Include="Intercepts_UnnamedPipe.cpp" />
+    <ClCompile Include="Intercepts_SemaphoreMutex.cpp" />
+    <ClCompile Include="Intercepts_MailSlot.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="PsfRuntime.def" />

@@ -177,15 +177,18 @@
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
-    <PostBuildEvent>erase /S $(TargetName)$(PlatformName)$(TargetExt)
-
+    <PostBuildEvent>echo "Start PostBuild"
 echo copying $(TargetPath) to $(TargetName)$(PlatformName)$(TargetExt)
 
-copy $(TargetPath) $(TargetName)$(PlatformName)$(TargetExt)
-rem powershell.exe /f $(SolutionDir)Set-DllVersionByDate.ps1  $(TargetDir)$(TargetName)$(PlatformName)$(TargetExt)</PostBuildEvent>
+copy $(TargetPath) $(TargetDir)$(TargetName)$(PlatformName)$(TargetExt)
+rem echo powershell.exe /f $(SolutionDir)PostProjectBuildEvent.ps1 $(SolutionDir)verpatch\verpatch.exe  $(TargetDir)$(TargetName)$(PlatformName)$(TargetExt) $(TargetDir) $(TargetDIr)$(TargetName)$(PlatformName).SBOM.xml $(ProjectFile)
+start /WAIT powershell.exe /f $(SolutionDir)PostProjectBuildEvent.ps1 $(SolutionDir)verpatch\verpatch.exe  $(TargetDir)$(TargetName)$(PlatformName)$(TargetExt) $(TargetDir) $(TargetDIr)$(TargetName)$(PlatformName).SBOM.xml $(ProjectPath)
+echo "End PostBuild"</PostBuildEvent>
   </PropertyGroup>
   <PropertyGroup>
-    <PreBuildEvent>
-    </PreBuildEvent>
+    <PreBuildEvent>echo "Start PreBuild  Clean out output copy if present."
+erase  $(TargetName)$(PlatformName)$(TargetExt)
+echo "End PreBuild"
+</PreBuildEvent>
   </PropertyGroup>
 </Project>

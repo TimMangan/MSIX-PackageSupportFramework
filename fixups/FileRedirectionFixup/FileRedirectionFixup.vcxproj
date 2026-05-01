@@ -126,7 +126,7 @@
       <AdditionalDependencies>kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PostBuildEvent>
-      <Command>powershell.exe /f $(SolutionDir)Set-DllVersionByDate.ps1 $(SolutionDir)verpatch\verpatch.exe   $(OutputPath)$(TargetName)$(TargetExt)</Command>
+      <Command>powershell.exe /f $(SolutionDir)PostProjectBuildEvent.ps1     $(SolutionDir)verpatch\verpatch.exe      $(TargetPath)     $(TargetDir)      $(TargetDir)$(TargetName).SBOM.xml         $(ProjectPath)</Command>
     </PostBuildEvent>
     <PostBuildEvent>
       <Message>Set the build</Message>
@@ -144,7 +144,7 @@
       <AdditionalDependencies>kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PostBuildEvent>
-      <Command>powershell.exe /f $(SolutionDir)Set-DllVersionByDate.ps1 $(SolutionDir)verpatch\verpatch.exe   $(OutputPath)$(TargetName)$(TargetExt)</Command>
+      <Command>powershell.exe /f $(SolutionDir)PostProjectBuildEvent.ps1     $(SolutionDir)verpatch\verpatch.exe      $(TargetPath)     $(TargetDir)      $(TargetDir)$(TargetName).SBOM.xml         $(ProjectPath)</Command>
     </PostBuildEvent>
     <PostBuildEvent>
       <Message>Set the build</Message>
@@ -160,7 +160,7 @@
       <AdditionalDependencies>kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PostBuildEvent>
-      <Command>powershell.exe /f $(SolutionDir)Set-DllVersionByDate.ps1 $(SolutionDir)verpatch\verpatch.exe   $(OutputPath)$(TargetName)$(TargetExt)</Command>
+      <Command>powershell.exe /f $(SolutionDir)PostProjectBuildEvent.ps1     $(SolutionDir)verpatch\verpatch.exe      $(TargetPath)     $(TargetDir)      $(TargetDir)$(TargetName).SBOM.xml         $(ProjectPath)</Command>
     </PostBuildEvent>
     <PostBuildEvent>
       <Message>Set the build</Message>
@@ -176,7 +176,7 @@
       <AdditionalDependencies>kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PostBuildEvent>
-      <Command>powershell.exe /f $(SolutionDir)Set-DllVersionByDate.ps1 $(SolutionDir)verpatch\verpatch.exe   $(OutputPath)$(TargetName)$(TargetExt)</Command>
+      <Command>powershell.exe /f $(SolutionDir)PostProjectBuildEvent.ps1     $(SolutionDir)verpatch\verpatch.exe      $(TargetPath)     $(TargetDir)      $(TargetDir)$(TargetName).SBOM.xml         $(ProjectPath)</Command>
     </PostBuildEvent>
     <PostBuildEvent>
       <Message>Set the build</Message>
