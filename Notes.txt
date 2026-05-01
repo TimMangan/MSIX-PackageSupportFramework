@@ -19,8 +19,11 @@ ideas:
 	1) EndScript should support check on return code, but what it should do is to clear the tatoo on runonce having been done.
 	2) Actually, maybe start should also clear the tatoo on error.
 
-v.2026.Next:
+v.2026.05.01:
     * PsfRuntime Added more informational intercepts for Named and unnamed Pipes, MailSlots, Semaphores, and Mutexes.
+	* SBOM generation for the package.  This is a big one, but it is something that has been requested by customers and would be a great addition to the PSF.  
+	   It involves generating an SBOM file in each project that lists all of the files in the package and their hashes.  
+	   This would allow customers to have a better understanding of what is in their package and to verify the integrity of the package.
 
 v.2026.02.22:
 	* Fix: MfrFixup: Handle case on GetAttributesEx when app requests package path but file is native.	
