@@ -19,8 +19,10 @@ ideas:
 	1) EndScript should support check on return code, but what it should do is to clear the tatoo on runonce having been done.
 	2) Actually, maybe start should also clear the tatoo on error.
 
+v.2026.Next:
+    * PsfRuntime Added more informational intercepts for Named and unnamed Pipes, MailSlots, Semaphores, and Mutexes.
 
-v.Next:
+v.2026.02.22:
 	* Fix: MfrFixup: Handle case on GetAttributesEx when app requests package path but file is native.	
 	* Fix: RegLegacyFixup: Cleanup on logging code to avoid potential buffer overrun.
 	* Fix: MfrFixup: Do not convert paths to long paths when falling through to native calls.  This was causing issues with certain apps.
