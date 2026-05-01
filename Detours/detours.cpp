@@ -1895,9 +1895,15 @@ LONG WINAPI DetourAttachEx(_Inout_ PVOID *ppPointer,
     // This happens when the detour does nothing other than call the target.
     if (pDetour == (PVOID)pbTarget) {
         if (s_fIgnoreTooSmall) {
+#if _DEBUG
+            OutputDebugStringA("  Detour: Ignore target too small.\n");
+#endif
             goto stop;
         }
         else {
+#if _DEBUG
+            OutputDebugStringA("  Detour: Ignore/fail other.\n");
+#endif
             DETOUR_BREAK();
             goto fail;
         }
@@ -1935,6 +1941,9 @@ LONG WINAPI DetourAttachEx(_Inout_ PVOID *ppPointer,
     pTrampoline = detour_alloc_trampoline(pbTarget);
     if (pTrampoline == NULL) {
         error = ERROR_NOT_ENOUGH_MEMORY;
+#if _DEBUG
+        OutputDebugStringA("  Detour: Not enough memory.\n");
+#endif
         DETOUR_BREAK();
         goto fail;
     }

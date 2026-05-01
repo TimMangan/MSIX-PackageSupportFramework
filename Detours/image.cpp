@@ -29,7 +29,7 @@
 #pragma warning(disable: 4710)
 #endif
 
-// #define DETOUR_DEBUG 1
+//#define DETOUR_DEBUG 1
 #define DETOURS_INTERNAL
 
 #include "detours.h"
