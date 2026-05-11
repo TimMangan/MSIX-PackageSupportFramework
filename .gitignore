@@ -326,3 +326,4 @@ tests/scenarios/Appx/MFRTests.appx.makeappx.txt
 .gitignore
 /.VSCodeCounter/2024-03-24_08-46-39
 /fixups/MFRFixup/ReplaceFile.cpp
+/.VSCodeCounter
