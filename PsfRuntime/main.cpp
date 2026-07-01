@@ -328,7 +328,7 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID) noexcept try
     }
 #endif
 
-    Log(LogLevel_DebugMaximum, "[%s%d] PsfRuntime: In DllMain Pid=%d Tid=%d", g_PsfRunTimeName, 0, GetCurrentProcessId(), GetCurrentThreadId());
+    Log(LogLevel_DebugMaximum, "[%s%d] PsfRuntime: In DllMain Pid=%d Tid=%d reason=0x%x", g_PsfRunTimeName, 0, GetCurrentProcessId(), GetCurrentThreadId(), reason);
     // Per detours documentation, immediately return true if running in a helper process
     if (::DetourIsHelperProcess())
     {

@@ -29,8 +29,9 @@ extern "C" {
     }
     catch (...)
     {
-        Log(LogLevel_Exception, L"[%s%d] EnvVarFixup attach ERROR", g_EnvVarName, 0);
-        ::SetLastError(win32_from_caught_exception());
+        DWORD err = win32_from_caught_exception();
+        Log(LogLevel_Exception, L"[%s%d] EnvVarFixup attach ERROR 0x%x", g_EnvVarName, 0, err);
+        ::SetLastError(err);
         return FALSE;
     }
 

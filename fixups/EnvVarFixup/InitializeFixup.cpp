@@ -44,12 +44,17 @@ void InitializeFixups()
     // For path comparison's sake - and the fact that std::filesystem::path doesn't handle (root-)local device paths all
     // that well - ensure that these paths are drive-absolute
     auto packageRootPath = ::PSFQueryPackageRootPath();
-    if (auto pathType = psf::path_type(packageRootPath);
-        (pathType == psf::dos_path_type::root_local_device) || (pathType == psf::dos_path_type::local_device))
+    //Log(LogLevel_DebugSuperMax, L"[%s%d]\tEnvVarFixup InitializeFixups: Queried", g_EnvVarName, 0);
+    //Log(LogLevel_DebugSuperMax, L"[%s%d]\tEnvVarFixup InitializeFixups: Query PackageRoot=%s", g_EnvVarName, 0, packageRootPath);
+    auto pathType = psf::path_type(packageRootPath);
+    //Log(LogLevel_DebugSuperMax, L"[%s%d]\tEnvVarFixup InitializeFixups: Query type=0x%x", g_EnvVarName, 0, (DWORD)pathType);
+    if ((pathType == psf::dos_path_type::root_local_device) || (pathType == psf::dos_path_type::local_device))
     {
-        packageRootPath += 4;
+        packageRootPath += 3;
+        //Log(LogLevel_DebugSuperMax, L"[%s%d]\tEnvVarFixup InitializeFixups: Updated PackageRoot=%s", g_EnvVarName, 0, packageRootPath);
     }
     assert(psf::path_type(packageRootPath) == psf::dos_path_type::drive_absolute);
+    //Log(LogLevel_DebugSuperMax, L"[%s%d]\tEnvVarFixup InitializeFixups: past assert", g_EnvVarName, 0);
     g_envvar_packageRootPath = psf::remove_trailing_path_separators(packageRootPath);
     g_envvar_packageVfsRootPath = g_envvar_packageRootPath / L"VFS";
 
@@ -61,52 +66,59 @@ void InitializeConfiguration()
     Log(LogLevel_DebugBasic, L"[%s%d] EnvVarFixup InitializeConfiguration()", g_EnvVarName, 0);
     if (auto rootConfig = ::PSFQueryCurrentDllConfig())
     {
+        Log(LogLevel_DebugIntermediate, "[%s%d]\t\tEnvVarFixup CONFIG: Has config", g_EnvVarName, 0);
         auto& rootObject = rootConfig->as_object();
 
 
         if (auto EnvVarsValue = rootObject.try_get("envVars"))
         {
-
-
             if (EnvVarsValue)
             {
+                Log(LogLevel_DebugIntermediate, "[%s%d]\t\tEnvVarFixup CONFIG: Has envVars", g_EnvVarName, 0);
                 const psf::json_array& dllArray = EnvVarsValue->as_array();
                 int count = 0;
                 for (auto& spec : dllArray)
                 {
-                    auto& specObject = spec.as_object();
-
-                    auto variablenamePattern = specObject.get("name").as_string().wstring();
-
-                    auto variablevalue = specObject.get("value").as_string().wstring();
-
-                    auto useregistry = specObject.get("useregistry").as_string().wstring();
-
-                    LogString(LogLevel_DebugBasic, g_EnvVarName, 0, L"GetEnvFixup Config: name", variablenamePattern.data());
-                    LogString(LogLevel_DebugBasic, g_EnvVarName, 0, L"GetEnvFixup Config: value", variablevalue.data());
-                    LogString(LogLevel_DebugBasic, g_EnvVarName, 0, L"GetEnvFixup Config: useregistry", useregistry.data());
-
-                    g_envvar_envVarSpecs.emplace_back();
-                    g_envvar_envVarSpecs.back().variablename.assign(variablenamePattern.data(), variablenamePattern.length());
-                    g_envvar_envVarSpecs.back().variablevalue = variablevalue;
-                    if (useregistry.compare(L"true") == 0 ||
-                        useregistry.compare(L"True") == 0 ||
-                        useregistry.compare(L"TRUE") == 0)
+                    try
                     {
-                        g_envvar_envVarSpecs.back().useregistry = true;
+                        auto& specObject = spec.as_object();
+
+                        auto variablenamePattern = specObject.get("name").as_string().wstring();
+
+                        auto variablevalue = specObject.get("value").as_string().wstring();
+
+                        auto useregistry = specObject.get("useregistry").as_string().wstring();
+
+                        LogString(LogLevel_DebugBasic, g_EnvVarName, 0, L"\t\t\tGetEnvFixup Config: name", variablenamePattern.data());
+                        LogString(LogLevel_DebugBasic, g_EnvVarName, 0, L"\t\t\tGetEnvFixup Config: value", variablevalue.data());
+                        LogString(LogLevel_DebugBasic, g_EnvVarName, 0, L"\t\t\tGetEnvFixup Config: useregistry", useregistry.data());
+
+                        g_envvar_envVarSpecs.emplace_back();
+                        g_envvar_envVarSpecs.back().variablename.assign(variablenamePattern.data(), variablenamePattern.length());
+                        g_envvar_envVarSpecs.back().variablevalue = variablevalue;
+                        if (useregistry.compare(L"true") == 0 ||
+                            useregistry.compare(L"True") == 0 ||
+                            useregistry.compare(L"TRUE") == 0)
+                        {
+                            g_envvar_envVarSpecs.back().useregistry = true;
+                        }
+                        else
+                        {
+                            g_envvar_envVarSpecs.back().useregistry = false;
+                        }
+                        count++;
                     }
-                    else
+                    catch (...)
                     {
-                        g_envvar_envVarSpecs.back().useregistry = false;
+                        Log(LogLevel_DebugIntermediate, "[%s%d]\t\t\tEnvVarFixup CONFIG: Exception=0x%x", g_EnvVarName, 0, win32_from_caught_exception());
                     }
-                    count++;
                 };
                 Log(LogLevel_DebugBasic, L"[%s%d] EnvVarFixup: %d config items read.", g_EnvVarName, 0, count);
             }
         }
         if (g_envvar_envVarSpecs.size() == 0)
         {
-            Log(LogLevel_DebugBasic, L"[%s%d] EnvVarFixup: Zero config items read.", g_EnvVarName, 0);
+            Log(LogLevel_DebugBasic, L"[%s%d] EnvVarFixup: ZERO config items read.", g_EnvVarName, 0);
         }
     }
 }
