@@ -29,6 +29,7 @@
     <ClCompile Include="..\CommonSrc\ArgumentVirtualization.cpp" />
     <ClCompile Include="..\CommonSrc\findStringIC.cpp" />
     <ClCompile Include="..\CommonSrc\psf_logging.cpp" />
+    <ClCompile Include="StartProcessHelper.cpp" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>17.0</VCProjectVersion>

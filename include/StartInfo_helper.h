@@ -10,6 +10,10 @@
 #include "..\PsfLauncher\Globals.h"
 #include "psf_logging.h"
 
+
+
+
+
 /* These Attribute definitions are the form as stored in the dwflags field of the structure*/
 #define SIH_PROC_THREAD_ATTRIBUTE_PARENT_PROCESS                    (1 << ProcThreadAttributeParentProcess)
 #define SIH_PROC_THREAD_ATTRIBUTE_HANDLE_LIST                       (1 << ProcThreadAttributeHandleList)
@@ -140,7 +144,7 @@ inline void DumpStartupAttributes(Json_Debug_Levels debugRequestLevel, SIH_PROC_
                         break;
                     case PROC_THREAD_ATTRIBUTE_PROTECTION_LEVEL & 0x0FFFF: // 11
                         Log(debugRequestLevel, L"\t\t[%s%d]\t\t\t\t The item is Attribute_Protection_Level", moduleName, instance);
-                        if (Entry.cbSize == 4)
+                        if (Entry.cbSize == 4 && Entry.lpvalue != NULL)
                         {
                             attval = *((DWORD*)(Entry.lpvalue));
                             switch (attval)

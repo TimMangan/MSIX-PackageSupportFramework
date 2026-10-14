@@ -292,6 +292,7 @@ bool IsProcessRunningForThisUser(const std::filesystem::path path)
 
                 if (sameUser)
                 {
+                    free(thisUserName);
                     CloseHandle(snapshot);
                     return true;
                 }
@@ -426,15 +427,18 @@ std::wstring ReplaceVariablesInString(std::wstring inputString, bool ReplaceEnvi
     }
     if (ReplaceEnvironmentVars)
     {
-        // Potentially an environment variable that needs replacing. For Example: "%HomeDir%\\Documents"
-        DWORD nSizeBuff = 256;
-        LPWSTR buff = new wchar_t[nSizeBuff];
-        DWORD nSizeRet = ExpandEnvironmentStrings(outputString.c_str(), buff, nSizeBuff);
-        if (nSizeRet > 0)
+        // Expand environment variables robustly
+        DWORD requiredSize = ExpandEnvironmentStrings(outputString.c_str(), nullptr, 0);
+        if (requiredSize > 0)
         {
-            outputString = std::wstring(buff);
+            std::vector<wchar_t> buff(requiredSize);
+            DWORD nSizeRet = ExpandEnvironmentStrings(outputString.c_str(), buff.data(), requiredSize);
+            if (nSizeRet > 0 && nSizeRet <= requiredSize)
+            {
+                outputString.assign(buff.data(), nSizeRet - 1); // nSizeRet includes terminating null
+            }
+            // else: leave outputString unchanged or log error
         }
-
     }
     return outputString;
 }

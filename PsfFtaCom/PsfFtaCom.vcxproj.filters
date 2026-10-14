@@ -27,6 +27,9 @@
     <ClCompile Include="..\CommonSrc\psf_logging.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="StartProcessHelper.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Globals.h">

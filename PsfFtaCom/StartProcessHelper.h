@@ -3,7 +3,31 @@
 #include <psf_logging.h>
 #include "Globals.h"
 #include <wil\resource.h>
-#include <tlhelp32.h>
+#include <TlHelp32.h>
+#include <string>
+#include <psf_framework.h>
+
+
+static inline std::wstring QuoteIfNeeded(LPCWSTR s)
+{
+    if (!s) return std::wstring();
+    std::wstring ws(s);
+    if (ws.empty()) return L"\"\"";
+    bool needsQuote = ws.find_first_of(L" \t") != std::wstring::npos;
+    if (needsQuote && ws.front() != L'"')
+    {
+        return L"\"" + ws + L"\"";
+    }
+    return ws;
+}
+
+
+// Keep signature compatible with existing call sites (LPWSTR commandLine)
+HRESULT StartProcess(LPCWSTR applicationName, LPWSTR commandLine, LPCWSTR currentDirectory, int cmdShow, DWORD timeout, bool inheritHandles, DWORD initialCreationFlags, LPPROC_THREAD_ATTRIBUTE_LIST attributeList = nullptr, bool terminateChidren = false);
+HRESULT StartProcessAsUser(HANDLE hUserToken, LPCWSTR applicationName, LPWSTR commandLine, LPCWSTR currentDirectory, int cmdShow, DWORD timeout, bool inheritHandles, DWORD initialCreationFlags, LPPROC_THREAD_ATTRIBUTE_LIST attributeList = nullptr, bool terminateChidren = false);
+void StartWithShellExecute(LPCWSTR verb, std::filesystem::path packageRoot, std::filesystem::path exeName, std::wstring exeArgString, LPCWSTR dirStr, int cmdShow, DWORD timeout);
+
+#if BEFORE_COSOLIDATION
 
 
 HRESULT StartProcess(LPCWSTR applicationName, LPWSTR commandLine, LPCWSTR currentDirectory, int cmdShow, DWORD timeout, bool inheritHandles, DWORD initialCreationFlags, LPPROC_THREAD_ATTRIBUTE_LIST attributeList = nullptr, bool terminateChidren = false)
@@ -211,3 +235,4 @@ void StartWithShellExecute(LPCWSTR verb, std::filesystem::path packageRoot, std:
     CloseHandle(shex.hProcess);
 }
 
+#endif

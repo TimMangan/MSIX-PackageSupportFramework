@@ -28,10 +28,10 @@ using namespace std::literals;
 //#define DO_POWERSHELL_TESTS
 //#define DO_COMPOSITION_TESTS
 //#define DO_MFRILVAWARE_TESTS
-//#define DO_MFR_TESTS
+#define DO_MFR_TESTS
 //#define DO_FRF_TESTS
 //#define DO_DYNDLL_TESTS
-#define DO_REGLEG_TESTS
+//#define DO_REGLEG_TESTS
 //#define DO_ENVVAR_TESTS
 
 

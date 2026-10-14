@@ -24,6 +24,7 @@
     <ClCompile Include="..\CommonSrc\findStringIC.cpp">
       <Filter>CommonSrc</Filter>
     </ClCompile>
+    <ClCompile Include="StartProcessHelper.cpp" />
   </ItemGroup>
   <ItemGroup>
     <Xml Include="PSFLauncherMetadata.xml">

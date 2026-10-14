@@ -19,6 +19,11 @@ ideas:
 	1) EndScript should support check on return code, but what it should do is to clear the tatoo on runonce having been done.
 	2) Actually, maybe start should also clear the tatoo on error.
 
+v.2026.10.13:
+	* PsfLauncher: Remove potential memory leak, consolidation of duplicate code from PsfFtaCom.
+	* PsfFtaCom: Remove potential memory leak, consolidation of duplicate code from PsfLauncher.
+	* MfrFixup: Handle user's Temp folder, including short name access, better.
+
 v.2026.05.01:
     * PsfRuntime Added more informational intercepts for Named and unnamed Pipes, MailSlots, Semaphores, and Mutexes.
 	* SBOM generation for the package.  This is a big one, but it is something that has been requested by customers and would be a great addition to the PSF.  
