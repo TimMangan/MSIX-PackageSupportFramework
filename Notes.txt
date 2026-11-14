@@ -19,6 +19,10 @@ ideas:
 	1) EndScript should support check on return code, but what it should do is to clear the tatoo on runonce having been done.
 	2) Actually, maybe start should also clear the tatoo on error.
 
+v.2026.11.14:
+	* MfrFixup: Changed the redirection logic for the Windows Logs and Spool folders to be redirected to the local redirection area rather than the package redirection area.  
+	  This is to allow software inside the container to write to locations such that outside applications to access these files, such as log viewers and print spoolers.
+
 v.2026.10.13:
 	* PsfLauncher: Remove potential memory leak, consolidation of duplicate code from PsfFtaCom.
 	* PsfFtaCom: Remove potential memory leak, consolidation of duplicate code from PsfLauncher.

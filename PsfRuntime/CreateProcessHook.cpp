@@ -38,6 +38,9 @@
 #include <psf_config.h>
 #include "JsonConfig.h"
 
+
+#include <regex>
+
 using namespace std::literals;
 #include <reentrancy_guard.h>
 
@@ -849,6 +852,7 @@ BOOL WINAPI CreateProcessFixup(
         DWORD PossiblyModifiedCreationFlags = creationFlags;
         bool OriginalCreationFlagSpecified_Suspended = false;
         DWORD CreateProcessInstance = ++g_CreateProcessInterceptInstance;
+        bool skipForce = false;
         bool allowInjection = false;
 
         STARTUPINFOEX* MyReplacementStartupInfo = reinterpret_cast<STARTUPINFOEX*>(startupInfo);
@@ -896,6 +900,42 @@ BOOL WINAPI CreateProcessFixup(
             LogStartupInfoFlags(LogLevel_DebugIntermediate, g_PsfRunTimeName, CreateProcessInstance, L"CreateProcessFixup", MyReplacementStartupInfo);
         }
         bool LaunchNormallyButIntercept = false;
+        bool LaunchExtenallyNoIntercept = false;
+
+#if WANT_TO_ADD_NOPSF_OPTION
+        // Look for nopsf match on a process in the json congig file.
+        const psf::json_value* processes = GetConfigProcesses();
+
+        if (processes)
+        {
+            std::filesystem::path targetexe;
+            if constexpr (psf::is_ansi<CharT>)
+            {
+                targetexe = widen(ExtractCommandLine(commandLine));
+            }
+            else
+            {
+                targetexe = ExtractCommandLine(commandLine);
+            } 
+            for (auto& processConfig : processes->as_array())
+            {
+                auto& processObj = processConfig.as_object();
+                auto exe = processObj.get("executable").as_string().wstring();
+                if (std::regex_match(targetexe.native(), std::wregex(exe.data(), exe.length())))
+                {
+                    auto isExternal = processObj.try_get("nopsf");
+                    if (isExternal && (isExternal->as_boolean().get() == true))
+                    {
+                        // New feature to specify processes that should not receive the PSF.
+                        Log(LogLevel_Launching, "[%s%d]\tExternal process marked to not receive the psf; skipping psfruntime and all fixups.", g_PsfRunTimeName, 0);
+                        LaunchExtenallyNoIntercept = true;
+                    }
+                }
+            }
+        }
+#endif
+        
+
 #if FAILED_TECHNIQUE_TO_USE_SUPPLIED_LIST
         // If the request already has extended startup information, it turns out that we don't know how to add
         // the desktop stuff to it, so we will just let it run as is, attempting to inject the PSF without suspending.
@@ -1025,9 +1065,16 @@ BOOL WINAPI CreateProcessFixup(
 
         if (!LaunchNormallyButIntercept)
         {
-            bool skipForce = false;  // exclude out certain processes from forcing to run inside the container, like conhost and maybe cmd and powershell
-
             MyProcThreadAttributeList* partialList = new MyProcThreadAttributeList(true, true, false);
+            if (!LaunchExtenallyNoIntercept)
+            {
+                skipForce = false;  // exclude out certain processes from forcing to run inside the container, like conhost and maybe cmd and powershell
+            }
+            else
+            {
+                partialList = new MyProcThreadAttributeList(true, false, false);
+                skipForce = true;
+            }
             ///MyProcThreadAttributeList* protList = new MyProcThreadAttributeList(false, true, true);
             ///MyProcThreadAttributeList* noList = new MyProcThreadAttributeList(false, true, false);
             
@@ -1325,8 +1372,10 @@ BOOL WINAPI CreateProcessFixup(
         //////PossiblyModifiedCreationFlags &= ~CREATE_NO_WINDOW;  // for debugging only
     //////}
 #endif
-            PossiblyModifiedCreationFlags |= CREATE_SUSPENDED;
-
+            if (!LaunchExtenallyNoIntercept)
+            {
+                PossiblyModifiedCreationFlags |= CREATE_SUSPENDED;
+            }
 
 
             LogCreationFlags(LogLevel_DebugIntermediate, g_PsfRunTimeName, CreateProcessInstance, PossiblyModifiedCreationFlags, L"CreateProcessFixup");
@@ -1431,7 +1480,14 @@ BOOL WINAPI CreateProcessFixup(
                     else
                     {
                         // just remove the added startup info
-                        PossiblyModifiedCreationFlags = creationFlags | CREATE_SUSPENDED;
+                        if (LaunchExtenallyNoIntercept)
+                        {
+                            PossiblyModifiedCreationFlags = creationFlags;
+                        }
+                        else
+                        {
+                            PossiblyModifiedCreationFlags = creationFlags | CREATE_SUSPENDED;
+                        }
                         if (::CreateProcessImpl(
                             applicationName,
                             commandLine,
@@ -1602,6 +1658,11 @@ BOOL WINAPI CreateProcessFixup(
 
         }
 
+        if (LaunchExtenallyNoIntercept)
+        {
+            Log(LogLevel_DebugBasic, L"\t[%s%d] CreateProcessFixup: New external process has started; no psf injection needed.", g_PsfRunTimeName, CreateProcessInstance);
+            return TRUE;
+        }
         Log(LogLevel_DebugBasic, L"\t[%s%d] CreateProcessFixup: Process has started as suspended, now consider injections...", g_PsfRunTimeName, CreateProcessInstance);
 
         iwstring path;

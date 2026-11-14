@@ -126,6 +126,7 @@ However, there are situations where we don't want the injection:
 * We wouldn't have PsfRuntime inject a PsfRuntime in a PsfLauncher (as it will load the runtime itself).
 * We should not inject into any process that is going to be running outside of the container.
 * We might not want to inject into console apps running inside the container.
+* We need to identify processes that must run outside of this container, such as the modern notepad.exe which runs in it's own container.
 
 If PsfRuntime's CreateProcess hook detects that the process config for the child process contains no fixups, it will skip injecting the launcher into that child process.  
 In the example below, the child process `notme.exe` will not get PSF injections.
@@ -150,6 +151,10 @@ Yes
         {
           "executable": "^notme.exe$"
         },
+        {
+          "executable": ".*[Nn]otepad.exe$"
+          "nopsf": true
+        }
         {
             "executable": ".*",
             "fixups": [

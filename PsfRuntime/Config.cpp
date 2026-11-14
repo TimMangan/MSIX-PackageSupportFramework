@@ -44,7 +44,7 @@ static std::filesystem::path g_CurrentExecutable;
 const wchar_t* g_PsfRunTimeName = L"r";
 
 // The object that constructs the JSON DOM and holds the root
-static struct
+static struct  JSON_HANDLER
 {
     bool on_value(std::unique_ptr<psf::json_value> value)
     {
@@ -223,6 +223,12 @@ static struct
 
 static const psf::json_object* g_CurrentExeConfig = nullptr;
 
+const psf::json_value* g_Processes = nullptr;
+
+const psf::json_value* GetConfigProcesses()
+{
+    return g_Processes;
+}
 
 void load_json()
 {
@@ -338,6 +344,7 @@ void load_json()
     {
         if (processes)
         {
+            g_Processes = processes;
             for (auto& processConfig : processes->as_array())
             {
                 auto& obj = processConfig.as_object();
