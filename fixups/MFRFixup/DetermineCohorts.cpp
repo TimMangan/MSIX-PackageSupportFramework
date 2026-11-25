@@ -14,8 +14,91 @@
 
 using namespace std::literals;
 
+// 8.3 short paths: the mapping tables only know the long form of the package root and of the writable package root,
+// but applications may use any mix of long and short folder names, e.g. C:\PROGRA~1\WindowsApps\<SHORTN~1>\... or
+// C:\Program Files\WindowsApps\<SHORTN~1>\... (seen on a CimFS app attach volume). Such a request is not mapped and
+// never redirected (CreateDirectory into the package -> ERROR_ACCESS_DENIED, or a nested redirection path).
+// Compare the request folder by folder with the root, accepting the long or the short name of each root folder,
+// and replace the matching part with the long root.
+struct RootForms
+{
+    std::wstring LongRoot;
+    std::vector<std::pair<std::wstring, std::wstring>> Parts;  // long and short name of each folder of the root
+};
 
+static std::vector<std::wstring> SplitPathParts(const std::wstring& p)
+{
+    std::vector<std::wstring> parts;
+    std::wstring cur;
+    for (wchar_t c : p)
+    {
+        if (c == L'\\' || c == L'/')
+        {
+            if (!cur.empty()) { parts.push_back(cur); cur.clear(); }
+        }
+        else
+        {
+            cur += c;
+        }
+    }
+    if (!cur.empty()) parts.push_back(cur);
+    return parts;
+}
 
+static RootForms MakeRootForms(const std::filesystem::path& longRoot)
+{
+    RootForms forms;
+    forms.LongRoot = longRoot.wstring();
+    while (!forms.LongRoot.empty() && (forms.LongRoot.back() == L'\\' || forms.LongRoot.back() == L'/')) forms.LongRoot.pop_back();
+    auto longParts = SplitPathParts(forms.LongRoot);
+    std::wstring prefix;
+    for (size_t i = 0; i < longParts.size(); i++)
+    {
+        prefix += (i == 0) ? longParts[i] : (L"\\" + longParts[i]);
+        std::wstring shortName = longParts[i];
+        if (i > 0)
+        {
+            // called while the reentrancy guard is held: the underlying file APIs are not redirected
+            DWORD len = ::GetShortPathNameW(prefix.c_str(), nullptr, 0);
+            if (len != 0)
+            {
+                std::wstring buf(len, L'\0');
+                len = ::GetShortPathNameW(prefix.c_str(), &buf[0], len);
+                if (len != 0)
+                {
+                    buf.resize(len);
+                    auto sp = SplitPathParts(buf);
+                    if (!sp.empty()) shortName = sp.back();
+                }
+            }
+        }
+        forms.Parts.push_back({ longParts[i], shortName });
+    }
+    return forms;
+}
+
+static std::filesystem::path ExpandShortRoot(const std::filesystem::path& path, const RootForms& root)
+{
+    if (root.Parts.empty()) return path;
+    std::wstring p = path.wstring();
+    // keep a \\?\ prefix out of the comparison
+    std::wstring lead;
+    if (p.rfind(L"\\\\?\\", 0) == 0) { lead = L"\\\\?\\"; p = p.substr(4); }
+    auto parts = SplitPathParts(p);
+    if (parts.size() < root.Parts.size()) return path;
+    bool anyShort = false;
+    for (size_t i = 0; i < root.Parts.size(); i++)
+    {
+        if (_wcsicmp(parts[i].c_str(), root.Parts[i].first.c_str()) == 0) continue;
+        if (_wcsicmp(parts[i].c_str(), root.Parts[i].second.c_str()) == 0) { anyShort = true; continue; }
+        return path;
+    }
+    if (!anyShort) return path;   // already the long form
+    std::wstring result = lead + root.LongRoot;
+    for (size_t i = root.Parts.size(); i < parts.size(); i++) result += L"\\" + parts[i];
+    if (p.size() > 0 && (p.back() == L'\\' || p.back() == L'/') && parts.size() > root.Parts.size()) result += L"\\";
+    return std::filesystem::path(result);
+}
 /// DetermineCohorts
 ///
 /// This function takes in a file path that was one of the inputs to an API call that we are intercepting,
@@ -31,6 +114,17 @@ void DetermineCohorts(Json_Debug_Levels debugRequestLevel, std::wstring requeste
 {
 
     cohorts->file_mfr = mfr::create_mfr_path(requestedPath);
+    static const RootForms packageRootForms = MakeRootForms(g_packageRootPath);
+    static const RootForms writableRootForms = MakeRootForms(g_writablePackageRootPath);
+    {
+        // the path type was determined from the original form: determine it again for the long form
+        auto expandedPath = ExpandShortRoot(ExpandShortRoot(cohorts->file_mfr.Request_NormalizedPath, packageRootForms), writableRootForms);
+        if (expandedPath != cohorts->file_mfr.Request_NormalizedPath)
+        {
+            Log(debugRequestLevel, L"[%s%d] %s: DetermineCohorts: 8.3 root expanded to %s", g_MfrModuleName, dllInstance, FixupName, expandedPath.c_str());
+            cohorts->file_mfr = mfr::create_mfr_path(expandedPath);
+        }
+    }
     cohorts->WsRequested = cohorts->file_mfr.Request_NormalizedPath.c_str();
     cohorts->NativeIsValidOptionInScenario = true;
 
@@ -182,7 +276,11 @@ void DetermineCohorts(Json_Debug_Levels debugRequestLevel, std::wstring requeste
         break;
     case mfr::mfr_path_types::in_package_vfs_area:
         Log(debugRequestLevel, L"[%s%d] %s: DetermineCohorts: Request is in_package_vfs_area.", g_MfrModuleName, dllInstance, FixupName);
-        
+
+        // A request for a package VFS path without a mapping (e.g. <PackageRoot>\VFS itself) must still find the
+        // package location, as in the in_package_pvad_area case; otherwise all cohorts stay empty and the request
+        // fails with ERROR_PATH_NOT_FOUND although the folder exists.
+        cohorts->WsPackage = cohorts->WsRequested;
         cohorts->map = mfr::Find_RedirMapping_FromPackagePath_ForwardSearch(cohorts->file_mfr.Request_NormalizedPath.c_str(), dllInstance);
         if (cohorts->map.Valid_mapping == mfr::mfr_enabled_types::enabled)
         {

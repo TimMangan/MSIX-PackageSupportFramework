@@ -291,6 +291,7 @@
     <ClCompile Include="SetFileAttributes.cpp" />
     <ClCompile Include="GetFileAttributes.cpp" />
     <ClCompile Include="GetFileAttributesEx.cpp" />
+    <ClCompile Include="GetFileInformationByName.cpp" />
     <ClCompile Include="GetPrivateProfileInt.cpp" />
     <ClCompile Include="GetPrivateProfileSection.cpp" />
     <ClCompile Include="GetPrivateProfileSectionNames.cpp" />

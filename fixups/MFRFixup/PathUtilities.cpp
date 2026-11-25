@@ -641,13 +641,17 @@ bool IsCreateForChange(DWORD desiredAccess, DWORD creationDisposition, DWORD fla
     {
         return true;
     }
-    // Check desiredAccess versus File Security and Access Rights values
-    if ((desiredAccess & (FILE_GENERIC_WRITE)) != 0)
+    // Composite masks must not be tested with a plain AND: FILE_GENERIC_WRITE contains STANDARD_RIGHTS_WRITE
+    // (== READ_CONTROL) and SYNCHRONIZE, FILE_ALL_ACCESS contains all read bits. Testing them with "& != 0"
+    // turned read-only opens (e.g. FILE_READ_ATTRIBUTES, FILE_GENERIC_READ) into write cases.
+    // FILE_ALL_ACCESS only counts when it is requested completely.
+    if ((desiredAccess & FILE_ALL_ACCESS) == FILE_ALL_ACCESS)
     {
         return true;
     }
-    // Check desiredAccess versus File Access Rights values
-    if ((desiredAccess & (FILE_ADD_FILE | FILE_ADD_SUBDIRECTORY | FILE_ALL_ACCESS | FILE_APPEND_DATA | FILE_DELETE_CHILD | FILE_WRITE_ATTRIBUTES | FILE_WRITE_DATA | FILE_WRITE_EA | STANDARD_RIGHTS_WRITE)) != 0)
+    // Check desiredAccess versus the individual File Access Rights that modify (FILE_ADD_FILE == FILE_WRITE_DATA,
+    // FILE_ADD_SUBDIRECTORY == FILE_APPEND_DATA)
+    if ((desiredAccess & (FILE_WRITE_DATA | FILE_APPEND_DATA | FILE_WRITE_EA | FILE_WRITE_ATTRIBUTES | FILE_DELETE_CHILD)) != 0)
     {
         return true;
     }

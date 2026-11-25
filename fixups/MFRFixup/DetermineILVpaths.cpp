@@ -87,7 +87,14 @@ std::wstring DetermineIlvPathForReadOperations(Json_Debug_Levels debugRequestLev
     } 
 
     bool RedirectionDeletionMarker = false;
-    if (!SkipRedirection)
+    // A deletion marker can only exist in the redirection area. With a local redirection the 'redirected' path is the
+    // real native location (e.g. Documents): hidden+system entries there (desktop.ini, the 'My Pictures' junctions) are
+    // ordinary files, not markers. Treating them as markers sends the read to a package path that does not exist.
+    bool RedirectedIsNativeLocation =
+        _wcsicmp(cohorts.WsRedirected.c_str(), cohorts.WsNative.c_str()) == 0 ||
+        (cohorts.file_mfr.Request_MfrPathType == mfr::mfr_path_types::in_native_area &&
+         _wcsicmp(cohorts.WsRedirected.c_str(), cohorts.WsRequested.c_str()) == 0);
+    if (!SkipRedirection && !RedirectedIsNativeLocation)
     {
         if (RedirectedAttributes != INVALID_FILE_ATTRIBUTES &&
             (RedirectedAttributes & (FILE_ATTRIBUTE_HIDDEN | FILE_ATTRIBUTE_SYSTEM)) == (FILE_ATTRIBUTE_HIDDEN | FILE_ATTRIBUTE_SYSTEM))
