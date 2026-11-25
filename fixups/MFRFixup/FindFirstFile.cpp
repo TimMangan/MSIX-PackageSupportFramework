@@ -208,6 +208,7 @@ extern "C" HANDLE __stdcall FindFirstFileAFixupHelper(_In_ const char* fileName,
 
         // return first result found
         copy_find_data(result->cached_data[UseIndex], *findFileData);
+        UseAlternateNameOfPackageOrNative(result.get(), UseIndex, *findFileData);  // 8.3: short name of package/native entry
 
         // Consider the case where the name is a variablized MSIX name, such as ProgramFilesX64 and the app asked for "C:\Program Files".
         // In that case, we really want to return what they asked for, because although they already knew the name, they might use the value
@@ -436,6 +437,7 @@ extern "C" HANDLE __stdcall FindFirstFileWFixupHelper(_In_ const wchar_t* fileNa
         
         // return first result found
         copy_find_data(result->cached_data[UseIndex], *findFileData);
+        UseAlternateNameOfPackageOrNative(result.get(), UseIndex, *findFileData);  // 8.3: short name of package/native entry
 
         // Consider the case where the name is a variablized MSIX name, such as ProgramFilesX64 and the app asked for "C:\Program Files".
         // In that case, we really want to return what they asked for, because although they already knew the name, they might use the value

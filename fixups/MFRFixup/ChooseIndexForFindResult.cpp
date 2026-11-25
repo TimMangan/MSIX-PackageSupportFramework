@@ -38,6 +38,22 @@ int ChooseIndexForFindResult(const Cohorts cohorts, FindData3A* result)
             // This covers the case where the requested path is in a package area, but not in the VFS area.
             UseIndex = Result_Package;
         }
+        // Never return an index without a find handle (its cached data is empty): fall back to the first hit.
+        if (!result->find_handles[UseIndex])
+        {
+            if (result->find_handles[Result_Redirected])
+            {
+                UseIndex = Result_Redirected;
+            }
+            else if (result->find_handles[Result_Package])
+            {
+                UseIndex = Result_Package;
+            }
+            else
+            {
+                UseIndex = Result_Native;
+            }
+        }
         break;
     case mfr::mfr_path_types::in_native_area:
     default:
@@ -67,6 +83,22 @@ int ChooseIndexForFindResult(const Cohorts cohorts, FindData3W* result)
         {
             // This covers the case where the requested path is in a package area, but not in the VFS area.
             UseIndex = Result_Package;
+        }
+        // Never return an index without a find handle (its cached data is empty): fall back to the first hit.
+        if (!result->find_handles[UseIndex])
+        {
+            if (result->find_handles[Result_Redirected])
+            {
+                UseIndex = Result_Redirected;
+            }
+            else if (result->find_handles[Result_Package])
+            {
+                UseIndex = Result_Package;
+            }
+            else
+            {
+                UseIndex = Result_Native;
+            }
         }
         break;
     case mfr::mfr_path_types::in_native_area:
